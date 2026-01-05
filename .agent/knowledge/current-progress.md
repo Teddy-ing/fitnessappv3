@@ -20,39 +20,98 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] Competitive landscape analyzed
 - [x] Monetization philosophy established
 - [x] Agent knowledge system set up
+- [x] Tech stack decided (React Native + Expo)
+- [x] On-device ML features conceptualized
+- [x] AI tier features conceptualized
+- [x] Comprehensive market research completed (Strong, Hevy, Reddit sentiment)
+- [x] UI design guidelines documented (Frankenstein Method)
+- [x] Open source decision made
+- [x] Background timer technical solution identified
 
 ---
 
 ## In Progress
 
-- [ ] Define MVP feature scope
-- [ ] Choose technology stack
-- [ ] Design core user flows
+- [/] **Scaffold React Native + Expo project** ← Ready to start
+- [ ] Design core data models (Workout, Exercise, Set, Template)
+- [ ] Implement core workout logging
 
 ---
 
 ## Next Steps
 
 1. Finalize MVP feature list (what ships in v1.0)
-2. Decide on platform (Android-first? Cross-platform?)
-3. Choose tech stack (Native Kotlin? Flutter? React Native?)
-4. Design authentication approach (local-first with optional sync)
-5. Sketch core UI/UX flows
+2. Design core data models (Workout, Exercise, Set, Template)
+3. Initialize React Native + Expo project
+4. Design core UI/UX flows (logging a set, viewing history)
+5. Decide on state management (Zustand vs Redux vs Context)
+6. Decide on local database (expo-sqlite vs WatermelonDB)
 
 ---
 
 ## Known Blockers / Open Questions
 
-- Platform decision pending (Android primary, but cross-platform?)
-- Tech stack pending (depends on platform decision)
-- Solo or team development?
-- Timeline expectations?
+- State management library choice
+- Local database choice
+- On-device ML approach (TensorFlow Lite vs custom simple stats)
+- Which AI provider for paid tier (cost optimization)
 
 ---
 
 ## Session Log
 
-### 2026-01-04: Initial Setup
+### 2026-01-04 (Late Evening): Comprehensive Market Research
+
+**Duration:** ~45 min
+**Focus:** Web research across Reddit and fitness communities
+
+**Research conducted:**
+- Reddit sentiment analysis for Hevy, Strong, Fitnotes
+- Caliber and Boostcamp deep-dive
+- Stretching/mobility app market analysis
+- User friction complaints ("too many clicks")
+- Data export/import pain points
+- Pricing comparison across all major apps
+
+**Key findings:**
+- **Hevy is the current Reddit favorite** — active development, $75 lifetime
+- **Strong is losing users** — perceived stagnant development
+- **Fitnotes is Android-only** — major gap for cross-platform
+- **Stretching/mobility = separate apps** — no weight tracker does this
+- **Users hate: too many clicks, start/stop paradigm, paywalls**
+- **Users love: fast logging, CSV export, lifetime purchases**
+
+**Files updated:**
+- `market-research.md` — Major expansion with Reddit sentiment, competitor breakdowns
+
+---
+
+### 2026-01-04 (Evening): Key Decisions Made
+
+**Duration:** ~30 min
+**Focus:** Confirming direction and adding feature concepts
+
+**Decisions made:**
+- ✅ **Tech stack**: React Native + Expo (cross-platform, no Mac required)
+- ✅ **Timeline**: Solo dev, 1 year for feature-rich app
+- ✅ **Monetization**: Free + donations + optional cheap AI tier
+- ✅ **Not open source**
+
+**New features conceptualized:**
+- On-device ML autocomplete for reps/weight
+- Workout day prediction based on patterns
+- AI chatbot with preformatted queries (paid tier)
+- Google Cloud / iCloud backup support
+
+**Files updated:**
+- `project-config.md` — Tech stack confirmed
+- `monetization.md` — Free + AI tier model
+- `feature-design.md` — NEW, ML and AI feature specs
+- This file
+
+---
+
+### 2026-01-04 (Afternoon): Initial Setup
 
 **Duration:** ~1 hour
 **Focus:** Brainstorming and knowledge system setup

@@ -25,7 +25,6 @@ Create the best weight training app that disrupts the fitness app market by comb
 We are NOT trying to:
 - Maximize revenue
 - Be everything to everyone
-- Compete on AI/ML features
 - Lock users into subscriptions
 
 We ARE trying to:
@@ -33,6 +32,37 @@ We ARE trying to:
 - Respect users' time and intelligence
 - Make money optional, not required for core value
 - Build trust through transparency and data ownership
+
+---
+
+## Unique Value Proposition
+
+### "An App That Becomes Yours"
+
+> **The more you use it, the more it adapts to you—while staying 100% private.**
+
+This is our key differentiator against Hevy and others:
+
+| Feature | Hevy | Our App |
+|---------|------|----------|
+| Auto-fill last workout values | ✅ Yes | ✅ Yes |
+| **Smart rep suggestions** based on weight/history | ❌ No | ✅ Yes |
+| **Workout day prediction** ("Monday = chest day") | ❌ No | ✅ Yes |
+| **On-device ML** (never sends data to cloud) | ❌ No | ✅ Yes |
+| Privacy-first by design | Partial | ✅ Yes |
+
+**Why this matters:**
+- Hevy only recalls your *last* values—not smart patterns
+- Users on Reddit are *requesting* ML-based progression suggestions
+- "Free app that learns YOU and stays private" is a powerful pitch
+
+### Open Source Advantage
+
+This project is **open source**, which means:
+- Full transparency about what the app does
+- Community can verify privacy claims
+- Community contributions and trust
+- Aligns with "not about the money" ethos
 
 ## Design Philosophy
 

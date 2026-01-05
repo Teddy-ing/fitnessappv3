@@ -20,37 +20,47 @@ This app exists to disrupt, not to maximize revenue. Monetization should:
 
 | Model | Pros | Cons | Fit |
 |-------|------|------|-----|
-| **Completely Free** | Max adoption, goodwill, word-of-mouth | No revenue, sustainability concerns | ⭐ Possible |
-| **One-Time Purchase ($3-5)** | Users prefer this, no recurring anxiety | Less revenue over time | ⭐⭐ Strong fit |
-| **Freemium (Core free + Premium)** | Accessible entry, revenue from power users | Requires careful feature gating | ⭐⭐ Strong fit |
-| **Free + Tip Jar** | Zero friction, community-supported | Unpredictable, low conversion | ⭐ Possible |
-| **Subscription ($10+/mo)** | Recurring revenue, industry standard | Against our positioning, user resentment | ❌ Rejected |
-| **Ads** | Revenue without direct payment | Degrades experience, feels cheap | ❌ Rejected |
+| **Completely Free + Donations** | Max adoption, goodwill, indie ethos | Unpredictable income | ⭐⭐ **Chosen** |
+| **Free + Paid AI Tier** | Covers API costs, fair value exchange | Requires careful pricing | ⭐⭐ **Chosen** |
+| **One-Time Purchase** | Users prefer this | Doesn't cover ongoing AI costs | Partially fits |
+| **Subscription ($10+/mo)** | Recurring revenue | Against our positioning | ❌ Rejected |
+| **Ads** | Revenue without payment | Degrades experience | ❌ Rejected |
 
 ---
 
-## Recommended Approach
+## Chosen Approach
 
-**Free Core + $3-5 One-Time "Supporter" Unlock**
+**Free Core + Donations + Optional Cheap AI Subscription**
 
-### Free Tier (Full Featured)
-Everything needed to track workouts effectively:
-- Unlimited workout logging
-- Basic templates (3-5 slots)
-- Exercise database
-- Rest timer
-- Core analytics (recent PRs, volume)
-- Export to CSV
+### Free Tier (Fully Featured)
+Everything needed for a complete workout tracking experience:
+- ✅ Unlimited workout logging
+- ✅ Unlimited templates
+- ✅ Full exercise database
+- ✅ Rest timer
+- ✅ Full analytics and progress tracking
+- ✅ **On-device ML features** (autocomplete, workout suggestions)
+- ✅ Multiple export formats (CSV, JSON, etc.)
+- ✅ Import from competitors
+- ✅ Google Cloud / iCloud backup (optional)
 
-### Supporter Tier ($3-5 one-time)
-Power user features and customization:
-- Unlimited templates
-- Advanced analytics (graphs over time, muscle balance, trends)
-- Cloud backup (optional)
-- Custom themes / dark mode variants
-- Widget support
-- Import from competitors
-- Priority feature requests (community voting)
+### AI Tier (Cheap Subscription)
+Cloud-based AI features that cost money to run:
+- 🤖 AI chatbot assistant
+- 🤖 Preformatted queries: "Detect weak points", "Give me optimizations"
+- 🤖 AI-generated workout templates
+- 🤖 Personalized training plans
+
+**Pricing Philosophy for AI Tier:**
+- Use lower-end model to minimize costs
+- Price slightly above average user's API cost
+- Goal: Break even or small margin, not profit maximization
+- Possible: $1-3/month or pay-per-use credits
+
+### Donations
+- Optional "Buy me a coffee" style donations
+- No features gated behind donations
+- Purely goodwill-based
 
 ---
 
