@@ -93,6 +93,35 @@ When user finishes a set and taps the checkbox:
 
 ---
 
+## Device-Specific Considerations
+
+### Bottom Navigation Overlap
+
+Different devices have different system navigation styles. The app must handle:
+
+| Navigation Type | Description | Handling |
+|-----------------|-------------|----------|
+| **Gesture Navigation** | Swipe-up bar at bottom | Use `useSafeAreaInsets()` |
+| **3-Button Navigation** | Always-visible Home/Back/Recent | Add bottom padding |
+| **Physical Buttons** | Older devices with hardware buttons | Minimal padding needed |
+
+**Implementation:** Use `react-native-safe-area-context` to dynamically calculate bottom padding.
+
+### Platform Differences
+
+| Platform | Considerations |
+|----------|----------------|
+| **Android** | Various manufacturers, screen sizes, navigation styles |
+| **iOS** | Home indicator on newer iPhones, notch handling |
+
+**Testing needed:**
+- [ ] Test on Android with gesture navigation (S25 confirmed)
+- [ ] Test on Android with 3-button navigation
+- [ ] Test on iPhone with home indicator
+- [ ] Test on older iPhone with home button
+
+---
+
 ## Onboarding (Steal from Caliber)
 
 ### Equipment Selector Wizard
@@ -174,15 +203,32 @@ Don't dump users into an empty app. Ask:
 
 ## Screenshots Reference
 
-> **Note for future sessions:** Attach screenshots of Hevy and Strong to this document for visual reference. Current knowledge is based on research, not direct visual inspection.
+> Screenshots of Hevy and Strong have been added to `.agent/reference/` for visual reference.
 
-### To capture:
-- [ ] Hevy: Main workout logging screen
-- [ ] Hevy: Exercise card expanded
-- [ ] Hevy: Dark mode color palette
-- [ ] Strong: Checkmark flow
-- [ ] Strong: Rest timer UI
+### Available:
+- [x] Hevy: Multiple screens (homescreen, workout, exercise detail, statistics, profile)
+- [x] Strong: Template and workout screens
+
+### Still needed:
 - [ ] Caliber: Equipment selector wizard
+- [ ] iOS device screenshots for comparison
+
+---
+
+## TODO: Custom Navigation Icons
+
+> **Priority:** Medium (polish item)
+
+Replace emoji icons in bottom navigation with custom icons:
+- Consider `react-native-vector-icons` (large library, many icon sets)
+- Or custom SVG icons for unique brand identity
+- Icons should be simple, recognizable at small sizes
+- Match the dark theme color scheme
+
+**Icon requirements:**
+- Assistant: Robot/AI chat icon
+- Workout: Dumbbell or flexed arm
+- Profile: User silhouette
 
 ---
 
@@ -197,5 +243,5 @@ Don't dump users into an empty app. Ask:
 ---
 
 ## Last Updated
-- Date: 2026-01-04
-- Session Context: Created from Frankenstein Method analysis and thumb zone rule
+- Date: 2026-01-05
+- Session Context: Added device-specific considerations for navigation overlap

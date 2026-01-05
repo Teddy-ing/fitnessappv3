@@ -164,7 +164,6 @@ const styles = StyleSheet.create({
     // Stats grid
     statsGrid: {
         flexDirection: 'row',
-        gap: spacing.sm,
         marginBottom: spacing.lg,
     },
     statCard: {
@@ -173,6 +172,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
         padding: spacing.md,
         alignItems: 'center',
+        marginHorizontal: spacing.xs,
     },
     statValue: {
         fontSize: typography.size.xxl,
@@ -193,7 +193,6 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         fontWeight: typography.weight.semibold,
         color: colors.text.secondary,
-        textTransform: 'uppercase',
         letterSpacing: 1,
         marginBottom: spacing.sm,
         marginLeft: spacing.xs,

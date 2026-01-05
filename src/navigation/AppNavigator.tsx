@@ -7,12 +7,16 @@
  * - Profile/Stats (right)
  * 
  * Following the Thumb Zone rule: navigation at bottom 30% of screen
+ * 
+ * TODO: Replace emoji icons with custom icon library (e.g., react-native-vector-icons
+ * or custom SVG icons) for a more polished look.
  */
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '../theme';
 
@@ -32,6 +36,7 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 
 /**
  * Simple icon component - will be replaced with proper icons later
+ * TODO: Replace with custom icon library
  */
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
     const icons: Record<string, string> = {
@@ -51,19 +56,32 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
  * Main App Navigator
  */
 export default function AppNavigator() {
+    // Get safe area insets to handle different device navigation types:
+    // - Gesture navigation (swipe up bar)
+    // - 3-button navigation (always visible home, back, recent)
+    // - Older devices with physical buttons
+    // This ensures the tab bar doesn't overlap with system navigation
+    const insets = useSafeAreaInsets();
+
+    // Calculate dynamic tab bar height based on safe area
+    // Minimum padding of 8 for devices with no bottom inset
+    const bottomInset = Math.max(insets.bottom, 8);
+    const tabBarHeight = 56 + bottomInset;
+
     return (
         <NavigationContainer>
             <Tab.Navigator
                 initialRouteName="Workout"
                 screenOptions={{
                     // Tab bar styling (dark theme)
+                    // Dynamic height to accommodate system navigation
                     tabBarStyle: {
                         backgroundColor: colors.background.secondary,
                         borderTopColor: colors.border,
                         borderTopWidth: 1,
-                        height: 80,
-                        paddingBottom: spacing.md,
-                        paddingTop: spacing.sm,
+                        height: tabBarHeight,
+                        paddingBottom: bottomInset,
+                        paddingTop: spacing.xs,
                     },
                     tabBarActiveTintColor: colors.accent.primary,
                     tabBarInactiveTintColor: colors.text.secondary,
@@ -128,6 +146,6 @@ const styles = StyleSheet.create({
         fontSize: 24,
     },
     iconFocused: {
-        transform: [{ scale: 1.1 }],
+        fontSize: 26,
     },
 });

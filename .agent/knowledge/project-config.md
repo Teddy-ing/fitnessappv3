@@ -18,7 +18,7 @@ License: TBD (MIT, Apache 2.0, or GPL to consider)
 |-------|--------|----------|
 | **Framework** | React Native + Expo | Cross-platform, JS ecosystem, no Mac required for dev |
 | **Language** | TypeScript | Type safety, better tooling |
-| **State Management** | TBD | (Zustand, Redux, or React Context) |
+| **State Management** | Zustand | Lightweight, minimal boilerplate, great TypeScript support |
 | **Local Database** | TBD | (SQLite via expo-sqlite, or WatermelonDB) |
 | **On-device ML** | TBD | (TensorFlow Lite, ONNX, or custom) |
 | **Cloud AI** | TBD | (OpenAI, Anthropic, or open-source) |

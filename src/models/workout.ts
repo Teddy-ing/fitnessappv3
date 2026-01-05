@@ -5,6 +5,7 @@
  * Workouts contain sections (warmup, main, cooldown) which contain exercise instances.
  */
 
+import { v4 as uuidv4 } from 'uuid';
 import { Exercise, ExerciseCategory } from './exercise';
 
 /**
@@ -157,7 +158,7 @@ export interface Workout {
 export function createWorkout(name?: string): Workout {
     const now = new Date();
     const mainSection: WorkoutSection = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         type: 'main',
         exercises: [],
         startedAt: null,
@@ -165,7 +166,7 @@ export function createWorkout(name?: string): Workout {
     };
 
     return {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         name: name ?? `Workout ${now.toLocaleDateString()}`,
         status: 'in_progress',
         warmup: null,
@@ -191,7 +192,7 @@ export function createWorkout(name?: string): Workout {
  */
 export function createSet(orderIndex: number, type: SetType = 'working'): WorkoutSet {
     return {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         orderIndex,
         weight: null,
         reps: null,
@@ -222,7 +223,7 @@ export function createWorkoutExercise(
     );
 
     return {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         exerciseId: exercise.id,
         exercise,
         orderIndex,
