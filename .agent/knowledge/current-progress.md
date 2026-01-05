@@ -32,14 +32,16 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] Theme configuration created
 - [x] README.md and LICENSE created
 - [x] **Core data models designed** (Exercise, Workout, Template, User)
+- [x] **Navigation set up** (3 tabs: Assistant, Workout, Profile)
+- [x] Placeholder screens created for all tabs
 
 ---
 
 ## In Progress
 
-- [ ] Set up navigation (bottom tabs)
 - [ ] Implement core workout logging screen
 - [ ] Create exercise database (seed data)
+- [ ] Build exercise picker component
 
 ---
 
