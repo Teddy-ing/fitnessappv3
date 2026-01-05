@@ -80,25 +80,66 @@ License: TBD (MIT, Apache 2.0, or GPL to consider)
 
 ## Project Structure
 
-*To be defined after framework selection*
-
 ```
 workout-app/
-├── AGENTS.md
-├── .agent/
-│   ├── knowledge/
-│   └── workflows/
-├── src/              # TBD based on framework
-├── assets/           # Images, fonts, etc.
-├── docs/             # User-facing documentation
-└── ...
+├── .agent/                 # AI agent knowledge & workflows
+│   ├── knowledge/          # Project documentation
+│   └── workflows/          # Development procedures
+├── src/
+│   ├── components/         # Reusable UI components
+│   ├── screens/            # Full-screen views  
+│   ├── services/           # Business logic, data access
+│   ├── models/             # Data types and entities
+│   ├── hooks/              # Custom React hooks
+│   ├── navigation/         # Navigation configuration
+│   ├── theme/              # Colors, typography, spacing
+│   └── utils/              # Helper functions
+├── assets/                 # Images, fonts, etc.
+├── App.tsx                 # App entry point
+├── app.json                # Expo configuration
+├── package.json            # Dependencies
+├── README.md               # Project overview
+└── LICENSE                 # MIT License
 ```
 
 ---
 
 ## Build Commands
 
-*To be defined after framework selection*
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Run on Android
+npm run android
+
+# Run on iOS (requires macOS)
+npm run ios
+
+# Run on web
+npm run web
+
+# Type check
+npm run typecheck
+
+# Lint
+npm run lint
+```
+
+---
+
+## Dependencies (Current)
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| expo | ~54.0.30 | Framework |
+| react | 19.1.0 | UI library |
+| react-native | 0.81.5 | Native bridge |
+| expo-status-bar | ~3.0.9 | Status bar control |
+| typescript | ~5.9.2 | Type checking |
 
 ---
 

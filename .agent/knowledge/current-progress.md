@@ -27,14 +27,19 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] UI design guidelines documented (Frankenstein Method)
 - [x] Open source decision made
 - [x] Background timer technical solution identified
+- [x] **React Native + Expo project scaffolded**
+- [x] Project structure created (src/components, screens, services, etc.)
+- [x] Theme configuration created
+- [x] README.md and LICENSE created
+- [x] **Core data models designed** (Exercise, Workout, Template, User)
 
 ---
 
 ## In Progress
 
-- [/] **Scaffold React Native + Expo project** ← Ready to start
-- [ ] Design core data models (Workout, Exercise, Set, Template)
-- [ ] Implement core workout logging
+- [ ] Set up navigation (bottom tabs)
+- [ ] Implement core workout logging screen
+- [ ] Create exercise database (seed data)
 
 ---
 
