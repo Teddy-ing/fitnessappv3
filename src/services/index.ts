@@ -20,5 +20,6 @@ export {
     requestNotificationPermissions,
     sendRestTimerNotification,
     scheduleRestTimerNotification,
-    cancelScheduledNotification
+    cancelScheduledNotification,
+    clearAllNotifications
 } from './notificationService';

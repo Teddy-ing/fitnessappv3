@@ -11,22 +11,33 @@ import { WorkoutExercise, WorkoutSet } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import SetRow from './SetRow';
 
+// Focus state type for keyboard coordination
+export interface FocusState {
+    exerciseId: string;
+    setId: string;
+    field: 'weight' | 'reps';
+}
+
 interface ExerciseCardProps {
     workoutExercise: WorkoutExercise;
+    focusState?: FocusState | null;
     onUpdateSet: (setId: string, updates: Partial<WorkoutSet>) => void;
     onCompleteSet: (setId: string) => void;
     onAddSet: () => void;
     onRemoveSet: (setId: string) => void;
     onRemoveExercise: () => void;
+    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
 }
 
 export default function ExerciseCard({
     workoutExercise,
+    focusState,
     onUpdateSet,
     onCompleteSet,
     onAddSet,
     onRemoveSet,
     onRemoveExercise,
+    onFocusField,
 }: ExerciseCardProps) {
     const { exercise, sets } = workoutExercise;
 
@@ -47,6 +58,13 @@ export default function ExerciseCard({
             }
         }
         return count;
+    };
+
+    // Check if a specific field is focused
+    const isFieldFocused = (setId: string, field: 'weight' | 'reps') => {
+        return focusState?.exerciseId === workoutExercise.id &&
+            focusState?.setId === setId &&
+            focusState?.field === field;
     };
 
     return (
@@ -87,9 +105,13 @@ export default function ExerciseCard({
                         trackWeight={exercise.trackWeight}
                         trackReps={exercise.trackReps}
                         trackTime={exercise.trackTime}
+                        isWeightFocused={isFieldFocused(set.id, 'weight')}
+                        isRepsFocused={isFieldFocused(set.id, 'reps')}
                         onUpdate={(updates) => onUpdateSet(set.id, updates)}
                         onComplete={() => onCompleteSet(set.id)}
                         onRemove={() => onRemoveSet(set.id)}
+                        onFocusWeight={() => onFocusField?.(workoutExercise.id, set.id, 'weight')}
+                        onFocusReps={() => onFocusField?.(workoutExercise.id, set.id, 'reps')}
                     />
                 ))}
             </View>

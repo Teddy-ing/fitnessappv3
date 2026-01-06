@@ -106,9 +106,22 @@ export async function cancelScheduledNotification(identifier: string): Promise<v
     }
 }
 
+/**
+ * Clear all delivered notifications from the notification tray
+ * Called when app comes to foreground
+ */
+export async function clearAllNotifications(): Promise<void> {
+    try {
+        await Notifications.dismissAllNotificationsAsync();
+    } catch (error) {
+        console.error('[Notifications] Failed to clear notifications:', error);
+    }
+}
+
 export default {
     requestNotificationPermissions,
     sendRestTimerNotification,
     scheduleRestTimerNotification,
     cancelScheduledNotification,
+    clearAllNotifications,
 };

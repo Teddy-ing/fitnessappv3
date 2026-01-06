@@ -23,12 +23,13 @@ import {
     TextInput,
     Modal,
     RefreshControl,
+    Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
-import { ExerciseCard, ExercisePicker, RestTimer, TemplateCard } from '../components';
+import { ExerciseCard, ExercisePicker, RestTimer, TemplateCard, WorkoutKeyboard, FocusState, KeyboardFieldType } from '../components';
 import {
     saveWorkout,
     getWorkouts,
@@ -71,6 +72,17 @@ export default function WorkoutScreen() {
     const [showSaveTemplateModal, setSaveTemplateModal] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [pendingWorkout, setPendingWorkout] = useState<Workout | null>(null);
+
+    // Custom keyboard state
+    const [focusState, setFocusState] = useState<FocusState | null>(null);
+    const [keyboardValue, setKeyboardValue] = useState('');
+
+    // Hide system keyboard when our custom keyboard is active
+    useEffect(() => {
+        if (focusState) {
+            Keyboard.dismiss();
+        }
+    }, [focusState]);
 
     // Live timer effect - updates every second when workout is active
     useEffect(() => {
@@ -242,9 +254,153 @@ export default function WorkoutScreen() {
             'Are you sure you want to discard this workout? All progress will be lost.',
             [
                 { text: 'Cancel', style: 'cancel' },
-                { text: 'Discard', style: 'destructive', onPress: discardWorkout },
+                {
+                    text: 'Discard', style: 'destructive', onPress: () => {
+                        setFocusState(null);
+                        discardWorkout();
+                    }
+                },
             ]
         );
+    };
+
+    // ========================================
+    // Custom Keyboard Handlers
+    // ========================================
+
+    // Handle focus on a specific field
+    const handleFocusField = (exerciseId: string, setId: string, field: 'weight' | 'reps') => {
+        if (!activeWorkout) return;
+
+        // Find the current value
+        const exercise = activeWorkout.main.exercises.find(e => e.id === exerciseId);
+        const set = exercise?.sets.find(s => s.id === setId);
+
+        let currentValue = '';
+        if (field === 'weight') {
+            currentValue = set?.weight?.toString() ?? '';
+        } else if (field === 'reps') {
+            currentValue = set?.reps?.toString() ?? '';
+        }
+
+        setFocusState({ exerciseId, setId, field });
+        setKeyboardValue(currentValue);
+    };
+
+    // Handle key press on custom keyboard
+    const handleKeyPress = (key: string) => {
+        if (!focusState) return;
+
+        // Prevent multiple decimals
+        if (key === '.' && keyboardValue.includes('.')) return;
+
+        // Limit length
+        if (keyboardValue.length >= 6) return;
+
+        const newValue = keyboardValue + key;
+        setKeyboardValue(newValue);
+
+        // Update the set
+        const numValue = parseFloat(newValue);
+        if (!isNaN(numValue)) {
+            if (focusState.field === 'weight') {
+                updateSet(focusState.exerciseId, focusState.setId, { weight: numValue });
+            } else {
+                updateSet(focusState.exerciseId, focusState.setId, { reps: Math.floor(numValue) });
+            }
+        }
+    };
+
+    // Handle backspace
+    const handleBackspace = () => {
+        if (!focusState || keyboardValue.length === 0) return;
+
+        const newValue = keyboardValue.slice(0, -1);
+        setKeyboardValue(newValue);
+
+        const numValue = newValue.length > 0 ? parseFloat(newValue) : null;
+        if (focusState.field === 'weight') {
+            updateSet(focusState.exerciseId, focusState.setId, { weight: numValue && !isNaN(numValue) ? numValue : null });
+        } else {
+            updateSet(focusState.exerciseId, focusState.setId, { reps: numValue && !isNaN(numValue) ? Math.floor(numValue) : null });
+        }
+    };
+
+    // Handle clear
+    const handleClear = () => {
+        if (!focusState) return;
+
+        setKeyboardValue('');
+        if (focusState.field === 'weight') {
+            updateSet(focusState.exerciseId, focusState.setId, { weight: null });
+        } else {
+            updateSet(focusState.exerciseId, focusState.setId, { reps: null });
+        }
+    };
+
+    // Handle +/- adjustment
+    const handleAdjust = (delta: number) => {
+        if (!focusState || !activeWorkout) return;
+
+        const exercise = activeWorkout.main.exercises.find(e => e.id === focusState.exerciseId);
+        const set = exercise?.sets.find(s => s.id === focusState.setId);
+
+        if (focusState.field === 'weight') {
+            const currentWeight = set?.weight ?? 0;
+            const newWeight = Math.max(0, currentWeight + delta);
+            updateSet(focusState.exerciseId, focusState.setId, { weight: newWeight });
+            setKeyboardValue(newWeight.toString());
+        } else {
+            const currentReps = set?.reps ?? 0;
+            const newReps = Math.max(0, currentReps + delta);
+            updateSet(focusState.exerciseId, focusState.setId, { reps: newReps });
+            setKeyboardValue(newReps.toString());
+        }
+    };
+
+    // Handle Next button - flow: weight → reps → complete set
+    const handleNext = () => {
+        if (!focusState || !activeWorkout) return;
+
+        const exercise = activeWorkout.main.exercises.find(e => e.id === focusState.exerciseId);
+        if (!exercise) return;
+
+        if (focusState.field === 'weight') {
+            // Move to reps
+            const set = exercise.sets.find(s => s.id === focusState.setId);
+            const repsValue = set?.reps?.toString() ?? '';
+            setFocusState({ ...focusState, field: 'reps' });
+            setKeyboardValue(repsValue);
+        } else {
+            // Complete the set and hide keyboard
+            completeSet(focusState.exerciseId, focusState.setId);
+            setFocusState(null);
+            setKeyboardValue('');
+        }
+    };
+
+    // Handle hide keyboard
+    const handleHideKeyboard = () => {
+        setFocusState(null);
+        setKeyboardValue('');
+    };
+
+    // Get current keyboard field type
+    const getKeyboardFieldType = (): KeyboardFieldType => {
+        return focusState?.field === 'weight' ? 'weight' : 'reps';
+    };
+
+    // Get label for current field
+    const getFieldLabel = (): string => {
+        if (!focusState || !activeWorkout) return '';
+
+        const exercise = activeWorkout.main.exercises.find(e => e.id === focusState.exerciseId);
+        if (!exercise) return '';
+
+        const setIndex = exercise.sets.findIndex(s => s.id === focusState.setId);
+        const setNum = setIndex + 1;
+
+        return `${exercise.exercise.name} - Set ${setNum} ${focusState.field === 'weight' ? 'Weight' : 'Reps'}`;
     };
 
     // Calculate workout stats
@@ -435,6 +591,7 @@ export default function WorkoutScreen() {
                         <ExerciseCard
                             key={workoutExercise.id}
                             workoutExercise={workoutExercise}
+                            focusState={focusState}
                             onUpdateSet={(setId, updates) =>
                                 updateSet(workoutExercise.id, setId, updates)
                             }
@@ -446,6 +603,7 @@ export default function WorkoutScreen() {
                                 removeSet(workoutExercise.id, setId)
                             }
                             onRemoveExercise={() => removeExercise(workoutExercise.id)}
+                            onFocusField={handleFocusField}
                         />
                     ))
                 )}
@@ -461,6 +619,20 @@ export default function WorkoutScreen() {
 
             {/* Rest Timer */}
             <RestTimer />
+
+            {/* Custom Workout Keyboard */}
+            <WorkoutKeyboard
+                visible={focusState !== null}
+                currentValue={keyboardValue}
+                fieldType={getKeyboardFieldType()}
+                fieldLabel={getFieldLabel()}
+                onKeyPress={handleKeyPress}
+                onBackspace={handleBackspace}
+                onClear={handleClear}
+                onAdjust={handleAdjust}
+                onNext={handleNext}
+                onHide={handleHideKeyboard}
+            />
 
             {/* Exercise picker modal */}
             <ExercisePicker
@@ -618,8 +790,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
         paddingTop: spacing.md,
         paddingBottom: spacing.lg,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.separator,
     },
     workoutHeaderTop: {
         flexDirection: 'row',

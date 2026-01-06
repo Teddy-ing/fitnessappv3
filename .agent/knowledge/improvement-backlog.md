@@ -35,13 +35,12 @@ description: Prioritized list of app improvements and feature requests from user
 - Works when app is in background
 - Permission request on app startup
 
-### 5. Custom numeric keyboard
-- **Reference**: Strong keyboard, Samsung base keyboard
-- **Features**:
-  - Hide keyboard button
-  - +5/-5 buttons for weight (lbs)
-  - "Next" button: weight → reps → timer
-- **Note**: Don't copy 1:1, make it our own
+### 5. ~~Custom numeric keyboard~~ ✅
+- **Fixed**: Created `WorkoutKeyboard.tsx` component
+- Tap weight/reps fields to open keyboard
+- +5/-5 (or +1/-1 for reps) adjustment buttons
+- "Next" button: weight → reps → complete set
+- Purple accent on focused fields
 
 ---
 

@@ -20,10 +20,14 @@ interface SetRowProps {
     trackReps: boolean;
     trackTime: boolean;
     weightUnit?: 'lbs' | 'kg';
-    showSwipeHint?: boolean;  // Show hint for first set
+    showSwipeHint?: boolean;
+    isWeightFocused?: boolean;  // Highlight weight field
+    isRepsFocused?: boolean;    // Highlight reps field
     onUpdate: (updates: Partial<WorkoutSet>) => void;
     onComplete: () => void;
     onRemove: () => void;
+    onFocusWeight?: () => void;  // Called when weight field tapped
+    onFocusReps?: () => void;    // Called when reps field tapped
 }
 
 export default function SetRow({
@@ -34,9 +38,13 @@ export default function SetRow({
     trackTime,
     weightUnit = 'lbs',
     showSwipeHint = false,
+    isWeightFocused = false,
+    isRepsFocused = false,
     onUpdate,
     onComplete,
     onRemove,
+    onFocusWeight,
+    onFocusReps,
 }: SetRowProps) {
     const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
@@ -133,36 +141,34 @@ export default function SetRow({
 
                 {/* Weight input */}
                 {trackWeight && (
-                    <View style={styles.inputContainer}>
-                        <TextInput
-                            style={[styles.input, isCompleted && styles.inputCompleted]}
-                            value={set.weight?.toString() ?? ''}
-                            onChangeText={handleWeightChange}
-                            placeholder="—"
-                            placeholderTextColor={colors.text.disabled}
-                            keyboardType="decimal-pad"
-                            selectTextOnFocus
-                            editable={!isCompleted}
-                        />
+                    <TouchableOpacity
+                        style={styles.inputContainer}
+                        onPress={onFocusWeight}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.inputDisplay, isWeightFocused && styles.inputFocused, isCompleted && styles.inputCompleted]}>
+                            <Text style={[styles.inputText, !set.weight && styles.inputPlaceholder]}>
+                                {set.weight?.toString() ?? '—'}
+                            </Text>
+                        </View>
                         <Text style={styles.inputUnit}>{weightUnit}</Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
 
                 {/* Reps input */}
                 {trackReps && (
-                    <View style={styles.inputContainer}>
-                        <TextInput
-                            style={[styles.input, isCompleted && styles.inputCompleted]}
-                            value={set.reps?.toString() ?? ''}
-                            onChangeText={handleRepsChange}
-                            placeholder="—"
-                            placeholderTextColor={colors.text.disabled}
-                            keyboardType="number-pad"
-                            selectTextOnFocus
-                            editable={!isCompleted}
-                        />
+                    <TouchableOpacity
+                        style={styles.inputContainer}
+                        onPress={onFocusReps}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.inputDisplay, isRepsFocused && styles.inputFocused, isCompleted && styles.inputCompleted]}>
+                            <Text style={[styles.inputText, !set.reps && styles.inputPlaceholder]}>
+                                {set.reps?.toString() ?? '—'}
+                            </Text>
+                        </View>
                         <Text style={styles.inputUnit}>reps</Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
 
                 {/* Duration input (for stretches, planks) */}
@@ -274,6 +280,31 @@ const styles = StyleSheet.create({
     },
     inputCompleted: {
         backgroundColor: colors.background.secondary,
+        opacity: 0.6,
+    },
+    inputDisplay: {
+        backgroundColor: colors.background.tertiary,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+        borderRadius: borderRadius.md,
+        minWidth: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    inputFocused: {
+        borderColor: colors.accent.primary,
+        backgroundColor: colors.background.primary,
+    },
+    inputText: {
+        color: colors.text.primary,
+        fontSize: typography.size.lg,
+        fontWeight: typography.weight.semibold,
+        textAlign: 'center',
+    },
+    inputPlaceholder: {
+        color: colors.text.disabled,
     },
     inputUnit: {
         color: colors.text.secondary,
