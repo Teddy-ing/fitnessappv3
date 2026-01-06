@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Development (Core Features)
-- **Status:** Core workout logging implemented, ready for testing
-- **Next Milestone:** Local database persistence, rest timer
+- **Phase:** Development (Feature Complete MVP)
+- **Status:** Rest timer, database, and templates implemented. Ready for testing and polish.
+- **Next Milestone:** Testing, UI polish, user feedback
 
 ---
 
@@ -40,41 +40,42 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Exercise seed database created** (50+ exercises covering all muscle groups)
 - [x] **Core workout logging components built** (SetRow, ExerciseCard, ExercisePicker)
 - [x] **WorkoutScreen fully implemented** (start workout, add exercises, log sets)
+- [x] **Rest timer implemented** (FloatingOverlay, haptic feedback, +/-30s adjust)
+- [x] **Local database with expo-sqlite** (workouts, exercises, sets, templates)
+- [x] **Template system** (save workout as template, start from template)
+- [x] **Workout history** (recent workouts displayed on home screen)
 
 ---
 
 ## In Progress
 
-- [ ] Test workout logging flow on Android device
-- [ ] Implement rest timer functionality
-- [ ] Set up local database persistence (expo-sqlite)
+- [ ] Test full workflow on Android device
+- [ ] Address any UI/UX feedback from testing
 
 ---
 
 ## Next Steps (For New Session)
 
-1. **Rest Timer** — Auto-start after set completion
-   - Floating overlay with countdown
-   - Vibration/sound notification
-   - Quick adjust buttons (+30s, -30s)
+1. **Testing & Polish** — Validate all features work correctly
+   - Complete workout → save → view in history
+   - Save template → start new workout from it
+   - Rest timer countdown and haptics
    
-2. **Local Database** — Persist workouts with expo-sqlite
-   - Save completed workouts
-   - Load workout history
-   - Enable template creation from past workouts
+2. **UI Improvements** — Based on user feedback
+   - Custom navigation icons
+   - Animation polish
+   - Loading states
 
-3. **Template System** — Create and use workout templates
-   - Save workout as template
-   - Start workout from template
+3. **Analytics/Stats Screen** — Display workout progress over time
 
-4. **History Screen** — View past workouts and progress
+4. **On-device ML** — Smart suggestions based on workout patterns
 
 ---
 
 ## Known Blockers / Open Questions
 
 - [x] ~~State management library choice~~ → **Zustand selected and implemented**
-- [ ] Local database choice (expo-sqlite vs WatermelonDB)
+- [x] ~~Local database choice~~ → **expo-sqlite selected and implemented**
 - [ ] On-device ML approach (TensorFlow Lite vs custom simple stats)
 - [ ] Which AI provider for paid tier (cost optimization)
 - [ ] App name (to be decided later)
@@ -82,6 +83,50 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-01-05 (Late Evening): Rest Timer, Database & Templates
+
+**Duration:** ~45 min
+**Focus:** Implementing persistence and template system
+
+**What was done:**
+- **Rest Timer:**
+  - Added timer state to `workoutStore.ts` (duration, remaining, active, endTime)
+  - Created `RestTimer.tsx` floating overlay component
+  - Auto-starts on set completion, haptic feedback when done
+  - +30s/-30s adjust buttons and skip option
+- **Database (expo-sqlite):**
+  - Created `database.ts` with schema (workouts, exercises, sets, templates)
+  - Created `workoutService.ts` with CRUD operations
+  - Created `templateService.ts` for template management
+- **Template System:**
+  - Created `TemplateCard.tsx` component
+  - Save workout as template flow (modal after finishing)
+  - Start workout from template functionality
+- **WorkoutScreen Updates:**
+  - Displays recent workouts from database
+  - Displays saved templates
+  - Pull-to-refresh for data reload
+  - Save as template modal
+
+**Files created:**
+- `src/components/RestTimer.tsx` — Floating rest timer overlay
+- `src/components/TemplateCard.tsx` — Template display card
+- `src/services/database.ts` — SQLite database initialization
+- `src/services/workoutService.ts` — Workout CRUD operations
+- `src/services/templateService.ts` — Template CRUD operations
+- `src/services/index.ts` — Service exports
+
+**Files updated:**
+- `src/stores/workoutStore.ts` — Added rest timer state and actions
+- `src/screens/WorkoutScreen.tsx` — Full integration with all features
+- `src/components/index.ts` — Added new component exports
+
+**Dependencies added:**
+- `expo-sqlite` — Local database
+- `expo-haptics` — Haptic feedback for rest timer
+
+---
 
 ### 2026-01-05 (Evening): Core Workout Logging Implementation
 

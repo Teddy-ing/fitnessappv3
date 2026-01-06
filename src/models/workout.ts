@@ -5,7 +5,7 @@
  * Workouts contain sections (warmup, main, cooldown) which contain exercise instances.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import * as Crypto from 'expo-crypto';
 import { Exercise, ExerciseCategory } from './exercise';
 
 /**
@@ -158,7 +158,7 @@ export interface Workout {
 export function createWorkout(name?: string): Workout {
     const now = new Date();
     const mainSection: WorkoutSection = {
-        id: uuidv4(),
+        id: Crypto.randomUUID(),
         type: 'main',
         exercises: [],
         startedAt: null,
@@ -166,7 +166,7 @@ export function createWorkout(name?: string): Workout {
     };
 
     return {
-        id: uuidv4(),
+        id: Crypto.randomUUID(),
         name: name ?? `Workout ${now.toLocaleDateString()}`,
         status: 'in_progress',
         warmup: null,
@@ -192,7 +192,7 @@ export function createWorkout(name?: string): Workout {
  */
 export function createSet(orderIndex: number, type: SetType = 'working'): WorkoutSet {
     return {
-        id: uuidv4(),
+        id: Crypto.randomUUID(),
         orderIndex,
         weight: null,
         reps: null,
@@ -223,7 +223,7 @@ export function createWorkoutExercise(
     );
 
     return {
-        id: uuidv4(),
+        id: Crypto.randomUUID(),
         exerciseId: exercise.id,
         exercise,
         orderIndex,

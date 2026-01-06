@@ -4,18 +4,41 @@
  * The main/primary screen of the app.
  * This is where users log their workouts.
  * 
- * Design inspired by:
- * - Hevy's card-based layout for exercises
- * - Strong's "checkmark flow" for quick set completion
+ * Features:
+ * - Start new workout or use template
+ * - Add exercises and log sets
+ * - Rest timer between sets
+ * - Save completed workouts
+ * - View workout history
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    Alert,
+    TextInput,
+    Modal,
+    RefreshControl,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
-import { ExerciseCard, ExercisePicker } from '../components';
+import { ExerciseCard, ExercisePicker, RestTimer, TemplateCard } from '../components';
+import {
+    saveWorkout,
+    getWorkouts,
+    getTemplates,
+    createTemplateFromWorkout,
+    startWorkoutFromTemplate,
+    deleteTemplate,
+    Template
+} from '../services';
+import { Workout } from '../models/workout';
 
 export default function WorkoutScreen() {
     const {
@@ -34,13 +57,84 @@ export default function WorkoutScreen() {
         closeExercisePicker,
     } = useWorkoutStore();
 
+    // Local state for history and templates
+    const [recentWorkouts, setRecentWorkouts] = useState<Workout[]>([]);
+    const [templates, setTemplates] = useState<Template[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    // Save as template modal state
+    const [showSaveTemplateModal, setSaveTemplateModal] = useState(false);
+    const [templateName, setTemplateName] = useState('');
+    const [pendingWorkout, setPendingWorkout] = useState<Workout | null>(null);
+
+    // Load data on mount
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            const [workouts, tmplts] = await Promise.all([
+                getWorkouts(5),
+                getTemplates(),
+            ]);
+            setRecentWorkouts(workouts);
+            setTemplates(tmplts);
+        } catch (error) {
+            console.error('Error loading data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await loadData();
+        setRefreshing(false);
+    }, []);
+
     // Handle start workout
     const handleStartWorkout = () => {
         startWorkout();
     };
 
+    // Handle start from template
+    const handleStartFromTemplate = async (template: Template) => {
+        try {
+            const workout = await startWorkoutFromTemplate(template.id);
+            if (workout) {
+                // Manually set the workout in the store
+                // The store's startWorkout creates a new one, so we need to set it directly
+                useWorkoutStore.setState({ activeWorkout: workout });
+            }
+        } catch (error) {
+            console.error('Error starting from template:', error);
+            Alert.alert('Error', 'Failed to start workout from template');
+        }
+    };
+
+    // Handle delete template
+    const handleDeleteTemplate = async (template: Template) => {
+        Alert.alert(
+            'Delete Template',
+            `Are you sure you want to delete "${template.name}"?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await deleteTemplate(template.id);
+                        await loadData();
+                    }
+                },
+            ]
+        );
+    };
+
     // Handle finish workout
-    const handleFinishWorkout = () => {
+    const handleFinishWorkout = async () => {
         const completedSets = activeWorkout?.main.exercises.reduce(
             (acc, ex) => acc + ex.sets.filter(s => s.status === 'completed').length,
             0
@@ -56,7 +150,45 @@ export default function WorkoutScreen() {
                 ]
             );
         } else {
-            finishWorkout();
+            // Ask if they want to save as template
+            const workout = await finishWorkout();
+            if (workout) {
+                await saveWorkout(workout);
+
+                // Ask about saving as template
+                Alert.alert(
+                    'Workout Saved!',
+                    'Would you like to save this as a template for quick access?',
+                    [
+                        { text: 'No Thanks', style: 'cancel', onPress: loadData },
+                        {
+                            text: 'Save Template',
+                            onPress: () => {
+                                setPendingWorkout(workout);
+                                setTemplateName(workout.name);
+                                setSaveTemplateModal(true);
+                            }
+                        },
+                    ]
+                );
+            }
+        }
+    };
+
+    // Handle save as template
+    const handleSaveTemplate = async () => {
+        if (!pendingWorkout || !templateName.trim()) return;
+
+        try {
+            await createTemplateFromWorkout(pendingWorkout, templateName.trim());
+            setSaveTemplateModal(false);
+            setPendingWorkout(null);
+            setTemplateName('');
+            await loadData();
+            Alert.alert('Success', 'Template saved!');
+        } catch (error) {
+            console.error('Error saving template:', error);
+            Alert.alert('Error', 'Failed to save template');
         }
     };
 
@@ -108,6 +240,19 @@ export default function WorkoutScreen() {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
+    // Format workout date for history
+    const formatWorkoutDate = (date: Date): string => {
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+        if (days === 0) return 'Today';
+        if (days === 1) return 'Yesterday';
+        if (days < 7) return `${days} days ago`;
+
+        return date.toLocaleDateString();
+    };
+
     // Render empty state (no active workout)
     if (!activeWorkout) {
         return (
@@ -115,6 +260,13 @@ export default function WorkoutScreen() {
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={colors.text.secondary}
+                        />
+                    }
                 >
                     {/* Empty state */}
                     <View style={styles.emptyState}>
@@ -133,26 +285,51 @@ export default function WorkoutScreen() {
                         >
                             <Text style={styles.primaryButtonText}>Start Empty Workout</Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.secondaryButton}>
-                            <Text style={styles.secondaryButtonText}>Choose Template</Text>
-                        </TouchableOpacity>
                     </View>
 
-                    {/* Recent workouts preview */}
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Recent Workouts</Text>
-                        <View style={styles.placeholder}>
-                            <Text style={styles.placeholderText}>No recent workouts yet</Text>
-                        </View>
-                    </View>
-
-                    {/* Templates preview */}
+                    {/* Templates */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Your Templates</Text>
-                        <View style={styles.placeholder}>
-                            <Text style={styles.placeholderText}>No templates yet</Text>
-                        </View>
+                        {templates.length === 0 ? (
+                            <View style={styles.placeholder}>
+                                <Text style={styles.placeholderText}>
+                                    No templates yet. Finish a workout to save it as a template!
+                                </Text>
+                            </View>
+                        ) : (
+                            templates.map(template => (
+                                <TemplateCard
+                                    key={template.id}
+                                    template={template}
+                                    onPress={() => handleStartFromTemplate(template)}
+                                    onDelete={() => handleDeleteTemplate(template)}
+                                />
+                            ))
+                        )}
+                    </View>
+
+                    {/* Recent workouts */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Recent Workouts</Text>
+                        {recentWorkouts.length === 0 ? (
+                            <View style={styles.placeholder}>
+                                <Text style={styles.placeholderText}>No recent workouts yet</Text>
+                            </View>
+                        ) : (
+                            recentWorkouts.map(workout => (
+                                <View key={workout.id} style={styles.historyCard}>
+                                    <View style={styles.historyHeader}>
+                                        <Text style={styles.historyName}>{workout.name}</Text>
+                                        <Text style={styles.historyDate}>
+                                            {formatWorkoutDate(workout.completedAt || workout.createdAt)}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.historyStats}>
+                                        {workout.main.exercises.length} exercises • {workout.totalSets || 0} sets • {Math.round((workout.totalDuration || 0) / 60)} min
+                                    </Text>
+                                </View>
+                            ))
+                        )}
                     </View>
                 </ScrollView>
             </SafeAreaView>
@@ -241,12 +418,55 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
             </ScrollView>
 
+            {/* Rest Timer */}
+            <RestTimer />
+
             {/* Exercise picker modal */}
             <ExercisePicker
                 visible={isExercisePickerOpen}
                 onClose={closeExercisePicker}
                 onSelect={addExercise}
             />
+
+            {/* Save as template modal */}
+            <Modal
+                visible={showSaveTemplateModal}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setSaveTemplateModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Save as Template</Text>
+                        <TextInput
+                            style={styles.templateInput}
+                            value={templateName}
+                            onChangeText={setTemplateName}
+                            placeholder="Template name"
+                            placeholderTextColor={colors.text.secondary}
+                            autoFocus
+                        />
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={styles.modalButtonCancel}
+                                onPress={() => {
+                                    setSaveTemplateModal(false);
+                                    setPendingWorkout(null);
+                                    loadData();
+                                }}
+                            >
+                                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.modalButtonSave}
+                                onPress={handleSaveTemplate}
+                            >
+                                <Text style={styles.modalButtonSaveText}>Save</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -288,7 +508,6 @@ const styles = StyleSheet.create({
     // Quick actions
     quickActions: {
         marginTop: spacing.lg,
-        paddingHorizontal: spacing.md,
     },
     primaryButton: {
         backgroundColor: colors.accent.primary,
@@ -302,26 +521,10 @@ const styles = StyleSheet.create({
         fontSize: typography.size.lg,
         fontWeight: typography.weight.semibold,
     },
-    secondaryButton: {
-        backgroundColor: colors.background.tertiary,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        borderRadius: borderRadius.lg,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: colors.border,
-        marginTop: spacing.sm,
-    },
-    secondaryButtonText: {
-        color: colors.text.primary,
-        fontSize: typography.size.lg,
-        fontWeight: typography.weight.medium,
-    },
 
     // Sections
     section: {
         marginTop: spacing.xl,
-        paddingHorizontal: spacing.md,
     },
     sectionTitle: {
         fontSize: typography.size.lg,
@@ -338,6 +541,34 @@ const styles = StyleSheet.create({
     placeholderText: {
         color: colors.text.secondary,
         fontSize: typography.size.md,
+        textAlign: 'center',
+    },
+
+    // History cards
+    historyCard: {
+        backgroundColor: colors.background.secondary,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        marginBottom: spacing.sm,
+    },
+    historyHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing.xs,
+    },
+    historyName: {
+        color: colors.text.primary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.medium,
+    },
+    historyDate: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+    },
+    historyStats: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
     },
 
     // Workout header
@@ -393,7 +624,7 @@ const styles = StyleSheet.create({
     // Exercises list
     exercisesList: {
         padding: spacing.md,
-        paddingBottom: spacing.xxl,
+        paddingBottom: 120, // Extra padding for rest timer
     },
     emptyExercises: {
         alignItems: 'center',
@@ -419,5 +650,66 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
         fontSize: typography.size.lg,
         fontWeight: typography.weight.medium,
+    },
+
+    // Modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: colors.overlay,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: spacing.lg,
+    },
+    modalContent: {
+        backgroundColor: colors.background.secondary,
+        borderRadius: borderRadius.xl,
+        padding: spacing.lg,
+        width: '100%',
+        maxWidth: 400,
+    },
+    modalTitle: {
+        color: colors.text.primary,
+        fontSize: typography.size.xl,
+        fontWeight: typography.weight.semibold,
+        marginBottom: spacing.md,
+        textAlign: 'center',
+    },
+    templateInput: {
+        backgroundColor: colors.background.tertiary,
+        color: colors.text.primary,
+        fontSize: typography.size.lg,
+        padding: spacing.md,
+        borderRadius: borderRadius.md,
+        marginBottom: spacing.lg,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    modalButtonCancel: {
+        flex: 1,
+        paddingVertical: spacing.md,
+        marginRight: spacing.sm,
+        borderRadius: borderRadius.md,
+        alignItems: 'center',
+        backgroundColor: colors.background.tertiary,
+    },
+    modalButtonCancelText: {
+        color: colors.text.primary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.medium,
+    },
+    modalButtonSave: {
+        flex: 1,
+        paddingVertical: spacing.md,
+        marginLeft: spacing.sm,
+        borderRadius: borderRadius.md,
+        alignItems: 'center',
+        backgroundColor: colors.accent.primary,
+    },
+    modalButtonSaveText: {
+        color: colors.text.primary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.semibold,
     },
 });

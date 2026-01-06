@@ -2,10 +2,11 @@
  * Workout Store
  * 
  * Zustand store for managing workout state.
- * Handles the active workout, exercises, and sets.
+ * Handles the active workout, exercises, sets, and rest timer.
  */
 
 import { create } from 'zustand';
+import * as Haptics from 'expo-haptics';
 import {
     Workout,
     WorkoutExercise,
@@ -17,9 +18,18 @@ import {
 } from '../models/workout';
 import { Exercise } from '../models/exercise';
 
+// Default rest timer duration in seconds
+const DEFAULT_REST_DURATION = 90;
+
 interface WorkoutState {
     // Current active workout (null if not working out)
     activeWorkout: Workout | null;
+
+    // Rest timer state
+    restTimerDuration: number;      // Total duration set
+    restTimerRemaining: number;     // Seconds remaining
+    restTimerActive: boolean;       // Is timer running?
+    restTimerEndTime: number | null; // Timestamp when timer ends
 
     // UI state
     isExercisePickerOpen: boolean;
@@ -27,7 +37,7 @@ interface WorkoutState {
 
     // Actions - Workout lifecycle
     startWorkout: (name?: string) => void;
-    finishWorkout: () => void;
+    finishWorkout: () => Promise<Workout | null>;
     discardWorkout: () => void;
 
     // Actions - Exercise management
@@ -41,6 +51,12 @@ interface WorkoutState {
     updateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
     completeSet: (exerciseId: string, setId: string) => void;
 
+    // Actions - Rest timer
+    startRestTimer: (seconds?: number) => void;
+    stopRestTimer: () => void;
+    adjustRestTimer: (delta: number) => void;
+    tickRestTimer: () => void;
+
     // Actions - UI state
     openExercisePicker: () => void;
     closeExercisePicker: () => void;
@@ -49,6 +65,10 @@ interface WorkoutState {
 
 export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     activeWorkout: null,
+    restTimerDuration: DEFAULT_REST_DURATION,
+    restTimerRemaining: 0,
+    restTimerActive: false,
+    restTimerEndTime: null,
     isExercisePickerOpen: false,
     currentExerciseId: null,
 
@@ -61,9 +81,9 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         set({ activeWorkout: workout });
     },
 
-    finishWorkout: () => {
+    finishWorkout: async () => {
         const { activeWorkout } = get();
-        if (!activeWorkout) return;
+        if (!activeWorkout) return null;
 
         const now = new Date();
         const duration = Math.floor((now.getTime() - activeWorkout.startedAt.getTime()) / 1000);
@@ -86,26 +106,35 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             });
         });
 
+        const completedWorkout: Workout = {
+            ...activeWorkout,
+            status: 'completed',
+            completedAt: now,
+            totalDuration: duration,
+            totalVolume,
+            totalSets,
+            muscleGroupsWorked: Array.from(muscleGroups),
+            updatedAt: now,
+        };
+
+        // Stop rest timer if running
         set({
-            activeWorkout: {
-                ...activeWorkout,
-                status: 'completed',
-                completedAt: now,
-                totalDuration: duration,
-                totalVolume,
-                totalSets,
-                muscleGroupsWorked: Array.from(muscleGroups),
-                updatedAt: now,
-            },
+            activeWorkout: null,
+            restTimerActive: false,
+            restTimerRemaining: 0,
+            restTimerEndTime: null,
         });
 
-        // TODO: Save to database
-        // For now, just clear the workout
-        setTimeout(() => set({ activeWorkout: null }), 100);
+        return completedWorkout;
     },
 
     discardWorkout: () => {
-        set({ activeWorkout: null });
+        set({
+            activeWorkout: null,
+            restTimerActive: false,
+            restTimerRemaining: 0,
+            restTimerEndTime: null,
+        });
     },
 
     // ========================================
@@ -269,13 +298,17 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     },
 
     completeSet: (exerciseId: string, setId: string) => {
-        const { activeWorkout } = get();
+        const { activeWorkout, startRestTimer } = get();
         if (!activeWorkout) return;
+
+        let wasCompleted = false;
 
         const exercises = activeWorkout.main.exercises.map(ex => {
             if (ex.id === exerciseId) {
                 const sets = ex.sets.map(s => {
                     if (s.id === setId) {
+                        // Check if we're marking as completed (not uncompleting)
+                        wasCompleted = s.status !== 'completed';
                         return {
                             ...s,
                             status: s.status === 'completed' ? 'pending' : 'completed',
@@ -299,7 +332,67 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
                 updatedAt: new Date(),
             },
         });
-        // TODO: Start rest timer when set is completed
+
+        // Start rest timer when completing a set (not when uncompleting)
+        if (wasCompleted) {
+            startRestTimer();
+        }
+    },
+
+    // ========================================
+    // Rest timer
+    // ========================================
+
+    startRestTimer: (seconds?: number) => {
+        const duration = seconds ?? get().restTimerDuration;
+        const endTime = Date.now() + (duration * 1000);
+
+        set({
+            restTimerDuration: duration,
+            restTimerRemaining: duration,
+            restTimerActive: true,
+            restTimerEndTime: endTime,
+        });
+    },
+
+    stopRestTimer: () => {
+        set({
+            restTimerActive: false,
+            restTimerRemaining: 0,
+            restTimerEndTime: null,
+        });
+    },
+
+    adjustRestTimer: (delta: number) => {
+        const { restTimerRemaining, restTimerActive, restTimerEndTime } = get();
+        if (!restTimerActive) return;
+
+        const newRemaining = Math.max(0, restTimerRemaining + delta);
+        const newEndTime = restTimerEndTime ? restTimerEndTime + (delta * 1000) : null;
+
+        set({
+            restTimerRemaining: newRemaining,
+            restTimerEndTime: newEndTime,
+        });
+    },
+
+    tickRestTimer: () => {
+        const { restTimerActive, restTimerEndTime } = get();
+        if (!restTimerActive || !restTimerEndTime) return;
+
+        const remaining = Math.max(0, Math.ceil((restTimerEndTime - Date.now()) / 1000));
+
+        if (remaining <= 0) {
+            // Timer finished - trigger haptic feedback
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            set({
+                restTimerActive: false,
+                restTimerRemaining: 0,
+                restTimerEndTime: null,
+            });
+        } else {
+            set({ restTimerRemaining: remaining });
+        }
     },
 
     // ========================================

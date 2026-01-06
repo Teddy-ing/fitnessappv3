@@ -5,7 +5,7 @@
  * that users can add to their workouts.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import * as Crypto from 'expo-crypto';
 
 /**
  * Primary muscle groups
@@ -113,7 +113,7 @@ export interface Exercise {
 export function createExercise(partial: Partial<Exercise> & { name: string }): Exercise {
     const now = new Date();
     return {
-        id: uuidv4(),
+        id: Crypto.randomUUID(),
         category: 'strength',
         muscleGroups: [],
         equipment: ['none'],
