@@ -3,20 +3,40 @@
  * 
  * Handles SQLite database initialization and schema management.
  * Uses expo-sqlite for persistent local storage.
+ * 
+ * NOTE: expo-sqlite requires a development build (not Expo Go).
+ * When running in Expo Go, database operations will be skipped gracefully.
  */
 
 import * as SQLite from 'expo-sqlite';
 
 // Singleton database instance
 let db: SQLite.SQLiteDatabase | null = null;
+let dbInitFailed = false;
+
+/**
+ * Check if database is available (not available in Expo Go)
+ */
+export function isDatabaseAvailable(): boolean {
+    return !dbInitFailed && db !== null;
+}
 
 /**
  * Get or create the database instance
+ * Returns null if database is not available (Expo Go)
  */
-export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
+export async function getDatabase(): Promise<SQLite.SQLiteDatabase | null> {
+    if (dbInitFailed) return null;
+
     if (!db) {
-        db = await SQLite.openDatabaseAsync('workout_app.db');
-        await initializeSchema();
+        try {
+            db = await SQLite.openDatabaseAsync('workout_app.db');
+            await initializeSchema();
+        } catch (error) {
+            console.warn('Database initialization failed (expected in Expo Go):', error);
+            dbInitFailed = true;
+            return null;
+        }
     }
     return db;
 }
@@ -142,6 +162,8 @@ export async function closeDatabase(): Promise<void> {
  */
 export async function clearAllData(): Promise<void> {
     const database = await getDatabase();
+    if (!database) return;
+
     await database.execAsync(`
         DELETE FROM workout_sets;
         DELETE FROM workout_exercises;
@@ -153,6 +175,7 @@ export async function clearAllData(): Promise<void> {
 
 export default {
     getDatabase,
+    isDatabaseAvailable,
     closeDatabase,
     clearAllData,
 };

@@ -2,6 +2,7 @@
  * Workout Service
  * 
  * CRUD operations for workout persistence.
+ * Returns empty data when database is not available (Expo Go).
  */
 
 import { getDatabase } from './database';
@@ -21,6 +22,10 @@ import { Exercise, MuscleContribution } from '../models/exercise';
  */
 export async function saveWorkout(workout: Workout): Promise<void> {
     const db = await getDatabase();
+    if (!db) {
+        console.log('Database not available - workout not saved (Expo Go mode)');
+        return;
+    }
 
     // Start a transaction
     await db.withTransactionAsync(async () => {
@@ -113,6 +118,7 @@ export async function saveWorkout(workout: Workout): Promise<void> {
  */
 export async function getWorkouts(limit: number = 20, offset: number = 0): Promise<Workout[]> {
     const db = await getDatabase();
+    if (!db) return [];
 
     const workoutRows = await db.getAllAsync<any>(
         `SELECT * FROM workouts 
@@ -136,6 +142,7 @@ export async function getWorkouts(limit: number = 20, offset: number = 0): Promi
  */
 export async function getWorkoutById(id: string): Promise<Workout | null> {
     const db = await getDatabase();
+    if (!db) return null;
 
     const row = await db.getFirstAsync<any>(
         `SELECT * FROM workouts WHERE id = ?`,
@@ -152,6 +159,8 @@ export async function getWorkoutById(id: string): Promise<Workout | null> {
  */
 export async function deleteWorkout(id: string): Promise<void> {
     const db = await getDatabase();
+    if (!db) return;
+
     await db.runAsync(`DELETE FROM workouts WHERE id = ?`, [id]);
 }
 
@@ -160,6 +169,8 @@ export async function deleteWorkout(id: string): Promise<void> {
  */
 export async function getWorkoutCount(): Promise<number> {
     const db = await getDatabase();
+    if (!db) return 0;
+
     const result = await db.getFirstAsync<{ count: number }>(
         `SELECT COUNT(*) as count FROM workouts`
     );
@@ -171,6 +182,7 @@ export async function getWorkoutCount(): Promise<number> {
  */
 async function hydrateWorkout(row: any): Promise<Workout> {
     const db = await getDatabase();
+    if (!db) throw new Error('Database not available');
 
     // Get exercises for this workout
     const exerciseRows = await db.getAllAsync<any>(

@@ -1,5 +1,5 @@
 // Service exports
-export { getDatabase, closeDatabase, clearAllData } from './database';
+export { getDatabase, isDatabaseAvailable, closeDatabase, clearAllData } from './database';
 export {
     saveWorkout,
     getWorkouts,

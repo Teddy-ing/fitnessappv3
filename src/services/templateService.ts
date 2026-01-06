@@ -2,6 +2,7 @@
  * Template Service
  * 
  * CRUD operations for workout templates.
+ * Returns empty data when database is not available (Expo Go).
  */
 
 import * as Crypto from 'expo-crypto';
@@ -46,8 +47,13 @@ export async function createTemplateFromWorkout(
     workout: Workout,
     name: string,
     description?: string
-): Promise<Template> {
+): Promise<Template | null> {
     const db = await getDatabase();
+    if (!db) {
+        console.log('Database not available - template not saved (Expo Go mode)');
+        return null;
+    }
+
     const templateId = Crypto.randomUUID();
     const now = new Date();
 
@@ -112,6 +118,7 @@ export async function createTemplateFromWorkout(
  */
 export async function getTemplates(): Promise<Template[]> {
     const db = await getDatabase();
+    if (!db) return [];
 
     const templateRows = await db.getAllAsync<any>(
         `SELECT * FROM templates ORDER BY last_used_at DESC NULLS LAST, created_at DESC`
@@ -132,6 +139,7 @@ export async function getTemplates(): Promise<Template[]> {
  */
 export async function getTemplateById(id: string): Promise<Template | null> {
     const db = await getDatabase();
+    if (!db) return null;
 
     const row = await db.getFirstAsync<any>(
         `SELECT * FROM templates WHERE id = ?`,
@@ -148,6 +156,8 @@ export async function getTemplateById(id: string): Promise<Template | null> {
  */
 export async function deleteTemplate(id: string): Promise<void> {
     const db = await getDatabase();
+    if (!db) return;
+
     await db.runAsync(`DELETE FROM templates WHERE id = ?`, [id]);
 }
 
@@ -161,11 +171,13 @@ export async function startWorkoutFromTemplate(templateId: string): Promise<Work
     const db = await getDatabase();
     const now = new Date();
 
-    // Update template usage stats
-    await db.runAsync(
-        `UPDATE templates SET last_used_at = ?, use_count = use_count + 1, updated_at = ? WHERE id = ?`,
-        [now.toISOString(), now.toISOString(), templateId]
-    );
+    // Update template usage stats (only if db available)
+    if (db) {
+        await db.runAsync(
+            `UPDATE templates SET last_used_at = ?, use_count = use_count + 1, updated_at = ? WHERE id = ?`,
+            [now.toISOString(), now.toISOString(), templateId]
+        );
+    }
 
     // Create a new workout
     const workout = createWorkout(template.name);
@@ -190,6 +202,7 @@ export async function startWorkoutFromTemplate(templateId: string): Promise<Work
  */
 async function hydrateTemplate(row: any): Promise<Template> {
     const db = await getDatabase();
+    if (!db) throw new Error('Database not available');
 
     // Get exercises for this template
     const exerciseRows = await db.getAllAsync<any>(
