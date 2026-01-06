@@ -3,7 +3,7 @@
  * 
  * Design inspired by Hevy's dark mode UI with:
  * - Deep dark backgrounds
- * - Blue accent for interactive elements
+ * - Purple accent for interactive elements (differentiates from competitors)
  * - Green for completion/success states
  * - High contrast for visibility (sweat in eyes friendly)
  */
@@ -25,7 +25,8 @@ export const colors = {
 
     // Accent colors
     accent: {
-        primary: '#3b82f6',      // Blue - interactive elements, sets
+        primary: '#a855f7',      // Purple - interactive elements, sets
+        secondary: '#c084fc',    // Lighter purple - hover states
         success: '#22c55e',      // Green - completion, PRs
         warning: '#f59e0b',      // Amber - warmup sets
         error: '#ef4444',        // Red - failed sets, errors
@@ -34,7 +35,7 @@ export const colors = {
     // Set state colors
     set: {
         upcoming: '#ffffff',     // Normal set
-        current: '#3b82f6',      // Active/current set
+        current: '#a855f7',      // Active/current set (purple)
         completed: '#666666',    // Completed set (faded)
         warmup: '#f59e0b',       // Warmup set
         failed: '#ef4444',       // Failed set

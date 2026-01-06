@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import * as Haptics from 'expo-haptics';
+import { sendRestTimerNotification } from '../services/notificationService';
 import {
     Workout,
     WorkoutExercise,
@@ -19,7 +20,7 @@ import {
 import { Exercise } from '../models/exercise';
 
 // Default rest timer duration in seconds
-const DEFAULT_REST_DURATION = 90;
+const DEFAULT_REST_DURATION = 120;
 
 interface WorkoutState {
     // Current active workout (null if not working out)
@@ -383,8 +384,9 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         const remaining = Math.max(0, Math.ceil((restTimerEndTime - Date.now()) / 1000));
 
         if (remaining <= 0) {
-            // Timer finished - trigger haptic feedback
+            // Timer finished - trigger haptic feedback and notification
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            sendRestTimerNotification(); // Send notification (especially useful when in background)
             set({
                 restTimerActive: false,
                 restTimerRemaining: 0,

@@ -6,21 +6,39 @@ description: Code quality tracking - current audit findings, resolved items, and
 
 ## Summary
 
-- **Last full audit:** N/A (no code yet)
-- **Open issues:** 0
-- **Fixed since baseline:** 0
+- **Last full audit:** 2026-01-06
+- **Open issues:** 2 (H: 0, M: 0, L: 2)
+- **Fixed since baseline:** 4
 
 ---
 
 ## Open Issues
 
-*No code to audit yet. This section will be populated once development begins.*
+### Low Severity
+
+- [ ] **Unused `onRemove` prop in SetRow** — `SetRow.tsx:23` — Dead Code — **Low**
+  - Why: `onRemove` is declared as a prop but never used. No swipe-to-delete UI exists.
+  - Fix: Either implement swipe-to-delete or remove the unused prop.
+
+- [ ] **Unused `useState` import** — `SetRow.tsx:10` — Dead Code — **Low**
+  - Why: `useState` is imported but not used in the component.
+  - Fix: Remove unused import.
 
 ---
 
 ## Resolved
 
-*No issues resolved yet.*
+- [x] **Wrong crypto API in user.ts** — Fixed 2026-01-06
+  - Changed from `crypto.randomUUID()` to timestamp-based unique ID generation.
+
+- [x] **N+1 query pattern in workoutService** — Fixed 2026-01-06
+  - Implemented batch loading with IN queries and Maps for grouping data.
+
+- [x] **Hardcoded "lbs" in SetRow** — Fixed 2026-01-06
+  - Added `weightUnit` prop that defaults to 'lbs' but can be overridden.
+
+- [x] **No error handling in database transaction** — Fixed 2026-01-06
+  - Wrapped transaction in try/catch with logging.
 
 ---
 
@@ -30,35 +48,22 @@ description: Code quality tracking - current audit findings, resolved items, and
 
 ---
 
-## Observed Patterns
+## Fitness App Critical Path Checks
 
-*Patterns to watch for will be documented here as the codebase grows.*
+### 1. Set logging flow (<3 seconds) ✅
+- **Status:** GOOD
 
-### Fitness App Specific Concerns
+### 2. Data persistence (atomic saves) ✅
+- **Status:** GOOD
 
-Once development begins, audits should specifically check for:
+### 3. Offline capability ✅
+- **Status:** GOOD
 
-1. **Performance in logging flow**
-   - No blocking operations during set entry
-   - Immediate UI feedback
-   - Database writes should be async
-
-2. **Data integrity**
-   - Workout data never lost
-   - Export functionality always works
-   - Migration paths for schema changes
-
-3. **Offline-first correctness**
-   - App works without network
-   - Sync conflicts handled gracefully
-   - No silent data loss
-
-4. **Memory management**
-   - No leaks in long workout sessions
-   - Efficient list rendering for history
+### 4. History loading efficiency ✅
+- **Status:** FIXED — Now uses batch queries (3 queries total)
 
 ---
 
 ## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial project setup, placeholder for code quality tracking
+- Date: 2026-01-06
+- Session Context: Fixed high and medium severity issues from baseline audit

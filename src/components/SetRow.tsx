@@ -2,13 +2,14 @@
  * SetRow Component
  * 
  * A single set row within an exercise card.
- * Displays set number, weight input, reps input, and completion checkbox.
+ * Swipe left to reveal delete button.
  * 
  * Design: Strong's "checkmark flow" - 1 tap to complete set
  */
 
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { WorkoutSet, SetType } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
 
@@ -18,6 +19,8 @@ interface SetRowProps {
     trackWeight: boolean;
     trackReps: boolean;
     trackTime: boolean;
+    weightUnit?: 'lbs' | 'kg';
+    showSwipeHint?: boolean;  // Show hint for first set
     onUpdate: (updates: Partial<WorkoutSet>) => void;
     onComplete: () => void;
     onRemove: () => void;
@@ -29,10 +32,13 @@ export default function SetRow({
     trackWeight,
     trackReps,
     trackTime,
+    weightUnit = 'lbs',
+    showSwipeHint = false,
     onUpdate,
     onComplete,
     onRemove,
 }: SetRowProps) {
+    const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
     const isWarmup = set.type === 'warmup';
 
@@ -72,85 +78,128 @@ export default function SetRow({
         onUpdate({ duration: isNaN(duration as number) ? null : duration });
     };
 
-    return (
-        <View style={getRowStyle()}>
-            {/* Set number/type indicator */}
-            <View style={[styles.setNumber, isWarmup && styles.setNumberWarmup]}>
-                <Text style={[styles.setNumberText, isWarmup && styles.setNumberTextWarmup]}>
-                    {getSetTypeLabel(set.type)}
-                </Text>
-            </View>
+    // Handle delete with animation
+    const handleDelete = () => {
+        swipeableRef.current?.close();
+        onRemove();
+    };
 
-            {/* Previous (suggested) value - shown if available */}
-            {set.suggestedWeight && (
-                <View style={styles.previousValue}>
-                    <Text style={styles.previousText}>
-                        {set.suggestedWeight}
+    // Render delete action
+    const renderRightActions = (
+        progress: Animated.AnimatedInterpolation<number>,
+        dragX: Animated.AnimatedInterpolation<number>
+    ) => {
+        const scale = dragX.interpolate({
+            inputRange: [-80, 0],
+            outputRange: [1, 0],
+            extrapolate: 'clamp',
+        });
+
+        return (
+            <TouchableOpacity
+                style={styles.deleteAction}
+                onPress={handleDelete}
+            >
+                <Animated.Text style={[styles.deleteText, { transform: [{ scale }] }]}>
+                    Delete
+                </Animated.Text>
+            </TouchableOpacity>
+        );
+    };
+
+    return (
+        <Swipeable
+            ref={swipeableRef}
+            renderRightActions={renderRightActions}
+            rightThreshold={40}
+            overshootRight={false}
+        >
+            <View style={getRowStyle()}>
+                {/* Set number/type indicator */}
+                <View style={[styles.setNumber, isWarmup && styles.setNumberWarmup]}>
+                    <Text style={[styles.setNumberText, isWarmup && styles.setNumberTextWarmup]}>
+                        {getSetTypeLabel(set.type)}
                     </Text>
                 </View>
-            )}
 
-            {/* Weight input */}
-            {trackWeight && (
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={[styles.input, isCompleted && styles.inputCompleted]}
-                        value={set.weight?.toString() ?? ''}
-                        onChangeText={handleWeightChange}
-                        placeholder="—"
-                        placeholderTextColor={colors.text.disabled}
-                        keyboardType="decimal-pad"
-                        selectTextOnFocus
-                        editable={!isCompleted}
-                    />
-                    <Text style={styles.inputUnit}>lbs</Text>
-                </View>
-            )}
-
-            {/* Reps input */}
-            {trackReps && (
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={[styles.input, isCompleted && styles.inputCompleted]}
-                        value={set.reps?.toString() ?? ''}
-                        onChangeText={handleRepsChange}
-                        placeholder="—"
-                        placeholderTextColor={colors.text.disabled}
-                        keyboardType="number-pad"
-                        selectTextOnFocus
-                        editable={!isCompleted}
-                    />
-                    <Text style={styles.inputUnit}>reps</Text>
-                </View>
-            )}
-
-            {/* Duration input (for stretches, planks) */}
-            {trackTime && !trackReps && (
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={[styles.input, isCompleted && styles.inputCompleted]}
-                        value={set.duration?.toString() ?? ''}
-                        onChangeText={handleDurationChange}
-                        placeholder="—"
-                        placeholderTextColor={colors.text.disabled}
-                        keyboardType="number-pad"
-                        selectTextOnFocus
-                        editable={!isCompleted}
-                    />
-                    <Text style={styles.inputUnit}>sec</Text>
-                </View>
-            )}
-
-            {/* Completion checkbox */}
-            <TouchableOpacity
-                style={[styles.checkbox, isCompleted && styles.checkboxCompleted]}
-                onPress={onComplete}
-            >
-                {isCompleted && (
-                    <Text style={styles.checkmark}>✓</Text>
+                {/* Previous (suggested) value - shown if available */}
+                {set.suggestedWeight && (
+                    <View style={styles.previousValue}>
+                        <Text style={styles.previousText}>
+                            {set.suggestedWeight}
+                        </Text>
+                    </View>
                 )}
-            </TouchableOpacity>
-        </View>
+
+                {/* Weight input */}
+                {trackWeight && (
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={[styles.input, isCompleted && styles.inputCompleted]}
+                            value={set.weight?.toString() ?? ''}
+                            onChangeText={handleWeightChange}
+                            placeholder="—"
+                            placeholderTextColor={colors.text.disabled}
+                            keyboardType="decimal-pad"
+                            selectTextOnFocus
+                            editable={!isCompleted}
+                        />
+                        <Text style={styles.inputUnit}>{weightUnit}</Text>
+                    </View>
+                )}
+
+                {/* Reps input */}
+                {trackReps && (
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={[styles.input, isCompleted && styles.inputCompleted]}
+                            value={set.reps?.toString() ?? ''}
+                            onChangeText={handleRepsChange}
+                            placeholder="—"
+                            placeholderTextColor={colors.text.disabled}
+                            keyboardType="number-pad"
+                            selectTextOnFocus
+                            editable={!isCompleted}
+                        />
+                        <Text style={styles.inputUnit}>reps</Text>
+                    </View>
+                )}
+
+                {/* Duration input (for stretches, planks) */}
+                {trackTime && !trackReps && (
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={[styles.input, isCompleted && styles.inputCompleted]}
+                            value={set.duration?.toString() ?? ''}
+                            onChangeText={handleDurationChange}
+                            placeholder="—"
+                            placeholderTextColor={colors.text.disabled}
+                            keyboardType="number-pad"
+                            selectTextOnFocus
+                            editable={!isCompleted}
+                        />
+                        <Text style={styles.inputUnit}>sec</Text>
+                    </View>
+                )}
+
+                {/* Completion checkbox */}
+                <TouchableOpacity
+                    style={[styles.checkbox, isCompleted && styles.checkboxCompleted]}
+                    onPress={onComplete}
+                >
+                    {isCompleted && (
+                        <Text style={styles.checkmark}>✓</Text>
+                    )}
+                </TouchableOpacity>
+
+                {/* Swipe hint for first set */}
+                {showSwipeHint && !isCompleted && (
+                    <View style={styles.swipeHint}>
+                        <Text style={styles.swipeHintText}>← swipe to delete</Text>
+                    </View>
+                )}
+            </View>
+        </Swipeable>
     );
 }
 
@@ -162,6 +211,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.sm,
         borderRadius: borderRadius.sm,
         marginBottom: spacing.xs,
+        backgroundColor: colors.background.secondary,
     },
     rowCompleted: {
         opacity: 0.6,
@@ -251,5 +301,34 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         fontSize: typography.size.lg,
         fontWeight: typography.weight.bold,
+    },
+
+    // Delete action
+    deleteAction: {
+        backgroundColor: colors.accent.error,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 80,
+        borderRadius: borderRadius.sm,
+        marginBottom: spacing.xs,
+    },
+    deleteText: {
+        color: colors.text.primary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.semibold,
+    },
+
+    // Swipe hint
+    swipeHint: {
+        position: 'absolute',
+        right: -100,
+        backgroundColor: colors.background.tertiary,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: borderRadius.sm,
+    },
+    swipeHintText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.xs,
     },
 });

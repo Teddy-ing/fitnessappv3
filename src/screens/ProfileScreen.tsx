@@ -6,12 +6,36 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { clearAllData } from '../services';
 
 export default function ProfileScreen() {
+    const handleClearAllData = () => {
+        Alert.alert(
+            'Clear All Data',
+            'This will delete all workouts, templates, and exercises. This cannot be undone!',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Clear Everything',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await clearAllData();
+                            Alert.alert('Done', 'All data has been cleared. Restart the app to see changes.');
+                        } catch (error) {
+                            console.error('Error clearing data:', error);
+                            Alert.alert('Error', 'Failed to clear data');
+                        }
+                    }
+                },
+            ]
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['bottom']}>
             <ScrollView
@@ -112,6 +136,20 @@ export default function ProfileScreen() {
                     <TouchableOpacity style={styles.menuItem}>
                         <Text style={styles.menuIcon}>ℹ️</Text>
                         <Text style={styles.menuText}>About</Text>
+                        <Text style={styles.menuArrow}>›</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Dev tools - for testing */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>🛠️ DEV TOOLS</Text>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, styles.dangerItem]}
+                        onPress={handleClearAllData}
+                    >
+                        <Text style={styles.menuIcon}>🗑️</Text>
+                        <Text style={[styles.menuText, styles.dangerText]}>Clear All Data</Text>
                         <Text style={styles.menuArrow}>›</Text>
                     </TouchableOpacity>
                 </View>
@@ -219,5 +257,14 @@ const styles = StyleSheet.create({
     menuArrow: {
         fontSize: typography.size.xl,
         color: colors.text.secondary,
+    },
+
+    // Danger styles
+    dangerItem: {
+        borderWidth: 1,
+        borderColor: colors.accent.error,
+    },
+    dangerText: {
+        color: colors.accent.error,
     },
 });

@@ -2,18 +2,20 @@
  * RestTimer Component
  * 
  * Floating overlay that displays the rest timer countdown.
+ * Uses react-native-background-timer for background execution.
+ * 
  * Features:
  * - Large countdown visible from arm's length
  * - Quick adjust buttons (+30s, -30s)
  * - Skip button to dismiss early
+ * - Continues running when screen is off
  */
 
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import BackgroundTimer from 'react-native-background-timer';
 import { useWorkoutStore } from '../stores';
 import { colors, spacing, borderRadius, typography } from '../theme';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function RestTimer() {
     const {
@@ -25,15 +27,43 @@ export default function RestTimer() {
         tickRestTimer,
     } = useWorkoutStore();
 
-    // Tick the timer every second
-    useEffect(() => {
-        if (!restTimerActive) return;
+    const appState = useRef(AppState.currentState);
 
-        const interval = setInterval(() => {
+    // Use background timer for ticking
+    useEffect(() => {
+        if (!restTimerActive) {
+            // Stop the background timer when not active
+            BackgroundTimer.stopBackgroundTimer();
+            return;
+        }
+
+        // Start the background timer
+        BackgroundTimer.runBackgroundTimer(() => {
             tickRestTimer();
         }, 1000);
 
-        return () => clearInterval(interval);
+        return () => {
+            BackgroundTimer.stopBackgroundTimer();
+        };
+    }, [restTimerActive]);
+
+    // Handle app state changes
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+            if (
+                appState.current.match(/inactive|background/) &&
+                nextAppState === 'active' &&
+                restTimerActive
+            ) {
+                // App has come to foreground - tick immediately to sync
+                tickRestTimer();
+            }
+            appState.current = nextAppState;
+        });
+
+        return () => {
+            subscription.remove();
+        };
     }, [restTimerActive, tickRestTimer]);
 
     // Don't render if timer is not active

@@ -16,3 +16,9 @@ export {
     type Template,
     type TemplateExercise
 } from './templateService';
+export {
+    requestNotificationPermissions,
+    sendRestTimerNotification,
+    scheduleRestTimerNotification,
+    cancelScheduledNotification
+} from './notificationService';

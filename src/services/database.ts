@@ -3,19 +3,17 @@
  * 
  * Handles SQLite database initialization and schema management.
  * Uses expo-sqlite for persistent local storage.
- * 
- * NOTE: expo-sqlite requires a development build (not Expo Go).
- * When running in Expo Go, database operations will be skipped gracefully.
  */
 
 import * as SQLite from 'expo-sqlite';
 
-// Singleton database instance
+// Database state
 let db: SQLite.SQLiteDatabase | null = null;
+let dbInitPromise: Promise<SQLite.SQLiteDatabase | null> | null = null;
 let dbInitFailed = false;
 
 /**
- * Check if database is available (not available in Expo Go)
+ * Check if database is available
  */
 export function isDatabaseAvailable(): boolean {
     return !dbInitFailed && db !== null;
@@ -23,36 +21,58 @@ export function isDatabaseAvailable(): boolean {
 
 /**
  * Get or create the database instance
- * Returns null if database is not available (Expo Go)
+ * Uses a singleton pattern with deferred initialization
  */
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase | null> {
+    // If init already failed, don't retry
     if (dbInitFailed) return null;
 
-    if (!db) {
-        try {
-            db = await SQLite.openDatabaseAsync('workout_app.db');
-            await initializeSchema();
-        } catch (error) {
-            console.warn('Database initialization failed (expected in Expo Go):', error);
-            dbInitFailed = true;
-            return null;
-        }
+    // Return existing database if available
+    if (db) return db;
+
+    // If initialization is in progress, wait for it
+    if (dbInitPromise) {
+        return dbInitPromise;
     }
-    return db;
+
+    // Start initialization
+    dbInitPromise = initDatabase();
+    const result = await dbInitPromise;
+    dbInitPromise = null;
+    return result;
+}
+
+/**
+ * Initialize the database
+ */
+async function initDatabase(): Promise<SQLite.SQLiteDatabase | null> {
+    try {
+        console.log('[DB] Opening database...');
+        const database = await SQLite.openDatabaseAsync('workout_app.db');
+
+        console.log('[DB] Initializing schema...');
+        await initializeSchema(database);
+
+        console.log('[DB] Database ready!');
+        db = database;
+        return db;
+    } catch (error) {
+        console.error('[DB] Database initialization failed:', error);
+        dbInitFailed = true;
+        return null;
+    }
 }
 
 /**
  * Initialize database schema
  */
-async function initializeSchema(): Promise<void> {
-    if (!db) return;
+async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> {
+    // Enable WAL mode and foreign keys
+    await database.execAsync(`PRAGMA journal_mode = WAL;`);
+    await database.execAsync(`PRAGMA foreign_keys = ON;`);
 
-    // Create tables in a transaction
-    await db.execAsync(`
-        PRAGMA journal_mode = WAL;
-        PRAGMA foreign_keys = ON;
-
-        -- Workouts table
+    // Create workouts table
+    await database.execAsync(`
         CREATE TABLE IF NOT EXISTS workouts (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -70,8 +90,10 @@ async function initializeSchema(): Promise<void> {
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         );
+    `);
 
-        -- Workout exercises table
+    // Create workout_exercises table
+    await database.execAsync(`
         CREATE TABLE IF NOT EXISTS workout_exercises (
             id TEXT PRIMARY KEY,
             workout_id TEXT NOT NULL,
@@ -88,8 +110,10 @@ async function initializeSchema(): Promise<void> {
             note TEXT,
             FOREIGN KEY (workout_id) REFERENCES workouts(id) ON DELETE CASCADE
         );
+    `);
 
-        -- Workout sets table
+    // Create workout_sets table
+    await database.execAsync(`
         CREATE TABLE IF NOT EXISTS workout_sets (
             id TEXT PRIMARY KEY,
             workout_exercise_id TEXT NOT NULL,
@@ -109,8 +133,10 @@ async function initializeSchema(): Promise<void> {
             rest_duration INTEGER,
             FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercises(id) ON DELETE CASCADE
         );
+    `);
 
-        -- Templates table
+    // Create templates table
+    await database.execAsync(`
         CREATE TABLE IF NOT EXISTS templates (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -120,8 +146,10 @@ async function initializeSchema(): Promise<void> {
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         );
+    `);
 
-        -- Template exercises table
+    // Create template_exercises table
+    await database.execAsync(`
         CREATE TABLE IF NOT EXISTS template_exercises (
             id TEXT PRIMARY KEY,
             template_id TEXT NOT NULL,
@@ -138,13 +166,13 @@ async function initializeSchema(): Promise<void> {
             note TEXT,
             FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE CASCADE
         );
-
-        -- Create indexes for common queries
-        CREATE INDEX IF NOT EXISTS idx_workouts_completed_at ON workouts(completed_at);
-        CREATE INDEX IF NOT EXISTS idx_workout_exercises_workout_id ON workout_exercises(workout_id);
-        CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise_id ON workout_sets(workout_exercise_id);
-        CREATE INDEX IF NOT EXISTS idx_template_exercises_template_id ON template_exercises(template_id);
     `);
+
+    // Create indexes
+    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workouts_completed_at ON workouts(completed_at);`);
+    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workout_exercises_workout_id ON workout_exercises(workout_id);`);
+    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise_id ON workout_sets(workout_exercise_id);`);
+    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_template_exercises_template_id ON template_exercises(template_id);`);
 }
 
 /**
@@ -152,7 +180,11 @@ async function initializeSchema(): Promise<void> {
  */
 export async function closeDatabase(): Promise<void> {
     if (db) {
-        await db.closeAsync();
+        try {
+            await db.closeAsync();
+        } catch (error) {
+            console.error('[DB] Error closing database:', error);
+        }
         db = null;
     }
 }
@@ -164,13 +196,15 @@ export async function clearAllData(): Promise<void> {
     const database = await getDatabase();
     if (!database) return;
 
-    await database.execAsync(`
-        DELETE FROM workout_sets;
-        DELETE FROM workout_exercises;
-        DELETE FROM workouts;
-        DELETE FROM template_exercises;
-        DELETE FROM templates;
-    `);
+    try {
+        await database.execAsync(`DELETE FROM workout_sets;`);
+        await database.execAsync(`DELETE FROM workout_exercises;`);
+        await database.execAsync(`DELETE FROM workouts;`);
+        await database.execAsync(`DELETE FROM template_exercises;`);
+        await database.execAsync(`DELETE FROM templates;`);
+    } catch (error) {
+        console.error('[DB] Error clearing data:', error);
+    }
 }
 
 export default {

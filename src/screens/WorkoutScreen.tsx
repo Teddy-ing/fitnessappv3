@@ -12,7 +12,7 @@
  * - View workout history
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -63,10 +63,43 @@ export default function WorkoutScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
+    // Live timer state - triggers re-renders every second
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
     // Save as template modal state
     const [showSaveTemplateModal, setSaveTemplateModal] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [pendingWorkout, setPendingWorkout] = useState<Workout | null>(null);
+
+    // Live timer effect - updates every second when workout is active
+    useEffect(() => {
+        if (activeWorkout) {
+            // Update immediately
+            const updateElapsed = () => {
+                const now = new Date();
+                const diff = Math.floor((now.getTime() - activeWorkout.startedAt.getTime()) / 1000);
+                setElapsedTime(diff);
+            };
+            updateElapsed();
+
+            // Set interval
+            timerIntervalRef.current = setInterval(updateElapsed, 1000);
+        } else {
+            // Clear interval when no active workout
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+                timerIntervalRef.current = null;
+            }
+            setElapsedTime(0);
+        }
+
+        return () => {
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+            }
+        };
+    }, [activeWorkout?.id]); // Re-run when workout changes
 
     // Load data on mount
     useEffect(() => {
@@ -150,27 +183,37 @@ export default function WorkoutScreen() {
                 ]
             );
         } else {
-            // Ask if they want to save as template
-            const workout = await finishWorkout();
-            if (workout) {
-                await saveWorkout(workout);
+            try {
+                // Finish and save the workout
+                const workout = await finishWorkout();
+                if (workout) {
+                    console.log('[WorkoutScreen] Saving workout...');
+                    await saveWorkout(workout);
+                    console.log('[WorkoutScreen] Workout saved!');
 
-                // Ask about saving as template
-                Alert.alert(
-                    'Workout Saved!',
-                    'Would you like to save this as a template for quick access?',
-                    [
-                        { text: 'No Thanks', style: 'cancel', onPress: loadData },
-                        {
-                            text: 'Save Template',
-                            onPress: () => {
-                                setPendingWorkout(workout);
-                                setTemplateName(workout.name);
-                                setSaveTemplateModal(true);
-                            }
-                        },
-                    ]
-                );
+                    // Reload data first to ensure history is updated
+                    await loadData();
+
+                    // Ask about saving as template
+                    Alert.alert(
+                        'Workout Saved!',
+                        'Would you like to save this as a template for quick access?',
+                        [
+                            { text: 'No Thanks', style: 'cancel' },
+                            {
+                                text: 'Save Template',
+                                onPress: () => {
+                                    setPendingWorkout(workout);
+                                    setTemplateName(workout.name);
+                                    setSaveTemplateModal(true);
+                                }
+                            },
+                        ]
+                    );
+                }
+            } catch (error) {
+                console.error('[WorkoutScreen] Error finishing workout:', error);
+                Alert.alert('Error', 'Failed to save workout. Please try again.');
             }
         }
     };
@@ -226,13 +269,11 @@ export default function WorkoutScreen() {
         return { exercises, sets, volume };
     };
 
-    // Format duration
-    const formatDuration = (startedAt: Date): string => {
-        const now = new Date();
-        const diff = Math.floor((now.getTime() - startedAt.getTime()) / 1000);
-        const hours = Math.floor(diff / 3600);
-        const minutes = Math.floor((diff % 3600) / 60);
-        const seconds = diff % 60;
+    // Format duration from elapsed seconds
+    const formatElapsedTime = (totalSeconds: number): string => {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
 
         if (hours > 0) {
             return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -356,7 +397,7 @@ export default function WorkoutScreen() {
                 {/* Stats row */}
                 <View style={styles.statsRow}>
                     <View style={styles.stat}>
-                        <Text style={styles.statValue}>{formatDuration(activeWorkout.startedAt)}</Text>
+                        <Text style={styles.statValue}>{formatElapsedTime(elapsedTime)}</Text>
                         <Text style={styles.statLabel}>Duration</Text>
                     </View>
                     <View style={styles.stat}>

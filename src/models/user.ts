@@ -199,8 +199,11 @@ export function getDefaultStats(): UserStats {
  */
 export function createUser(): User {
     const now = new Date();
+    // Note: Using random ID since Crypto.randomUUID() requires async
+    // In practice, user is created once and stored
+    const id = `user_${now.getTime()}_${Math.random().toString(36).substr(2, 9)}`;
     return {
-        id: crypto.randomUUID(),
+        id,
         name: null,
         preferences: getDefaultPreferences(),
         stats: getDefaultStats(),
