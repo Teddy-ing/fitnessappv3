@@ -92,13 +92,12 @@ export default function AppNavigator() {
                     // Header styling
                     headerStyle: {
                         backgroundColor: colors.background.primary,
-                        borderBottomColor: colors.border,
-                        borderBottomWidth: 1,
                     },
                     headerTintColor: colors.text.primary,
                     headerTitleStyle: {
                         fontWeight: '600',
                     },
+                    headerShadowVisible: false,
                 }}
             >
                 {/* Left tab: AI Assistant */}

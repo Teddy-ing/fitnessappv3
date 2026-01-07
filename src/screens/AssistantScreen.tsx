@@ -10,13 +10,12 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 
 export default function AssistantScreen() {
     return (
-        <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.container}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
@@ -82,7 +81,7 @@ export default function AssistantScreen() {
                     </Text>
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 

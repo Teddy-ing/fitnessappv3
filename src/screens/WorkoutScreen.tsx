@@ -453,7 +453,7 @@ export default function WorkoutScreen() {
     // Render empty state (no active workout)
     if (!activeWorkout) {
         return (
-            <SafeAreaView style={styles.container} edges={['bottom']}>
+            <View style={styles.container}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -529,7 +529,7 @@ export default function WorkoutScreen() {
                         )}
                     </View>
                 </ScrollView>
-            </SafeAreaView>
+            </View>
         );
     }
 
@@ -537,7 +537,7 @@ export default function WorkoutScreen() {
     const stats = getWorkoutStats();
 
     return (
-        <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.container}>
             {/* Workout header */}
             <View style={styles.workoutHeader}>
                 <View style={styles.workoutHeaderTop}>
@@ -680,7 +680,7 @@ export default function WorkoutScreen() {
                     </View>
                 </View>
             </Modal>
-        </SafeAreaView>
+        </View>
     );
 }
 
