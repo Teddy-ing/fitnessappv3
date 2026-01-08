@@ -37,9 +37,17 @@ import {
     createTemplateFromWorkout,
     startWorkoutFromTemplate,
     deleteTemplate,
+    getActiveSplit,
+    getTemplatesForSplit,
+    getCurrentTemplate,
+    getCurrentTemplateIndex,
+    advanceToNextTemplate,
     Template
 } from '../services';
 import { Workout } from '../models/workout';
+import { Split } from '../models/split';
+import SplitsScreen from './SplitsScreen';
+import TemplatesScreen from './TemplatesScreen';
 
 export default function WorkoutScreen() {
     const {
@@ -63,6 +71,13 @@ export default function WorkoutScreen() {
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+
+    // Splits state
+    const [activeSplit, setActiveSplit] = useState<Split | null>(null);
+    const [showSplitsModal, setShowSplitsModal] = useState(false);
+    const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+    const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null);
+    const [currentTemplateIndex, setCurrentTemplateIndexState] = useState(0);
 
     // Live timer state - triggers re-renders every second
     const [elapsedTime, setElapsedTime] = useState(0);
@@ -120,12 +135,28 @@ export default function WorkoutScreen() {
 
     const loadData = async () => {
         try {
-            const [workouts, tmplts] = await Promise.all([
+            const [workouts, active, currentIdx] = await Promise.all([
                 getWorkouts(5),
-                getTemplates(),
+                getActiveSplit(),
+                getCurrentTemplateIndex(),
             ]);
             setRecentWorkouts(workouts);
-            setTemplates(tmplts);
+            setActiveSplit(active);
+            setCurrentTemplateIndexState(currentIdx);
+
+            // Load templates based on active split
+            if (active) {
+                const splitTemplates = await getTemplatesForSplit(active.id);
+                setTemplates(splitTemplates);
+
+                // Get current template from split schedule
+                const nextTemplate = await getCurrentTemplate();
+                setCurrentTemplate(nextTemplate);
+            } else {
+                const allTemplates = await getTemplates();
+                setTemplates(allTemplates);
+                setCurrentTemplate(null);
+            }
         } catch (error) {
             console.error('Error loading data:', error);
         } finally {
@@ -141,6 +172,10 @@ export default function WorkoutScreen() {
 
     // Handle start workout
     const handleStartWorkout = () => {
+        // Reset any pending template modal state
+        setSaveTemplateModal(false);
+        setPendingWorkout(null);
+        setTemplateName('');
         startWorkout();
     };
 
@@ -484,25 +519,64 @@ export default function WorkoutScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Templates */}
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Your Templates</Text>
-                        {templates.length === 0 ? (
-                            <View style={styles.placeholder}>
-                                <Text style={styles.placeholderText}>
-                                    No templates yet. Finish a workout to save it as a template!
+                    {/* Browse buttons row */}
+                    <View style={styles.browseButtonsRow}>
+                        <TouchableOpacity
+                            style={styles.browseButton}
+                            onPress={() => setShowTemplatesModal(true)}
+                        >
+                            <Text style={styles.browseButtonText}>Browse Templates →</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.browseButton}
+                            onPress={() => setShowSplitsModal(true)}
+                        >
+                            <Text style={styles.browseButtonText}>Browse Splits →</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Current Template and Current Split cards */}
+                    <View style={styles.currentCardsRow}>
+                        {/* Current Template Card */}
+                        <TouchableOpacity
+                            style={styles.currentCard}
+                            onPress={() => currentTemplate && handleStartFromTemplate(currentTemplate)}
+                            disabled={!currentTemplate}
+                        >
+                            <Text style={styles.currentCardLabel}>Current Template</Text>
+                            {currentTemplate ? (
+                                <>
+                                    <Text style={styles.currentCardTitle}>{currentTemplate.name}</Text>
+                                    <Text style={styles.currentCardSubtitle}>
+                                        {currentTemplate.exerciseCount} exercises
+                                    </Text>
+                                    <Text style={styles.currentCardAction}>Tap to start →</Text>
+                                </>
+                            ) : (
+                                <Text style={styles.currentCardEmpty}>
+                                    {activeSplit ? 'No templates in split' : 'Select a split first'}
                                 </Text>
-                            </View>
-                        ) : (
-                            templates.map(template => (
-                                <TemplateCard
-                                    key={template.id}
-                                    template={template}
-                                    onPress={() => handleStartFromTemplate(template)}
-                                    onDelete={() => handleDeleteTemplate(template)}
-                                />
-                            ))
-                        )}
+                            )}
+                        </TouchableOpacity>
+
+                        {/* Current Split Card */}
+                        <TouchableOpacity
+                            style={styles.currentCard}
+                            onPress={() => setShowSplitsModal(true)}
+                        >
+                            <Text style={styles.currentCardLabel}>Current Split</Text>
+                            {activeSplit ? (
+                                <>
+                                    <Text style={styles.currentCardTitle}>{activeSplit.name}</Text>
+                                    <Text style={styles.currentCardSubtitle}>
+                                        Day {currentTemplateIndex + 1} of {activeSplit.schedule.length}
+                                    </Text>
+                                </>
+                            ) : (
+                                <Text style={styles.currentCardEmpty}>No split selected</Text>
+                            )}
+                            <Text style={styles.currentCardAction}>Change →</Text>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Recent workouts */}
@@ -529,6 +603,63 @@ export default function WorkoutScreen() {
                         )}
                     </View>
                 </ScrollView>
+
+                {/* Splits modal */}
+                <SplitsScreen
+                    visible={showSplitsModal}
+                    onClose={() => setShowSplitsModal(false)}
+                    onSplitSelected={(split) => {
+                        setActiveSplit(split);
+                        loadData();
+                    }}
+                />
+
+                {/* Templates modal */}
+                <TemplatesScreen
+                    visible={showTemplatesModal}
+                    onClose={() => setShowTemplatesModal(false)}
+                    onSelectTemplate={(template) => handleStartFromTemplate(template)}
+                />
+
+                {/* Save as template modal - needs to be in empty state too! */}
+                <Modal
+                    visible={showSaveTemplateModal}
+                    animationType="fade"
+                    transparent
+                    onRequestClose={() => setSaveTemplateModal(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Save as Template</Text>
+                            <TextInput
+                                style={styles.templateInput}
+                                value={templateName}
+                                onChangeText={setTemplateName}
+                                placeholder="Template name"
+                                placeholderTextColor={colors.text.secondary}
+                                autoFocus
+                            />
+                            <View style={styles.modalButtons}>
+                                <TouchableOpacity
+                                    style={styles.modalButtonCancel}
+                                    onPress={() => {
+                                        setSaveTemplateModal(false);
+                                        setPendingWorkout(null);
+                                        loadData();
+                                    }}
+                                >
+                                    <Text style={styles.modalButtonCancelText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.modalButtonSave}
+                                    onPress={handleSaveTemplate}
+                                >
+                                    <Text style={styles.modalButtonSaveText}>Save</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
             </View>
         );
     }
@@ -922,5 +1053,91 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
+    },
+
+    // Split header styles
+    splitHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: spacing.sm,
+    },
+    splitInfo: {
+        flex: 1,
+    },
+    splitSubtitle: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+        marginTop: spacing.xs,
+    },
+    browseSplitsButton: {
+        backgroundColor: colors.background.tertiary,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.md,
+    },
+    browseSplitsText: {
+        color: colors.accent.primary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.medium,
+    },
+
+    // New layout styles
+    browseButtonsRow: {
+        flexDirection: 'row',
+        gap: spacing.sm,
+        marginBottom: spacing.lg,
+    },
+    browseButton: {
+        flex: 1,
+        backgroundColor: colors.background.secondary,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.md,
+        borderRadius: borderRadius.md,
+        alignItems: 'center',
+    },
+    browseButtonText: {
+        color: colors.accent.primary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.medium,
+    },
+    currentCardsRow: {
+        flexDirection: 'row',
+        gap: spacing.md,
+        marginBottom: spacing.lg,
+    },
+    currentCard: {
+        flex: 1,
+        backgroundColor: colors.background.secondary,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        minHeight: 120,
+    },
+    currentCardLabel: {
+        color: colors.text.secondary,
+        fontSize: typography.size.xs,
+        textTransform: 'uppercase',
+        marginBottom: spacing.sm,
+    },
+    currentCardTitle: {
+        color: colors.text.primary,
+        fontSize: typography.size.lg,
+        fontWeight: typography.weight.semibold,
+        marginBottom: spacing.xs,
+    },
+    currentCardSubtitle: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+    },
+    currentCardAction: {
+        color: colors.accent.primary,
+        fontSize: typography.size.sm,
+        marginTop: 'auto',
+        paddingTop: spacing.sm,
+    },
+    currentCardEmpty: {
+        color: colors.text.disabled,
+        fontSize: typography.size.sm,
+        flex: 1,
     },
 });

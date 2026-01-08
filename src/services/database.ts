@@ -168,11 +168,44 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
         );
     `);
 
+    // Create splits table
+    await database.execAsync(`
+        CREATE TABLE IF NOT EXISTS splits (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            is_built_in INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    `);
+
+    // Create splits_templates junction table (ordered list of templates in a split)
+    await database.execAsync(`
+        CREATE TABLE IF NOT EXISTS splits_templates (
+            id TEXT PRIMARY KEY,
+            split_id TEXT NOT NULL,
+            template_id TEXT NOT NULL,
+            order_index INTEGER NOT NULL,
+            FOREIGN KEY (split_id) REFERENCES splits(id) ON DELETE CASCADE,
+            FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE CASCADE
+        );
+    `);
+
+    // Create user_preferences table (stores active split, etc.)
+    await database.execAsync(`
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        );
+    `);
+
     // Create indexes
     await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workouts_completed_at ON workouts(completed_at);`);
     await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workout_exercises_workout_id ON workout_exercises(workout_id);`);
     await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise_id ON workout_sets(workout_exercise_id);`);
     await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_template_exercises_template_id ON template_exercises(template_id);`);
+    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_splits_templates_split_id ON splits_templates(split_id);`);
 }
 
 /**
@@ -202,6 +235,9 @@ export async function clearAllData(): Promise<void> {
         await database.execAsync(`DELETE FROM workouts;`);
         await database.execAsync(`DELETE FROM template_exercises;`);
         await database.execAsync(`DELETE FROM templates;`);
+        await database.execAsync(`DELETE FROM splits_templates;`);
+        await database.execAsync(`DELETE FROM splits;`);
+        await database.execAsync(`DELETE FROM user_preferences;`);
     } catch (error) {
         console.error('[DB] Error clearing data:', error);
     }

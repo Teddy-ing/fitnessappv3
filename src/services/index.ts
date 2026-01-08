@@ -17,6 +17,19 @@ export {
     type TemplateExercise
 } from './templateService';
 export {
+    getSplits,
+    getSplitById,
+    saveSplit,
+    deleteSplit,
+    getActiveSplit,
+    setActiveSplit,
+    getTemplatesForSplit,
+    getCurrentTemplateIndex,
+    setCurrentTemplateIndex,
+    advanceToNextTemplate,
+    getCurrentTemplate,
+} from './splitService';
+export {
     requestNotificationPermissions,
     sendRestTimerNotification,
     scheduleRestTimerNotification,
