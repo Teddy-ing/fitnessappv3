@@ -143,6 +143,49 @@ description: Feature specifications, on-device ML concepts, and UX decisions
 
 ---
 
+## Splits & Template Cycling (Implemented)
+
+### Splits System
+
+**What it does:**
+- Group multiple templates into a "split" (e.g., PPL, Upper/Lower)
+- Active split determines which templates appear on home screen
+- Each position in split can be a template or rest day
+
+**Data Model:**
+```typescript
+type SplitScheduleItem = 
+    | { type: 'template'; templateId: string }
+    | { type: 'rest' };
+
+interface Split {
+    id: string;
+    name: string;
+    schedule: SplitScheduleItem[];
+    // ...
+}
+```
+
+### Template Cycling
+
+**Current Template Tracking:**
+- `currentTemplateIndex` stored in user preferences
+- Shows "Current Template" card on home screen
+- Tap to start that workout
+
+**Manual Position Switching:**
+- "Change" button opens picker modal
+- User can jump to any position in split
+- Useful for: starting mid-week, making up missed days
+
+**Date-Based Auto-Advance:**
+- When workout finishes → record today's date
+- Next time app opens on a **different day** → advance to next template
+- Skips rest days automatically
+- Does NOT advance immediately after finishing (per user request)
+
+---
+
 ## Data & Sync Features
 
 ### Export Capabilities

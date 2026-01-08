@@ -26,6 +26,27 @@ These apply regardless of framework:
 - Squash merge for clean history
 - Meaningful commit messages
 
+### Agent Commit Message Convention
+**At the end of every coding task**, the agent should provide a suggested commit message following this format:
+
+```
+<type>(<scope>): <short description>
+
+<optional body with more details>
+```
+
+**Types**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+**Scope**: Component or feature area (e.g., `splits`, `workout`, `database`)
+
+Example:
+```
+feat(splits): add rest days support in split creation
+
+- Added splits_schedule table for rest day storage
+- Updated SplitsScreen with Add Rest Day button
+- Schedule preview shows ordered templates + rest days
+```
+
 ### Testing Philosophy
 - Test critical paths (logging a set, saving a workout)
 - Integration tests over unit tests for UI

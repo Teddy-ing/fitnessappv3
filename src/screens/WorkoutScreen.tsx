@@ -42,6 +42,8 @@ import {
     getCurrentTemplate,
     getCurrentTemplateIndex,
     advanceToNextTemplate,
+    checkAndAdvanceIfNewDay,
+    markWorkoutCompletedToday,
     Template
 } from '../services';
 import { Workout } from '../models/workout';
@@ -76,6 +78,7 @@ export default function WorkoutScreen() {
     const [activeSplit, setActiveSplit] = useState<Split | null>(null);
     const [showSplitsModal, setShowSplitsModal] = useState(false);
     const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+    const [showTemplatePicker, setShowTemplatePicker] = useState(false);
     const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null);
     const [currentTemplateIndex, setCurrentTemplateIndexState] = useState(0);
 
@@ -135,6 +138,9 @@ export default function WorkoutScreen() {
 
     const loadData = async () => {
         try {
+            // Check if we should advance template (new day after workout)
+            await checkAndAdvanceIfNewDay();
+
             const [workouts, active, currentIdx] = await Promise.all([
                 getWorkouts(5),
                 getActiveSplit(),
@@ -194,6 +200,22 @@ export default function WorkoutScreen() {
         }
     };
 
+    // Handle changing current template position in split
+    const handleChangeTemplateIndex = async (newIndex: number) => {
+        try {
+            const { setCurrentTemplateIndex } = await import('../services');
+            await setCurrentTemplateIndex(newIndex);
+            setCurrentTemplateIndexState(newIndex);
+
+            // Reload current template
+            const nextTemplate = await getCurrentTemplate();
+            setCurrentTemplate(nextTemplate);
+            setShowTemplatePicker(false);
+        } catch (error) {
+            console.error('Error changing template index:', error);
+        }
+    };
+
     // Handle delete template
     const handleDeleteTemplate = async (template: Template) => {
         Alert.alert(
@@ -237,6 +259,9 @@ export default function WorkoutScreen() {
                     console.log('[WorkoutScreen] Saving workout...');
                     await saveWorkout(workout);
                     console.log('[WorkoutScreen] Workout saved!');
+
+                    // Mark workout completed for date-based advance
+                    await markWorkoutCompletedToday();
 
                     // Reload data first to ensure history is updated
                     await loadData();
@@ -538,11 +563,7 @@ export default function WorkoutScreen() {
                     {/* Current Template and Current Split cards */}
                     <View style={styles.currentCardsRow}>
                         {/* Current Template Card */}
-                        <TouchableOpacity
-                            style={styles.currentCard}
-                            onPress={() => currentTemplate && handleStartFromTemplate(currentTemplate)}
-                            disabled={!currentTemplate}
-                        >
+                        <View style={styles.currentCard}>
                             <Text style={styles.currentCardLabel}>Current Template</Text>
                             {currentTemplate ? (
                                 <>
@@ -550,14 +571,29 @@ export default function WorkoutScreen() {
                                     <Text style={styles.currentCardSubtitle}>
                                         {currentTemplate.exerciseCount} exercises
                                     </Text>
-                                    <Text style={styles.currentCardAction}>Tap to start →</Text>
+                                    <View style={styles.currentCardActions}>
+                                        <TouchableOpacity
+                                            onPress={() => handleStartFromTemplate(currentTemplate)}
+                                            style={styles.cardActionButton}
+                                        >
+                                            <Text style={styles.currentCardAction}>Start →</Text>
+                                        </TouchableOpacity>
+                                        {activeSplit && activeSplit.schedule.length > 1 && (
+                                            <TouchableOpacity
+                                                onPress={() => setShowTemplatePicker(true)}
+                                                style={styles.cardActionButton}
+                                            >
+                                                <Text style={styles.cardChangeAction}>Change</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
                                 </>
                             ) : (
                                 <Text style={styles.currentCardEmpty}>
                                     {activeSplit ? 'No templates in split' : 'Select a split first'}
                                 </Text>
                             )}
-                        </TouchableOpacity>
+                        </View>
 
                         {/* Current Split Card */}
                         <TouchableOpacity
@@ -620,6 +656,61 @@ export default function WorkoutScreen() {
                     onClose={() => setShowTemplatesModal(false)}
                     onSelectTemplate={(template) => handleStartFromTemplate(template)}
                 />
+
+                {/* Template picker modal - for switching current position in split */}
+                <Modal
+                    visible={showTemplatePicker}
+                    animationType="fade"
+                    transparent
+                    onRequestClose={() => setShowTemplatePicker(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Choose Current Template</Text>
+                            <Text style={styles.pickerSubtitle}>
+                                Select which template to start from
+                            </Text>
+                            <ScrollView style={styles.pickerList}>
+                                {activeSplit?.schedule.map((item, index) => {
+                                    if (item.type === 'rest') {
+                                        return (
+                                            <View key={index} style={styles.pickerItem}>
+                                                <Text style={styles.pickerRestText}>Rest Day</Text>
+                                            </View>
+                                        );
+                                    }
+                                    const template = templates.find(t => t.id === item.templateId);
+                                    return (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={[
+                                                styles.pickerItem,
+                                                currentTemplateIndex === index && styles.pickerItemActive
+                                            ]}
+                                            onPress={() => handleChangeTemplateIndex(index)}
+                                        >
+                                            <Text style={[
+                                                styles.pickerItemText,
+                                                currentTemplateIndex === index && styles.pickerItemTextActive
+                                            ]}>
+                                                {template?.name || 'Unknown Template'}
+                                            </Text>
+                                            <Text style={styles.pickerItemMeta}>
+                                                Day {index + 1}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
+                            <TouchableOpacity
+                                style={styles.modalButtonCancel}
+                                onPress={() => setShowTemplatePicker(false)}
+                            >
+                                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
 
                 {/* Save as template modal - needs to be in empty state too! */}
                 <Modal
@@ -1086,6 +1177,7 @@ const styles = StyleSheet.create({
     browseButtonsRow: {
         flexDirection: 'row',
         gap: spacing.sm,
+        marginTop: spacing.lg,
         marginBottom: spacing.lg,
     },
     browseButton: {
@@ -1132,12 +1224,66 @@ const styles = StyleSheet.create({
     currentCardAction: {
         color: colors.accent.primary,
         fontSize: typography.size.sm,
-        marginTop: 'auto',
-        paddingTop: spacing.sm,
     },
     currentCardEmpty: {
         color: colors.text.disabled,
         fontSize: typography.size.sm,
         flex: 1,
+    },
+    currentCardActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 'auto',
+        paddingTop: spacing.sm,
+    },
+    cardActionButton: {
+        paddingVertical: spacing.xs,
+    },
+    cardChangeAction: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+    },
+
+    // Template picker modal styles
+    pickerSubtitle: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+        marginBottom: spacing.md,
+        textAlign: 'center',
+    },
+    pickerList: {
+        maxHeight: 300,
+        marginBottom: spacing.md,
+    },
+    pickerItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: colors.background.tertiary,
+        borderRadius: borderRadius.md,
+        padding: spacing.md,
+        marginBottom: spacing.sm,
+    },
+    pickerItemActive: {
+        borderWidth: 2,
+        borderColor: colors.accent.primary,
+    },
+    pickerItemText: {
+        color: colors.text.primary,
+        fontSize: typography.size.md,
+    },
+    pickerItemTextActive: {
+        color: colors.accent.primary,
+        fontWeight: typography.weight.semibold,
+    },
+    pickerItemMeta: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+    },
+    pickerRestText: {
+        color: colors.text.disabled,
+        fontSize: typography.size.sm,
+        fontStyle: 'italic',
     },
 });

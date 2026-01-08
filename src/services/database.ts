@@ -192,6 +192,18 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
         );
     `);
 
+    // Create splits_schedule table (supports rest days + templates)
+    await database.execAsync(`
+        CREATE TABLE IF NOT EXISTS splits_schedule (
+            id TEXT PRIMARY KEY,
+            split_id TEXT NOT NULL,
+            order_index INTEGER NOT NULL,
+            item_type TEXT NOT NULL,
+            template_id TEXT,
+            FOREIGN KEY (split_id) REFERENCES splits(id) ON DELETE CASCADE
+        );
+    `);
+
     // Create user_preferences table (stores active split, etc.)
     await database.execAsync(`
         CREATE TABLE IF NOT EXISTS user_preferences (
@@ -206,6 +218,7 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
     await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise_id ON workout_sets(workout_exercise_id);`);
     await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_template_exercises_template_id ON template_exercises(template_id);`);
     await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_splits_templates_split_id ON splits_templates(split_id);`);
+    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_splits_schedule_split_id ON splits_schedule(split_id);`);
 }
 
 /**
@@ -236,6 +249,7 @@ export async function clearAllData(): Promise<void> {
         await database.execAsync(`DELETE FROM template_exercises;`);
         await database.execAsync(`DELETE FROM templates;`);
         await database.execAsync(`DELETE FROM splits_templates;`);
+        await database.execAsync(`DELETE FROM splits_schedule;`);
         await database.execAsync(`DELETE FROM splits;`);
         await database.execAsync(`DELETE FROM user_preferences;`);
     } catch (error) {

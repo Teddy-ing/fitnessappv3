@@ -46,26 +46,37 @@ description: Prioritized list of app improvements and feature requests from user
 
 ## P2: Medium Priority Features
 
-### 6. Rename "Templates" → "Splits"
-- **Why**: More intuitive terminology
-- **Structure**:
-  - Browse splits / Your splits / Add split
-  - Inside split: contains templates or individual workouts
-  - Need word for "individual workout within split"
+### 6. ~~Rename "Templates" → "Splits"~~ ✅
+- **Fixed**: Implemented full Splits feature
+- Browse Splits modal with create/delete
+- Split = ordered list of templates
+- Active split determines home screen templates
+- Current Template card shows "next" workout
 
-### 7. Exercise management
+### 6b. ~~Template cycling in splits~~ ✅
+- **Fixed**: Manual position switching via picker modal
+- Date-based auto-advance (advances next day, not immediately)
+- "Change" button on Current Template card
+
+### 7. ~~Rest days in split creation~~ ✅
+- **Fixed**: Added splits_schedule table for rest days
+- "Add Rest Day" button in split creation
+- Schedule preview shows templates + rest days
+- Split cards show "X workouts · Y rest days"
+
+### 8. Exercise management
 - Add custom exercises
 - Hide/unhide exercises
 - Filter by equipment (home gym, bodyweight, etc.)
 - "Show all" to view hidden exercises
 
-### 8. Exercise images
+### 9. Exercise images
 - Placeholder images for now
 - Show in exercise picker
 - Show in workout view
 - TBD: actual image source
 
-### 9. Improved rest timer UX (Strong-style)
+### 10. Improved rest timer UX (Strong-style)
 - More specific details TBD
 - Visual changes while keeping core functionality
 

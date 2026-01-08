@@ -65,20 +65,41 @@ export async function saveSplit(split: Split): Promise<Split | null> {
             split.createdAt.toISOString(), now.toISOString()]
         );
 
-        // Delete existing template associations
+        // Delete existing template associations (legacy table)
         await db.runAsync(
             `DELETE FROM splits_templates WHERE split_id = ?`,
             [split.id]
         );
 
-        // Insert template associations
-        for (let i = 0; i < split.templateIds.length; i++) {
-            const linkId = Crypto.randomUUID();
+        // Delete existing schedule items
+        await db.runAsync(
+            `DELETE FROM splits_schedule WHERE split_id = ?`,
+            [split.id]
+        );
+
+        // Insert schedule items (supports rest days)
+        for (let i = 0; i < split.schedule.length; i++) {
+            const item = split.schedule[i];
+            const itemId = Crypto.randomUUID();
             await db.runAsync(
-                `INSERT INTO splits_templates (id, split_id, template_id, order_index)
-                 VALUES (?, ?, ?, ?)`,
-                [linkId, split.id, split.templateIds[i], i]
+                `INSERT INTO splits_schedule (id, split_id, order_index, item_type, template_id)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [itemId, split.id, i, item.type, item.type === 'template' ? item.templateId : null]
             );
+        }
+
+        // Also insert into legacy splits_templates for backward compat
+        const templateItems = split.schedule.filter(item => item.type === 'template');
+        for (let i = 0; i < templateItems.length; i++) {
+            const item = templateItems[i];
+            if (item.type === 'template') {
+                const linkId = Crypto.randomUUID();
+                await db.runAsync(
+                    `INSERT INTO splits_templates (id, split_id, template_id, order_index)
+                     VALUES (?, ?, ?, ?)`,
+                    [linkId, split.id, item.templateId, i]
+                );
+            }
         }
     });
 
@@ -210,6 +231,61 @@ export async function getCurrentTemplate(): Promise<Template | null> {
 }
 
 /**
+ * Get the last workout date (stored in user preferences)
+ */
+export async function getLastWorkoutDate(): Promise<string | null> {
+    const db = await getDatabase();
+    if (!db) return null;
+
+    const row = await db.getFirstAsync<{ value: string }>(
+        `SELECT value FROM user_preferences WHERE key = 'last_workout_date'`
+    );
+
+    return row?.value || null;
+}
+
+/**
+ * Set the last workout date
+ */
+export async function setLastWorkoutDate(date: string): Promise<void> {
+    const db = await getDatabase();
+    if (!db) return;
+
+    await db.runAsync(
+        `INSERT OR REPLACE INTO user_preferences (key, value) VALUES ('last_workout_date', ?)`,
+        [date]
+    );
+}
+
+/**
+ * Check if we should advance template (called when app opens)
+ * Only advances if a workout was completed and it's a new day
+ */
+export async function checkAndAdvanceIfNewDay(): Promise<boolean> {
+    const lastDate = await getLastWorkoutDate();
+    if (!lastDate) return false;
+
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    if (lastDate !== today) {
+        // It's a new day - advance template and clear the flag
+        await advanceToNextTemplate();
+        await setLastWorkoutDate(''); // Clear the flag
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Mark that a workout was completed today (used for date-based advance)
+ */
+export async function markWorkoutCompletedToday(): Promise<void> {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    await setLastWorkoutDate(today);
+}
+
+/**
  * Get templates for a split
  */
 export async function getTemplatesForSplit(splitId: string): Promise<Template[]> {
@@ -235,16 +311,37 @@ async function hydrateSplit(row: any): Promise<Split> {
     const db = await getDatabase();
     if (!db) throw new Error('Database not available');
 
-    // Get template IDs for this split
-    const templateRows = await db.getAllAsync<{ template_id: string }>(
-        `SELECT template_id FROM splits_templates WHERE split_id = ? ORDER BY order_index`,
+    // Try to get schedule from new splits_schedule table first
+    const scheduleRows = await db.getAllAsync<{ item_type: string; template_id: string | null }>(
+        `SELECT item_type, template_id FROM splits_schedule WHERE split_id = ? ORDER BY order_index`,
         [row.id]
     );
 
-    const templateIds = templateRows.map(r => r.template_id);
+    let schedule: Array<{ type: 'template'; templateId: string } | { type: 'rest' }>;
+    let templateIds: string[];
 
-    // Generate schedule from templateIds (for backward compat - new splits will store schedule directly)
-    const schedule = templateIds.map(id => ({ type: 'template' as const, templateId: id }));
+    if (scheduleRows.length > 0) {
+        // New format: read from splits_schedule
+        schedule = scheduleRows.map(r => {
+            if (r.item_type === 'rest') {
+                return { type: 'rest' as const };
+            } else {
+                return { type: 'template' as const, templateId: r.template_id! };
+            }
+        });
+        // Extract template IDs for backward compat
+        templateIds = schedule
+            .filter((item): item is { type: 'template'; templateId: string } => item.type === 'template')
+            .map(item => item.templateId);
+    } else {
+        // Legacy: fall back to splits_templates
+        const templateRows = await db.getAllAsync<{ template_id: string }>(
+            `SELECT template_id FROM splits_templates WHERE split_id = ? ORDER BY order_index`,
+            [row.id]
+        );
+        templateIds = templateRows.map(r => r.template_id);
+        schedule = templateIds.map(id => ({ type: 'template' as const, templateId: id }));
+    }
 
     return {
         id: row.id,

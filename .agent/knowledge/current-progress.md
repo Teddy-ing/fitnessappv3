@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Development (Feature Complete MVP)
-- **Status:** Rest timer, database, and templates implemented. Ready for testing and polish.
-- **Next Milestone:** Testing, UI polish, user feedback
+- **Phase:** Development (Feature Complete MVP + Splits + Rest Days)
+- **Status:** Core workout logging, rest timer, database, templates, splits, and rest days all implemented
+- **Next Milestone:** Testing, UI polish, exercise management
 
 ---
 
@@ -44,11 +44,17 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Local database with expo-sqlite** (workouts, exercises, sets, templates)
 - [x] **Template system** (save workout as template, start from template)
 - [x] **Workout history** (recent workouts displayed on home screen)
+- [x] **Splits feature** (group templates, active split, split-based home screen)
+- [x] **Template cycling** (current template, manual position switching, date-based advance)
+- [x] **Browse Templates/Splits dual-button layout**
+- [x] **Current Template + Current Split cards side-by-side**
+- [x] **Rest days in split creation** (Add Rest Day button, schedule preview)
 
 ---
 
 ## In Progress
 
+- [ ] Test rest days feature on Android device
 - [ ] Test full workflow on Android device
 - [ ] Address any UI/UX feedback from testing
 
@@ -57,18 +63,28 @@ description: Living document tracking completed work, in-progress tasks, next st
 ## Next Steps (For New Session)
 
 1. **Testing & Polish** — Validate all features work correctly
+   - Create split with rest days
    - Complete workout → save → view in history
    - Save template → start new workout from it
    - Rest timer countdown and haptics
+   - Splits: select, create, delete
+   - Template cycling: change position, auto-advance next day (skips rest days)
    
-2. **UI Improvements** — Based on user feedback
+2. **Testing & Polish** — Validate all features work correctly
+   - Complete workout → save → view in history
+   - Save template → start new workout from it
+   - Rest timer countdown and haptics
+   - Splits: select, create, delete
+   - Template cycling: change position, auto-advance next day
+   
+3. **UI Improvements** — Based on user feedback
    - Custom navigation icons
    - Animation polish
    - Loading states
 
-3. **Analytics/Stats Screen** — Display workout progress over time
+4. **Analytics/Stats Screen** — Display workout progress over time
 
-4. **On-device ML** — Smart suggestions based on workout patterns
+5. **On-device ML** — Smart suggestions based on workout patterns
 
 ---
 
@@ -83,6 +99,50 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-01-07/08: Splits Feature & Template Cycling
+
+**Duration:** ~2 hours across sessions
+**Focus:** Implementing splits, template cycling, and home screen redesign
+
+**What was done:**
+- **Splits System:**
+  - Created `Split` model with `SplitScheduleItem` type (templates + rest days)
+  - Created `splitService.ts` with full CRUD operations
+  - Added database tables: `splits`, `splits_templates`, `user_preferences`
+  - Created `SplitsScreen.tsx` modal (browse, create, delete, select active)
+  - Multi-step template creation flow in split creation
+  
+- **Home Screen Redesign:**
+  - Replaced single "All Templates" with dual browse buttons
+  - Added "Current Template" + "Current Split" cards side-by-side
+  - Current Template card shows next workout with "Start" and "Change" buttons
+  
+- **Template Cycling System:**
+  - `getCurrentTemplateIndex()` / `setCurrentTemplateIndex()` for tracking position
+  - `advanceToNextTemplate()` skips rest days automatically
+  - `checkAndAdvanceIfNewDay()` - advances only when opening app next day
+  - `markWorkoutCompletedToday()` - records date for next-day advance
+  - Template picker modal for manual position switching
+  
+- **Created `TemplatesScreen.tsx`** — Browse all templates with delete
+
+**Files created:**
+- `src/models/split.ts` — Split and SplitScheduleItem types
+- `src/services/splitService.ts` — Split CRUD + template cycling
+- `src/screens/SplitsScreen.tsx` — Browse/create/delete splits modal
+- `src/screens/TemplatesScreen.tsx` — Browse all templates modal
+
+**Files updated:**
+- `src/services/database.ts` — Added splits tables
+- `src/services/index.ts` — Added split service exports
+- `src/screens/WorkoutScreen.tsx` — New layout, template cycling integration
+- `src/models/index.ts` — Added Split export
+
+**Deferred to future session:**
+- Rest days UI in split creation (data model supports it)
+
+---
 
 ### 2026-01-05 (Late Evening): Rest Timer, Database & Templates
 
@@ -265,6 +325,6 @@ Screenshots of competitor apps are available in `.agent/reference/`:
 ---
 
 ## Last Updated
-- Date: 2026-01-05
-- Session Context: Navigation complete, ready for core workout logging implementation
+- Date: 2026-01-08
+- Session Context: Splits feature and template cycling implemented, documenting knowledge before chat pivot
 

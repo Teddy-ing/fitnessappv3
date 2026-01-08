@@ -28,6 +28,8 @@ export {
     setCurrentTemplateIndex,
     advanceToNextTemplate,
     getCurrentTemplate,
+    checkAndAdvanceIfNewDay,
+    markWorkoutCompletedToday,
 } from './splitService';
 export {
     requestNotificationPermissions,

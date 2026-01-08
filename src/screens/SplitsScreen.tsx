@@ -29,7 +29,7 @@ import {
     getTemplates,
     type Template
 } from '../services';
-import { Split, createSplit } from '../models/split';
+import { Split, SplitScheduleItem, createSplit } from '../models/split';
 import { Exercise } from '../models/exercise';
 
 interface SplitsScreenProps {
@@ -45,7 +45,7 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [newSplitName, setNewSplitName] = useState('');
-    const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+    const [scheduleItems, setScheduleItems] = useState<SplitScheduleItem[]>([]);
 
     // New template creation modal
     const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
@@ -124,26 +124,46 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
             return;
         }
 
-        if (selectedTemplateIds.length === 0) {
-            Alert.alert('Error', 'Please select at least one template.');
+        if (scheduleItems.length === 0) {
+            Alert.alert('Error', 'Please add at least one template or rest day.');
             return;
         }
 
-        const split = createSplit(newSplitName.trim(), selectedTemplateIds);
+        // Extract templateIds for backward compat
+        const templateIds = scheduleItems
+            .filter((item): item is { type: 'template'; templateId: string } => item.type === 'template')
+            .map(item => item.templateId);
+
+        const split = createSplit(newSplitName.trim(), templateIds, scheduleItems);
         await saveSplit(split);
 
         setNewSplitName('');
-        setSelectedTemplateIds([]);
+        setScheduleItems([]);
         setIsCreating(false);
         loadData();
     };
 
     const toggleTemplateSelection = (templateId: string) => {
-        setSelectedTemplateIds(prev =>
-            prev.includes(templateId)
-                ? prev.filter(id => id !== templateId)
-                : [...prev, templateId]
-        );
+        setScheduleItems(prev => {
+            const templateIndex = prev.findIndex(
+                item => item.type === 'template' && item.templateId === templateId
+            );
+            if (templateIndex >= 0) {
+                // Remove it
+                return prev.filter((_, i) => i !== templateIndex);
+            } else {
+                // Add it
+                return [...prev, { type: 'template' as const, templateId }];
+            }
+        });
+    };
+
+    const addRestDay = () => {
+        setScheduleItems(prev => [...prev, { type: 'rest' as const }]);
+    };
+
+    const removeScheduleItem = (index: number) => {
+        setScheduleItems(prev => prev.filter((_, i) => i !== index));
     };
 
     const toggleTemplateExpand = (templateId: string) => {
@@ -180,7 +200,7 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                 // Reload templates and auto-select
                 const updatedTemplates = await getTemplates();
                 setTemplates(updatedTemplates);
-                setSelectedTemplateIds(prev => [...prev, newTemplate.id]);
+                setScheduleItems(prev => [...prev, { type: 'template' as const, templateId: newTemplate.id }]);
             }
 
             resetTemplateCreation();
@@ -215,9 +235,11 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
         setPendingTemplateExercises(prev => prev.filter((_, i) => i !== index));
     };
 
-    // Get order number for a selected template
+    // Get order number for a selected template in the schedule
     const getSelectionOrder = (templateId: string): number => {
-        const index = selectedTemplateIds.indexOf(templateId);
+        const index = scheduleItems.findIndex(
+            item => item.type === 'template' && item.templateId === templateId
+        );
         return index >= 0 ? index + 1 : 0;
     };
 
@@ -240,7 +262,15 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                     <Text style={styles.splitDescription}>{split.description}</Text>
                 )}
                 <Text style={styles.splitTemplates}>
-                    {split.templateIds.length} template{split.templateIds.length !== 1 ? 's' : ''}
+                    {(() => {
+                        const workouts = split.schedule.filter(item => item.type === 'template').length;
+                        const restDays = split.schedule.filter(item => item.type === 'rest').length;
+                        let text = `${workouts} workout${workouts !== 1 ? 's' : ''}`;
+                        if (restDays > 0) {
+                            text += ` · ${restDays} rest day${restDays !== 1 ? 's' : ''}`;
+                        }
+                        return text;
+                    })()}
                 </Text>
             </TouchableOpacity>
         );
@@ -359,13 +389,51 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                             })
                         )}
 
+                        {/* Add Rest Day button */}
+                        <TouchableOpacity
+                            style={styles.addRestDayButton}
+                            onPress={addRestDay}
+                        >
+                            <Text style={styles.addRestDayIcon}>🛌</Text>
+                            <Text style={styles.addRestDayText}>Add Rest Day</Text>
+                        </TouchableOpacity>
+
+                        {/* Schedule Preview */}
+                        {scheduleItems.length > 0 && (
+                            <>
+                                <Text style={styles.formLabel}>Schedule Preview</Text>
+                                <View style={styles.schedulePreview}>
+                                    {scheduleItems.map((item, index) => (
+                                        <View key={index} style={styles.scheduleItem}>
+                                            <View style={styles.scheduleItemOrderBadge}>
+                                                <Text style={styles.scheduleItemOrderText}>{index + 1}</Text>
+                                            </View>
+                                            {item.type === 'rest' ? (
+                                                <Text style={styles.scheduleItemRestText}>🛌 Rest Day</Text>
+                                            ) : (
+                                                <Text style={styles.scheduleItemTemplateText}>
+                                                    {templates.find(t => t.id === item.templateId)?.name || 'Template'}
+                                                </Text>
+                                            )}
+                                            <TouchableOpacity
+                                                style={styles.scheduleItemRemove}
+                                                onPress={() => removeScheduleItem(index)}
+                                            >
+                                                <Text style={styles.scheduleItemRemoveText}>✕</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))}
+                                </View>
+                            </>
+                        )}
+
                         <View style={styles.formButtons}>
                             <TouchableOpacity
                                 style={styles.cancelButton}
                                 onPress={() => {
                                     setIsCreating(false);
                                     setNewSplitName('');
-                                    setSelectedTemplateIds([]);
+                                    setScheduleItems([]);
                                 }}
                             >
                                 <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -941,5 +1009,73 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
         fontSize: typography.size.md,
         fontWeight: typography.weight.medium,
+    },
+
+    // Rest day and schedule preview styles
+    addRestDayButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.background.tertiary,
+        borderRadius: borderRadius.md,
+        padding: spacing.md,
+        marginTop: spacing.md,
+        marginBottom: spacing.md,
+        borderWidth: 1,
+        borderColor: colors.text.disabled,
+        borderStyle: 'dashed',
+    },
+    addRestDayIcon: {
+        fontSize: typography.size.lg,
+        marginRight: spacing.sm,
+    },
+    addRestDayText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.medium,
+    },
+    schedulePreview: {
+        backgroundColor: colors.background.secondary,
+        borderRadius: borderRadius.md,
+        padding: spacing.sm,
+        marginBottom: spacing.md,
+    },
+    scheduleItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.background.tertiary,
+        borderRadius: borderRadius.sm,
+        padding: spacing.sm,
+        marginBottom: spacing.xs,
+    },
+    scheduleItemOrderBadge: {
+        backgroundColor: colors.accent.primary,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: spacing.sm,
+    },
+    scheduleItemOrderText: {
+        color: colors.text.primary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.bold,
+    },
+    scheduleItemRestText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.md,
+        flex: 1,
+    },
+    scheduleItemTemplateText: {
+        color: colors.text.primary,
+        fontSize: typography.size.md,
+        flex: 1,
+    },
+    scheduleItemRemove: {
+        padding: spacing.xs,
+    },
+    scheduleItemRemoveText: {
+        color: colors.text.disabled,
+        fontSize: typography.size.md,
     },
 });
