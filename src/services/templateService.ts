@@ -162,6 +162,131 @@ export async function deleteTemplate(id: string): Promise<void> {
 }
 
 /**
+ * Find a template that matches the workout's exercises (by exercise IDs, order-independent)
+ * Used to avoid prompting to save a template when exercises are identical
+ */
+export async function findMatchingTemplate(workout: Workout): Promise<Template | null> {
+    const templates = await getTemplates();
+    if (templates.length === 0) return null;
+
+    // Get exercise IDs from workout (sorted for comparison)
+    const workoutExerciseIds = workout.main.exercises
+        .map(we => we.exerciseId)
+        .sort();
+
+    // Find a template with exactly the same exercises
+    for (const template of templates) {
+        const templateExerciseIds = template.exercises
+            .map(te => te.exercise.id)
+            .sort();
+
+        // Check if same length and same IDs
+        if (workoutExerciseIds.length === templateExerciseIds.length &&
+            workoutExerciseIds.every((id, idx) => id === templateExerciseIds[idx])) {
+            return template;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Find a template by exact name (case-insensitive)
+ */
+export async function findTemplateByName(name: string): Promise<Template | null> {
+    const db = await getDatabase();
+    if (!db) return null;
+
+    const row = await db.getFirstAsync<any>(
+        `SELECT * FROM templates WHERE LOWER(name) = LOWER(?)`,
+        [name.trim()]
+    );
+
+    if (!row) return null;
+    return hydrateTemplate(row);
+}
+
+/**
+ * Find ALL templates with a given name (case-insensitive)
+ * Used when multiple templates can have the same name
+ */
+export async function findTemplatesByName(name: string): Promise<Template[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    const rows = await db.getAllAsync<any>(
+        `SELECT * FROM templates WHERE LOWER(name) = LOWER(?)`,
+        [name.trim()]
+    );
+
+    const templates: Template[] = [];
+    for (const row of rows) {
+        templates.push(await hydrateTemplate(row));
+    }
+    return templates;
+}
+
+/**
+ * Overwrite an existing template with new exercises from a workout
+ * Preserves the template ID so it stays in any splits that reference it
+ */
+export async function overwriteTemplate(
+    existingTemplateId: string,
+    workout: Workout,
+    name: string,
+    description?: string
+): Promise<Template | null> {
+    const db = await getDatabase();
+    if (!db) return null;
+
+    const now = new Date();
+
+    await db.withTransactionAsync(async () => {
+        // Update template metadata
+        await db.runAsync(
+            `UPDATE templates SET name = ?, description = ?, updated_at = ? WHERE id = ?`,
+            [name, description ?? null, now.toISOString(), existingTemplateId]
+        );
+
+        // Delete old exercises
+        await db.runAsync(
+            `DELETE FROM template_exercises WHERE template_id = ?`,
+            [existingTemplateId]
+        );
+
+        // Insert new exercises from workout
+        for (const workoutExercise of workout.main.exercises) {
+            const exerciseId = Crypto.randomUUID();
+            await db.runAsync(
+                `INSERT INTO template_exercises (
+                    id, template_id, exercise_id, exercise_name, exercise_category,
+                    exercise_muscle_groups, exercise_equipment, exercise_track_weight,
+                    exercise_track_reps, exercise_track_time, order_index, default_sets, note
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    exerciseId,
+                    existingTemplateId,
+                    workoutExercise.exerciseId,
+                    workoutExercise.exercise.name,
+                    workoutExercise.exercise.category,
+                    JSON.stringify(workoutExercise.exercise.muscleGroups),
+                    JSON.stringify(workoutExercise.exercise.equipment),
+                    workoutExercise.exercise.trackWeight ? 1 : 0,
+                    workoutExercise.exercise.trackReps ? 1 : 0,
+                    workoutExercise.exercise.trackTime ? 1 : 0,
+                    workoutExercise.orderIndex,
+                    workoutExercise.sets.length,
+                    workoutExercise.note,
+                ]
+            );
+        }
+    });
+
+    // Return updated template
+    return getTemplateById(existingTemplateId);
+}
+
+/**
  * Start a new workout from a template
  */
 export async function startWorkoutFromTemplate(templateId: string): Promise<Workout | null> {
@@ -251,5 +376,9 @@ export default {
     getTemplates,
     getTemplateById,
     deleteTemplate,
+    findMatchingTemplate,
+    findTemplateByName,
+    findTemplatesByName,
+    overwriteTemplate,
     startWorkoutFromTemplate,
 };

@@ -286,7 +286,7 @@ export async function markWorkoutCompletedToday(): Promise<void> {
 }
 
 /**
- * Get templates for a split
+ * Get all templates for a split (ordered by split schedule)
  */
 export async function getTemplatesForSplit(splitId: string): Promise<Template[]> {
     const db = await getDatabase();
@@ -302,6 +302,39 @@ export async function getTemplatesForSplit(splitId: string): Promise<Template[]>
     return split.templateIds
         .map(id => templateMap.get(id))
         .filter((t): t is Template => t !== undefined);
+}
+
+/**
+ * Info about a split for display purposes
+ */
+export interface SplitInfo {
+    id: string;
+    name: string;
+    isBuiltIn: boolean;
+}
+
+/**
+ * Get all splits that contain a specific template
+ */
+export async function getSplitsForTemplate(templateId: string): Promise<SplitInfo[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    // Query all splits that have this template in their schedule
+    const rows = await db.getAllAsync<{ split_id: string; name: string; is_built_in: number }>(
+        `SELECT DISTINCT s.id as split_id, s.name, s.is_built_in 
+         FROM splits s
+         INNER JOIN splits_schedule ss ON s.id = ss.split_id
+         WHERE ss.template_id = ?
+         ORDER BY s.is_built_in DESC, s.name ASC`,
+        [templateId]
+    );
+
+    return rows.map(row => ({
+        id: row.split_id,
+        name: row.name,
+        isBuiltIn: row.is_built_in === 1,
+    }));
 }
 
 /**

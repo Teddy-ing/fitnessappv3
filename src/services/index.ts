@@ -12,6 +12,10 @@ export {
     getTemplates,
     getTemplateById,
     deleteTemplate,
+    findMatchingTemplate,
+    findTemplateByName,
+    findTemplatesByName,
+    overwriteTemplate,
     startWorkoutFromTemplate,
     type Template,
     type TemplateExercise
@@ -24,12 +28,14 @@ export {
     getActiveSplit,
     setActiveSplit,
     getTemplatesForSplit,
+    getSplitsForTemplate,
     getCurrentTemplateIndex,
     setCurrentTemplateIndex,
     advanceToNextTemplate,
     getCurrentTemplate,
     checkAndAdvanceIfNewDay,
     markWorkoutCompletedToday,
+    type SplitInfo,
 } from './splitService';
 export {
     requestNotificationPermissions,
@@ -38,3 +44,4 @@ export {
     cancelScheduledNotification,
     clearAllNotifications
 } from './notificationService';
+export { seedPremadeSplits } from './premadeSplits';

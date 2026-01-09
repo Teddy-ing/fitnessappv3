@@ -27,7 +27,9 @@ import {
     deleteSplit,
     saveSplit,
     getTemplates,
-    type Template
+    getSplitsForTemplate,
+    type Template,
+    type SplitInfo
 } from '../services';
 import { Split, SplitScheduleItem, createSplit } from '../models/split';
 import { Exercise } from '../models/exercise';
@@ -57,6 +59,9 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
     // Expanded templates (to show exercise details)
     const [expandedTemplateIds, setExpandedTemplateIds] = useState<Set<string>>(new Set());
 
+    // Template to splits mapping for display
+    const [templateSplitsMap, setTemplateSplitsMap] = useState<Map<string, SplitInfo[]>>(new Map());
+
     const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -68,6 +73,14 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
             setSplits(splitsData);
             setTemplates(templatesData);
             setActiveSplitState(active);
+
+            // Fetch split membership for all templates
+            const splitsMap = new Map<string, SplitInfo[]>();
+            await Promise.all(templatesData.map(async (template) => {
+                const splits = await getSplitsForTemplate(template.id);
+                splitsMap.set(template.id, splits);
+            }));
+            setTemplateSplitsMap(splitsMap);
         } catch (error) {
             console.error('Error loading splits:', error);
         }
@@ -256,7 +269,7 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                 <View style={styles.splitHeader}>
                     <Text style={styles.splitName}>{split.name}</Text>
                     {isActive && <Text style={styles.activeLabel}>Active</Text>}
-                    {split.isBuiltIn && <Text style={styles.builtInLabel}>Built-in</Text>}
+                    {split.isBuiltIn && <Text style={styles.builtInLabel}>Pre-made</Text>}
                 </View>
                 {split.description && (
                     <Text style={styles.splitDescription}>{split.description}</Text>
@@ -352,6 +365,18 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                                                 <Text style={styles.templateName}>{template.name}</Text>
                                                 <Text style={styles.templateExercises}>
                                                     {template.exerciseCount} exercises
+                                                </Text>
+                                                {/* Split membership */}
+                                                <Text style={styles.templateSplitInfo}>
+                                                    {(() => {
+                                                        const splits = templateSplitsMap.get(template.id) || [];
+                                                        if (splits.length === 0) {
+                                                            return 'No split yet';
+                                                        }
+                                                        return splits.map(s =>
+                                                            s.isBuiltIn ? `${s.name} (Pre-made)` : s.name
+                                                        ).join(', ');
+                                                    })()}
                                                 </Text>
                                             </View>
 
@@ -854,6 +879,11 @@ const styles = StyleSheet.create({
     },
     templateInfo: {
         flex: 1,
+    },
+    templateSplitInfo: {
+        color: colors.text.disabled,
+        fontSize: typography.size.xs,
+        marginTop: 2,
     },
     expandButton: {
         padding: spacing.sm,

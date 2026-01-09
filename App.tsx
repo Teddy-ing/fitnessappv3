@@ -11,14 +11,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppNavigator } from './src/navigation';
-import { requestNotificationPermissions, clearAllNotifications } from './src/services';
+import { requestNotificationPermissions, clearAllNotifications, seedPremadeSplits } from './src/services';
 
 export default function App() {
   const appState = useRef(AppState.currentState);
 
-  // Request notification permissions on app start
+  // Request notification permissions and seed premade splits on app start
   useEffect(() => {
     requestNotificationPermissions();
+    seedPremadeSplits();
   }, []);
 
   // Clear notifications when app comes to foreground

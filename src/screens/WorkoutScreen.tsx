@@ -35,16 +35,22 @@ import {
     getWorkouts,
     getTemplates,
     createTemplateFromWorkout,
+    findMatchingTemplate,
+    findTemplateByName,
+    findTemplatesByName,
+    overwriteTemplate,
     startWorkoutFromTemplate,
     deleteTemplate,
     getActiveSplit,
     getTemplatesForSplit,
+    getSplitsForTemplate,
     getCurrentTemplate,
     getCurrentTemplateIndex,
     advanceToNextTemplate,
     checkAndAdvanceIfNewDay,
     markWorkoutCompletedToday,
-    Template
+    Template,
+    SplitInfo
 } from '../services';
 import { Workout } from '../models/workout';
 import { Split } from '../models/split';
@@ -266,22 +272,29 @@ export default function WorkoutScreen() {
                     // Reload data first to ensure history is updated
                     await loadData();
 
-                    // Ask about saving as template
-                    Alert.alert(
-                        'Workout Saved!',
-                        'Would you like to save this as a template for quick access?',
-                        [
-                            { text: 'No Thanks', style: 'cancel' },
-                            {
-                                text: 'Save Template',
-                                onPress: () => {
-                                    setPendingWorkout(workout);
-                                    setTemplateName(workout.name);
-                                    setSaveTemplateModal(true);
-                                }
-                            },
-                        ]
-                    );
+                    // Check if workout matches an existing template
+                    const matchingTemplate = await findMatchingTemplate(workout);
+                    if (matchingTemplate) {
+                        // Exercises match existing template - no prompt needed
+                        console.log('[WorkoutScreen] Workout matches template:', matchingTemplate.name);
+                    } else {
+                        // Exercises differ - offer to save as template
+                        Alert.alert(
+                            'Workout Saved!',
+                            'This workout has different exercises than your templates. Save as a new template?',
+                            [
+                                { text: 'No Thanks', style: 'cancel' },
+                                {
+                                    text: 'Save Template',
+                                    onPress: () => {
+                                        setPendingWorkout(workout);
+                                        setTemplateName(workout.name);
+                                        setSaveTemplateModal(true);
+                                    }
+                                },
+                            ]
+                        );
+                    }
                 }
             } catch (error) {
                 console.error('[WorkoutScreen] Error finishing workout:', error);
@@ -295,12 +308,111 @@ export default function WorkoutScreen() {
         if (!pendingWorkout || !templateName.trim()) return;
 
         try {
-            await createTemplateFromWorkout(pendingWorkout, templateName.trim());
-            setSaveTemplateModal(false);
-            setPendingWorkout(null);
-            setTemplateName('');
-            await loadData();
-            Alert.alert('Success', 'Template saved!');
+            // Check if templates with this name already exist
+            const existingTemplates = await findTemplatesByName(templateName.trim());
+
+            if (existingTemplates.length === 0) {
+                // No existing templates - create new
+                await createTemplateFromWorkout(pendingWorkout, templateName.trim());
+                setSaveTemplateModal(false);
+                setPendingWorkout(null);
+                setTemplateName('');
+                await loadData();
+                Alert.alert('Success', 'Template saved!');
+            } else if (existingTemplates.length === 1) {
+                // Single template with this name - simple overwrite dialog
+                const existing = existingTemplates[0];
+                const splits = await getSplitsForTemplate(existing.id);
+                const splitText = splits.length > 0
+                    ? splits.map(s => s.isBuiltIn ? `${s.name} (Pre-made)` : s.name).join(', ')
+                    : 'no splits';
+
+                Alert.alert(
+                    'Template Exists',
+                    `A template named "${existing.name}" (${existing.exerciseCount} exercises, in ${splitText}) already exists. Overwrite it?`,
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                            text: 'Create New', onPress: async () => {
+                                await createTemplateFromWorkout(pendingWorkout, templateName.trim());
+                                setSaveTemplateModal(false);
+                                setPendingWorkout(null);
+                                setTemplateName('');
+                                await loadData();
+                                Alert.alert('Success', 'New template created!');
+                            }
+                        },
+                        {
+                            text: 'Overwrite',
+                            style: 'destructive',
+                            onPress: async () => {
+                                await overwriteTemplate(existing.id, pendingWorkout, templateName.trim());
+                                setSaveTemplateModal(false);
+                                setPendingWorkout(null);
+                                setTemplateName('');
+                                await loadData();
+                                Alert.alert('Success', 'Template updated!');
+                            }
+                        },
+                    ]
+                );
+            } else {
+                // Multiple templates with same name - show picker
+                const templateOptions = await Promise.all(
+                    existingTemplates.map(async (t) => {
+                        const splits = await getSplitsForTemplate(t.id);
+                        return { template: t, splits };
+                    })
+                );
+
+                // Sort: current split's templates first
+                templateOptions.sort((a, b) => {
+                    const aInActive = activeSplit && a.splits.some(s => s.id === activeSplit.id);
+                    const bInActive = activeSplit && b.splits.some(s => s.id === activeSplit.id);
+                    if (aInActive && !bInActive) return -1;
+                    if (!aInActive && bInActive) return 1;
+                    return 0;
+                });
+
+                // Build alert buttons
+                const buttons = templateOptions.map(({ template, splits }) => {
+                    const splitText = splits.length > 0
+                        ? splits.map(s => s.isBuiltIn ? `${s.name} (Pre-made)` : s.name).join(', ')
+                        : 'No split';
+                    return {
+                        text: `${splitText}`,
+                        onPress: async () => {
+                            await overwriteTemplate(template.id, pendingWorkout, templateName.trim());
+                            setSaveTemplateModal(false);
+                            setPendingWorkout(null);
+                            setTemplateName('');
+                            await loadData();
+                            Alert.alert('Success', 'Template updated!');
+                        }
+                    };
+                });
+
+                // Add "Create New" option
+                buttons.push({
+                    text: 'Create New',
+                    onPress: async () => {
+                        await createTemplateFromWorkout(pendingWorkout, templateName.trim());
+                        setSaveTemplateModal(false);
+                        setPendingWorkout(null);
+                        setTemplateName('');
+                        await loadData();
+                        Alert.alert('Success', 'New template created!');
+                    }
+                });
+
+                buttons.push({ text: 'Cancel', onPress: async () => { } });
+
+                Alert.alert(
+                    'Multiple Templates Found',
+                    `Multiple templates named "${templateName}" exist. Which one do you want to update?`,
+                    buttons as any
+                );
+            }
         } catch (error) {
             console.error('Error saving template:', error);
             Alert.alert('Error', 'Failed to save template');
