@@ -45,6 +45,7 @@ interface WorkoutState {
     addExercise: (exercise: Exercise) => void;
     removeExercise: (exerciseId: string) => void;
     reorderExercises: (fromIndex: number, toIndex: number) => void;
+    toggleSuperset: (exerciseId: string) => void;  // Link/unlink with next exercise
 
     // Actions - Set management
     addSet: (exerciseId: string) => void;
@@ -193,6 +194,50 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         exercises.splice(toIndex, 0, removed);
         // Reindex
         exercises.forEach((ex, idx) => { ex.orderIndex = idx; });
+
+        set({
+            activeWorkout: {
+                ...activeWorkout,
+                main: {
+                    ...activeWorkout.main,
+                    exercises,
+                },
+                updatedAt: new Date(),
+            },
+        });
+    },
+
+    toggleSuperset: (exerciseId: string) => {
+        const { activeWorkout } = get();
+        if (!activeWorkout) return;
+
+        const exercises = [...activeWorkout.main.exercises];
+        const exerciseIndex = exercises.findIndex(e => e.id === exerciseId);
+
+        if (exerciseIndex === -1 || exerciseIndex >= exercises.length - 1) return;
+
+        const currentExercise = exercises[exerciseIndex];
+        const nextExercise = exercises[exerciseIndex + 1];
+
+        // If current exercise is already in a superset with next, remove the link
+        if (currentExercise.supersetGroupId && currentExercise.supersetGroupId === nextExercise.supersetGroupId) {
+            // Check if there are other exercises in this superset group
+            const groupExercises = exercises.filter(e => e.supersetGroupId === currentExercise.supersetGroupId);
+
+            if (groupExercises.length === 2) {
+                // Only these two, remove the group entirely
+                exercises[exerciseIndex] = { ...currentExercise, supersetGroupId: null };
+                exercises[exerciseIndex + 1] = { ...nextExercise, supersetGroupId: null };
+            } else {
+                // Multiple exercises, just remove current from group
+                exercises[exerciseIndex] = { ...currentExercise, supersetGroupId: null };
+            }
+        } else {
+            // Create or join superset
+            const newGroupId = nextExercise.supersetGroupId || currentExercise.supersetGroupId || `superset-${Date.now()}`;
+            exercises[exerciseIndex] = { ...currentExercise, supersetGroupId: newGroupId };
+            exercises[exerciseIndex + 1] = { ...nextExercise, supersetGroupId: newGroupId };
+        }
 
         set({
             activeWorkout: {

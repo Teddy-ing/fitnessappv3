@@ -28,6 +28,7 @@ import {
     saveSplit,
     getTemplates,
     getSplitsForTemplate,
+    toggleSplitFavorite,
     type Template,
     type SplitInfo
 } from '../services';
@@ -46,6 +47,8 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
     const [activeSplit, setActiveSplitState] = useState<Split | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
+    const [editingSplit, setEditingSplit] = useState<Split | null>(null); // Split being edited
+    const [editIsFavorite, setEditIsFavorite] = useState(false); // Favorite status while editing
     const [newSplitName, setNewSplitName] = useState('');
     const [scheduleItems, setScheduleItems] = useState<SplitScheduleItem[]>([]);
 
@@ -104,31 +107,58 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
         }
     };
 
-    const handleDeleteSplit = (split: Split) => {
-        if (split.isBuiltIn) {
-            Alert.alert('Cannot Delete', 'Built-in splits cannot be deleted.');
+    // Handle edit split (long-press) - opens edit mode
+    const handleEditSplit = (split: Split) => {
+        // Populate form with existing split data
+        setEditingSplit(split);
+        setNewSplitName(split.name);
+        setScheduleItems([...split.schedule]);
+        setEditIsFavorite(split.isFavorite || false);
+        setIsCreating(true); // Reuse create UI for editing
+    };
+
+    // Handle delete split (from within edit mode)
+    const handleDeleteSplit = () => {
+        if (!editingSplit) return;
+
+        if (editingSplit.isBuiltIn) {
+            Alert.alert('Cannot Delete', 'Pre-made splits cannot be deleted, but you can edit them.');
             return;
         }
 
         Alert.alert(
             'Delete Split',
-            `Are you sure you want to delete "${split.name}"?`,
+            `Are you sure you want to delete "${editingSplit.name}"?`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: async () => {
-                        await deleteSplit(split.id);
-                        if (activeSplit?.id === split.id) {
+                        await deleteSplit(editingSplit.id);
+                        if (activeSplit?.id === editingSplit.id) {
                             setActiveSplitState(null);
                             onSplitSelected?.(null);
                         }
+                        setIsCreating(false);
+                        setEditingSplit(null);
+                        setNewSplitName('');
+                        setScheduleItems([]);
                         loadData();
                     },
                 },
             ]
         );
+    };
+
+    // Toggle favorite from list view (optimistic update to prevent flash)
+    const handleToggleSplitFavorite = async (splitId: string) => {
+        // Optimistically update local state immediately
+        setSplits(prev => prev.map(s =>
+            s.id === splitId ? { ...s, isFavorite: !s.isFavorite } : s
+        ));
+        // Persist to database
+        await toggleSplitFavorite(splitId);
     };
 
     const handleCreateSplit = async () => {
@@ -150,6 +180,43 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
         const split = createSplit(newSplitName.trim(), templateIds, scheduleItems);
         await saveSplit(split);
 
+        setNewSplitName('');
+        setScheduleItems([]);
+        setIsCreating(false);
+        loadData();
+    };
+
+    // Handle save (update) existing split
+    const handleSaveSplit = async () => {
+        if (!editingSplit) return;
+
+        if (!newSplitName.trim()) {
+            Alert.alert('Error', 'Please enter a name for your split.');
+            return;
+        }
+
+        if (scheduleItems.length === 0) {
+            Alert.alert('Error', 'Please add at least one template or rest day.');
+            return;
+        }
+
+        // Extract templateIds for backward compat
+        const templateIds = scheduleItems
+            .filter((item): item is { type: 'template'; templateId: string } => item.type === 'template')
+            .map(item => item.templateId);
+
+        // Update the existing split
+        const updatedSplit: Split = {
+            ...editingSplit,
+            name: newSplitName.trim(),
+            templateIds,
+            schedule: scheduleItems,
+            isFavorite: editIsFavorite,
+            updatedAt: new Date(),
+        };
+        await saveSplit(updatedSplit);
+
+        setEditingSplit(null);
         setNewSplitName('');
         setScheduleItems([]);
         setIsCreating(false);
@@ -264,10 +331,18 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                 key={split.id}
                 style={[styles.splitCard, isActive && styles.splitCardActive]}
                 onPress={() => handleSelectSplit(split)}
-                onLongPress={() => handleDeleteSplit(split)}
+                onLongPress={() => handleEditSplit(split)}
             >
                 <View style={styles.splitHeader}>
                     <Text style={styles.splitName}>{split.name}</Text>
+                    <TouchableOpacity
+                        style={styles.starButton}
+                        onPress={() => handleToggleSplitFavorite(split.id)}
+                    >
+                        <Text style={[styles.starButtonText, split.isFavorite && styles.starButtonActive]}>
+                            {split.isFavorite ? '★' : '☆'}
+                        </Text>
+                    </TouchableOpacity>
                     {isActive && <Text style={styles.activeLabel}>Active</Text>}
                     {split.isBuiltIn && <Text style={styles.builtInLabel}>Pre-made</Text>}
                 </View>
@@ -302,7 +377,9 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                     <TouchableOpacity onPress={onClose}>
                         <Text style={styles.closeButton}>Close</Text>
                     </TouchableOpacity>
-                    <Text style={styles.title}>{isCreating ? 'Create Split' : 'Browse Splits'}</Text>
+                    <Text style={styles.title}>
+                        {isCreating ? (editingSplit ? 'Edit Split' : 'Create Split') : 'Browse Splits'}
+                    </Text>
                     {!isCreating ? (
                         <TouchableOpacity onPress={() => setIsCreating(true)}>
                             <Text style={styles.createButton}>+ New</Text>
@@ -323,6 +400,19 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                             placeholder="e.g., My PPL Split"
                             placeholderTextColor={colors.text.disabled}
                         />
+
+                        {/* Favorite toggle - only in edit mode */}
+                        {editingSplit && (
+                            <TouchableOpacity
+                                style={styles.favoriteToggle}
+                                onPress={() => setEditIsFavorite(!editIsFavorite)}
+                            >
+                                <Text style={styles.favoriteIcon}>{editIsFavorite ? '★' : '☆'}</Text>
+                                <Text style={styles.favoriteText}>
+                                    {editIsFavorite ? 'Favorited' : 'Add to Favorites'}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
 
                         <Text style={styles.formLabel}>Select Templates</Text>
 
@@ -457,6 +547,7 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                                 style={styles.cancelButton}
                                 onPress={() => {
                                     setIsCreating(false);
+                                    setEditingSplit(null);
                                     setNewSplitName('');
                                     setScheduleItems([]);
                                 }}
@@ -465,11 +556,23 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={styles.saveButton}
-                                onPress={handleCreateSplit}
+                                onPress={editingSplit ? handleSaveSplit : handleCreateSplit}
                             >
-                                <Text style={styles.saveButtonText}>Create Split</Text>
+                                <Text style={styles.saveButtonText}>
+                                    {editingSplit ? 'Save Changes' : 'Create Split'}
+                                </Text>
                             </TouchableOpacity>
                         </View>
+
+                        {/* Delete button - only in edit mode */}
+                        {editingSplit && !editingSplit.isBuiltIn && (
+                            <TouchableOpacity
+                                style={styles.deleteButton}
+                                onPress={handleDeleteSplit}
+                            >
+                                <Text style={styles.deleteButtonText}>Delete Split</Text>
+                            </TouchableOpacity>
+                        )}
                     </ScrollView>
                 ) : (
                     /* Split list */
@@ -495,7 +598,9 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                         {splits.filter(s => !s.isBuiltIn).length > 0 && (
                             <>
                                 <Text style={styles.sectionTitle}>Your Splits</Text>
-                                {splits.filter(s => !s.isBuiltIn).map(renderSplitCard)}
+                                {splits.filter(s => !s.isBuiltIn)
+                                    .sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0))
+                                    .map(renderSplitCard)}
                             </>
                         )}
 
@@ -503,7 +608,9 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                         {splits.filter(s => s.isBuiltIn).length > 0 && (
                             <>
                                 <Text style={styles.sectionTitle}>Pre-made Splits</Text>
-                                {splits.filter(s => s.isBuiltIn).map(renderSplitCard)}
+                                {splits.filter(s => s.isBuiltIn)
+                                    .sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0))
+                                    .map(renderSplitCard)}
                             </>
                         )}
 
@@ -518,7 +625,7 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                         )}
 
                         <Text style={styles.hint}>
-                            Long-press a user split to delete it
+                            Long-press a split to edit it
                         </Text>
                     </ScrollView>
                 )}
@@ -720,6 +827,17 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.sm,
         marginLeft: spacing.sm,
     },
+    starButton: {
+        padding: spacing.xs,
+        marginLeft: spacing.xs,
+    },
+    starButtonText: {
+        color: colors.text.secondary,
+        fontSize: 18,
+    },
+    starButtonActive: {
+        color: colors.accent.warning,
+    },
     builtInLabel: {
         color: colors.text.disabled,
         fontSize: typography.size.xs,
@@ -779,6 +897,20 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         fontSize: typography.size.md,
     },
+    favoriteToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: spacing.md,
+    },
+    favoriteIcon: {
+        fontSize: 24,
+        color: colors.accent.warning,
+        marginRight: spacing.sm,
+    },
+    favoriteText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.md,
+    },
     templateOption: {
         backgroundColor: colors.background.secondary,
         borderRadius: borderRadius.md,
@@ -810,6 +942,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: spacing.md,
         marginTop: spacing.xl,
+        marginBottom: spacing.xxl,
     },
     cancelButton: {
         flex: 1,
@@ -831,6 +964,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     saveButtonText: {
+        color: colors.text.primary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.semibold,
+    },
+    deleteButton: {
+        backgroundColor: colors.accent.error,
+        borderRadius: borderRadius.md,
+        padding: spacing.md,
+        alignItems: 'center',
+        marginTop: spacing.lg,
+        marginBottom: spacing.xxl,
+    },
+    deleteButtonText: {
         color: colors.text.primary,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,

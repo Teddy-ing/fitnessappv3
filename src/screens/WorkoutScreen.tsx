@@ -70,6 +70,7 @@ export default function WorkoutScreen() {
         removeSet,
         updateSet,
         completeSet,
+        toggleSuperset,
         openExercisePicker,
         closeExercisePicker,
     } = useWorkoutStore();
@@ -921,25 +922,37 @@ export default function WorkoutScreen() {
                         </Text>
                     </View>
                 ) : (
-                    activeWorkout.main.exercises.map((workoutExercise) => (
-                        <ExerciseCard
-                            key={workoutExercise.id}
-                            workoutExercise={workoutExercise}
-                            focusState={focusState}
-                            onUpdateSet={(setId, updates) =>
-                                updateSet(workoutExercise.id, setId, updates)
-                            }
-                            onCompleteSet={(setId) =>
-                                completeSet(workoutExercise.id, setId)
-                            }
-                            onAddSet={() => addSet(workoutExercise.id)}
-                            onRemoveSet={(setId) =>
-                                removeSet(workoutExercise.id, setId)
-                            }
-                            onRemoveExercise={() => removeExercise(workoutExercise.id)}
-                            onFocusField={handleFocusField}
-                        />
-                    ))
+                    activeWorkout.main.exercises.map((workoutExercise, index) => {
+                        const exercises = activeWorkout.main.exercises;
+                        const nextExercise = exercises[index + 1];
+                        const isInSuperset = Boolean(workoutExercise.supersetGroupId);
+                        const isLastInSuperset = isInSuperset && (!nextExercise || nextExercise.supersetGroupId !== workoutExercise.supersetGroupId);
+                        const canSuperset = index < exercises.length - 1;
+
+                        return (
+                            <ExerciseCard
+                                key={workoutExercise.id}
+                                workoutExercise={workoutExercise}
+                                focusState={focusState}
+                                isInSuperset={isInSuperset}
+                                isLastInSuperset={isLastInSuperset}
+                                canSuperset={canSuperset}
+                                onUpdateSet={(setId, updates) =>
+                                    updateSet(workoutExercise.id, setId, updates)
+                                }
+                                onCompleteSet={(setId) =>
+                                    completeSet(workoutExercise.id, setId)
+                                }
+                                onAddSet={() => addSet(workoutExercise.id)}
+                                onRemoveSet={(setId) =>
+                                    removeSet(workoutExercise.id, setId)
+                                }
+                                onRemoveExercise={() => removeExercise(workoutExercise.id)}
+                                onToggleSuperset={() => toggleSuperset(workoutExercise.id)}
+                                onFocusField={handleFocusField}
+                            />
+                        );
+                    })
                 )}
 
                 {/* Add exercise button */}

@@ -21,22 +21,30 @@ export interface FocusState {
 interface ExerciseCardProps {
     workoutExercise: WorkoutExercise;
     focusState?: FocusState | null;
+    isInSuperset?: boolean;           // Is this exercise part of a superset?
+    isLastInSuperset?: boolean;       // Is this the last exercise in its superset group?
+    canSuperset?: boolean;            // Can this exercise be linked (not last in list)?
     onUpdateSet: (setId: string, updates: Partial<WorkoutSet>) => void;
     onCompleteSet: (setId: string) => void;
     onAddSet: () => void;
     onRemoveSet: (setId: string) => void;
     onRemoveExercise: () => void;
+    onToggleSuperset?: () => void;
     onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
 }
 
 export default function ExerciseCard({
     workoutExercise,
     focusState,
+    isInSuperset = false,
+    isLastInSuperset = false,
+    canSuperset = false,
     onUpdateSet,
     onCompleteSet,
     onAddSet,
     onRemoveSet,
     onRemoveExercise,
+    onToggleSuperset,
     onFocusField,
 }: ExerciseCardProps) {
     const { exercise, sets } = workoutExercise;
@@ -68,7 +76,14 @@ export default function ExerciseCard({
     };
 
     return (
-        <View style={styles.card}>
+        <View style={[styles.card, isInSuperset && !isLastInSuperset && styles.cardInSuperset]}>
+            {/* Superset badge */}
+            {isInSuperset && (
+                <View style={styles.supersetBadge}>
+                    <Text style={styles.supersetBadgeText}>SUPERSET</Text>
+                </View>
+            )}
+
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
@@ -112,14 +127,24 @@ export default function ExerciseCard({
                         onRemove={() => onRemoveSet(set.id)}
                         onFocusWeight={() => onFocusField?.(workoutExercise.id, set.id, 'weight')}
                         onFocusReps={() => onFocusField?.(workoutExercise.id, set.id, 'reps')}
+                        onChangeSetType={(newType) => onUpdateSet(set.id, { type: newType })}
                     />
                 ))}
             </View>
 
-            {/* Add set button */}
-            <TouchableOpacity style={styles.addSetButton} onPress={onAddSet}>
-                <Text style={styles.addSetText}>+ Add Set</Text>
-            </TouchableOpacity>
+            {/* Add set and superset buttons */}
+            <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.addSetButton} onPress={onAddSet}>
+                    <Text style={styles.addSetText}>+ Add Set</Text>
+                </TouchableOpacity>
+                {canSuperset && onToggleSuperset && (
+                    <TouchableOpacity style={styles.supersetButton} onPress={onToggleSuperset}>
+                        <Text style={styles.supersetButtonText}>
+                            {isInSuperset ? '🔗 Unlink' : '🔗 Link'}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+            </View>
 
             {/* Progress indicator */}
             {totalSets > 0 && (
@@ -147,6 +172,24 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
         marginBottom: spacing.md,
         overflow: 'hidden',
+    },
+    cardInSuperset: {
+        marginBottom: 0,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+        borderBottomWidth: 2,
+        borderBottomColor: colors.accent.primary,
+    },
+    supersetBadge: {
+        backgroundColor: colors.accent.primary,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.xs,
+    },
+    supersetBadgeText: {
+        color: colors.text.primary,
+        fontSize: typography.size.xs,
+        fontWeight: typography.weight.semibold,
+        textAlign: 'center',
     },
 
     // Header
@@ -225,6 +268,22 @@ const styles = StyleSheet.create({
         borderTopColor: colors.separator,
     },
     addSetText: {
+        color: colors.accent.primary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.medium,
+    },
+    actionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        borderTopWidth: 1,
+        borderTopColor: colors.separator,
+    },
+    supersetButton: {
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+    },
+    supersetButtonText: {
         color: colors.accent.primary,
         fontSize: typography.size.md,
         fontWeight: typography.weight.medium,

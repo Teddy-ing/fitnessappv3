@@ -22,6 +22,7 @@ export interface Split {
     templateIds: string[];         // Ordered list of template IDs (legacy, for backward compat)
     schedule: SplitScheduleItem[]; // New: schedule items including rest days
     isBuiltIn: boolean;            // Pre-generated splits shipped with app
+    isFavorite: boolean;           // User-favorited for priority sorting
     createdAt: Date;
     updatedAt: Date;
 }
@@ -41,6 +42,7 @@ export function createSplit(name: string, templateIds: string[] = [], schedule?:
         templateIds,
         schedule: finalSchedule,
         isBuiltIn: false,
+        isFavorite: false,
         createdAt: now,
         updatedAt: now,
     };

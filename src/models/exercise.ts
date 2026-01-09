@@ -49,6 +49,15 @@ export type Equipment =
     | 'bench'
     | 'foam_roller'
     | 'yoga_mat'
+    // Cardio equipment
+    | 'treadmill'
+    | 'stationary_bike'
+    | 'elliptical'
+    | 'rowing_machine'
+    | 'stair_climber'
+    | 'jump_rope'
+    | 'battle_ropes'
+    | 'plyo_box'
     | 'other'
     | 'none';
 

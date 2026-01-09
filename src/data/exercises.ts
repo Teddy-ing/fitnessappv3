@@ -530,6 +530,136 @@ export const SEED_EXERCISES: Exercise[] = [
     ),
 
     // ============================================
+    // CARDIO
+    // ============================================
+    seedExercise(
+        'treadmill-run',
+        'Treadmill Running',
+        'cardio',
+        ['quads', 'hamstrings', 'calves'],
+        ['glutes', 'core'],
+        ['treadmill'],
+        { trackWeight: false, trackReps: false, trackTime: true, trackDistance: true }
+    ),
+    seedExercise(
+        'outdoor-run',
+        'Outdoor Running',
+        'cardio',
+        ['quads', 'hamstrings', 'calves'],
+        ['glutes', 'core'],
+        ['none'],
+        { trackWeight: false, trackReps: false, trackTime: true, trackDistance: true }
+    ),
+    seedExercise(
+        'stationary-bike',
+        'Stationary Bike',
+        'cardio',
+        ['quads', 'hamstrings'],
+        ['calves', 'glutes'],
+        ['stationary_bike'],
+        { trackWeight: false, trackReps: false, trackTime: true, trackDistance: true }
+    ),
+    seedExercise(
+        'outdoor-cycling',
+        'Outdoor Cycling',
+        'cardio',
+        ['quads', 'hamstrings'],
+        ['calves', 'glutes'],
+        ['none'],
+        { trackWeight: false, trackReps: false, trackTime: true, trackDistance: true }
+    ),
+    seedExercise(
+        'rowing-machine',
+        'Rowing Machine',
+        'cardio',
+        ['back', 'quads'],
+        ['biceps', 'core', 'shoulders'],
+        ['rowing_machine'],
+        { trackWeight: false, trackReps: false, trackTime: true, trackDistance: true }
+    ),
+    seedExercise(
+        'elliptical',
+        'Elliptical',
+        'cardio',
+        ['quads', 'glutes'],
+        ['hamstrings', 'core'],
+        ['elliptical'],
+        { trackWeight: false, trackReps: false, trackTime: true, trackDistance: true }
+    ),
+    seedExercise(
+        'stair-climber',
+        'Stair Climber',
+        'cardio',
+        ['quads', 'glutes', 'calves'],
+        ['hamstrings'],
+        ['stair_climber'],
+        { trackWeight: false, trackReps: false, trackTime: true }
+    ),
+    seedExercise(
+        'jump-rope',
+        'Jump Rope',
+        'cardio',
+        ['calves'],
+        ['quads', 'shoulders', 'core'],
+        ['jump_rope'],
+        { trackWeight: false, trackTime: true }
+    ),
+    seedExercise(
+        'battle-ropes',
+        'Battle Ropes',
+        'cardio',
+        ['shoulders', 'core'],
+        ['biceps', 'triceps', 'back'],
+        ['battle_ropes'],
+        { trackWeight: false, trackTime: true }
+    ),
+    seedExercise(
+        'box-jumps',
+        'Box Jumps',
+        'cardio',
+        ['quads', 'glutes'],
+        ['calves', 'hamstrings'],
+        ['plyo_box'],
+        { trackWeight: false, trackTime: false }
+    ),
+    seedExercise(
+        'burpees',
+        'Burpees',
+        'cardio',
+        ['full_body'],
+        [],
+        ['none'],
+        { trackWeight: false, trackTime: false }
+    ),
+    seedExercise(
+        'mountain-climbers',
+        'Mountain Climbers',
+        'cardio',
+        ['core', 'shoulders'],
+        ['quads', 'hip_flexors'],
+        ['none'],
+        { trackWeight: false, trackTime: true }
+    ),
+    seedExercise(
+        'jumping-jacks',
+        'Jumping Jacks',
+        'cardio',
+        ['full_body'],
+        [],
+        ['none'],
+        { trackWeight: false, trackTime: true }
+    ),
+    seedExercise(
+        'high-knees',
+        'High Knees',
+        'cardio',
+        ['hip_flexors', 'core'],
+        ['quads', 'calves'],
+        ['none'],
+        { trackWeight: false, trackTime: true }
+    ),
+
+    // ============================================
     // STRETCHES
     // ============================================
     seedExercise(

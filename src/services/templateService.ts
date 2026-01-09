@@ -28,6 +28,7 @@ export interface Template {
     exercises: TemplateExercise[];
     lastUsedAt: Date | null;
     useCount: number;
+    isFavorite: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -108,6 +109,7 @@ export async function createTemplateFromWorkout(
         })),
         lastUsedAt: null,
         useCount: 0,
+        isFavorite: false,
         createdAt: now,
         updatedAt: now,
     };
@@ -287,6 +289,66 @@ export async function overwriteTemplate(
 }
 
 /**
+ * Update a template's name and exercises directly
+ * Used by the template edit screen
+ */
+export async function updateTemplate(
+    templateId: string,
+    name: string,
+    exercises: Array<{ exercise: Exercise; defaultSets: number }>
+): Promise<Template | null> {
+    const db = await getDatabase();
+    if (!db) return null;
+
+    const now = new Date();
+
+    await db.withTransactionAsync(async () => {
+        // Update template metadata
+        await db.runAsync(
+            `UPDATE templates SET name = ?, updated_at = ? WHERE id = ?`,
+            [name, now.toISOString(), templateId]
+        );
+
+        // Delete old exercises
+        await db.runAsync(
+            `DELETE FROM template_exercises WHERE template_id = ?`,
+            [templateId]
+        );
+
+        // Insert new exercises
+        for (let i = 0; i < exercises.length; i++) {
+            const { exercise, defaultSets } = exercises[i];
+            const exerciseId = Crypto.randomUUID();
+            await db.runAsync(
+                `INSERT INTO template_exercises (
+                    id, template_id, exercise_id, exercise_name, exercise_category,
+                    exercise_muscle_groups, exercise_equipment, exercise_track_weight,
+                    exercise_track_reps, exercise_track_time, order_index, default_sets, note
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    exerciseId,
+                    templateId,
+                    exercise.id,
+                    exercise.name,
+                    exercise.category,
+                    JSON.stringify(exercise.muscleGroups),
+                    JSON.stringify(exercise.equipment),
+                    exercise.trackWeight ? 1 : 0,
+                    exercise.trackReps ? 1 : 0,
+                    exercise.trackTime ? 1 : 0,
+                    i,
+                    defaultSets,
+                    null,
+                ]
+            );
+        }
+    });
+
+    // Return updated template
+    return getTemplateById(templateId);
+}
+
+/**
  * Start a new workout from a template
  */
 export async function startWorkoutFromTemplate(templateId: string): Promise<Workout | null> {
@@ -366,9 +428,29 @@ async function hydrateTemplate(row: any): Promise<Template> {
         exercises,
         lastUsedAt: row.last_used_at ? new Date(row.last_used_at) : null,
         useCount: row.use_count,
+        isFavorite: row.is_favorite === 1,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
     };
+}
+
+/**
+ * Toggle the favorite status of a template
+ */
+export async function toggleTemplateFavorite(templateId: string): Promise<boolean> {
+    const db = await getDatabase();
+    if (!db) return false;
+
+    await db.runAsync(
+        `UPDATE templates SET is_favorite = CASE WHEN is_favorite = 1 THEN 0 ELSE 1 END WHERE id = ?`,
+        [templateId]
+    );
+
+    const result = await db.getFirstAsync<{ is_favorite: number }>(
+        `SELECT is_favorite FROM templates WHERE id = ?`,
+        [templateId]
+    );
+    return result?.is_favorite === 1;
 }
 
 export default {
@@ -380,5 +462,7 @@ export default {
     findTemplateByName,
     findTemplatesByName,
     overwriteTemplate,
+    updateTemplate,
+    toggleTemplateFavorite,
     startWorkoutFromTemplate,
 };

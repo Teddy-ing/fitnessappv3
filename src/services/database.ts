@@ -204,6 +204,30 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
         );
     `);
 
+    // Create exercises table (stores custom exercises and user modifications to built-in)
+    await database.execAsync(`
+        CREATE TABLE IF NOT EXISTS exercises (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'strength',
+            muscle_groups TEXT,
+            equipment TEXT,
+            description TEXT,
+            instructions TEXT,
+            image_path TEXT,
+            track_weight INTEGER DEFAULT 1,
+            track_reps INTEGER DEFAULT 1,
+            track_time INTEGER DEFAULT 0,
+            track_distance INTEGER DEFAULT 0,
+            is_custom INTEGER DEFAULT 1,
+            is_hidden INTEGER DEFAULT 0,
+            is_favorite INTEGER DEFAULT 0,
+            notes TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    `);
+
     // Create user_preferences table (stores active split, etc.)
     await database.execAsync(`
         CREATE TABLE IF NOT EXISTS user_preferences (
@@ -213,12 +237,26 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
     `);
 
     // Create indexes
-    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workouts_completed_at ON workouts(completed_at);`);
-    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workout_exercises_workout_id ON workout_exercises(workout_id);`);
-    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise_id ON workout_sets(workout_exercise_id);`);
-    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_template_exercises_template_id ON template_exercises(template_id);`);
-    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_splits_templates_split_id ON splits_templates(split_id);`);
-    await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_splits_schedule_split_id ON splits_schedule(split_id);`);
+    await database.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_workouts_started_at ON workouts(started_at);
+        CREATE INDEX IF NOT EXISTS idx_workout_exercises_workout_id ON workout_exercises(workout_id);
+        CREATE INDEX IF NOT EXISTS idx_workout_sets_workout_exercise_id ON workout_sets(workout_exercise_id);
+        CREATE INDEX IF NOT EXISTS idx_template_exercises_template_id ON template_exercises(template_id);
+        CREATE INDEX IF NOT EXISTS idx_splits_templates_split_id ON splits_templates(split_id);
+        CREATE INDEX IF NOT EXISTS idx_splits_schedule_split_id ON splits_schedule(split_id);
+    `);
+
+    // Migration: Add is_favorite columns (safe to run multiple times)
+    try {
+        await database.execAsync(`ALTER TABLE templates ADD COLUMN is_favorite INTEGER DEFAULT 0;`);
+    } catch (e) {
+        // Column already exists, ignore
+    }
+    try {
+        await database.execAsync(`ALTER TABLE splits ADD COLUMN is_favorite INTEGER DEFAULT 0;`);
+    } catch (e) {
+        // Column already exists, ignore
+    }
 }
 
 /**

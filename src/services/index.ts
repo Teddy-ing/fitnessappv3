@@ -16,6 +16,8 @@ export {
     findTemplateByName,
     findTemplatesByName,
     overwriteTemplate,
+    updateTemplate,
+    toggleTemplateFavorite,
     startWorkoutFromTemplate,
     type Template,
     type TemplateExercise
@@ -35,6 +37,7 @@ export {
     getCurrentTemplate,
     checkAndAdvanceIfNewDay,
     markWorkoutCompletedToday,
+    toggleSplitFavorite,
     type SplitInfo,
 } from './splitService';
 export {
@@ -45,3 +48,14 @@ export {
     clearAllNotifications
 } from './notificationService';
 export { seedPremadeSplits } from './premadeSplits';
+export {
+    getExercises,
+    getExerciseById,
+    createCustomExercise,
+    updateExercise as updateCustomExercise,
+    deleteExercise,
+    toggleExerciseHidden,
+    toggleExerciseFavorite,
+    getExercisesByCategory,
+    searchExercises,
+} from './exerciseService';

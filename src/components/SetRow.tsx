@@ -8,7 +8,7 @@
  */
 
 import React, { useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { WorkoutSet, SetType } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
@@ -28,6 +28,7 @@ interface SetRowProps {
     onRemove: () => void;
     onFocusWeight?: () => void;  // Called when weight field tapped
     onFocusReps?: () => void;    // Called when reps field tapped
+    onChangeSetType?: (newType: SetType) => void;  // Called when set type changed
 }
 
 export default function SetRow({
@@ -45,10 +46,14 @@ export default function SetRow({
     onRemove,
     onFocusWeight,
     onFocusReps,
+    onChangeSetType,
 }: SetRowProps) {
     const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
     const isWarmup = set.type === 'warmup';
+    const isDrop = set.type === 'drop';
+    const isFailure = set.type === 'failure';
+    const isAmrap = set.type === 'amrap';
 
     // Get set type indicator
     const getSetTypeLabel = (type: SetType): string => {
@@ -61,10 +66,48 @@ export default function SetRow({
         }
     };
 
+    // Get badge style based on set type
+    const getBadgeStyle = () => {
+        if (isWarmup) return [styles.setNumber, styles.setNumberWarmup];
+        if (isDrop) return [styles.setNumber, styles.setNumberDrop];
+        if (isFailure) return [styles.setNumber, styles.setNumberFailure];
+        if (isAmrap) return [styles.setNumber, styles.setNumberAmrap];
+        return [styles.setNumber];
+    };
+
+    // Get badge text style
+    const getBadgeTextStyle = () => {
+        if (isWarmup || isDrop || isFailure || isAmrap) {
+            return [styles.setNumberText, styles.setNumberTextSpecial];
+        }
+        return [styles.setNumberText];
+    };
+
+    // Handle set type change
+    const handleSetTypePress = () => {
+        if (!onChangeSetType || isCompleted) return;
+
+        Alert.alert(
+            'Set Type',
+            'Choose set type',
+            [
+                { text: 'Working', onPress: () => onChangeSetType('working') },
+                { text: 'Warmup', onPress: () => onChangeSetType('warmup') },
+                { text: 'Drop Set', onPress: () => onChangeSetType('drop') },
+                { text: 'Failure', onPress: () => onChangeSetType('failure') },
+                { text: 'AMRAP', onPress: () => onChangeSetType('amrap') },
+                { text: 'Cancel', style: 'cancel' },
+            ]
+        );
+    };
+
     // Get row background based on state
     const getRowStyle = () => {
         if (isCompleted) return [styles.row, styles.rowCompleted];
         if (isWarmup) return [styles.row, styles.rowWarmup];
+        if (isDrop) return [styles.row, styles.rowDrop];
+        if (isFailure) return [styles.row, styles.rowFailure];
+        if (isAmrap) return [styles.row, styles.rowAmrap];
         return [styles.row];
     };
 
@@ -123,12 +166,16 @@ export default function SetRow({
             overshootRight={false}
         >
             <View style={getRowStyle()}>
-                {/* Set number/type indicator */}
-                <View style={[styles.setNumber, isWarmup && styles.setNumberWarmup]}>
-                    <Text style={[styles.setNumberText, isWarmup && styles.setNumberTextWarmup]}>
+                {/* Set number/type indicator - tap to change type */}
+                <TouchableOpacity
+                    style={getBadgeStyle()}
+                    onPress={handleSetTypePress}
+                    disabled={isCompleted || !onChangeSetType}
+                >
+                    <Text style={getBadgeTextStyle()}>
                         {getSetTypeLabel(set.type)}
                     </Text>
-                </View>
+                </TouchableOpacity>
 
                 {/* Previous (suggested) value - shown if available */}
                 {set.suggestedWeight && (
@@ -225,6 +272,15 @@ const styles = StyleSheet.create({
     rowWarmup: {
         backgroundColor: 'rgba(245, 158, 11, 0.1)',
     },
+    rowDrop: {
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    },
+    rowFailure: {
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    },
+    rowAmrap: {
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    },
 
     // Set number
     setNumber: {
@@ -239,6 +295,15 @@ const styles = StyleSheet.create({
     setNumberWarmup: {
         backgroundColor: colors.accent.warning,
     },
+    setNumberDrop: {
+        backgroundColor: colors.accent.primary,
+    },
+    setNumberFailure: {
+        backgroundColor: colors.accent.error,
+    },
+    setNumberAmrap: {
+        backgroundColor: colors.accent.success,
+    },
     setNumberText: {
         color: colors.text.primary,
         fontSize: typography.size.sm,
@@ -246,6 +311,9 @@ const styles = StyleSheet.create({
     },
     setNumberTextWarmup: {
         color: colors.background.primary,
+    },
+    setNumberTextSpecial: {
+        color: colors.text.primary,
     },
 
     // Previous value hint

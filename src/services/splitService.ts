@@ -59,9 +59,9 @@ export async function saveSplit(split: Split): Promise<Split | null> {
     await db.withTransactionAsync(async () => {
         // Insert or update split
         await db.runAsync(
-            `INSERT OR REPLACE INTO splits (id, name, description, is_built_in, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [split.id, split.name, split.description, split.isBuiltIn ? 1 : 0,
+            `INSERT OR REPLACE INTO splits (id, name, description, is_built_in, is_favorite, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [split.id, split.name, split.description, split.isBuiltIn ? 1 : 0, split.isFavorite ? 1 : 0,
             split.createdAt.toISOString(), now.toISOString()]
         );
 
@@ -383,9 +383,29 @@ async function hydrateSplit(row: any): Promise<Split> {
         templateIds,
         schedule,
         isBuiltIn: row.is_built_in === 1,
+        isFavorite: row.is_favorite === 1,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
     };
+}
+
+/**
+ * Toggle the favorite status of a split
+ */
+export async function toggleSplitFavorite(splitId: string): Promise<boolean> {
+    const db = await getDatabase();
+    if (!db) return false;
+
+    await db.runAsync(
+        `UPDATE splits SET is_favorite = CASE WHEN is_favorite = 1 THEN 0 ELSE 1 END WHERE id = ?`,
+        [splitId]
+    );
+
+    const result = await db.getFirstAsync<{ is_favorite: number }>(
+        `SELECT is_favorite FROM splits WHERE id = ?`,
+        [splitId]
+    );
+    return result?.is_favorite === 1;
 }
 
 export default {
@@ -396,4 +416,5 @@ export default {
     getActiveSplit,
     setActiveSplit,
     getTemplatesForSplit,
+    toggleSplitFavorite,
 };
