@@ -657,21 +657,13 @@ export default function WorkoutScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Browse buttons row */}
-                    <View style={styles.browseButtonsRow}>
-                        <TouchableOpacity
-                            style={styles.browseButton}
-                            onPress={() => setShowTemplatesModal(true)}
-                        >
-                            <Text style={styles.browseButtonText}>Browse Templates →</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.browseButton}
-                            onPress={() => setShowSplitsModal(true)}
-                        >
-                            <Text style={styles.browseButtonText}>Browse Splits →</Text>
-                        </TouchableOpacity>
-                    </View>
+                    {/* Browse templates link */}
+                    <TouchableOpacity
+                        style={styles.browseTemplatesLink}
+                        onPress={() => setShowTemplatesModal(true)}
+                    >
+                        <Text style={styles.browseTemplatesLinkText}>Browse all templates →</Text>
+                    </TouchableOpacity>
 
                     {/* Current Template and Current Split cards */}
                     <View style={styles.currentCardsRow}>
@@ -1086,6 +1078,18 @@ const styles = StyleSheet.create({
     section: {
         marginTop: spacing.xl,
     },
+
+    // Browse templates link
+    browseTemplatesLink: {
+        marginTop: spacing.xs,
+        marginBottom: spacing.md,
+        alignItems: 'flex-start',
+    },
+    browseTemplatesLinkText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+    },
+
     sectionTitle: {
         fontSize: typography.size.lg,
         fontWeight: typography.weight.semibold,

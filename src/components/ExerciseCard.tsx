@@ -9,7 +9,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { WorkoutExercise, WorkoutSet } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useWorkoutStore } from '../stores';
 import SetRow from './SetRow';
+import ActiveRestLine from './ActiveRestLine';
 
 // Focus state type for keyboard coordination
 export interface FocusState {
@@ -75,6 +77,24 @@ export default function ExerciseCard({
             focusState?.field === field;
     };
 
+    // Get timer state from store
+    const {
+        restTimerActive,
+        restTimerRemaining,
+        restTimerDuration,
+        activeRestTimerExerciseId,
+        activeRestTimerSetId,
+        adjustRestTimer,
+        stopRestTimer,
+    } = useWorkoutStore();
+
+    // Check if a specific set has the active timer
+    const isSetTimerActive = (setId: string) => {
+        return restTimerActive &&
+            activeRestTimerExerciseId === workoutExercise.id &&
+            activeRestTimerSetId === setId;
+    };
+
     return (
         <View style={[styles.card, isInSuperset && !isLastInSuperset && styles.cardInSuperset]}>
             {/* Superset badge */}
@@ -113,22 +133,33 @@ export default function ExerciseCard({
             {/* Sets list */}
             <View style={styles.setsList}>
                 {sets.map((set, index) => (
-                    <SetRow
-                        key={set.id}
-                        set={set}
-                        setNumber={set.type === 'warmup' ? 0 : workingSetNumber(index)}
-                        trackWeight={exercise.trackWeight}
-                        trackReps={exercise.trackReps}
-                        trackTime={exercise.trackTime}
-                        isWeightFocused={isFieldFocused(set.id, 'weight')}
-                        isRepsFocused={isFieldFocused(set.id, 'reps')}
-                        onUpdate={(updates) => onUpdateSet(set.id, updates)}
-                        onComplete={() => onCompleteSet(set.id)}
-                        onRemove={() => onRemoveSet(set.id)}
-                        onFocusWeight={() => onFocusField?.(workoutExercise.id, set.id, 'weight')}
-                        onFocusReps={() => onFocusField?.(workoutExercise.id, set.id, 'reps')}
-                        onChangeSetType={(newType) => onUpdateSet(set.id, { type: newType })}
-                    />
+                    <React.Fragment key={set.id}>
+                        <SetRow
+                            set={set}
+                            setNumber={set.type === 'warmup' ? 0 : workingSetNumber(index)}
+                            trackWeight={exercise.trackWeight}
+                            trackReps={exercise.trackReps}
+                            trackTime={exercise.trackTime}
+                            isWeightFocused={isFieldFocused(set.id, 'weight')}
+                            isRepsFocused={isFieldFocused(set.id, 'reps')}
+                            onUpdate={(updates) => onUpdateSet(set.id, updates)}
+                            onComplete={() => onCompleteSet(set.id)}
+                            onRemove={() => onRemoveSet(set.id)}
+                            onFocusWeight={() => onFocusField?.(workoutExercise.id, set.id, 'weight')}
+                            onFocusReps={() => onFocusField?.(workoutExercise.id, set.id, 'reps')}
+                            onChangeSetType={(newType) => onUpdateSet(set.id, { type: newType })}
+                        />
+                        {/* Show rest timer after completed sets */}
+                        {isSetTimerActive(set.id) && (
+                            <ActiveRestLine
+                                duration={restTimerDuration}
+                                remaining={restTimerRemaining}
+                                isActive={true}
+                                onAdjustTime={adjustRestTimer}
+                                onSkip={stopRestTimer}
+                            />
+                        )}
+                    </React.Fragment>
                 ))}
             </View>
 

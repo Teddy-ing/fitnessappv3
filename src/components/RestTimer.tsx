@@ -28,6 +28,7 @@ export default function RestTimer() {
     } = useWorkoutStore();
 
     const appState = useRef(AppState.currentState);
+    const [isInForeground, setIsInForeground] = React.useState(AppState.currentState === 'active');
 
     // Use background timer for ticking
     useEffect(() => {
@@ -50,6 +51,9 @@ export default function RestTimer() {
     // Handle app state changes
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+            // Track foreground state
+            setIsInForeground(nextAppState === 'active');
+
             if (
                 appState.current.match(/inactive|background/) &&
                 nextAppState === 'active' &&
@@ -66,8 +70,9 @@ export default function RestTimer() {
         };
     }, [restTimerActive, tickRestTimer]);
 
-    // Don't render if timer is not active
-    if (!restTimerActive) return null;
+    // Don't render if timer is not active OR if app is in foreground
+    // (inline timers handle the foreground display now)
+    if (!restTimerActive || isInForeground) return null;
 
     // Format time as MM:SS
     const formatTime = (seconds: number): string => {

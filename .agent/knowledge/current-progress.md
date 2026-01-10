@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Development (Feature Complete MVP + Splits + Rest Days)
-- **Status:** Core workout logging, rest timer, database, templates, splits, and rest days all implemented
-- **Next Milestone:** Testing, UI polish, exercise management
+- **Phase:** Development (Feature Complete MVP + Splits + Rest Days + Exercise Overhaul)
+- **Status:** Core workout logging, rest timer, database, templates, splits, rest days, and exercise management all implemented
+- **Next Milestone:** Bug fixes (superset unlink), UI polish, ML features
 
 ---
 
@@ -49,12 +49,16 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Browse Templates/Splits dual-button layout**
 - [x] **Current Template + Current Split cards side-by-side**
 - [x] **Rest days in split creation** (Add Rest Day button, schedule preview)
+- [x] **Phase 1: Custom Exercises** (add/edit/delete custom exercises, favorites, hide/unhide)
+- [x] **Phase 2: Set Variations** (set type selector, visual badges W/D/F/A, row colors)
+- [x] **Phase 3: Cardio & Stretching** (category tabs, 14 cardio exercises, equipment types)
+- [x] **Polish fixes** (favorites sort to top, Hidden tab at end, smaller category icons)
 
 ---
 
 ## In Progress
 
-- [ ] Test rest days feature on Android device
+- [ ] **BUG-001: Superset unlink** — First exercise disappears when unlinking superset (deferred)
 - [ ] Test full workflow on Android device
 - [ ] Address any UI/UX feedback from testing
 
@@ -141,6 +145,72 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 **Deferred to future session:**
 - Rest days UI in split creation (data model supports it)
+
+---
+
+### 2026-01-09: Exercise System Overhaul (Phase 1-3)
+
+**Duration:** ~4+ hours across sessions
+**Focus:** Complete exercise management system with custom exercises, set variations, and cardio/stretching support
+
+**What was done:**
+
+**Phase 1a: Exercise Database & Service**
+- Created `exercises` database table for custom exercises
+- Created `exerciseService.ts` with full CRUD operations
+- Added favorites toggle and hide/unhide functionality
+
+**Phase 1b: Add/Edit Exercise UI**
+- Created `AddExerciseScreen.tsx` modal with form
+- Edit exercise (reuses AddExerciseScreen)
+- Delete exercise (custom only)
+- ExercisePicker '+ New' button
+- Star toggle for favorites (in list view)
+- Long-press menu for hide/edit options
+- 'Custom' badge on user-created exercises
+
+**Phase 1c: Images & Polish**
+- Hidden exercises filter tab with Unhide button
+- Exercise images with placeholder
+- All styles for new UI elements
+
+**Phase 2: Set Variations UI**
+- Set type selector (tap badge → action sheet: Working/Warmup/Drop/Failure/AMRAP)
+- Visual badges for set types (W/D/F/A letters with distinct colors)
+- Row background colors per set type
+- Superset grouping UI (Link button + SUPERSET badge + visual connector)
+  - **NOTE: Superset unlink has a bug — see BUG-001**
+
+**Phase 3: Cardio & Stretching**
+- Category tabs in ExercisePicker (All/Strength/Cardio/Stretch with icons)
+- Muscle filters only show for Strength category
+- 14 cardio exercises added to seed data:
+  - Treadmill Running, Outdoor Running, Stationary Bike, Outdoor Cycling
+  - Rowing Machine, Elliptical, Stair Climber, Jump Rope
+  - Battle Ropes, Box Jumps, Burpees, Mountain Climbers, Jumping Jacks, High Knees
+- 8 new equipment types: treadmill, stationary_bike, elliptical, rowing_machine, stair_climber, jump_rope, battle_ropes, plyo_box
+
+**Polish Fixes:**
+- Favorites sort to top of exercise list
+- Hidden filter tab moved to end of list
+- First-time hide notice (per session)
+- Smaller category icons with added spacing
+
+**Files created:**
+- `src/screens/AddExerciseScreen.tsx` — Add/edit exercise modal
+
+**Files significantly modified:**
+- `src/components/ExercisePicker.tsx` — Category tabs, favorites sorting, UI improvements
+- `src/components/ExerciseCard.tsx` — Superset UI (badge, connector, link button)
+- `src/components/SetRow.tsx` — Set type selector, visual badges, row colors
+- `src/stores/workoutStore.ts` — toggleSuperset function
+- `src/screens/WorkoutScreen.tsx` — Superset state computation
+- `src/data/exercises.ts` — 14 cardio exercises
+- `src/models/exercise.ts` — 8 new equipment types
+- `src/services/exerciseService.ts` — CRUD operations for exercises
+
+**Known Bug (deferred):**
+- BUG-001: Superset unlink causes first exercise to visually disappear
 
 ---
 
@@ -325,6 +395,6 @@ Screenshots of competitor apps are available in `.agent/reference/`:
 ---
 
 ## Last Updated
-- Date: 2026-01-08
-- Session Context: Splits feature and template cycling implemented, documenting knowledge before chat pivot
+- Date: 2026-01-09
+- Session Context: Exercise system overhaul (Phase 1-3) completed, documenting knowledge before chat pivot
 

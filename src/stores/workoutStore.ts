@@ -32,6 +32,12 @@ interface WorkoutState {
     restTimerActive: boolean;       // Is timer running?
     restTimerEndTime: number | null; // Timestamp when timer ends
 
+    // Per-exercise rest times (exerciseId -> seconds)
+    exerciseRestTimes: Record<string, number>;
+    // Track which set triggered the current timer (for inline display)
+    activeRestTimerExerciseId: string | null;
+    activeRestTimerSetId: string | null;
+
     // UI state
     isExercisePickerOpen: boolean;
     currentExerciseId: string | null; // For focusing on a specific exercise
@@ -54,10 +60,12 @@ interface WorkoutState {
     completeSet: (exerciseId: string, setId: string) => void;
 
     // Actions - Rest timer
-    startRestTimer: (seconds?: number) => void;
+    startRestTimer: (seconds?: number, exerciseId?: string, setId?: string) => void;
     stopRestTimer: () => void;
     adjustRestTimer: (delta: number) => void;
     tickRestTimer: () => void;
+    setExerciseRestTime: (exerciseId: string, seconds: number) => void;
+    getExerciseRestTime: (exerciseId: string) => number;
 
     // Actions - UI state
     openExercisePicker: () => void;
@@ -71,6 +79,9 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     restTimerRemaining: 0,
     restTimerActive: false,
     restTimerEndTime: null,
+    exerciseRestTimes: {},
+    activeRestTimerExerciseId: null,
+    activeRestTimerSetId: null,
     isExercisePickerOpen: false,
     currentExerciseId: null,
 
@@ -211,33 +222,41 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         const { activeWorkout } = get();
         if (!activeWorkout) return;
 
-        const exercises = [...activeWorkout.main.exercises];
-        const exerciseIndex = exercises.findIndex(e => e.id === exerciseId);
+        const exerciseIndex = activeWorkout.main.exercises.findIndex(e => e.id === exerciseId);
+        if (exerciseIndex === -1 || exerciseIndex >= activeWorkout.main.exercises.length - 1) return;
 
-        if (exerciseIndex === -1 || exerciseIndex >= exercises.length - 1) return;
+        const currentExercise = activeWorkout.main.exercises[exerciseIndex];
+        const nextExercise = activeWorkout.main.exercises[exerciseIndex + 1];
 
-        const currentExercise = exercises[exerciseIndex];
-        const nextExercise = exercises[exerciseIndex + 1];
+        // Create new exercises array with immutable updates
+        const exercises = activeWorkout.main.exercises.map((ex, idx) => {
+            // If current exercise is already in a superset with next, remove the link
+            if (currentExercise.supersetGroupId && currentExercise.supersetGroupId === nextExercise.supersetGroupId) {
+                // Check if there are other exercises in this superset group
+                const groupExercises = activeWorkout.main.exercises.filter(
+                    e => e.supersetGroupId === currentExercise.supersetGroupId
+                );
 
-        // If current exercise is already in a superset with next, remove the link
-        if (currentExercise.supersetGroupId && currentExercise.supersetGroupId === nextExercise.supersetGroupId) {
-            // Check if there are other exercises in this superset group
-            const groupExercises = exercises.filter(e => e.supersetGroupId === currentExercise.supersetGroupId);
-
-            if (groupExercises.length === 2) {
-                // Only these two, remove the group entirely
-                exercises[exerciseIndex] = { ...currentExercise, supersetGroupId: null };
-                exercises[exerciseIndex + 1] = { ...nextExercise, supersetGroupId: null };
+                if (groupExercises.length === 2) {
+                    // Only these two, remove the group entirely
+                    if (idx === exerciseIndex || idx === exerciseIndex + 1) {
+                        return { ...ex, supersetGroupId: null };
+                    }
+                } else {
+                    // Multiple exercises, just remove current from group
+                    if (idx === exerciseIndex) {
+                        return { ...ex, supersetGroupId: null };
+                    }
+                }
             } else {
-                // Multiple exercises, just remove current from group
-                exercises[exerciseIndex] = { ...currentExercise, supersetGroupId: null };
+                // Create or join superset
+                if (idx === exerciseIndex || idx === exerciseIndex + 1) {
+                    const newGroupId = nextExercise.supersetGroupId || currentExercise.supersetGroupId || `superset-${Date.now()}`;
+                    return { ...ex, supersetGroupId: newGroupId };
+                }
             }
-        } else {
-            // Create or join superset
-            const newGroupId = nextExercise.supersetGroupId || currentExercise.supersetGroupId || `superset-${Date.now()}`;
-            exercises[exerciseIndex] = { ...currentExercise, supersetGroupId: newGroupId };
-            exercises[exerciseIndex + 1] = { ...nextExercise, supersetGroupId: newGroupId };
-        }
+            return ex;
+        });
 
         set({
             activeWorkout: {
@@ -381,7 +400,9 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
         // Start rest timer when completing a set (not when uncompleting)
         if (wasCompleted) {
-            startRestTimer();
+            // Get per-exercise rest time or default
+            const exerciseRestTime = get().exerciseRestTimes[exerciseId] ?? DEFAULT_REST_DURATION;
+            startRestTimer(exerciseRestTime, exerciseId, setId);
         }
     },
 
@@ -389,7 +410,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     // Rest timer
     // ========================================
 
-    startRestTimer: (seconds?: number) => {
+    startRestTimer: (seconds?: number, exerciseId?: string, setId?: string) => {
         const duration = seconds ?? get().restTimerDuration;
         const endTime = Date.now() + (duration * 1000);
 
@@ -398,6 +419,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             restTimerRemaining: duration,
             restTimerActive: true,
             restTimerEndTime: endTime,
+            activeRestTimerExerciseId: exerciseId ?? null,
+            activeRestTimerSetId: setId ?? null,
         });
     },
 
@@ -406,18 +429,33 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             restTimerActive: false,
             restTimerRemaining: 0,
             restTimerEndTime: null,
+            activeRestTimerExerciseId: null,
+            activeRestTimerSetId: null,
         });
     },
 
     adjustRestTimer: (delta: number) => {
-        const { restTimerRemaining, restTimerActive, restTimerEndTime } = get();
+        const { restTimerRemaining, restTimerActive, restTimerEndTime, restTimerDuration, activeRestTimerExerciseId } = get();
         if (!restTimerActive) return;
 
         const newRemaining = Math.max(0, restTimerRemaining + delta);
+        const newDuration = Math.max(0, restTimerDuration + delta);
         const newEndTime = restTimerEndTime ? restTimerEndTime + (delta * 1000) : null;
+
+        // Also update the per-exercise rest time so future sets use this duration
+        if (activeRestTimerExerciseId) {
+            const { exerciseRestTimes } = get();
+            set({
+                exerciseRestTimes: {
+                    ...exerciseRestTimes,
+                    [activeRestTimerExerciseId]: newDuration,
+                },
+            });
+        }
 
         set({
             restTimerRemaining: newRemaining,
+            restTimerDuration: newDuration,
             restTimerEndTime: newEndTime,
         });
     },
@@ -436,10 +474,38 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
                 restTimerActive: false,
                 restTimerRemaining: 0,
                 restTimerEndTime: null,
+                activeRestTimerExerciseId: null,
+                activeRestTimerSetId: null,
             });
         } else {
             set({ restTimerRemaining: remaining });
         }
+    },
+
+    setExerciseRestTime: (exerciseId: string, seconds: number) => {
+        const { exerciseRestTimes, restTimerActive, activeRestTimerExerciseId, restTimerEndTime } = get();
+
+        // Update the per-exercise setting
+        set({
+            exerciseRestTimes: {
+                ...exerciseRestTimes,
+                [exerciseId]: seconds,
+            },
+        });
+
+        // If there's an active timer for this exercise, adjust it
+        if (restTimerActive && activeRestTimerExerciseId === exerciseId) {
+            const newEndTime = Date.now() + (seconds * 1000);
+            set({
+                restTimerDuration: seconds,
+                restTimerRemaining: seconds,
+                restTimerEndTime: newEndTime,
+            });
+        }
+    },
+
+    getExerciseRestTime: (exerciseId: string) => {
+        return get().exerciseRestTimes[exerciseId] ?? DEFAULT_REST_DURATION;
     },
 
     // ========================================

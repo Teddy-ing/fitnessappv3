@@ -38,6 +38,9 @@ interface ExercisePickerProps {
 type FilterTab = 'all' | 'favorites' | 'hidden' | MuscleGroup;
 type CategoryTab = 'all' | ExerciseCategory;
 
+// Track if user has hidden an exercise during this session
+let hasShownHideNotice = false;
+
 // Placeholder image for exercises
 const EXERCISE_PLACEHOLDER = require('../../assets/exercise-placeholder.png');
 
@@ -129,6 +132,13 @@ export default function ExercisePicker({
             );
         }
 
+        // Sort favorites to top
+        result = [...result].sort((a, b) => {
+            if (a.isFavorite && !b.isFavorite) return -1;
+            if (!a.isFavorite && b.isFavorite) return 1;
+            return a.name.localeCompare(b.name);
+        });
+
         return result;
     }, [exercises, hiddenExercises, searchQuery, activeFilter, activeCategory]);
 
@@ -168,6 +178,15 @@ export default function ExercisePicker({
                 onPress: async () => {
                     await toggleExerciseHidden(exercise.id);
                     loadExercises();
+
+                    // Show notice first time only (per session)
+                    if (!hasShownHideNotice) {
+                        hasShownHideNotice = true;
+                        Alert.alert(
+                            'Exercise Hidden',
+                            `"${exercise.name}" is now hidden. You can find hidden exercises by scrolling to the end of the filter tabs and tapping "👁 Hidden".`
+                        );
+                    }
                 },
             },
         ];
@@ -314,8 +333,8 @@ export default function ExercisePicker({
                             data={[
                                 { key: 'all', label: 'All' },
                                 { key: 'favorites', label: '★ Favorites' },
-                                { key: 'hidden', label: '👁 Hidden' },
                                 ...MUSCLE_FILTERS,
+                                { key: 'hidden', label: '👁 Hidden' },
                             ]}
                             keyExtractor={(item) => item.key}
                             contentContainerStyle={styles.filterList}
@@ -467,19 +486,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
         borderBottomWidth: 1,
         borderBottomColor: colors.separator,
+        marginBottom: spacing.sm,
     },
     categoryTab: {
         alignItems: 'center',
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.sm,
         borderRadius: borderRadius.md,
     },
     categoryTabActive: {
         backgroundColor: colors.accent.primary + '20',
     },
     categoryIcon: {
-        fontSize: 24,
-        marginBottom: spacing.xs,
+        fontSize: 18,
+        marginBottom: 2,
     },
     categoryTabText: {
         color: colors.text.secondary,

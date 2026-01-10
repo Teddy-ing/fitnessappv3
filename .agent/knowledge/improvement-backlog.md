@@ -64,19 +64,24 @@ description: Prioritized list of app improvements and feature requests from user
 - Schedule preview shows templates + rest days
 - Split cards show "X workouts · Y rest days"
 
-### 8. Exercise management
-- Add custom exercises
-- Hide/unhide exercises
-- Filter by equipment (home gym, bodyweight, etc.)
-- "Show all" to view hidden exercises
+### 8. Exercise management ✅ COMPLETE
+- [x] Add custom exercises (full add/edit/delete flow)
+- [x] Hide/unhide exercises (long-press menu, Hidden tab)
+- [x] Filter by category (Strength/Cardio/Stretching tabs)
+- [x] Favorites sort to top of list
+- [x] Exercise images with placeholder
 
-### 9. Exercise images
-- Placeholder images for now
-- Show in exercise picker
-- Show in workout view
-- TBD: actual image source
+### 9. Set Variations UI ✅ COMPLETE
+- [x] Set type selector (tap badge → action sheet)
+- [x] Visual badges for set types (W/D/F/A with colors)
+- [x] Row background colors per set type
 
-### 10. Improved rest timer UX (Strong-style)
+### 10. Cardio & Stretching Support ✅ COMPLETE
+- [x] Category tabs in exercise picker (All/Strength/Cardio/Stretch)
+- [x] 14 cardio exercises added to seed data
+- [x] 8 new equipment types for cardio machines
+
+### 11. Improved rest timer UX (Strong-style)
 - More specific details TBD
 - Visual changes while keeping core functionality
 
@@ -108,6 +113,31 @@ description: Prioritized list of app improvements and feature requests from user
 ### 14. Remove "Recent Workouts" from home?
 - User feedback: may not be necessary
 - Revisit after template/split system is in place
+
+---
+
+## 🐛 Known Bugs
+
+### BUG-001: Superset Unlink Causes Exercise to Disappear
+- **Priority:** P1 (High)
+- **Status:** Open
+- **Symptom:** When unlinking a superset (clicking "🔗 Unlink" button), the first exercise in the superset visually disappears from the workout screen
+- **Location:** 
+  - `src/stores/workoutStore.ts` - `toggleSuperset` function
+  - `src/screens/WorkoutScreen.tsx` - ExerciseCard rendering
+  - `src/components/ExerciseCard.tsx` - superset styling (`cardInSuperset`)
+- **Attempted Fixes:**
+  - Improved immutability using `.map()` instead of array spread + index assignment
+  - Did not resolve the issue
+- **Investigation Notes:**
+  - The toggleSuperset logic appears correct
+  - May be a React key/rendering issue
+  - May be related to the `cardInSuperset` styling removing margins incorrectly
+  - Visible in user screenshot: large gray empty area where exercise should be
+- **Next Steps:**
+  - Add console.log debugging to trace state updates
+  - Check if it's a styling issue vs actual data issue
+  - Test if exercise still exists in state but just not rendering
 
 ---
 
@@ -144,5 +174,5 @@ description: Prioritized list of app improvements and feature requests from user
 ---
 
 ## Last Updated
-- Date: 2026-01-06
-- Session: User testing feedback consolidation
+- Date: 2026-01-09
+- Session: Exercise system overhaul (Phase 1-3) + polish fixes completed
