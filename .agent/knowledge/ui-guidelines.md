@@ -16,35 +16,157 @@ Combine the best elements from the gold-standard apps:
 
 ---
 
-## Visual Design (Steal from Hevy)
+## Visual Design (Premium Dark Theme)
 
 ### Color Palette
 
-**Dark Mode Primary (Default):**
-- Background: Deep dark gray (not pure black)
-- Cards: Slightly lighter gray
-- Primary accent: Blue (for sets, interactive elements)
-- Success/Completion: Green
-- Text: White/off-white
-- Secondary text: Gray
+**Background Colors (Zinc Scale):**
 
-**Why these colors:**
-- High contrast for visibility with sweat in eyes
-- Distinct colors for different states
-- Professional, modern feel
+| Token | Value | Usage |
+|-------|-------|-------|
+| `background.primary` | `#09090b` (zinc-950) | Main background - deepest black |
+| `background.secondary` | `#18181b` (zinc-900) | Card backgrounds |
+| `background.tertiary` | `#27272a` (zinc-800) | Elevated surfaces, inputs |
 
-### Card-Based Layout
+**Text Colors (Zinc + White):**
 
-- Each exercise is a card
-- Cards contain: exercise name, sets list, notes
-- Clear visual hierarchy
-- Swipe actions on cards (delete, reorder)
+| Token | Value | Usage |
+|-------|-------|-------|
+| `text.primary` | `#ffffff` | Headings, primary text |
+| `text.secondary` | `#a1a1aa` (zinc-400) | Body text, descriptions |
+| `text.disabled` | `#52525b` (zinc-600) | Disabled/placeholder text |
 
-### Typography
+**Accent Colors (Violet-Purple Gradient):**
 
+| Token | Value | Usage |
+|-------|-------|-------|
+| `accent.primary` | `#a855f7` (violet-500) | Primary brand color, CTAs |
+| `accent.secondary` | `#9333ea` (purple-600) | Gradient end, pressed states |
+| `accent.tertiary` | `#c084fc` (violet-400) | Hover states, highlights |
+| `accent.success` | `#22c55e` | Completion, PRs |
+| `accent.warning` | `#f59e0b` | Warmup sets |
+| `accent.error` | `#ef4444` | Failed sets, errors |
+
+**Gradient Configuration:**
+
+```typescript
+gradient: {
+    primary: ['#a855f7', '#9333ea'], // Left-to-right gradient for buttons
+    glow: 'rgba(168, 85, 247, 0.3)', // Purple glow for shadows
+}
+```
+
+**Glassmorphism / Surface Colors:**
+
+```typescript
+glass: {
+    background: 'rgba(24, 24, 27, 0.6)',   // Semi-transparent zinc-900
+    border: 'rgba(255, 255, 255, 0.1)',    // Subtle white border
+    borderLight: 'rgba(255, 255, 255, 0.05)', // Very subtle border
+}
+```
+
+**Decorative Blur Orb Colors:**
+
+```typescript
+decorative: {
+    purpleOrb: 'rgba(168, 85, 247, 0.2)', // Purple ambient glow
+    blueOrb: 'rgba(59, 130, 246, 0.1)',   // Blue accent glow
+}
+```
+
+### Typography (Premium Weights)
+
+- **Font Inspiration:** Plus Jakarta Sans (web reference)
+- **Weights:** Prefer bold (700) for headings, semibold (600) for emphasis
+- **Tracking:** Negative letter-spacing (-0.5) for large titles
+- **Line Height:** Tight (1.2) for headings, relaxed for body text
 - Large, readable fonts for weight/reps
 - Clear at arm's length (phone on bench)
 - High contrast
+
+### Border Radius Scale
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `sm` | 4px | Small elements, badges |
+| `md` | 8px | Inputs, small buttons |
+| `lg` | 12px | Cards, standard elements |
+| `xl` | 16px | Large cards |
+| `2xl` | 20px | **Premium:** Primary buttons, glass cards |
+| `3xl` | 24px | **Premium:** Hero elements |
+| `full` | 9999px | Pills, circular buttons |
+
+---
+
+## Component Patterns
+
+### Gradient Primary Button
+
+The main CTA uses a horizontal gradient with a glow effect:
+
+```tsx
+<TouchableOpacity style={styles.gradientButtonContainer}>
+    <LinearGradient
+        colors={colors.gradient.primary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradientButton}
+    >
+        <Text style={styles.primaryButtonText}>Start Empty Workout</Text>
+    </LinearGradient>
+</TouchableOpacity>
+```
+
+**Styling requirements:**
+- `borderRadius: 20` (2xl)
+- `overflow: 'hidden'` on container
+- Shadow with `shadowColor: colors.accent.primary`
+- `shadowOpacity: 0.3`, `shadowRadius: 12`
+- Subtle white border: `borderColor: colors.glass.borderLight`
+
+### Glassmorphism Cards
+
+Semi-transparent cards with subtle borders for premium feel:
+
+```tsx
+glassCard: {
+    backgroundColor: colors.glass.background,  // rgba(24, 24, 27, 0.6)
+    borderRadius: borderRadius['2xl'],         // 20px
+    borderWidth: 1,
+    borderColor: colors.glass.border,          // rgba(255, 255, 255, 0.1)
+    padding: spacing.md + 4,
+}
+```
+
+**Glass card labels:** Uppercase, 10px font, letter-spacing: 1.5, bold weight. Use purple (`#a855f7`) for Template labels and blue (`#3b82f6`) for Split labels.
+
+### Date/Status Badges
+
+Small pill-shaped badges for metadata:
+
+```tsx
+historyDateBadge: {
+    backgroundColor: colors.glass.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
+}
+historyDateText: {
+    color: colors.text.secondary,
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+}
+```
+
+### Bottom Navigation Bar
+
+Custom tab bar with raised center icon:
+- **Background:** Match main background (`colors.background.primary`)
+- **Separator:** Purple gradient line at top (`#a855f7` → `#4c1d95` → `#a855f7`)
+- **Center button:** Raised purple oval with shadow
+- **Icons:** Emoji for now, to be replaced with icon library
 
 ---
 
@@ -243,5 +365,5 @@ Replace emoji icons in bottom navigation with custom icons:
 ---
 
 ## Last Updated
-- Date: 2026-01-05
-- Session Context: Added device-specific considerations for navigation overlap
+- Date: 2026-01-13
+- Session Context: Major visual upgrade - integrated Google Stitch premium design with glassmorphism cards, gradient buttons, decorative blur orbs, and comprehensive color system documentation

@@ -12,12 +12,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@react-native-community/blur": "^4.4.1",
     "@react-navigation/bottom-tabs": "^7.9.0",
     "@react-navigation/native": "^7.1.26",
     "expo": "~54.0.30",
     "expo-crypto": "~15.0.8",
     "expo-dev-client": "~6.0.20",
     "expo-haptics": "~15.0.8",
+    "expo-linear-gradient": "~15.0.8",
     "expo-notifications": "~0.32.15",
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
