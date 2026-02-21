@@ -35,6 +35,7 @@ import { ExerciseCard, ExercisePicker, RestTimer, TemplateCard, WorkoutKeyboard,
 import {
     saveWorkout,
     getWorkouts,
+    getWorkoutDatesThisWeek,
     getTemplates,
     createTemplateFromWorkout,
     findMatchingTemplate,
@@ -58,6 +59,7 @@ import { Workout } from '../models/workout';
 import { Split } from '../models/split';
 import SplitsScreen from './SplitsScreen';
 import TemplatesScreen from './TemplatesScreen';
+import WorkoutHomeView from './WorkoutHomeView';
 
 export default function WorkoutScreen() {
     const {
@@ -90,6 +92,7 @@ export default function WorkoutScreen() {
     const [showTemplatePicker, setShowTemplatePicker] = useState(false);
     const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null);
     const [currentTemplateIndex, setCurrentTemplateIndexState] = useState(0);
+    const [workoutDatesThisWeek, setWorkoutDatesThisWeek] = useState<Date[]>([]);
 
     // Live timer state - triggers re-renders every second
     const [elapsedTime, setElapsedTime] = useState(0);
@@ -150,14 +153,16 @@ export default function WorkoutScreen() {
             // Check if we should advance template (new day after workout)
             await checkAndAdvanceIfNewDay();
 
-            const [workouts, active, currentIdx] = await Promise.all([
+            const [workouts, active, currentIdx, weekDates] = await Promise.all([
                 getWorkouts(5),
                 getActiveSplit(),
                 getCurrentTemplateIndex(),
+                getWorkoutDatesThisWeek(),
             ]);
             setRecentWorkouts(workouts);
             setActiveSplit(active);
             setCurrentTemplateIndexState(currentIdx);
+            setWorkoutDatesThisWeek(weekDates);
 
             // Load templates based on active split
             if (active) {
@@ -625,154 +630,10 @@ export default function WorkoutScreen() {
         return date.toLocaleDateString();
     };
 
-    // Render empty state (no active workout)
+    // Render empty state (no active workout) — delegated to WorkoutHomeView
     if (!activeWorkout) {
-        return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                {/* Custom header */}
-                <View style={styles.customHeader}>
-                    <Text style={styles.customHeaderTitle}>Workout</Text>
-                </View>
-
-                <ScrollView
-                    style={styles.scrollView}
-                    contentContainerStyle={styles.scrollContent}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            tintColor={colors.text.secondary}
-                        />
-                    }
-                >
-                    {/* Hero section */}
-                    <View style={styles.heroSection}>
-                        <Text style={styles.emptyIcon}>💪</Text>
-                        <Text style={styles.emptyTitle}>Ready to workout?</Text>
-                        <Text style={styles.emptySubtitle}>
-                            Start a new workout or choose from your templates
-                        </Text>
-                    </View>
-
-                    {/* Primary action - Gradient button with + icon */}
-                    <View style={styles.quickActions}>
-                        <TouchableOpacity
-                            onPress={handleStartWorkout}
-                            activeOpacity={0.9}
-                            style={styles.gradientButtonContainer}
-                        >
-                            <LinearGradient
-                                colors={colors.gradient.primary}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.gradientButton}
-                            >
-                                <Text style={styles.primaryButtonText}>Start Empty Workout</Text>
-                                <Text style={styles.primaryButtonIcon}>+</Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Browse templates link */}
-                    <TouchableOpacity
-                        style={styles.browseTemplatesLink}
-                        onPress={() => setShowTemplatesModal(true)}
-                    >
-                        <Text style={styles.browseTemplatesLinkText}>Browse all templates →</Text>
-                    </TouchableOpacity>
-
-                    {/* Current Template and Current Split cards */}
-                    <View style={styles.currentCardsRow}>
-                        {/* Current Template Card */}
-                        <View style={styles.glassCard}>
-                            <Text style={styles.glassCardLabelPurple}>Current Template</Text>
-                            {currentTemplate ? (
-                                <>
-                                    <Text style={styles.glassCardTitle}>{currentTemplate.name}</Text>
-                                    <Text style={styles.glassCardSubtitle}>
-                                        {currentTemplate.exerciseCount} exercises
-                                    </Text>
-                                    <View style={styles.glassCardActions}>
-                                        <TouchableOpacity
-                                            onPress={() => handleStartFromTemplate(currentTemplate)}
-                                            style={styles.cardActionButton}
-                                        >
-                                            <Text style={styles.glassCardAction}>Start →</Text>
-                                        </TouchableOpacity>
-                                        {activeSplit && activeSplit.schedule.length > 1 && (
-                                            <TouchableOpacity
-                                                onPress={() => setShowTemplatePicker(true)}
-                                                style={styles.cardActionButton}
-                                            >
-                                                <Text style={styles.glassCardChangeAction}>Change</Text>
-                                            </TouchableOpacity>
-                                        )}
-                                    </View>
-                                </>
-                            ) : (
-                                <Text style={styles.glassCardEmpty}>
-                                    {activeSplit ? 'No templates in split' : 'Select a split first'}
-                                </Text>
-                            )}
-                        </View>
-
-                        {/* Current Split Card */}
-                        <TouchableOpacity
-                            style={styles.glassCard}
-                            onPress={() => setShowSplitsModal(true)}
-                            activeOpacity={0.7}
-                        >
-                            <Text style={styles.glassCardLabelBlue}>Current Split</Text>
-                            {activeSplit ? (
-                                <>
-                                    <Text style={styles.glassCardTitle}>{activeSplit.name}</Text>
-                                    <Text style={styles.glassCardSubtitleAccent}>
-                                        Day {currentTemplateIndex + 1} of {activeSplit.schedule.length}
-                                    </Text>
-                                </>
-                            ) : (
-                                <Text style={styles.glassCardEmpty}>No split selected</Text>
-                            )}
-                            <View style={styles.glassCardActions}>
-                                <Text style={styles.glassCardAction}>Change →</Text>
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Recent workouts */}
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Recent Workouts</Text>
-                            {recentWorkouts.length > 0 && (
-                                <TouchableOpacity>
-                                    <Text style={styles.sectionViewAll}>View All</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                        {recentWorkouts.length === 0 ? (
-                            <View style={styles.placeholder}>
-                                <Text style={styles.placeholderText}>No recent workouts yet</Text>
-                            </View>
-                        ) : (
-                            recentWorkouts.map(workout => (
-                                <View key={workout.id} style={styles.historyCard}>
-                                    <View style={styles.historyContent}>
-                                        <Text style={styles.historyName}>{workout.name}</Text>
-                                        <Text style={styles.historyStats}>
-                                            {workout.main.exercises.length} exercises • {workout.totalSets || 0} sets • {Math.round((workout.totalDuration || 0) / 60)} min
-                                        </Text>
-                                    </View>
-                                    <View style={styles.historyDateBadge}>
-                                        <Text style={styles.historyDateText}>
-                                            {formatWorkoutDate(workout.completedAt || workout.createdAt)}
-                                        </Text>
-                                    </View>
-                                </View>
-                            ))
-                        )}
-                    </View>
-                </ScrollView>
-
+        const homeModals = (
+            <>
                 {/* Splits modal */}
                 <SplitsScreen
                     visible={showSplitsModal}
@@ -845,7 +706,7 @@ export default function WorkoutScreen() {
                     </View>
                 </Modal>
 
-                {/* Save as template modal - needs to be in empty state too! */}
+                {/* Save as template modal */}
                 <Modal
                     visible={showSaveTemplateModal}
                     animationType="fade"
@@ -884,7 +745,25 @@ export default function WorkoutScreen() {
                         </View>
                     </View>
                 </Modal>
-            </SafeAreaView>
+            </>
+        );
+
+        return (
+            <WorkoutHomeView
+                activeSplit={activeSplit}
+                currentTemplate={currentTemplate}
+                currentTemplateIndex={currentTemplateIndex}
+                templates={templates}
+                workoutDatesThisWeek={workoutDatesThisWeek}
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                onStartWorkout={handleStartWorkout}
+                onStartFromTemplate={handleStartFromTemplate}
+                onShowSplitsModal={() => setShowSplitsModal(true)}
+                onShowTemplatesModal={() => setShowTemplatesModal(true)}
+                onShowTemplatePicker={() => setShowTemplatePicker(true)}
+                modals={homeModals}
+            />
         );
     }
 
@@ -1064,258 +943,7 @@ const styles = StyleSheet.create({
         paddingBottom: spacing.xxl,
     },
 
-    // Custom header
-    customHeader: {
-        flexDirection: 'row',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        paddingHorizontal: spacing.lg,
-        paddingVertical: spacing.md,
-    },
-    customHeaderTitle: {
-        color: colors.text.primary,
-        fontSize: typography.size.xxl,
-        fontWeight: typography.weight.bold,
-        letterSpacing: -0.5,
-    },
-
-    // Hero section (empty state)
-    heroSection: {
-        alignItems: 'center',
-        paddingVertical: spacing.lg,
-        paddingTop: spacing.md,
-    },
-    emptyIcon: {
-        fontSize: 64,
-        marginBottom: spacing.md,
-    },
-    emptyTitle: {
-        fontSize: typography.size.xxl,
-        fontWeight: typography.weight.bold,
-        color: colors.text.primary,
-        marginBottom: spacing.sm,
-        letterSpacing: -0.5,
-    },
-    emptySubtitle: {
-        fontSize: typography.size.sm,
-        color: colors.text.secondary,
-        textAlign: 'center',
-        paddingHorizontal: spacing.lg,
-        lineHeight: 20,
-    },
-
-    // Quick actions with gradient button
-    quickActions: {
-        marginTop: spacing.lg,
-        marginBottom: spacing.sm,
-    },
-    gradientButtonContainer: {
-        borderRadius: borderRadius['2xl'],
-        overflow: 'hidden',
-        // Glow shadow
-        shadowColor: colors.accent.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-        elevation: 8,
-    },
-    gradientButton: {
-        flexDirection: 'row',
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: borderRadius['2xl'],
-        borderWidth: 1,
-        borderColor: colors.glass.borderLight,
-        gap: spacing.sm,
-    },
-    primaryButton: {
-        backgroundColor: colors.accent.primary,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        borderRadius: borderRadius['2xl'],
-        alignItems: 'center',
-    },
-    primaryButtonText: {
-        color: colors.text.primary,
-        fontSize: typography.size.md,
-        fontWeight: typography.weight.bold,
-    },
-    primaryButtonIcon: {
-        color: colors.text.primary,
-        fontSize: typography.size.xl,
-        fontWeight: typography.weight.bold,
-    },
-
-    // Sections
-    section: {
-        marginTop: spacing.lg,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing.md,
-        paddingHorizontal: spacing.xs,
-    },
-    sectionTitle: {
-        fontSize: typography.size.lg,
-        fontWeight: typography.weight.bold,
-        color: colors.text.primary,
-    },
-    sectionViewAll: {
-        fontSize: typography.size.xs,
-        fontWeight: typography.weight.medium,
-        color: colors.text.secondary,
-    },
-
-    // Browse templates link
-    browseTemplatesLink: {
-        marginTop: spacing.sm,
-        marginBottom: spacing.lg,
-        alignItems: 'center',
-    },
-    browseTemplatesLinkText: {
-        color: colors.text.secondary,
-        fontSize: typography.size.xs,
-        fontWeight: typography.weight.semibold,
-    },
-
-    // Glassmorphism cards
-    glassCard: {
-        flex: 1,
-        backgroundColor: colors.glass.background,
-        borderRadius: borderRadius['2xl'],
-        padding: spacing.md + 4,
-        minHeight: 160,
-        borderWidth: 1,
-        borderColor: colors.glass.border,
-    },
-    glassCardLabel: {
-        color: colors.text.secondary,
-        fontSize: 10,
-        fontWeight: typography.weight.bold,
-        textTransform: 'uppercase',
-        letterSpacing: 1.5,
-        marginBottom: spacing.sm,
-    },
-    glassCardLabelPurple: {
-        color: '#a855f7', // violet-500
-        fontSize: 10,
-        fontWeight: typography.weight.bold,
-        textTransform: 'uppercase',
-        letterSpacing: 1.5,
-        marginBottom: spacing.sm,
-    },
-    glassCardLabelBlue: {
-        color: '#3b82f6', // blue-500
-        fontSize: 10,
-        fontWeight: typography.weight.bold,
-        textTransform: 'uppercase',
-        letterSpacing: 1.5,
-        marginBottom: spacing.sm,
-    },
-    glassCardTitle: {
-        color: colors.text.primary,
-        fontSize: typography.size.lg,
-        fontWeight: typography.weight.bold,
-        marginBottom: spacing.xs,
-        lineHeight: 22,
-    },
-    glassCardSubtitle: {
-        color: colors.text.secondary,
-        fontSize: typography.size.xs,
-    },
-    glassCardSubtitleAccent: {
-        color: colors.accent.primary,
-        fontSize: typography.size.xs,
-        fontWeight: typography.weight.semibold,
-    },
-    glassCardEmpty: {
-        color: colors.text.disabled,
-        fontSize: typography.size.sm,
-        flex: 1,
-    },
-    glassCardActions: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 'auto',
-        paddingTop: spacing.sm,
-    },
-    glassCardAction: {
-        color: colors.accent.primary,
-        fontSize: typography.size.sm,
-        fontWeight: typography.weight.bold,
-    },
-    glassCardChangeAction: {
-        color: colors.text.secondary,
-        fontSize: 10,
-        fontWeight: typography.weight.medium,
-    },
-
-    placeholder: {
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.lg,
-        padding: spacing.lg,
-        alignItems: 'center',
-    },
-    placeholderText: {
-        color: colors.text.secondary,
-        fontSize: typography.size.md,
-        textAlign: 'center',
-    },
-
-    // History cards
-    historyCard: {
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius['2xl'],
-        padding: spacing.md,
-        marginBottom: spacing.sm,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: colors.glass.borderLight,
-    },
-    historyContent: {
-        flex: 1,
-    },
-    historyHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing.xs,
-    },
-    historyName: {
-        color: colors.text.primary,
-        fontSize: typography.size.sm,
-        fontWeight: typography.weight.bold,
-        marginBottom: spacing.xs / 2,
-    },
-    historyDate: {
-        color: colors.text.secondary,
-        fontSize: typography.size.sm,
-    },
-    historyStats: {
-        color: colors.text.secondary,
-        fontSize: 11,
-        fontWeight: typography.weight.medium,
-    },
-    historyDateBadge: {
-        backgroundColor: colors.glass.background,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs / 2,
-        borderRadius: borderRadius.sm,
-        marginLeft: spacing.sm,
-    },
-    historyDateText: {
-        color: colors.text.secondary,
-        fontSize: 10,
-        fontWeight: typography.weight.bold,
-        textAlign: 'center',
-    },
+    // (Home screen styles are now in WorkoutHomeView.tsx)
 
     // Workout header
     workoutHeader: {

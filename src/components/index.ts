@@ -8,4 +8,5 @@ export { default as ActiveRestLine } from './ActiveRestLine';
 export { default as TemplateCard } from './TemplateCard';
 export { default as WorkoutKeyboard } from './WorkoutKeyboard';
 export type { KeyboardFieldType } from './WorkoutKeyboard';
+export { default as WeeklyTracker } from './WeeklyTracker';
 

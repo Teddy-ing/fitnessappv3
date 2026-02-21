@@ -15,6 +15,7 @@ import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/b
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing } from '../theme';
 
@@ -32,10 +33,10 @@ export type RootTabParamList = {
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
-const TAB_ICONS: Record<string, string> = {
-    Assistant: '🤖',
-    Workout: '💪',
-    Profile: '👤',
+const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
+    Assistant: 'smart-toy',
+    Workout: 'fitness-center',
+    Profile: 'person',
 };
 
 /**
@@ -92,7 +93,11 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                                     styles.raisedIconContainer,
                                     !isFocused && styles.raisedIconContainerInactive
                                 ]}>
-                                    <Text style={styles.raisedIcon}>{TAB_ICONS[route.name]}</Text>
+                                    <MaterialIcons
+                                        name={TAB_ICONS[route.name]}
+                                        size={26}
+                                        color="#fff"
+                                    />
                                 </View>
                                 <Text style={[
                                     styles.tabLabel,
@@ -115,12 +120,12 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                             style={styles.tabButton}
                             activeOpacity={0.7}
                         >
-                            <Text style={[
-                                styles.tabIcon,
-                                { opacity: isFocused ? 1 : 0.5 }
-                            ]}>
-                                {TAB_ICONS[route.name]}
-                            </Text>
+                            <MaterialIcons
+                                name={TAB_ICONS[route.name]}
+                                size={24}
+                                color={isFocused ? colors.accent.primary : colors.text.secondary}
+                                style={{ opacity: isFocused ? 1 : 0.5 }}
+                            />
                             <Text style={[
                                 styles.tabLabel,
                                 { color: isFocused ? colors.accent.primary : colors.text.secondary }
@@ -237,10 +242,7 @@ const styles = StyleSheet.create({
         elevation: 0,
     },
     raisedIcon: {
-        fontSize: 24,
-    },
-    tabIcon: {
-        fontSize: 24,
+        // Kept for potential future use, MaterialIcons handles sizing via props
     },
     tabLabel: {
         fontSize: 10,

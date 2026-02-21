@@ -141,38 +141,53 @@ description: Prioritized list of app improvements and feature requests from user
 
 ---
 
-## Suggested Order of Implementation
+## Suggested Order of Implementation (Updated 8-Phase Roadmap)
 
-### Phase 1: Bug Fixes (Do First)
-1. ✅ Fix workout timer not updating
-2. ✅ Add ability to remove sets
+### ~~Phase 1-3: Foundation~~ ✅ COMPLETE
+- ✅ Bug fixes (timer, set removal)
+- ✅ Quick wins (purple theme, rest timer notification)
+- ✅ Core UX improvements (custom keyboard, splits)
+- ✅ Exercise management, set variations, cardio/stretching
 
-### Phase 2: Quick Wins
-3. ✅ Change color theme to purple
-4. ✅ Rest timer notification
+### Phase 1: Visual Refactor 🔜
+- App-wide UI/UX overhaul
+- Modernize typography, spacing, colors, animations
+- Polish navigation, cards, modals, interactive elements
 
-### Phase 3: Core UX Improvements
-5. Custom numeric keyboard
-6. Rename templates → splits (terminology + basic restructure)
+### Phase 2: Widgets System
+- Home screen widgets (current split, next workout, stats)
+- Platform-specific widget implementations
 
-### Phase 4: Content & Features
-7. Exercise management (add/hide)
-8. Exercise images (placeholders)
+### Phase 3: Analytics Functions & Profile Scoping
+- Audit analytics data availability
+- Design data aggregation layer
+- Scope Profile vs dedicated analytics screens
 
-### Phase 5: Design Decisions
-9. ML + template strategy decision
-10. Split flow design
-11. Cardio/mobility brainstorm
+### Phase 4: Profile Screen Refactor + Analytics Screens
+- Redesign Profile screen with summary cards
+- Progress charts, PR log, volume trends, muscle balance
 
----
+### Phase 5: Settings
+- User preferences (units, theme, timer, notifications)
+- App configuration, privacy controls, ML toggles
 
-## Reference Materials Needed
-- [ ] Screenshot of Strong keyboard
-- [ ] Screenshot of Samsung base keyboard
-- [ ] Current color values to change
+### Phase 6: Import & Export
+- Export (CSV, JSON, PDF)
+- Import from Hevy, Strong, Fitnotes
+- Backup/restore
+
+### Phase 7: ML & Personalization
+- Rep/weight autocomplete, workout day suggestions
+- Smart rest timer, set count suggestions
+- On-device only, privacy-first
+
+### Phase 8: LLM Chatbot
+- AI assistant in dedicated tab
+- Preformatted + free-form queries with workout context
+- Premium/paid tier feature
 
 ---
 
 ## Last Updated
-- Date: 2026-01-09
-- Session: Exercise system overhaul (Phase 1-3) + polish fixes completed
+- Date: 2026-02-20
+- Session: Restructured roadmap with new 8-phase feature plan after month-long break

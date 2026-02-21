@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Development (Feature Complete MVP + Splits + Rest Days + Exercise Overhaul)
+- **Phase:** Post-MVP Development — Core features complete, entering UI/UX refinement and advanced features
 - **Status:** Core workout logging, rest timer, database, templates, splits, rest days, and exercise management all implemented
-- **Next Milestone:** Bug fixes (superset unlink), UI polish, ML features
+- **Next Milestone:** Phase 1 — Visual Refactor (app-wide UI overhaul)
 
 ---
 
@@ -58,47 +58,68 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## In Progress
 
+- [ ] **Phase 1: Visual Refactor** — App-wide UI overhaul (starting this session)
+
+---
+
+## Upcoming Roadmap
+
+### Phase 1: Visual Refactor
+- App-wide UI/UX overhaul — modernize all screens, components, and navigation
+- Improve typography, spacing, color consistency, animations
+- Address accumulated UI debt from rapid feature development
+
+### Phase 2: Widgets System
+- Home screen widgets for quick workout access
+- At-a-glance stats and current split info
+- Platform-specific widget implementations (Android/iOS)
+
+### Phase 3: Analytics Functions & Profile Screen Scoping
+- Audit existing analytics/stats capabilities in the codebase
+- Define what metrics and charts belong on the Profile screen
+- Design the analytics data layer (aggregations, queries, caching)
+
+### Phase 4: Profile Screen Visual Refactor + Analytics Screens
+- Redesign the Profile screen with analytics integration
+- Create dedicated analytics/stats screens (progress charts, PRs, volume trends)
+- Visual consistency with Phase 1 design language
+
+### Phase 5: Settings
+- User preferences screen (units, theme, rest timer defaults, notifications)
+- App configuration (data management, about, privacy)
+- On-device ML toggle and privacy controls
+
+### Phase 6: Import & Export
+- Export workout data (CSV, JSON, PDF)
+- Import from competitors (Hevy, Strong, Fitnotes CSV formats)
+- Backup/restore functionality
+
+### Phase 7: ML & Personalization
+- On-device ML for rep/weight autocomplete
+- Workout day suggestions based on patterns
+- Smart rest timer defaults per exercise
+- All processing on-device, no cloud dependency
+
+### Phase 8: LLM Chatbot Feature
+- AI chatbot assistant (paid tier)
+- Preformatted queries (weak points, optimizations, template generation)
+- Free-form conversation with workout context
+- Cost-effective model selection and rate limiting
+
+---
+
+## Known Bugs (Carry-over)
+
 - [ ] **BUG-001: Superset unlink** — First exercise disappears when unlinking superset (deferred)
-- [ ] Test full workflow on Android device
-- [ ] Address any UI/UX feedback from testing
 
----
-
-## Next Steps (For New Session)
-
-1. **Testing & Polish** — Validate all features work correctly
-   - Create split with rest days
-   - Complete workout → save → view in history
-   - Save template → start new workout from it
-   - Rest timer countdown and haptics
-   - Splits: select, create, delete
-   - Template cycling: change position, auto-advance next day (skips rest days)
-   
-2. **Testing & Polish** — Validate all features work correctly
-   - Complete workout → save → view in history
-   - Save template → start new workout from it
-   - Rest timer countdown and haptics
-   - Splits: select, create, delete
-   - Template cycling: change position, auto-advance next day
-   
-3. **UI Improvements** — Based on user feedback
-   - Custom navigation icons
-   - Animation polish
-   - Loading states
-
-4. **Analytics/Stats Screen** — Display workout progress over time
-
-5. **On-device ML** — Smart suggestions based on workout patterns
-
----
-
-## Known Blockers / Open Questions
+## Open Questions
 
 - [x] ~~State management library choice~~ → **Zustand selected and implemented**
 - [x] ~~Local database choice~~ → **expo-sqlite selected and implemented**
 - [ ] On-device ML approach (TensorFlow Lite vs custom simple stats)
 - [ ] Which AI provider for paid tier (cost optimization)
 - [ ] App name (to be decided later)
+- [ ] Widget framework choice (React Native widget libraries vs native modules)
 
 ---
 
@@ -395,6 +416,6 @@ Screenshots of competitor apps are available in `.agent/reference/`:
 ---
 
 ## Last Updated
-- Date: 2026-01-09
-- Session Context: Exercise system overhaul (Phase 1-3) completed, documenting knowledge before chat pivot
+- Date: 2026-02-20
+- Session Context: Restructured roadmap with new 8-phase feature plan after month-long break
 

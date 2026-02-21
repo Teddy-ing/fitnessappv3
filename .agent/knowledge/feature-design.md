@@ -209,27 +209,82 @@ Multiple formats for maximum portability:
 
 ---
 
-## Feature Prioritization
+## Feature Prioritization (Updated Roadmap)
 
-### MVP (v1.0)
-- [ ] Core workout logging
-- [ ] Exercise database
-- [ ] Template system
-- [ ] Basic analytics
-- [ ] Export (CSV, JSON)
+### Phase 1: Visual Refactor
+- App-wide UI/UX overhaul of all existing screens and components
+- Modernize typography, spacing, color palette, and animations
+- Polish navigation bar, cards, modals, and interactive elements
+- Address UI debt accumulated during rapid feature development
 
-### v1.1 (Post-Launch)
-- [ ] On-device ML autocomplete
-- [ ] Workout day suggestions
-- [ ] Import from competitors
+### Phase 2: Widgets System
+- **Home screen widgets** for quick workout access and at-a-glance info
+- Current split / next workout widget
+- Weekly volume or streak summary widget
+- Quick-start workout widget
+- Platform-specific implementations (Android widget API, iOS WidgetKit)
 
-### v1.2+
-- [ ] Cloud backup (Google/iCloud)
-- [ ] AI chatbot (paid tier)
-- [ ] Advanced analytics
+### Phase 3: Analytics Functions & Profile Screen Scoping
+- Audit what analytics data is already available from existing workout/set tables
+- Define key metrics: total volume, PR tracking, workout frequency, muscle group distribution
+- Design the data aggregation layer (queries, caching strategy)
+- Scope what belongs on the Profile screen vs dedicated analytics screens
+
+### Phase 4: Profile Screen Visual Refactor + Analytics Screens
+- Redesign Profile screen with summary analytics cards
+- Create dedicated analytics screens:
+  - Progress charts (weight/volume over time per exercise)
+  - Personal records log
+  - Volume trends (weekly, monthly)
+  - Muscle group balance/heatmap
+- Consistent design language with Phase 1 visual refactor
+
+### Phase 5: Settings
+- **User Preferences:**
+  - Units (kg/lbs, km/miles)
+  - Default rest timer duration
+  - Theme customization
+  - Notification preferences
+- **App Configuration:**
+  - Data management (clear data, database info)
+  - About screen (version, licenses)
+  - Privacy controls
+- **ML Controls:**
+  - Toggle on-device ML features
+  - Clear ML data
+  - Transparency about what is learned
+
+### Phase 6: Import & Export
+- **Export formats:**
+  - CSV (Fitnotes-compatible for easy migration)
+  - JSON (full fidelity, includes templates/splits/preferences)
+  - PDF (printable workout logs)
+- **Import from competitors:**
+  - Hevy CSV/JSON import
+  - Strong CSV import
+  - Fitnotes CSV import
+  - Generic CSV mapping tool
+- **Backup/Restore:**
+  - Manual export/import as primary mechanism
+  - Optional cloud backup (Google Drive / iCloud) as stretch goal
+
+### Phase 7: ML & Personalization *(see "On-Device ML Features" section above for full spec)*
+- Implement rep/weight autocomplete based on exercise history
+- Workout day suggestions from recurring patterns
+- Smart rest timer defaults per exercise type
+- Set count suggestions based on history
+- All processing on-device, privacy-first
+
+### Phase 8: LLM Chatbot Feature *(see "Cloud AI Features" section above for full spec)*
+- AI chatbot assistant in dedicated tab
+- Preformatted queries: weak points, optimizations, template generation, periodization
+- Free-form conversation with workout history context
+- Cost-effective model selection (Haiku, GPT-4o-mini, Llama, etc.)
+- Rate limiting and response caching
+- Premium/paid tier feature
 
 ---
 
 ## Last Updated
-- Date: 2026-01-04
-- Session Context: Captured on-device ML concepts and AI tier features from brainstorming
+- Date: 2026-02-20
+- Session Context: Restructured feature prioritization with new 8-phase roadmap after month-long break

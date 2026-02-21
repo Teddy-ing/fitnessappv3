@@ -417,11 +417,48 @@ function hydrateWorkoutFromData(
     };
 }
 
+/**
+ * Get dates of completed workouts for the current week (Monday–Sunday)
+ * Used by the WeeklyTracker component to show which days had workouts
+ */
+export async function getWorkoutDatesThisWeek(): Promise<Date[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    // Calculate start of week (Monday) and end of week (Sunday)
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    try {
+        const rows = await db.getAllAsync<{ completed_at: string }>(
+            `SELECT DISTINCT DATE(completed_at) as completed_at FROM workouts 
+             WHERE completed_at >= ? AND completed_at <= ?
+             ORDER BY completed_at`,
+            [monday.toISOString(), sunday.toISOString()]
+        );
+
+        return rows.map(row => new Date(row.completed_at));
+    } catch (error) {
+        console.error('[WorkoutService] Failed to get weekly workout dates:', error);
+        return [];
+    }
+}
+
 export default {
     saveWorkout,
     getWorkouts,
     getWorkoutById,
     deleteWorkout,
     getWorkoutCount,
+    getWorkoutDatesThisWeek,
 };
 
