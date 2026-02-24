@@ -2,11 +2,11 @@
  * WeeklyTracker Component
  * 
  * Displays a M-S row of day circles showing workout completion status.
- * Position-aware rest days from the split schedule.
+ * Shows rest indicator for today if current split position is a rest day.
  * 
  * States:
  * - Completed: purple filled circle with check icon
- * - Rest day: dark circle with "Rest" label
+ * - Rest day: dark circle with "Rest" label (today only)
  * - Today: highlighted border circle
  * - Future: dim empty circle
  */
@@ -29,24 +29,6 @@ interface WeeklyTrackerProps {
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-/**
- * Map a calendar day (Mon=0..Sun=6) to the split schedule position,
- * working backwards from today's known position.
- */
-function getScheduleIndexForDay(
-    calendarDayIndex: number,
-    todayCalendarIndex: number,
-    currentScheduleIndex: number,
-    scheduleLength: number
-): number {
-    if (scheduleLength === 0) return -1;
-    const offset = calendarDayIndex - todayCalendarIndex;
-    let idx = currentScheduleIndex + offset;
-    // Wrap around the schedule
-    idx = ((idx % scheduleLength) + scheduleLength) % scheduleLength;
-    return idx;
-}
-
 export default function WeeklyTracker({
     workoutDates,
     splitSchedule,
@@ -56,6 +38,10 @@ export default function WeeklyTracker({
     // Convert JS day (0=Sun) to our Mon-based index (0=Mon..6=Sun)
     const jsDayOfWeek = now.getDay();
     const todayIndex = jsDayOfWeek === 0 ? 6 : jsDayOfWeek - 1;
+
+    // Check if today's split position is a rest day
+    const isTodayRestDay = splitSchedule.length > 0
+        && splitSchedule[currentScheduleIndex]?.type === 'rest';
 
     // Build a set of weekday indices (Mon=0..Sun=6) that had workouts
     const workoutDayIndices = new Set<number>();
@@ -72,32 +58,16 @@ export default function WeeklyTracker({
                 const isPast = dayIndex < todayIndex;
                 const hasWorkout = workoutDayIndices.has(dayIndex);
 
-                // Determine if this day is a rest day from the split schedule
-                let isRestDay = false;
-                if (splitSchedule.length > 0) {
-                    const schedIdx = getScheduleIndexForDay(
-                        dayIndex, todayIndex, currentScheduleIndex, splitSchedule.length
-                    );
-                    if (schedIdx >= 0 && splitSchedule[schedIdx]?.type === 'rest') {
-                        isRestDay = true;
-                    }
-                }
-
                 // Determine the visual state
                 let state: 'completed' | 'rest' | 'today' | 'future';
                 if (hasWorkout) {
                     state = 'completed';
-                } else if (isRestDay && (isPast || isToday)) {
+                } else if (isToday && isTodayRestDay) {
                     state = 'rest';
                 } else if (isToday) {
                     state = 'today';
                 } else {
-                    state = isPast ? 'rest' : 'future'; // Past days with no workout and no rest = treat as missed/rest
-                }
-
-                // Override: if it's a past day with no workout and not a rest day, show as empty/dim
-                if (isPast && !hasWorkout && !isRestDay) {
-                    state = 'future'; // Show as dim empty
+                    state = 'future'; // Past without workout or future — show dim
                 }
 
                 return (
@@ -119,7 +89,7 @@ export default function WeeklyTracker({
                             {state === 'completed' ? (
                                 <MaterialIcons name="check" size={16} color="#fff" />
                             ) : state === 'rest' ? (
-                                <Text style={styles.restText}>R</Text>
+                                <Text style={styles.restText}>Rest</Text>
                             ) : null}
                         </View>
                     </View>
@@ -128,6 +98,7 @@ export default function WeeklyTracker({
         </View>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {

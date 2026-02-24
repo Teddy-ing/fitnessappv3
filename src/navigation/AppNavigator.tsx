@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing } from '../theme';
+import { useWorkoutStore } from '../stores';
 
 // Placeholder screens - will be replaced with actual implementations
 import WorkoutScreen from '../screens/WorkoutScreen';
@@ -45,6 +46,10 @@ const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const insets = useSafeAreaInsets();
     const bottomPadding = Math.max(insets.bottom, 8);
+
+    // Hide tab bar during active workout
+    const activeWorkout = useWorkoutStore(s => s.activeWorkout);
+    if (activeWorkout) return null;
 
     return (
         <View style={styles.tabBarContainer}>

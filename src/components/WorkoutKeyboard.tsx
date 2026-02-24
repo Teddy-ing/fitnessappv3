@@ -21,6 +21,7 @@ import {
     Dimensions,
     BackHandler,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, typography } from '../theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -53,7 +54,10 @@ export default function WorkoutKeyboard({
     onNext,
     onHide,
 }: WorkoutKeyboardProps) {
-    const slideAnim = useRef(new Animated.Value(KEYBOARD_HEIGHT)).current;
+    const insets = useSafeAreaInsets();
+    const bottomInset = Math.max(insets.bottom, 0);
+    const totalHeight = KEYBOARD_HEIGHT + bottomInset;
+    const slideAnim = useRef(new Animated.Value(totalHeight)).current;
     const hasBeenVisible = useRef(false);
 
     // Track if keyboard has ever been shown
@@ -66,12 +70,12 @@ export default function WorkoutKeyboard({
     // Animate slide up/down
     useEffect(() => {
         Animated.spring(slideAnim, {
-            toValue: visible ? 0 : KEYBOARD_HEIGHT,
+            toValue: visible ? 0 : totalHeight,
             useNativeDriver: true,
             tension: 100,
             friction: 12,
         }).start();
-    }, [visible]);
+    }, [visible, totalHeight]);
 
     // Handle Android back button
     useEffect(() => {
@@ -138,7 +142,11 @@ export default function WorkoutKeyboard({
         <Animated.View
             style={[
                 styles.container,
-                { transform: [{ translateY: slideAnim }] }
+                {
+                    height: totalHeight,
+                    paddingBottom: bottomInset,
+                    transform: [{ translateY: slideAnim }],
+                }
             ]}
         >
             {/* Current value display */}
@@ -222,7 +230,6 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        height: KEYBOARD_HEIGHT,
         backgroundColor: colors.background.secondary,
         borderTopLeftRadius: borderRadius.xl,
         borderTopRightRadius: borderRadius.xl,

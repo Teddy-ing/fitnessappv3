@@ -668,9 +668,22 @@ export default function WorkoutScreen() {
                                 {activeSplit?.schedule.map((item, index) => {
                                     if (item.type === 'rest') {
                                         return (
-                                            <View key={index} style={styles.pickerItem}>
-                                                <Text style={styles.pickerRestText}>Rest Day</Text>
-                                            </View>
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={[
+                                                    styles.pickerItem,
+                                                    currentTemplateIndex === index && styles.pickerItemActive
+                                                ]}
+                                                onPress={() => handleChangeTemplateIndex(index)}
+                                            >
+                                                <Text style={[
+                                                    styles.pickerRestText,
+                                                    currentTemplateIndex === index && styles.pickerItemTextActive
+                                                ]}>Rest Day</Text>
+                                                <Text style={styles.pickerItemMeta}>
+                                                    Day {index + 1}
+                                                </Text>
+                                            </TouchableOpacity>
                                         );
                                     }
                                     const template = templates.find(t => t.id === item.templateId);

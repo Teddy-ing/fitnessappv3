@@ -142,6 +142,20 @@ export default function WorkoutHomeView({
                                 </TouchableOpacity>
                             )}
                         </View>
+                    ) : activeSplit && activeSplit.schedule[currentTemplateIndex]?.type === 'rest' ? (
+                        <View style={styles.upNextRow}>
+                            <MaterialIcons name="hotel" size={18} color={colors.text.secondary} />
+                            <Text style={[styles.upNextLabel, { marginLeft: spacing.xs }]}>Rest Day</Text>
+                            {activeSplit.schedule.length > 1 && (
+                                <TouchableOpacity
+                                    onPress={onShowTemplatePicker}
+                                    style={styles.swapButton}
+                                    activeOpacity={0.7}
+                                >
+                                    <MaterialIcons name="swap-horiz" size={20} color={colors.text.primary} />
+                                </TouchableOpacity>
+                            )}
+                        </View>
                     ) : (
                         <View style={styles.upNextRow}>
                             <Text style={styles.upNextLabel}>

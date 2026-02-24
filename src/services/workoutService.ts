@@ -446,12 +446,17 @@ export async function getWorkoutDatesThisWeek(): Promise<Date[]> {
             [monday.toISOString(), sunday.toISOString()]
         );
 
-        return rows.map(row => new Date(row.completed_at));
+        // Parse YYYY-MM-DD strings as local dates (not UTC) to avoid day-shift
+        return rows.map(row => {
+            const [year, month, day] = row.completed_at.split('-').map(Number);
+            return new Date(year, month - 1, day); // month is 0-indexed
+        });
     } catch (error) {
         console.error('[WorkoutService] Failed to get weekly workout dates:', error);
         return [];
     }
 }
+
 
 export default {
     saveWorkout,

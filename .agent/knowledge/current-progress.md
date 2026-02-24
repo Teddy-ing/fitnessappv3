@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Core features complete, entering UI/UX refinement and advanced features
-- **Status:** Core workout logging, rest timer, database, templates, splits, rest days, and exercise management all implemented
-- **Next Milestone:** Phase 1 — Visual Refactor (app-wide UI overhaul)
+- **Phase:** Post-MVP Development — Phase 1 complete, entering analytics & widget framework
+- **Status:** Core features + home screen visual refactor complete
+- **Next Milestone:** Phase 2 — Analytics Functions & Profile Screen Scoping
 
 ---
 
@@ -53,31 +53,27 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Phase 2: Set Variations** (set type selector, visual badges W/D/F/A, row colors)
 - [x] **Phase 3: Cardio & Stretching** (category tabs, 14 cardio exercises, equipment types)
 - [x] **Polish fixes** (favorites sort to top, Hidden tab at end, smaller category icons)
+- [x] **Phase 1: Visual Refactor — Home Screen** (WorkoutHomeView extraction, WeeklyTracker, MaterialIcons nav, keyboard safe area, rest day UX)
 
 ---
 
 ## In Progress
 
-- [ ] **Phase 1: Visual Refactor** — App-wide UI overhaul (starting this session)
+- [ ] **Phase 2: Analytics Functions & Profile Screen Scoping**
 
 ---
 
 ## Upcoming Roadmap
 
-### Phase 1: Visual Refactor
-- App-wide UI/UX overhaul — modernize all screens, components, and navigation
-- Improve typography, spacing, color consistency, animations
-- Address accumulated UI debt from rapid feature development
-
-### Phase 2: Widgets System
-- Home screen widgets for quick workout access
-- At-a-glance stats and current split info
-- Platform-specific widget implementations (Android/iOS)
-
-### Phase 3: Analytics Functions & Profile Screen Scoping
+### Phase 2: Analytics Functions & Profile Screen Scoping
 - Audit existing analytics/stats capabilities in the codebase
 - Define what metrics and charts belong on the Profile screen
 - Design the analytics data layer (aggregations, queries, caching)
+
+### Phase 3: Widget Framework
+- Reusable widget system (add/remove/reorder on home screen)
+- Widgets are bite-sized capsules of profile page analytics
+- Core framework first, then populate with real data after analytics
 
 ### Phase 4: Profile Screen Visual Refactor + Analytics Screens
 - Redesign the Profile screen with analytics integration
@@ -124,6 +120,35 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-02-23: Phase 1 — Home Screen Visual Refactor
+
+**Duration:** ~2 hours across sessions
+**Focus:** Extracting home screen UI into dedicated component, matching mockup, fixing bugs
+
+**What was done:**
+- **WorkoutHomeView extraction** — Pulled home screen JSX/styles out of `WorkoutScreen.tsx` (1,601 → 1,228 lines)
+- **WeeklyTracker** — M–S day circles with completed/rest/today/future states
+- **Navigation overhaul** — Replaced emoji tab icons with MaterialIcons, tab bar hidden during active workout
+- **Service layer** — Added `getWorkoutDatesThisWeek()` for weekly workout date queries
+- **Rest day UX** — Rest day items tappable in template picker, rest day state on home screen with swap button
+- **Bug fixes:**
+  - Timezone: `DATE()` YYYY-MM-DD parsed as local time (not UTC) to prevent day-shift
+  - Keyboard safe area: Added `useSafeAreaInsets()` bottom padding when tab bar is hidden
+  - Rest day alignment: Simplified to today-only indicator (schedule doesn't map to calendar linearly)
+
+**Files created:**
+- `src/screens/WorkoutHomeView.tsx` — Extracted home screen component
+- `src/components/WeeklyTracker.tsx` — Weekly day tracker
+
+**Files modified:**
+- `src/screens/WorkoutScreen.tsx` — Extracted home screen, added weekly dates state
+- `src/navigation/AppNavigator.tsx` — MaterialIcons, tab bar hide on active workout
+- `src/components/WorkoutKeyboard.tsx` — Safe area bottom padding
+- `src/services/workoutService.ts` — `getWorkoutDatesThisWeek()`, timezone fix
+- `src/services/index.ts`, `src/components/index.ts` — Barrel exports
+
+---
 
 ### 2026-01-07/08: Splits Feature & Template Cycling
 
@@ -416,6 +441,6 @@ Screenshots of competitor apps are available in `.agent/reference/`:
 ---
 
 ## Last Updated
-- Date: 2026-02-20
-- Session Context: Restructured roadmap with new 8-phase feature plan after month-long break
+- Date: 2026-02-23
+- Session Context: Completed Phase 1 home screen visual refactor, reordered roadmap (analytics before widgets)
 
