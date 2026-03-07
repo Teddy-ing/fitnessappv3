@@ -12,7 +12,7 @@
  * - View workout history
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -20,10 +20,8 @@ import {
     TouchableOpacity,
     ScrollView,
     Alert,
-    TextInput,
     Modal,
     RefreshControl,
-    Keyboard,
     Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,29 +29,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
-import { ExerciseCard, ExercisePicker, RestTimer, TemplateCard, WorkoutKeyboard, FocusState, KeyboardFieldType } from '../components';
+import { ExerciseCard, ExercisePicker, RestTimer, TemplateCard, WorkoutKeyboard, TemplatePickerModal, SaveTemplateModal } from '../components';
+import { useElapsedTimer, formatElapsedTime, useWorkoutKeyboard, useHomeScreenData } from '../hooks';
 import {
     saveWorkout,
-    getWorkouts,
-    getWorkoutDatesThisWeek,
-    getTemplates,
-    createTemplateFromWorkout,
     findMatchingTemplate,
-    findTemplateByName,
-    findTemplatesByName,
-    overwriteTemplate,
     startWorkoutFromTemplate,
     deleteTemplate,
-    getActiveSplit,
-    getTemplatesForSplit,
-    getSplitsForTemplate,
-    getCurrentTemplate,
-    getCurrentTemplateIndex,
-    advanceToNextTemplate,
-    checkAndAdvanceIfNewDay,
     markWorkoutCompletedToday,
     Template,
-    SplitInfo
 } from '../services';
 import { Workout } from '../models/workout';
 import { Split } from '../models/split';
@@ -79,123 +63,56 @@ export default function WorkoutScreen() {
         closeExercisePicker,
     } = useWorkoutStore();
 
-    // Local state for history and templates
-    const [recentWorkouts, setRecentWorkouts] = useState<Workout[]>([]);
-    const [templates, setTemplates] = useState<Template[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+    // Home screen data - extracted to useHomeScreenData hook
+    const {
+        recentWorkouts,
+        templates,
+        activeSplit,
+        currentTemplate,
+        currentTemplateIndex,
+        workoutDatesThisWeek,
+        isLoading,
+        refreshing,
+        loadData,
+        onRefresh,
+        handleChangeTemplateIndex,
+        setActiveSplit,
+    } = useHomeScreenData();
 
-    // Splits state
-    const [activeSplit, setActiveSplit] = useState<Split | null>(null);
+    // UI toggle states (remain in component)
     const [showSplitsModal, setShowSplitsModal] = useState(false);
     const [showTemplatesModal, setShowTemplatesModal] = useState(false);
     const [showTemplatePicker, setShowTemplatePicker] = useState(false);
-    const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null);
-    const [currentTemplateIndex, setCurrentTemplateIndexState] = useState(0);
-    const [workoutDatesThisWeek, setWorkoutDatesThisWeek] = useState<Date[]>([]);
 
-    // Live timer state - triggers re-renders every second
-    const [elapsedTime, setElapsedTime] = useState(0);
-    const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    // Live timer - extracted to useElapsedTimer hook
+    const { elapsedTime } = useElapsedTimer(activeWorkout?.startedAt ?? null);
 
     // Save as template modal state
     const [showSaveTemplateModal, setSaveTemplateModal] = useState(false);
-    const [templateName, setTemplateName] = useState('');
     const [pendingWorkout, setPendingWorkout] = useState<Workout | null>(null);
 
-    // Custom keyboard state
-    const [focusState, setFocusState] = useState<FocusState | null>(null);
-    const [keyboardValue, setKeyboardValue] = useState('');
+    // Custom keyboard - extracted to useWorkoutKeyboard hook
+    const {
+        focusState,
+        keyboardValue,
+        handleFocusField,
+        handleKeyPress,
+        handleBackspace,
+        handleClear,
+        handleAdjust,
+        handleNext,
+        handleHideKeyboard,
+        getKeyboardFieldType,
+        getFieldLabel,
+    } = useWorkoutKeyboard();
 
-    // Hide system keyboard when our custom keyboard is active
-    useEffect(() => {
-        if (focusState) {
-            Keyboard.dismiss();
-        }
-    }, [focusState]);
 
-    // Live timer effect - updates every second when workout is active
-    useEffect(() => {
-        if (activeWorkout) {
-            // Update immediately
-            const updateElapsed = () => {
-                const now = new Date();
-                const diff = Math.floor((now.getTime() - activeWorkout.startedAt.getTime()) / 1000);
-                setElapsedTime(diff);
-            };
-            updateElapsed();
-
-            // Set interval
-            timerIntervalRef.current = setInterval(updateElapsed, 1000);
-        } else {
-            // Clear interval when no active workout
-            if (timerIntervalRef.current) {
-                clearInterval(timerIntervalRef.current);
-                timerIntervalRef.current = null;
-            }
-            setElapsedTime(0);
-        }
-
-        return () => {
-            if (timerIntervalRef.current) {
-                clearInterval(timerIntervalRef.current);
-            }
-        };
-    }, [activeWorkout?.id]); // Re-run when workout changes
-
-    // Load data on mount
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
-        try {
-            // Check if we should advance template (new day after workout)
-            await checkAndAdvanceIfNewDay();
-
-            const [workouts, active, currentIdx, weekDates] = await Promise.all([
-                getWorkouts(5),
-                getActiveSplit(),
-                getCurrentTemplateIndex(),
-                getWorkoutDatesThisWeek(),
-            ]);
-            setRecentWorkouts(workouts);
-            setActiveSplit(active);
-            setCurrentTemplateIndexState(currentIdx);
-            setWorkoutDatesThisWeek(weekDates);
-
-            // Load templates based on active split
-            if (active) {
-                const splitTemplates = await getTemplatesForSplit(active.id);
-                setTemplates(splitTemplates);
-
-                // Get current template from split schedule
-                const nextTemplate = await getCurrentTemplate();
-                setCurrentTemplate(nextTemplate);
-            } else {
-                const allTemplates = await getTemplates();
-                setTemplates(allTemplates);
-                setCurrentTemplate(null);
-            }
-        } catch (error) {
-            console.error('Error loading data:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const onRefresh = useCallback(async () => {
-        setRefreshing(true);
-        await loadData();
-        setRefreshing(false);
-    }, []);
 
     // Handle start workout
     const handleStartWorkout = () => {
         // Reset any pending template modal state
         setSaveTemplateModal(false);
         setPendingWorkout(null);
-        setTemplateName('');
         startWorkout();
     };
 
@@ -214,21 +131,7 @@ export default function WorkoutScreen() {
         }
     };
 
-    // Handle changing current template position in split
-    const handleChangeTemplateIndex = async (newIndex: number) => {
-        try {
-            const { setCurrentTemplateIndex } = await import('../services');
-            await setCurrentTemplateIndex(newIndex);
-            setCurrentTemplateIndexState(newIndex);
 
-            // Reload current template
-            const nextTemplate = await getCurrentTemplate();
-            setCurrentTemplate(nextTemplate);
-            setShowTemplatePicker(false);
-        } catch (error) {
-            console.error('Error changing template index:', error);
-        }
-    };
 
     // Handle delete template
     const handleDeleteTemplate = async (template: Template) => {
@@ -296,7 +199,6 @@ export default function WorkoutScreen() {
                                     text: 'Save Template',
                                     onPress: () => {
                                         setPendingWorkout(workout);
-                                        setTemplateName(workout.name);
                                         setSaveTemplateModal(true);
                                     }
                                 },
@@ -311,121 +213,6 @@ export default function WorkoutScreen() {
         }
     };
 
-    // Handle save as template
-    const handleSaveTemplate = async () => {
-        if (!pendingWorkout || !templateName.trim()) return;
-
-        try {
-            // Check if templates with this name already exist
-            const existingTemplates = await findTemplatesByName(templateName.trim());
-
-            if (existingTemplates.length === 0) {
-                // No existing templates - create new
-                await createTemplateFromWorkout(pendingWorkout, templateName.trim());
-                setSaveTemplateModal(false);
-                setPendingWorkout(null);
-                setTemplateName('');
-                await loadData();
-                Alert.alert('Success', 'Template saved!');
-            } else if (existingTemplates.length === 1) {
-                // Single template with this name - simple overwrite dialog
-                const existing = existingTemplates[0];
-                const splits = await getSplitsForTemplate(existing.id);
-                const splitText = splits.length > 0
-                    ? splits.map(s => s.isBuiltIn ? `${s.name} (Pre-made)` : s.name).join(', ')
-                    : 'no splits';
-
-                Alert.alert(
-                    'Template Exists',
-                    `A template named "${existing.name}" (${existing.exerciseCount} exercises, in ${splitText}) already exists. Overwrite it?`,
-                    [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                            text: 'Create New', onPress: async () => {
-                                await createTemplateFromWorkout(pendingWorkout, templateName.trim());
-                                setSaveTemplateModal(false);
-                                setPendingWorkout(null);
-                                setTemplateName('');
-                                await loadData();
-                                Alert.alert('Success', 'New template created!');
-                            }
-                        },
-                        {
-                            text: 'Overwrite',
-                            style: 'destructive',
-                            onPress: async () => {
-                                await overwriteTemplate(existing.id, pendingWorkout, templateName.trim());
-                                setSaveTemplateModal(false);
-                                setPendingWorkout(null);
-                                setTemplateName('');
-                                await loadData();
-                                Alert.alert('Success', 'Template updated!');
-                            }
-                        },
-                    ]
-                );
-            } else {
-                // Multiple templates with same name - show picker
-                const templateOptions = await Promise.all(
-                    existingTemplates.map(async (t) => {
-                        const splits = await getSplitsForTemplate(t.id);
-                        return { template: t, splits };
-                    })
-                );
-
-                // Sort: current split's templates first
-                templateOptions.sort((a, b) => {
-                    const aInActive = activeSplit && a.splits.some(s => s.id === activeSplit.id);
-                    const bInActive = activeSplit && b.splits.some(s => s.id === activeSplit.id);
-                    if (aInActive && !bInActive) return -1;
-                    if (!aInActive && bInActive) return 1;
-                    return 0;
-                });
-
-                // Build alert buttons
-                const buttons = templateOptions.map(({ template, splits }) => {
-                    const splitText = splits.length > 0
-                        ? splits.map(s => s.isBuiltIn ? `${s.name} (Pre-made)` : s.name).join(', ')
-                        : 'No split';
-                    return {
-                        text: `${splitText}`,
-                        onPress: async () => {
-                            await overwriteTemplate(template.id, pendingWorkout, templateName.trim());
-                            setSaveTemplateModal(false);
-                            setPendingWorkout(null);
-                            setTemplateName('');
-                            await loadData();
-                            Alert.alert('Success', 'Template updated!');
-                        }
-                    };
-                });
-
-                // Add "Create New" option
-                buttons.push({
-                    text: 'Create New',
-                    onPress: async () => {
-                        await createTemplateFromWorkout(pendingWorkout, templateName.trim());
-                        setSaveTemplateModal(false);
-                        setPendingWorkout(null);
-                        setTemplateName('');
-                        await loadData();
-                        Alert.alert('Success', 'New template created!');
-                    }
-                });
-
-                buttons.push({ text: 'Cancel', onPress: async () => { } });
-
-                Alert.alert(
-                    'Multiple Templates Found',
-                    `Multiple templates named "${templateName}" exist. Which one do you want to update?`,
-                    buttons as any
-                );
-            }
-        } catch (error) {
-            console.error('Error saving template:', error);
-            Alert.alert('Error', 'Failed to save template');
-        }
-    };
 
     // Handle discard workout
     const handleDiscardWorkout = () => {
@@ -436,7 +223,7 @@ export default function WorkoutScreen() {
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Discard', style: 'destructive', onPress: () => {
-                        setFocusState(null);
+                        handleHideKeyboard();
                         discardWorkout();
                     }
                 },
@@ -444,144 +231,8 @@ export default function WorkoutScreen() {
         );
     };
 
-    // ========================================
-    // Custom Keyboard Handlers
-    // ========================================
 
-    // Handle focus on a specific field
-    const handleFocusField = (exerciseId: string, setId: string, field: 'weight' | 'reps') => {
-        if (!activeWorkout) return;
 
-        // Find the current value
-        const exercise = activeWorkout.main.exercises.find(e => e.id === exerciseId);
-        const set = exercise?.sets.find(s => s.id === setId);
-
-        let currentValue = '';
-        if (field === 'weight') {
-            currentValue = set?.weight?.toString() ?? '';
-        } else if (field === 'reps') {
-            currentValue = set?.reps?.toString() ?? '';
-        }
-
-        setFocusState({ exerciseId, setId, field });
-        setKeyboardValue(currentValue);
-    };
-
-    // Handle key press on custom keyboard
-    const handleKeyPress = (key: string) => {
-        if (!focusState) return;
-
-        // Prevent multiple decimals
-        if (key === '.' && keyboardValue.includes('.')) return;
-
-        // Limit length
-        if (keyboardValue.length >= 6) return;
-
-        const newValue = keyboardValue + key;
-        setKeyboardValue(newValue);
-
-        // Update the set
-        const numValue = parseFloat(newValue);
-        if (!isNaN(numValue)) {
-            if (focusState.field === 'weight') {
-                updateSet(focusState.exerciseId, focusState.setId, { weight: numValue });
-            } else {
-                updateSet(focusState.exerciseId, focusState.setId, { reps: Math.floor(numValue) });
-            }
-        }
-    };
-
-    // Handle backspace
-    const handleBackspace = () => {
-        if (!focusState || keyboardValue.length === 0) return;
-
-        const newValue = keyboardValue.slice(0, -1);
-        setKeyboardValue(newValue);
-
-        const numValue = newValue.length > 0 ? parseFloat(newValue) : null;
-        if (focusState.field === 'weight') {
-            updateSet(focusState.exerciseId, focusState.setId, { weight: numValue && !isNaN(numValue) ? numValue : null });
-        } else {
-            updateSet(focusState.exerciseId, focusState.setId, { reps: numValue && !isNaN(numValue) ? Math.floor(numValue) : null });
-        }
-    };
-
-    // Handle clear
-    const handleClear = () => {
-        if (!focusState) return;
-
-        setKeyboardValue('');
-        if (focusState.field === 'weight') {
-            updateSet(focusState.exerciseId, focusState.setId, { weight: null });
-        } else {
-            updateSet(focusState.exerciseId, focusState.setId, { reps: null });
-        }
-    };
-
-    // Handle +/- adjustment
-    const handleAdjust = (delta: number) => {
-        if (!focusState || !activeWorkout) return;
-
-        const exercise = activeWorkout.main.exercises.find(e => e.id === focusState.exerciseId);
-        const set = exercise?.sets.find(s => s.id === focusState.setId);
-
-        if (focusState.field === 'weight') {
-            const currentWeight = set?.weight ?? 0;
-            const newWeight = Math.max(0, currentWeight + delta);
-            updateSet(focusState.exerciseId, focusState.setId, { weight: newWeight });
-            setKeyboardValue(newWeight.toString());
-        } else {
-            const currentReps = set?.reps ?? 0;
-            const newReps = Math.max(0, currentReps + delta);
-            updateSet(focusState.exerciseId, focusState.setId, { reps: newReps });
-            setKeyboardValue(newReps.toString());
-        }
-    };
-
-    // Handle Next button - flow: weight → reps → complete set
-    const handleNext = () => {
-        if (!focusState || !activeWorkout) return;
-
-        const exercise = activeWorkout.main.exercises.find(e => e.id === focusState.exerciseId);
-        if (!exercise) return;
-
-        if (focusState.field === 'weight') {
-            // Move to reps
-            const set = exercise.sets.find(s => s.id === focusState.setId);
-            const repsValue = set?.reps?.toString() ?? '';
-            setFocusState({ ...focusState, field: 'reps' });
-            setKeyboardValue(repsValue);
-        } else {
-            // Complete the set and hide keyboard
-            completeSet(focusState.exerciseId, focusState.setId);
-            setFocusState(null);
-            setKeyboardValue('');
-        }
-    };
-
-    // Handle hide keyboard
-    const handleHideKeyboard = () => {
-        setFocusState(null);
-        setKeyboardValue('');
-    };
-
-    // Get current keyboard field type
-    const getKeyboardFieldType = (): KeyboardFieldType => {
-        return focusState?.field === 'weight' ? 'weight' : 'reps';
-    };
-
-    // Get label for current field
-    const getFieldLabel = (): string => {
-        if (!focusState || !activeWorkout) return '';
-
-        const exercise = activeWorkout.main.exercises.find(e => e.id === focusState.exerciseId);
-        if (!exercise) return '';
-
-        const setIndex = exercise.sets.findIndex(s => s.id === focusState.setId);
-        const setNum = setIndex + 1;
-
-        return `${exercise.exercise.name} - Set ${setNum} ${focusState.field === 'weight' ? 'Weight' : 'Reps'}`;
-    };
 
     // Calculate workout stats
     const getWorkoutStats = () => {
@@ -605,17 +256,7 @@ export default function WorkoutScreen() {
         return { exercises, sets, volume };
     };
 
-    // Format duration from elapsed seconds
-    const formatElapsedTime = (totalSeconds: number): string => {
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-
-        if (hours > 0) {
-            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    };
+    // formatElapsedTime is now imported from '../hooks'
 
     // Format workout date for history
     const formatWorkoutDate = (date: Date): string => {
@@ -652,112 +293,29 @@ export default function WorkoutScreen() {
                 />
 
                 {/* Template picker modal - for switching current position in split */}
-                <Modal
+                <TemplatePickerModal
                     visible={showTemplatePicker}
-                    animationType="fade"
-                    transparent
-                    onRequestClose={() => setShowTemplatePicker(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>Choose Current Template</Text>
-                            <Text style={styles.pickerSubtitle}>
-                                Select which template to start from
-                            </Text>
-                            <ScrollView style={styles.pickerList}>
-                                {activeSplit?.schedule.map((item, index) => {
-                                    if (item.type === 'rest') {
-                                        return (
-                                            <TouchableOpacity
-                                                key={index}
-                                                style={[
-                                                    styles.pickerItem,
-                                                    currentTemplateIndex === index && styles.pickerItemActive
-                                                ]}
-                                                onPress={() => handleChangeTemplateIndex(index)}
-                                            >
-                                                <Text style={[
-                                                    styles.pickerRestText,
-                                                    currentTemplateIndex === index && styles.pickerItemTextActive
-                                                ]}>Rest Day</Text>
-                                                <Text style={styles.pickerItemMeta}>
-                                                    Day {index + 1}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        );
-                                    }
-                                    const template = templates.find(t => t.id === item.templateId);
-                                    return (
-                                        <TouchableOpacity
-                                            key={index}
-                                            style={[
-                                                styles.pickerItem,
-                                                currentTemplateIndex === index && styles.pickerItemActive
-                                            ]}
-                                            onPress={() => handleChangeTemplateIndex(index)}
-                                        >
-                                            <Text style={[
-                                                styles.pickerItemText,
-                                                currentTemplateIndex === index && styles.pickerItemTextActive
-                                            ]}>
-                                                {template?.name || 'Unknown Template'}
-                                            </Text>
-                                            <Text style={styles.pickerItemMeta}>
-                                                Day {index + 1}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </ScrollView>
-                            <TouchableOpacity
-                                style={styles.modalButtonCancel}
-                                onPress={() => setShowTemplatePicker(false)}
-                            >
-                                <Text style={styles.modalButtonCancelText}>Cancel</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
+                    activeSplit={activeSplit}
+                    templates={templates}
+                    currentTemplateIndex={currentTemplateIndex}
+                    onChangeIndex={async (index) => {
+                        await handleChangeTemplateIndex(index);
+                        setShowTemplatePicker(false);
+                    }}
+                    onClose={() => setShowTemplatePicker(false)}
+                />
 
                 {/* Save as template modal */}
-                <Modal
+                <SaveTemplateModal
                     visible={showSaveTemplateModal}
-                    animationType="fade"
-                    transparent
-                    onRequestClose={() => setSaveTemplateModal(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>Save as Template</Text>
-                            <TextInput
-                                style={styles.templateInput}
-                                value={templateName}
-                                onChangeText={setTemplateName}
-                                placeholder="Template name"
-                                placeholderTextColor={colors.text.secondary}
-                                autoFocus
-                            />
-                            <View style={styles.modalButtons}>
-                                <TouchableOpacity
-                                    style={styles.modalButtonCancel}
-                                    onPress={() => {
-                                        setSaveTemplateModal(false);
-                                        setPendingWorkout(null);
-                                        loadData();
-                                    }}
-                                >
-                                    <Text style={styles.modalButtonCancelText}>Cancel</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.modalButtonSave}
-                                    onPress={handleSaveTemplate}
-                                >
-                                    <Text style={styles.modalButtonSaveText}>Save</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
+                    pendingWorkout={pendingWorkout}
+                    activeSplit={activeSplit}
+                    onClose={() => {
+                        setSaveTemplateModal(false);
+                        setPendingWorkout(null);
+                    }}
+                    onSaved={loadData}
+                />
             </>
         );
 
@@ -901,44 +459,16 @@ export default function WorkoutScreen() {
             />
 
             {/* Save as template modal */}
-            <Modal
+            <SaveTemplateModal
                 visible={showSaveTemplateModal}
-                animationType="fade"
-                transparent
-                onRequestClose={() => setSaveTemplateModal(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Save as Template</Text>
-                        <TextInput
-                            style={styles.templateInput}
-                            value={templateName}
-                            onChangeText={setTemplateName}
-                            placeholder="Template name"
-                            placeholderTextColor={colors.text.secondary}
-                            autoFocus
-                        />
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={styles.modalButtonCancel}
-                                onPress={() => {
-                                    setSaveTemplateModal(false);
-                                    setPendingWorkout(null);
-                                    loadData();
-                                }}
-                            >
-                                <Text style={styles.modalButtonCancelText}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.modalButtonSave}
-                                onPress={handleSaveTemplate}
-                            >
-                                <Text style={styles.modalButtonSaveText}>Save</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                pendingWorkout={pendingWorkout}
+                activeSplit={activeSplit}
+                onClose={() => {
+                    setSaveTemplateModal(false);
+                    setPendingWorkout(null);
+                }}
+                onSaved={loadData}
+            />
         </SafeAreaView>
     );
 }

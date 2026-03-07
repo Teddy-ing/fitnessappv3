@@ -1,0 +1,499 @@
+# Workout App Architecture Walkthrough
+
+This walkthrough explains how your fitness app works from the ground up. Even without deep TypeScript/React Native experience, you'll understand the patterns and data flow.
+
+---
+
+## Table of Contents
+1. [The Big Picture](#the-big-picture)
+2. [Data Models (The Foundation)](#data-models)
+3. [Services (Database Layer)](#services)
+4. [State Management (Zustand Store)](#state-management)
+5. [Components (UI Building Blocks)](#components)
+6. [Screens (Full Pages)](#screens)
+7. [Theme (Styling System)](#theme)
+8. [How It All Connects](#how-it-all-connects)
+
+---
+
+## The Big Picture
+
+```mermaid
+flowchart TB
+    subgraph UI["UI Layer"]
+        Screens["Screens<br/>(WorkoutScreen, SplitsScreen, etc)"]
+        Components["Components<br/>(ExerciseCard, SetRow, etc)"]
+    end
+    
+    subgraph State["State Layer"]
+        Store["Zustand Store<br/>(workoutStore.ts)"]
+    end
+    
+    subgraph Data["Data Layer"]
+        Services["Services<br/>(workoutService, templateService, etc)"]
+        DB["SQLite Database"]
+    end
+    
+    subgraph Foundation["Foundation"]
+        Models["Models<br/>(Workout, Exercise, Template, Split)"]
+        Theme["Theme<br/>(colors, spacing, typography)"]
+    end
+    
+    Screens --> Components
+    Screens --> Store
+    Components --> Store
+    Store --> Services
+    Services --> DB
+    Services --> Models
+    Components --> Theme
+    Screens --> Theme
+```
+
+**Reading this diagram:** Data flows from bottom to top. Models define the shape of data. Services read/write that data to the database. The Store holds the "current" state for the active workout. UI layers display and modify state.
+
+---
+
+## Data Models
+
+Location: [src/models/](file:///c:/Users/teddy/projects/workout-app/src/models)
+
+Models are **TypeScript interfaces** - they define the *shape* of your data without any logic. Think of them as blueprints.
+
+### Core Models
+
+````carousel
+### Exercise ([exercise.ts](file:///c:/Users/teddy/projects/workout-app/src/models/exercise.ts))
+
+The definition of an exercise (e.g., "Bench Press", "Squat").
+
+```typescript
+interface Exercise {
+    id: string;
+    name: string;                    // "Bench Press"
+    category: ExerciseCategory;      // 'chest', 'back', 'legs', etc.
+    muscleGroups: MuscleContribution[]; // Which muscles, with percentages
+    equipment: Equipment[];          // Barbell, dumbbell, machine, etc.
+    trackWeight: boolean;            // Does this exercise track weight?
+    trackReps: boolean;              // Does it track reps?
+    trackTime: boolean;              // Does it track duration? (for planks, etc.)
+    isCustom: boolean;               // User-created?
+    isFavorite: boolean;
+    isHidden: boolean;
+}
+```
+
+**Key insight:** An Exercise is a *definition*, not an actual workout. It's like a recipe, not a meal.
+<!-- slide -->
+### Workout ([workout.ts](file:///c:/Users/teddy/projects/workout-app/src/models/workout.ts))
+
+An actual workout session the user logs.
+
+```typescript
+interface Workout {
+    id: string;
+    name: string;                    // "Morning Push Day"
+    status: 'in_progress' | 'completed' | 'abandoned';
+    
+    // Sections (only main is required)
+    warmup: WorkoutSection | null;
+    main: WorkoutSection;            // Contains the exercises
+    cooldown: WorkoutSection | null;
+    
+    // Timing
+    startedAt: Date;
+    completedAt: Date | null;
+    totalDuration: number | null;
+    
+    // Stats (calculated when saved)
+    totalVolume: number | null;      // weight × reps
+    totalSets: number | null;
+}
+```
+
+A Workout contains **WorkoutExercises**, which contain **WorkoutSets**. This is the hierarchy:
+```
+Workout
+└── WorkoutSection (main)
+    └── WorkoutExercise[] (each exercise you perform)
+        └── WorkoutSet[] (each set within that exercise)
+```
+<!-- slide -->
+### Template ([template.ts](file:///c:/Users/teddy/projects/workout-app/src/models/template.ts))
+
+A saved workout structure you can reuse.
+
+```typescript
+interface Template {
+    id: string;
+    name: string;                    // "Push Day A"
+    exercises: TemplateExercise[];   // The exercises in this template
+    exerciseCount: number;
+    lastUsedAt: Date | null;
+    useCount: number;
+    isFavorite: boolean;
+}
+```
+
+**Relationship:** You start a workout FROM a template. The template defines which exercises; the workout records what you actually did.
+<!-- slide -->
+### Split ([split.ts](file:///c:/Users/teddy/projects/workout-app/src/models/split.ts))
+
+A training program - a sequence of templates over days.
+
+```typescript
+interface Split {
+    id: string;
+    name: string;                    // "Push/Pull/Legs"
+    schedule: SplitScheduleItem[];   // Day 1: Push, Day 2: Pull, etc.
+    isBuiltIn: boolean;              // Pre-made split vs. user-created
+    isFavorite: boolean;
+}
+
+interface SplitScheduleItem {
+    dayIndex: number;                // 0, 1, 2, ...
+    templateId: string | null;       // null = rest day
+}
+```
+
+**Example:** A PPL split might have:
+- Day 0: Push template
+- Day 1: Pull template  
+- Day 2: Legs template
+- Day 3: Rest (templateId = null)
+- ...repeat
+````
+
+### Helper Functions
+
+Models also include **factory functions** to create new instances:
+
+```typescript
+// Creates a fresh workout with defaults
+const workout = createWorkout("Morning Session");
+
+// Creates a workout exercise with 3 empty sets
+const benchPress = createWorkoutExercise(exercise, orderIndex, 3);
+
+// Creates a single set
+const set = createSet(0, 'working');
+```
+
+---
+
+## Services
+
+Location: [src/services/](file:///c:/Users/teddy/projects/workout-app/src/services)
+
+Services handle **database operations**. They're the only layer that talks to SQLite.
+
+### Service Pattern
+
+Every service follows the same pattern:
+
+```typescript
+export async function saveWorkout(workout: Workout): Promise<void> {
+    const db = await getDatabase();
+    if (!db) {
+        console.log('Database not available (Expo Go mode)');
+        return;  // Graceful degradation
+    }
+    
+    await db.withTransactionAsync(async () => {
+        // Insert workout
+        // Insert exercises
+        // Insert sets
+    });
+}
+```
+
+**Key patterns:**
+1. **Get database connection** (may be null in Expo Go)
+2. **Return empty/gracefully** if no DB
+3. **Use transactions** for multi-table writes
+4. **Hydrate** when reading (convert DB rows → TypeScript objects)
+
+### Service Responsibilities
+
+| Service | Purpose |
+|---------|---------|
+| [database.ts](file:///c:/Users/teddy/projects/workout-app/src/services/database.ts) | DB connection, schema creation |
+| [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts) | Save/load workout history |
+| [templateService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/templateService.ts) | CRUD for templates |
+| [splitService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/splitService.ts) | Split management, current position tracking |
+| [exerciseService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/exerciseService.ts) | Exercise library, favorites, hiding |
+
+### Barrel Export
+
+[services/index.ts](file:///c:/Users/teddy/projects/workout-app/src/services/index.ts) re-exports everything so other code can:
+
+```typescript
+import { saveWorkout, getTemplates, getActiveSplit } from '../services';
+```
+
+Instead of importing from 5 different files.
+
+---
+
+## State Management
+
+Location: [src/stores/workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts)
+
+### What is Zustand?
+
+Zustand is a lightweight state management library. Think of it as a "global variable" that:
+- Any component can read
+- Any component can update
+- Automatically re-renders components when it changes
+
+### The Workout Store
+
+```typescript
+interface WorkoutState {
+    // The actual data
+    activeWorkout: Workout | null;
+    restTimerDuration: number;
+    restTimerRemaining: number;
+    restTimerActive: boolean;
+    
+    // Actions (functions to modify state)
+    startWorkout: (name?: string) => void;
+    finishWorkout: () => Workout | null;
+    addExercise: (exercise: Exercise) => void;
+    removeExercise: (exerciseId: string) => void;
+    addSet: (exerciseId: string) => void;
+    completeSet: (exerciseId: string, setId: string) => void;
+    startRestTimer: (seconds?: number) => void;
+    // ... more
+}
+```
+
+### How Components Use It
+
+```typescript
+function ExerciseCard() {
+    // Subscribe to specific parts of state
+    const { activeWorkout, addSet, removeSet } = useWorkoutStore();
+    
+    // When you call addSet(), the store updates,
+    // and this component automatically re-renders
+}
+```
+
+### Why Not Just Services?
+
+- **Services** = persistent storage (database)
+- **Store** = current session state (RAM)
+
+When you're logging a workout, changes go to the **Store**. When you finish, the workout is saved via **Services** to the database.
+
+---
+
+## Components
+
+Location: [src/components/](file:///c:/Users/teddy/projects/workout-app/src/components)
+
+Components are **reusable UI building blocks**. They're like LEGO pieces.
+
+### Component Hierarchy
+
+```
+ExerciseCard
+├── SetRow (repeated for each set)
+│   └── (weight input, reps input, complete button)
+└── ActiveRestLine (shown when rest timer is active)
+
+ExercisePicker (modal)
+└── (search, filters, exercise list)
+
+WorkoutKeyboard
+└── (custom numeric keyboard for weight/reps)
+```
+
+### Props Pattern
+
+Components receive data and callbacks via **props**:
+
+```typescript
+interface ExerciseCardProps {
+    workoutExercise: WorkoutExercise;  // Data to display
+    onAddSet: () => void;              // Function to call when "+ Add Set" tapped
+    onRemoveExercise: () => void;      // Function to call when "×" tapped
+    onCompleteSet: (setId: string) => void;
+}
+
+function ExerciseCard({ workoutExercise, onAddSet, ... }: ExerciseCardProps) {
+    // Render UI, call callbacks when user interacts
+}
+```
+
+**Key insight:** Components don't know *how* to add a set—they just call `onAddSet()` and let the parent decide.
+
+---
+
+## Screens
+
+Location: [src/screens/](file:///c:/Users/teddy/projects/workout-app/src/screens)
+
+Screens are **complete pages** that compose components and connect to state.
+
+### WorkoutScreen ([WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx))
+
+The main screen. Has two modes:
+
+**No Active Workout:**
+- Shows "Ready to workout?" hero
+- Current template / split cards
+- Recent workout history
+- Start button
+
+**Active Workout:**
+- Elapsed timer
+- List of ExerciseCards
+- Custom keyboard overlay
+- Finish/discard buttons
+
+### Screen Responsibilities
+
+```typescript
+function WorkoutScreen() {
+    // 1. Connect to store
+    const { activeWorkout, startWorkout, addExercise } = useWorkoutStore();
+    
+    // 2. Local UI state (modals, etc.)
+    const [showSplitsModal, setShowSplitsModal] = useState(false);
+    
+    // 3. Load data from services
+    useEffect(() => {
+        loadData();  // Fetches templates, splits, recent workouts
+    }, []);
+    
+    // 4. Define handlers that wire everything together
+    const handleFinishWorkout = async () => {
+        const workout = await finishWorkout();
+        await saveWorkout(workout);  // Persist to DB
+        await loadData();            // Refresh UI
+    };
+    
+    // 5. Render UI
+    return (
+        <View>
+            {activeWorkout ? (
+                <ActiveWorkoutUI />
+            ) : (
+                <EmptyStateUI />
+            )}
+        </View>
+    );
+}
+```
+
+---
+
+## Theme
+
+Location: [src/theme/index.ts](file:///c:/Users/teddy/projects/workout-app/src/theme/index.ts)
+
+Centralized design tokens:
+
+```typescript
+export const colors = {
+    background: {
+        primary: '#09090b',    // Dark background
+        secondary: '#18181b',  // Card backgrounds
+    },
+    accent: {
+        primary: '#a855f7',    // Purple - your brand color
+        success: '#22c55e',    // Green - completed sets
+    },
+    // ... more
+};
+
+export const spacing = {
+    xs: 4, sm: 8, md: 16, lg: 24, xl: 32
+};
+
+export const typography = {
+    size: { xs: 12, sm: 14, md: 16, lg: 18, xl: 20 },
+    weight: { regular: '400', semibold: '600', bold: '700' }
+};
+```
+
+### Usage
+
+```typescript
+import { colors, spacing } from '../theme';
+
+const styles = StyleSheet.create({
+    card: {
+        backgroundColor: colors.background.secondary,
+        padding: spacing.md,
+        borderRadius: borderRadius.lg,
+    }
+});
+```
+
+**Why this matters:** Changing `colors.accent.primary` updates the purple throughout the entire app.
+
+---
+
+## How It All Connects
+
+Let's trace a complete user action: **Completing a set**.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant SetRow
+    participant ExerciseCard
+    participant WorkoutScreen
+    participant Store as workoutStore
+    participant UI as React Re-render
+
+    User->>SetRow: Taps ✓ button
+    SetRow->>ExerciseCard: onComplete(setId)
+    ExerciseCard->>WorkoutScreen: onCompleteSet(setId)
+    WorkoutScreen->>Store: completeSet(exerciseId, setId)
+    Store->>Store: Update set.status = 'completed'
+    Store->>Store: startRestTimer()
+    Store->>UI: State changed!
+    UI->>SetRow: Re-render with completed style
+    UI->>ExerciseCard: Show ActiveRestLine
+```
+
+### The Flow
+
+1. **User taps ✓** on a set row
+2. **SetRow** calls `onComplete()` prop (doesn't know what happens)
+3. **ExerciseCard** passes it up via `onCompleteSet()` 
+4. **WorkoutScreen** calls `store.completeSet()`
+5. **Store** updates the set's status and starts rest timer
+6. **React** detects state changed, re-renders affected components
+7. **UI updates** - set shows completed, rest timer appears
+
+---
+
+## Quick Reference
+
+| Concept | Location | Purpose |
+|---------|----------|---------|
+| Data shapes | `src/models/` | TypeScript interfaces |
+| Database ops | `src/services/` | CRUD with SQLite |
+| Current state | `src/stores/` | Active workout in memory |
+| UI pieces | `src/components/` | Reusable building blocks |
+| Full pages | `src/screens/` | Compose everything together |
+| Styling | `src/theme/` | Colors, spacing, typography |
+
+---
+
+## Learning Resources
+
+To deepen your understanding:
+
+1. **TypeScript interfaces** - You're using them well already. They're just "shapes" for data.
+2. **React hooks** - `useState`, `useEffect`, `useCallback` are the main ones you use
+3. **Zustand** - Very simple compared to Redux. Your store is a great example.
+4. **React Native** - Same as React, but `<View>` instead of `<div>`, `<Text>` instead of `<p>`
+
+---
+
+*Walkthrough completed. Your codebase architecture is clean, well-separated, and follows industry patterns.*

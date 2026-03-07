@@ -9,4 +9,9 @@ export { default as TemplateCard } from './TemplateCard';
 export { default as WorkoutKeyboard } from './WorkoutKeyboard';
 export type { KeyboardFieldType } from './WorkoutKeyboard';
 export { default as WeeklyTracker } from './WeeklyTracker';
+export { default as TemplatePickerModal } from './TemplatePickerModal';
+export { default as SaveTemplateModal } from './SaveTemplateModal';
+export { default as CreateTemplateWizard } from './CreateTemplateWizard';
+export { default as SplitListView } from './SplitListView';
+export { default as SplitFormView } from './SplitFormView';
 
