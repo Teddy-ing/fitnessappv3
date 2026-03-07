@@ -16,6 +16,7 @@ import {
     createSet
 } from '../models/workout';
 import { Exercise } from '../models/exercise';
+import { mapExerciseRow, ExerciseRow } from './hydration';
 
 /**
  * Template type for the UI
@@ -392,32 +393,17 @@ async function hydrateTemplate(row: any): Promise<Template> {
     if (!db) throw new Error('Database not available');
 
     // Get exercises for this template
-    const exerciseRows = await db.getAllAsync<any>(
+    const exerciseRows = await db.getAllAsync<ExerciseRow>(
         `SELECT * FROM template_exercises WHERE template_id = ? ORDER BY order_index`,
         [row.id]
     );
 
     const exercises: TemplateExercise[] = exerciseRows.map(exRow => ({
         id: exRow.id,
-        exercise: {
-            id: exRow.exercise_id,
-            name: exRow.exercise_name,
-            category: exRow.exercise_category,
-            muscleGroups: JSON.parse(exRow.exercise_muscle_groups || '[]'),
-            equipment: JSON.parse(exRow.exercise_equipment || '[]'),
-            trackWeight: exRow.exercise_track_weight === 1,
-            trackReps: exRow.exercise_track_reps === 1,
-            trackTime: exRow.exercise_track_time === 1,
-            trackDistance: false,
-            isCustom: false,
-            isHidden: false,
-            isFavorite: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        },
+        exercise: mapExerciseRow(exRow),
         orderIndex: exRow.order_index,
-        defaultSets: exRow.default_sets,
-        note: exRow.note,
+        defaultSets: exRow.default_sets ?? 3,
+        note: exRow.note ?? null,
     }));
 
     return {
