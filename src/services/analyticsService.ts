@@ -19,6 +19,9 @@ import {
     AggregatedMetricPoint,
     ConsistencyStats,
     MuscleDistributionPoint,
+    PerformedExercise,
+    ExerciseTimeSeriesPoint,
+    BestWeightForRep,
 } from '../models/analytics';
 import { MuscleContribution } from '../models/exercise';
 
@@ -47,6 +50,27 @@ interface WeekRow {
 interface MuscleSourceRow {
     exercise_muscle_groups: string | null;
     metric_value: number;
+}
+
+/** Row for performed exercises list */
+interface PerformedExerciseRow {
+    exercise_id: string;
+    exercise_name: string;
+    last_performed: string;
+    total_sessions: number;
+}
+
+/** Row for per-exercise time series (date + value) */
+interface ExerciseMetricRow {
+    workout_date: string;
+    value: number;
+}
+
+/** Row for best weight at a rep count */
+interface BestWeightRow {
+    reps: number;
+    weight: number;
+    achieved_date: string;
 }
 
 // ============================================================
@@ -443,9 +467,283 @@ export async function getMuscleDistribution(
     }
 }
 
+// ============================================================
+// Micro Analytics — Per-Exercise Queries
+// ============================================================
+
+/** Date label formatter for per-workout time series */
+function formatDateLabel(isoDate: string): string {
+    const d = new Date(isoDate);
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    return `${month}/${day}`;
+}
+
+/**
+ * Get list of exercises the user has performed, with metadata.
+ * Sorted by most recently performed.
+ */
+export async function getPerformedExercises(
+    range: ChartRange,
+): Promise<PerformedExercise[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    try {
+        const rangeStart = getDateRangeStart(range);
+        const whereRange = rangeStart ? `AND w.completed_at >= ?` : '';
+        const params: string[] = rangeStart ? [rangeStart] : [];
+
+        const sql = `
+            SELECT
+                we.exercise_id,
+                we.exercise_name,
+                MAX(w.completed_at) AS last_performed,
+                COUNT(DISTINCT w.id) AS total_sessions
+            FROM workout_exercises we
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE w.status = 'completed' ${whereRange}
+            GROUP BY we.exercise_id
+            ORDER BY last_performed DESC
+        `;
+
+        const rows = await db.getAllAsync<PerformedExerciseRow>(sql, params);
+
+        return rows.map((r) => ({
+            exerciseId: r.exercise_id,
+            exerciseName: r.exercise_name,
+            lastPerformed: r.last_performed,
+            totalSessions: r.total_sessions,
+        }));
+    } catch (error) {
+        console.error('[AnalyticsService] Failed to get performed exercises:', error);
+        return [];
+    }
+}
+
+/**
+ * Get estimated 1RM over time for an exercise.
+ * Uses Epley formula: weight × (1 + reps / 30)
+ * Takes the MAX est. 1RM per workout date.
+ */
+export async function getEstimated1RM(
+    exerciseId: string,
+    range: ChartRange,
+): Promise<ExerciseTimeSeriesPoint[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    try {
+        const rangeStart = getDateRangeStart(range);
+        const whereRange = rangeStart ? `AND w.completed_at >= ?` : '';
+        const params: (string)[] = [exerciseId, ...(rangeStart ? [rangeStart] : [])];
+
+        const sql = `
+            SELECT
+                DATE(w.completed_at) AS workout_date,
+                MAX(ws.weight * (1.0 + ws.reps / 30.0)) AS value
+            FROM workout_sets ws
+            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE we.exercise_id = ?
+              AND w.status = 'completed'
+              AND ws.weight > 0 AND ws.reps > 0
+              ${whereRange}
+            GROUP BY DATE(w.completed_at)
+            ORDER BY workout_date ASC
+        `;
+
+        const rows = await db.getAllAsync<ExerciseMetricRow>(sql, params);
+
+        return rows.map((r) => ({
+            date: r.workout_date,
+            value: Math.round(r.value * 10) / 10,
+            label: formatDateLabel(r.workout_date),
+        }));
+    } catch (error) {
+        console.error('[AnalyticsService] Failed to get est. 1RM:', error);
+        return [];
+    }
+}
+
+/**
+ * Get max weight per workout date for an exercise.
+ */
+export async function getMaxWeight(
+    exerciseId: string,
+    range: ChartRange,
+): Promise<ExerciseTimeSeriesPoint[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    try {
+        const rangeStart = getDateRangeStart(range);
+        const whereRange = rangeStart ? `AND w.completed_at >= ?` : '';
+        const params: string[] = [exerciseId, ...(rangeStart ? [rangeStart] : [])];
+
+        const sql = `
+            SELECT
+                DATE(w.completed_at) AS workout_date,
+                MAX(ws.weight) AS value
+            FROM workout_sets ws
+            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE we.exercise_id = ?
+              AND w.status = 'completed'
+              AND ws.weight > 0
+              ${whereRange}
+            GROUP BY DATE(w.completed_at)
+            ORDER BY workout_date ASC
+        `;
+
+        const rows = await db.getAllAsync<ExerciseMetricRow>(sql, params);
+
+        return rows.map((r) => ({
+            date: r.workout_date,
+            value: r.value,
+            label: formatDateLabel(r.workout_date),
+        }));
+    } catch (error) {
+        console.error('[AnalyticsService] Failed to get max weight:', error);
+        return [];
+    }
+}
+
+/**
+ * Get total volume (SUM weight × reps) per workout date for an exercise.
+ */
+export async function getExerciseVolume(
+    exerciseId: string,
+    range: ChartRange,
+): Promise<ExerciseTimeSeriesPoint[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    try {
+        const rangeStart = getDateRangeStart(range);
+        const whereRange = rangeStart ? `AND w.completed_at >= ?` : '';
+        const params: string[] = [exerciseId, ...(rangeStart ? [rangeStart] : [])];
+
+        const sql = `
+            SELECT
+                DATE(w.completed_at) AS workout_date,
+                SUM(ws.weight * ws.reps) AS value
+            FROM workout_sets ws
+            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE we.exercise_id = ?
+              AND w.status = 'completed'
+              AND ws.weight > 0 AND ws.reps > 0
+              ${whereRange}
+            GROUP BY DATE(w.completed_at)
+            ORDER BY workout_date ASC
+        `;
+
+        const rows = await db.getAllAsync<ExerciseMetricRow>(sql, params);
+
+        return rows.map((r) => ({
+            date: r.workout_date,
+            value: Math.round(r.value),
+            label: formatDateLabel(r.workout_date),
+        }));
+    } catch (error) {
+        console.error('[AnalyticsService] Failed to get exercise volume:', error);
+        return [];
+    }
+}
+
+/**
+ * Get max reps per workout date for an exercise.
+ */
+export async function getMaxReps(
+    exerciseId: string,
+    range: ChartRange,
+): Promise<ExerciseTimeSeriesPoint[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    try {
+        const rangeStart = getDateRangeStart(range);
+        const whereRange = rangeStart ? `AND w.completed_at >= ?` : '';
+        const params: string[] = [exerciseId, ...(rangeStart ? [rangeStart] : [])];
+
+        const sql = `
+            SELECT
+                DATE(w.completed_at) AS workout_date,
+                MAX(ws.reps) AS value
+            FROM workout_sets ws
+            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE we.exercise_id = ?
+              AND w.status = 'completed'
+              AND ws.reps > 0
+              ${whereRange}
+            GROUP BY DATE(w.completed_at)
+            ORDER BY workout_date ASC
+        `;
+
+        const rows = await db.getAllAsync<ExerciseMetricRow>(sql, params);
+
+        return rows.map((r) => ({
+            date: r.workout_date,
+            value: r.value,
+            label: formatDateLabel(r.workout_date),
+        }));
+    } catch (error) {
+        console.error('[AnalyticsService] Failed to get max reps:', error);
+        return [];
+    }
+}
+
+/**
+ * Get best weight achieved at each rep count (1-15) for an exercise.
+ * Returns only rep counts that have data.
+ */
+export async function getBestWeightForReps(
+    exerciseId: string,
+): Promise<BestWeightForRep[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    try {
+        const sql = `
+            SELECT
+                ws.reps,
+                MAX(ws.weight) AS weight,
+                DATE(w.completed_at) AS achieved_date
+            FROM workout_sets ws
+            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE we.exercise_id = ?
+              AND w.status = 'completed'
+              AND ws.weight > 0 AND ws.reps > 0
+              AND ws.reps <= 15
+            GROUP BY ws.reps
+            ORDER BY ws.reps ASC
+        `;
+
+        const rows = await db.getAllAsync<BestWeightRow>(sql, [exerciseId]);
+
+        return rows.map((r) => ({
+            reps: r.reps,
+            weight: r.weight,
+            date: r.achieved_date,
+        }));
+    } catch (error) {
+        console.error('[AnalyticsService] Failed to get best weight for reps:', error);
+        return [];
+    }
+}
+
 export default {
     getAggregatedMetric,
     getDateRangeStart,
     getConsistencyStats,
     getMuscleDistribution,
+    getPerformedExercises,
+    getEstimated1RM,
+    getMaxWeight,
+    getExerciseVolume,
+    getMaxReps,
+    getBestWeightForReps,
 };

@@ -69,5 +69,11 @@ export {
     getAggregatedMetric,
     getConsistencyStats,
     getMuscleDistribution,
+    getPerformedExercises,
+    getEstimated1RM,
+    getMaxWeight,
+    getExerciseVolume,
+    getMaxReps,
+    getBestWeightForReps,
 } from './analyticsService';
 export { generateMockData } from './mockDataService';

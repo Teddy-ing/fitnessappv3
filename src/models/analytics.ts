@@ -44,6 +44,42 @@ export interface MuscleDistributionPoint {
     value: number;
 }
 
+// ============================================================
+// Micro analytics types
+// ============================================================
+
+/** An exercise with usage metadata, for the exercise list */
+export interface PerformedExercise {
+    exerciseId: string;
+    exerciseName: string;
+    /** ISO date of last session containing this exercise */
+    lastPerformed: string;
+    /** Number of distinct workouts containing this exercise */
+    totalSessions: number;
+}
+
+/** Generic time-series data point for per-exercise charts */
+export interface ExerciseTimeSeriesPoint {
+    /** ISO date of the workout */
+    date: string;
+    /** Metric value (weight, reps, volume, est. 1RM) */
+    value: number;
+    /** Display label for x-axis (e.g., "Mar 5") */
+    label: string;
+}
+
+/** Best weight achieved at a specific rep count */
+export interface BestWeightForRep {
+    reps: number;
+    weight: number;
+    /** ISO date when this was achieved */
+    date: string;
+}
+
+// ============================================================
+// Display constants
+// ============================================================
+
 /** Display metadata for each metric type */
 export const METRIC_LABELS: Record<MetricType, string> = {
     volume: 'Volume',

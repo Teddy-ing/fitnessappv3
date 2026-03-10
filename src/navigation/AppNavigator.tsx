@@ -27,6 +27,7 @@ import WorkoutScreen from '../screens/WorkoutScreen';
 import AssistantScreen from '../screens/AssistantScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
+import ExerciseAnalyticsScreen from '../screens/ExerciseAnalyticsScreen';
 
 // Wrap each screen in its own error boundary so one tab crashing
 // doesn't take down the other tabs
@@ -48,6 +49,7 @@ const AssistantScreenWithBoundary = () => (
 export type ProfileStackParamList = {
     ProfileHome: undefined;
     Analytics: undefined;
+    ExerciseAnalytics: { exerciseId: string; exerciseName: string };
 };
 
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
@@ -78,6 +80,13 @@ function ProfileStackNavigator() {
                     options={{
                         title: 'Analytics',
                     }}
+                />
+                <ProfileStack.Screen
+                    name="ExerciseAnalytics"
+                    component={ExerciseAnalyticsScreen}
+                    options={({ route }) => ({
+                        title: route.params.exerciseName,
+                    })}
                 />
             </ProfileStack.Navigator>
         </ErrorBoundary>

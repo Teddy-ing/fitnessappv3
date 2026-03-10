@@ -8,7 +8,7 @@
  * Accessed from ProfileScreen → stack navigation push.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -17,10 +17,13 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Dimensions,
+    TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BarChart } from 'react-native-gifted-charts';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useMacroAnalytics } from '../hooks/useMacroAnalytics';
@@ -31,10 +34,13 @@ import {
     MetricType,
     TimeBucket,
     ChartRange,
+    PerformedExercise,
     METRIC_LABELS,
     TIME_BUCKET_LABELS,
     CHART_RANGE_LABELS,
 } from '../models/analytics';
+import { getPerformedExercises } from '../services/analyticsService';
+import type { ProfileStackParamList } from '../navigation/AppNavigator';
 
 type AnalyticsTab = 'workouts' | 'exercises';
 
@@ -312,17 +318,92 @@ function MacroAnalyticsView() {
 }
 
 // ============================================================
-// Exercises Placeholder
+// Exercises List View
 // ============================================================
 
-function ExercisesPlaceholder() {
+function ExerciseListView() {
+    const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
+    const [exercises, setExercises] = useState<PerformedExercise[]>([]);
+    const [search, setSearch] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+
+        getPerformedExercises('ALL').then((result) => {
+            if (!cancelled) {
+                setExercises(result);
+                setLoading(false);
+            }
+        });
+
+        return () => { cancelled = true; };
+    }, []);
+
+    const filtered = search
+        ? exercises.filter((e) =>
+              e.exerciseName.toLowerCase().includes(search.toLowerCase()),
+          )
+        : exercises;
+
+    if (loading) {
+        return (
+            <View style={styles.exerciseLoading}>
+                <ActivityIndicator size="large" color={colors.accent.primary} />
+            </View>
+        );
+    }
+
     return (
-        <View style={styles.placeholderContainer}>
-            <MaterialIcons name="fitness-center" size={64} color={colors.text.disabled} />
-            <Text style={styles.comingSoonTitle}>Exercise Analytics</Text>
-            <Text style={styles.comingSoonText}>
-                Per-exercise progression charts, estimated 1RM tracking, and more — coming soon.
-            </Text>
+        <View>
+            <TextInput
+                style={styles.searchInput}
+                placeholder="Search exercises..."
+                placeholderTextColor={colors.text.disabled}
+                value={search}
+                onChangeText={setSearch}
+            />
+
+            {filtered.length === 0 ? (
+                <View style={styles.placeholderContainer}>
+                    <MaterialIcons name="fitness-center" size={48} color={colors.text.disabled} />
+                    <Text style={styles.placeholderText}>
+                        {search ? 'No matching exercises' : 'No exercises performed yet'}
+                    </Text>
+                </View>
+            ) : (
+                filtered.map((ex) => (
+                    <TouchableOpacity
+                        key={ex.exerciseId}
+                        style={styles.exerciseRow}
+                        activeOpacity={0.6}
+                        onPress={() =>
+                            navigation.navigate('ExerciseAnalytics', {
+                                exerciseId: ex.exerciseId,
+                                exerciseName: ex.exerciseName,
+                            })
+                        }
+                    >
+                        <View style={styles.exerciseInfo}>
+                            <Text style={styles.exerciseName}>{ex.exerciseName}</Text>
+                            <Text style={styles.exerciseMeta}>
+                                {ex.totalSessions} session{ex.totalSessions !== 1 ? 's' : ''}
+                                {' · Last: '}
+                                {new Date(ex.lastPerformed).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                })}
+                            </Text>
+                        </View>
+                        <MaterialIcons
+                            name="chevron-right"
+                            size={20}
+                            color={colors.text.disabled}
+                        />
+                    </TouchableOpacity>
+                ))
+            )}
         </View>
     );
 }
@@ -343,7 +424,7 @@ export default function AnalyticsScreen() {
             >
                 <TabControl activeTab={activeTab} onTabChange={setActiveTab} />
 
-                {activeTab === 'workouts' ? <MacroAnalyticsView /> : <ExercisesPlaceholder />}
+                {activeTab === 'workouts' ? <MacroAnalyticsView /> : <ExerciseListView />}
             </ScrollView>
         </SafeAreaView>
     );
@@ -502,23 +583,49 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
     },
 
-    // Exercises placeholder
+    // Exercises list (empty) container
     placeholderContainer: {
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: spacing.xxl * 2,
         gap: spacing.md,
     },
-    comingSoonTitle: {
-        fontSize: typography.size.xl,
-        fontWeight: typography.weight.bold,
+
+    // Search input
+    searchInput: {
+        backgroundColor: colors.background.secondary,
+        borderRadius: borderRadius.lg,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm + 2,
+        fontSize: typography.size.sm,
+        color: colors.text.primary,
+        marginBottom: spacing.md,
+    },
+
+    // Exercise list
+    exerciseLoading: {
+        paddingVertical: spacing.xxl * 2,
+        alignItems: 'center',
+    },
+    exerciseRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.background.secondary,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        marginBottom: spacing.sm,
+    },
+    exerciseInfo: {
+        flex: 1,
+        gap: spacing.xs / 2,
+    },
+    exerciseName: {
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.semibold,
         color: colors.text.primary,
     },
-    comingSoonText: {
-        fontSize: typography.size.sm,
+    exerciseMeta: {
+        fontSize: typography.size.xs,
         color: colors.text.secondary,
-        textAlign: 'center',
-        paddingHorizontal: spacing.xl,
-        lineHeight: typography.size.sm * typography.lineHeight.relaxed,
     },
 });

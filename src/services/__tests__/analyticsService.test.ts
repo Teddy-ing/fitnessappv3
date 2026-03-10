@@ -10,6 +10,12 @@ import {
     getDateRangeStart,
     getConsistencyStats,
     getMuscleDistribution,
+    getPerformedExercises,
+    getEstimated1RM,
+    getMaxWeight,
+    getExerciseVolume,
+    getMaxReps,
+    getBestWeightForReps,
 } from '../analyticsService';
 
 // ============================================================
@@ -367,6 +373,213 @@ describe('getMuscleDistribution', () => {
         const result = await getMuscleDistribution('reps', 'ALL');
         expect(result).toEqual([]);
         expect(consoleSpy).toHaveBeenCalled();
+        consoleSpy.mockRestore();
+    });
+});
+
+// ============================================================
+// Micro Analytics — getPerformedExercises
+// ============================================================
+
+describe('getPerformedExercises', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns empty array when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getPerformedExercises('3M');
+        expect(result).toEqual([]);
+    });
+
+    it('returns exercises sorted by recency', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            {
+                exercise_id: 'ex1',
+                exercise_name: 'Bench Press',
+                last_performed: '2026-03-10T10:00:00Z',
+                total_sessions: 12,
+            },
+            {
+                exercise_id: 'ex2',
+                exercise_name: 'Squat',
+                last_performed: '2026-03-08T10:00:00Z',
+                total_sessions: 8,
+            },
+        ]);
+
+        const result = await getPerformedExercises('3M');
+
+        expect(result).toHaveLength(2);
+        expect(result[0].exerciseId).toBe('ex1');
+        expect(result[0].exerciseName).toBe('Bench Press');
+        expect(result[0].totalSessions).toBe(12);
+        expect(result[1].exerciseId).toBe('ex2');
+    });
+
+    it('returns empty array on error', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockRejectedValueOnce(new Error('fail'));
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await getPerformedExercises('ALL');
+        expect(result).toEqual([]);
+        consoleSpy.mockRestore();
+    });
+});
+
+// ============================================================
+// Micro Analytics — getEstimated1RM
+// ============================================================
+
+describe('getEstimated1RM', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns empty array when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getEstimated1RM('ex1', '3M');
+        expect(result).toEqual([]);
+    });
+
+    it('returns time series with rounded Epley values', async () => {
+        setMockDb(true);
+        // Epley: 225 * (1 + 5/30) = 225 * 1.1667 = 262.5
+        mockGetAllAsync.mockResolvedValueOnce([
+            { workout_date: '2026-03-01', value: 262.5 },
+            { workout_date: '2026-03-05', value: 275.0 },
+        ]);
+
+        const result = await getEstimated1RM('ex1', '3M');
+
+        expect(result).toHaveLength(2);
+        expect(result[0].value).toBe(262.5);
+        expect(result[0].date).toBe('2026-03-01');
+        expect(result[0].label).toBeTruthy();
+        expect(result[1].value).toBe(275.0);
+
+        // Verify SQL uses Epley formula
+        const [sql] = mockGetAllAsync.mock.calls[0];
+        expect(sql).toContain('1.0 + ws.reps / 30.0');
+    });
+});
+
+// ============================================================
+// Micro Analytics — getMaxWeight
+// ============================================================
+
+describe('getMaxWeight', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns empty array when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getMaxWeight('ex1', '3M');
+        expect(result).toEqual([]);
+    });
+
+    it('returns max weight per workout date', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            { workout_date: '2026-03-01', value: 225 },
+            { workout_date: '2026-03-05', value: 230 },
+        ]);
+
+        const result = await getMaxWeight('ex1', '3M');
+
+        expect(result).toHaveLength(2);
+        expect(result[0].value).toBe(225);
+        expect(result[1].value).toBe(230);
+    });
+});
+
+// ============================================================
+// Micro Analytics — getExerciseVolume
+// ============================================================
+
+describe('getExerciseVolume', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns volume per workout date', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            { workout_date: '2026-03-01', value: 4500 },
+        ]);
+
+        const result = await getExerciseVolume('ex1', '1M');
+
+        expect(result).toHaveLength(1);
+        expect(result[0].value).toBe(4500);
+    });
+});
+
+// ============================================================
+// Micro Analytics — getMaxReps
+// ============================================================
+
+describe('getMaxReps', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns max reps per workout date', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            { workout_date: '2026-03-01', value: 12 },
+            { workout_date: '2026-03-05', value: 15 },
+        ]);
+
+        const result = await getMaxReps('ex1', 'ALL');
+
+        expect(result).toHaveLength(2);
+        expect(result[0].value).toBe(12);
+        expect(result[1].value).toBe(15);
+    });
+});
+
+// ============================================================
+// Micro Analytics — getBestWeightForReps
+// ============================================================
+
+describe('getBestWeightForReps', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns empty array when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getBestWeightForReps('ex1');
+        expect(result).toEqual([]);
+    });
+
+    it('returns best weight at each rep count', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            { reps: 1, weight: 285, achieved_date: '2026-03-01' },
+            { reps: 5, weight: 225, achieved_date: '2026-02-28' },
+            { reps: 10, weight: 175, achieved_date: '2026-02-21' },
+        ]);
+
+        const result = await getBestWeightForReps('ex1');
+
+        expect(result).toHaveLength(3);
+        expect(result[0]).toEqual({ reps: 1, weight: 285, date: '2026-03-01' });
+        expect(result[1].reps).toBe(5);
+        expect(result[2].weight).toBe(175);
+    });
+
+    it('returns empty array on error', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockRejectedValueOnce(new Error('fail'));
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await getBestWeightForReps('ex1');
+        expect(result).toEqual([]);
         consoleSpy.mockRestore();
     });
 });
