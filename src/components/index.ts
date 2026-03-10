@@ -17,4 +17,5 @@ export { default as SplitFormView } from './SplitFormView';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as ConsistencyCards } from './ConsistencyCards';
 export { default as MuscleDistributionChart } from './MuscleDistributionChart';
+export { default as FatigueRatioBanner } from './FatigueRatioBanner';
 

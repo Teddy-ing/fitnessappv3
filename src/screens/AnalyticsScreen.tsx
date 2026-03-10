@@ -29,6 +29,7 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import { useMacroAnalytics } from '../hooks/useMacroAnalytics';
 import ConsistencyCards from '../components/ConsistencyCards';
 import MuscleDistributionChart from '../components/MuscleDistributionChart';
+import FatigueRatioBanner from '../components/FatigueRatioBanner';
 
 import {
     MetricType,
@@ -214,6 +215,9 @@ function MacroAnalyticsView() {
 
     return (
         <View>
+            {/* Fatigue ratio banner */}
+            <FatigueRatioBanner />
+
             {/* Axis 1: Metric selector */}
             <MetricSelector selected={metric} onSelect={setMetric} />
 

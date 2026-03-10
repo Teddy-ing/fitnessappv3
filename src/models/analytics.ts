@@ -76,6 +76,21 @@ export interface BestWeightForRep {
     date: string;
 }
 
+/** Fatigue status thresholds */
+export type FatigueStatus = 'light' | 'normal' | 'high';
+
+/** Result from getFatigueRatio() */
+export interface FatigueRatioResult {
+    /** This week's total volume */
+    acute: number;
+    /** Average weekly volume over last 4 weeks */
+    chronic: number;
+    /** acute / chronic ratio */
+    ratio: number;
+    /** Status classification */
+    status: FatigueStatus;
+}
+
 // ============================================================
 // Display constants
 // ============================================================

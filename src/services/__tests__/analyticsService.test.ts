@@ -16,6 +16,7 @@ import {
     getExerciseVolume,
     getMaxReps,
     getBestWeightForReps,
+    getFatigueRatio,
 } from '../analyticsService';
 
 // ============================================================
@@ -580,6 +581,63 @@ describe('getBestWeightForReps', () => {
 
         const result = await getBestWeightForReps('ex1');
         expect(result).toEqual([]);
+        consoleSpy.mockRestore();
+    });
+});
+
+// ============================================================
+// getFatigueRatio
+// ============================================================
+
+describe('getFatigueRatio', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns default when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getFatigueRatio();
+        expect(result).toEqual({ acute: 0, chronic: 0, ratio: 0, status: 'normal' });
+    });
+
+    it('returns normal status when chronic is zero', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ total: 5000 });
+        mockGetFirstAsync.mockResolvedValueOnce({ total: 0 });
+
+        const result = await getFatigueRatio();
+        expect(result.ratio).toBe(0);
+        expect(result.status).toBe('normal');
+    });
+
+    it('returns light status when ratio < 0.8', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ total: 3000 });  // acute
+        mockGetFirstAsync.mockResolvedValueOnce({ total: 5000 });  // chronic avg
+
+        const result = await getFatigueRatio();
+        expect(result.ratio).toBe(0.6);
+        expect(result.status).toBe('light');
+    });
+
+    it('returns high status when ratio > 1.3', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ total: 8000 });  // acute
+        mockGetFirstAsync.mockResolvedValueOnce({ total: 5000 });  // chronic avg
+
+        const result = await getFatigueRatio();
+        expect(result.ratio).toBe(1.6);
+        expect(result.status).toBe('high');
+    });
+
+    it('returns default on error', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockRejectedValueOnce(new Error('fail'));
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await getFatigueRatio();
+        expect(result.ratio).toBe(0);
+        expect(result.status).toBe('normal');
         consoleSpy.mockRestore();
     });
 });

@@ -22,6 +22,7 @@ import {
     PerformedExercise,
     ExerciseTimeSeriesPoint,
     BestWeightForRep,
+    FatigueRatioResult,
 } from '../models/analytics';
 import { MuscleContribution } from '../models/exercise';
 
@@ -735,6 +736,53 @@ export async function getBestWeightForReps(
     }
 }
 
+// ============================================================
+// Fatigue Ratio
+// ============================================================
+
+/**
+ * Compute acute:chronic workload ratio.
+ * Acute  = total volume this week (last 7 days).
+ * Chronic = average weekly volume over last 4 weeks (28 days).
+ * Ratio < 0.8 → light, 0.8–1.3 → normal, > 1.3 → high.
+ */
+export async function getFatigueRatio(): Promise<FatigueRatioResult> {
+    const empty: FatigueRatioResult = { acute: 0, chronic: 0, ratio: 0, status: 'normal' };
+    const db = await getDatabase();
+    if (!db) return empty;
+
+    try {
+        const acuteRow = await db.getFirstAsync<{ total: number | null }>(
+            `SELECT SUM(total_volume) AS total FROM workouts
+             WHERE status = 'completed'
+               AND completed_at >= DATE('now', '-7 days')`,
+        );
+
+        const chronicRow = await db.getFirstAsync<{ total: number | null }>(
+            `SELECT SUM(total_volume) / 4.0 AS total FROM workouts
+             WHERE status = 'completed'
+               AND completed_at >= DATE('now', '-28 days')`,
+        );
+
+        const acute = acuteRow?.total ?? 0;
+        const chronic = chronicRow?.total ?? 0;
+
+        if (chronic === 0) {
+            return { acute, chronic: 0, ratio: 0, status: 'normal' };
+        }
+
+        const ratio = Math.round((acute / chronic) * 100) / 100;
+        let status: FatigueRatioResult['status'] = 'normal';
+        if (ratio < 0.8) status = 'light';
+        else if (ratio > 1.3) status = 'high';
+
+        return { acute, chronic: Math.round(chronic), ratio, status };
+    } catch (error) {
+        console.error('[AnalyticsService] Failed to get fatigue ratio:', error);
+        return empty;
+    }
+}
+
 export default {
     getAggregatedMetric,
     getDateRangeStart,
@@ -746,4 +794,5 @@ export default {
     getExerciseVolume,
     getMaxReps,
     getBestWeightForReps,
+    getFatigueRatio,
 };

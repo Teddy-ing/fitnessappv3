@@ -75,5 +75,6 @@ export {
     getExerciseVolume,
     getMaxReps,
     getBestWeightForReps,
+    getFatigueRatio,
 } from './analyticsService';
 export { generateMockData } from './mockDataService';
