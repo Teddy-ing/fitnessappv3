@@ -8,11 +8,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { clearAllData } from '../services';
+import { ProfileStackParamList } from '../navigation/AppNavigator';
 
-export default function ProfileScreen() {
+type ProfileScreenProps = {
+    navigation: NativeStackNavigationProp<ProfileStackParamList, 'ProfileHome'>;
+};
+
+export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     const handleClearAllData = () => {
         Alert.alert(
             'Clear All Data',
@@ -71,7 +77,10 @@ export default function ProfileScreen() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Your Data</Text>
 
-                    <TouchableOpacity style={styles.menuItem}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('Analytics')}
+                    >
                         <Text style={styles.menuIcon}>📊</Text>
                         <Text style={styles.menuText}>Statistics</Text>
                         <Text style={styles.menuArrow}>›</Text>

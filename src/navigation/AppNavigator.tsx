@@ -4,7 +4,7 @@
  * Bottom tab navigation with 3 tabs:
  * - AI Assistant (left)
  * - Workout (center, primary - raised icon)
- * - Profile/Stats (right)
+ * - Profile/Stats (right) — contains a stack navigator for sub-screens
  * 
  * Following the Thumb Zone rule: navigation at bottom 30% of screen
  */
@@ -12,6 +12,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,10 +22,11 @@ import { colors, spacing } from '../theme';
 import { useWorkoutStore } from '../stores';
 import { ErrorBoundary } from '../components';
 
-// Placeholder screens - will be replaced with actual implementations
+// Screen imports
 import WorkoutScreen from '../screens/WorkoutScreen';
 import AssistantScreen from '../screens/AssistantScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import AnalyticsScreen from '../screens/AnalyticsScreen';
 
 // Wrap each screen in its own error boundary so one tab crashing
 // doesn't take down the other tabs
@@ -38,11 +40,53 @@ const AssistantScreenWithBoundary = () => (
         <AssistantScreen />
     </ErrorBoundary>
 );
-const ProfileScreenWithBoundary = () => (
-    <ErrorBoundary fallback="screen" label="ProfileScreen">
-        <ProfileScreen />
-    </ErrorBoundary>
-);
+
+// ============================================================
+// Profile Stack Navigator
+// ============================================================
+
+export type ProfileStackParamList = {
+    ProfileHome: undefined;
+    Analytics: undefined;
+};
+
+const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+
+function ProfileStackNavigator() {
+    return (
+        <ErrorBoundary fallback="screen" label="ProfileStack">
+            <ProfileStack.Navigator
+                screenOptions={{
+                    headerStyle: {
+                        backgroundColor: colors.background.primary,
+                    },
+                    headerTintColor: colors.text.primary,
+                    headerTitleStyle: {
+                        fontWeight: '600',
+                    },
+                    headerShadowVisible: false,
+                }}
+            >
+                <ProfileStack.Screen
+                    name="ProfileHome"
+                    component={ProfileScreen}
+                    options={{ headerShown: false }}
+                />
+                <ProfileStack.Screen
+                    name="Analytics"
+                    component={AnalyticsScreen}
+                    options={{
+                        title: 'Analytics',
+                    }}
+                />
+            </ProfileStack.Navigator>
+        </ErrorBoundary>
+    );
+}
+
+// ============================================================
+// Bottom Tab Navigator
+// ============================================================
 
 // Tab navigator type definitions
 export type RootTabParamList = {
@@ -204,12 +248,13 @@ export default function AppNavigator() {
                     }}
                 />
 
-                {/* Right tab: Profile/Stats */}
+                {/* Right tab: Profile/Stats — uses stack navigator for sub-screens */}
                 <Tab.Screen
                     name="Profile"
-                    component={ProfileScreenWithBoundary}
+                    component={ProfileStackNavigator}
                     options={{
                         title: 'Profile',
+                        headerShown: false,
                     }}
                 />
             </Tab.Navigator>

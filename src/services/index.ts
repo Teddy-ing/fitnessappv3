@@ -65,3 +65,6 @@ export {
     updateSettings,
     type UserSettings,
 } from './preferencesService';
+export {
+    getAggregatedMetric,
+} from './analyticsService';

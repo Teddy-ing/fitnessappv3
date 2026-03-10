@@ -15,3 +15,4 @@ export * from './workout';
 export * from './template';
 export * from './user';
 export * from './split';
+export * from './analytics';
