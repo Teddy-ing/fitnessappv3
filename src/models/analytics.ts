@@ -24,6 +24,26 @@ export interface AggregatedMetricPoint {
     date?: string;
 }
 
+/** Consistency stats returned by getConsistencyStats() */
+export interface ConsistencyStats {
+    /** Total completed workouts in range */
+    totalWorkouts: number;
+    /** Distinct days with a completed workout in range */
+    activeDays: number;
+    /** Consecutive weeks (backward from current) with ≥1 workout */
+    currentStreak: number;
+    /** Average workouts per week over the range */
+    avgPerWeek: number;
+}
+
+/** A single muscle group data point for distribution chart */
+export interface MuscleDistributionPoint {
+    /** Muscle group name (e.g., "chest", "back") */
+    muscleGroup: string;
+    /** Aggregated value weighted by contribution percentage */
+    value: number;
+}
+
 /** Display metadata for each metric type */
 export const METRIC_LABELS: Record<MetricType, string> = {
     volume: 'Volume',

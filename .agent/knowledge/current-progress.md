@@ -54,7 +54,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Phase 3: Cardio & Stretching** (category tabs, 14 cardio exercises, equipment types)
 - [x] **Polish fixes** (favorites sort to top, Hidden tab at end, smaller category icons)
 - [x] **Phase 1: Visual Refactor — Home Screen** (WorkoutHomeView extraction, WeeklyTracker, MaterialIcons nav, keyboard safe area, rest day UX)
-
+- [x] **Codebase Quality & Testing — Phase 1/2** (God Component Decomposition, `WorkoutScreen`/`SplitsScreen` broken down, Jest setup, typed hydration bugfixes)
+- [x] **Database Reliability** (Versioned migrations system implemented)
+- [x] **Store Architecture Cleanup** (UI state removed from domain stores, RestTimer extracted)
 ---
 
 ## In Progress
@@ -120,6 +122,36 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-03-05 to 2026-03-10: God Component Decomposition & Codebase Cleanup
+
+**Duration:** Multi-day refactoring push
+**Focus:** Breaking down massive `WorkoutScreen`/`SplitsScreen` components, fixing technical debt, adding testing and DB migrations.
+
+**What was done:**
+- **Decomposition — `SplitsScreen`:** Extracted `CreateTemplateWizard` (inline picker), `SplitListView`, and `SplitFormView`. Reduced from 1,258 to 225 lines (82% reduction). Parent is now a thin orchestrator.
+- **Decomposition — `WorkoutScreen`:** Extracted hooks (`useElapsedTimer`, `useWorkoutKeyboard`, `useHomeScreenData`) and modals (`SaveTemplateModal`, `TemplatePickerModal`).
+- **Modals Ownership Refactor:** Eliminated `React.ReactNode` modal proxy pattern. `WorkoutHomeView` now truly owns and renders its modals with local state. `WorkoutScreen` reduced from 1,600+ lines down to ~385 lines.
+- **Store Architecture Fixes:** Extracted `restTimerStore`, moved all UI state (`isExercisePickerOpen`, `currentExerciseId`) out of `workoutStore` and strictly into local component state. Ensured immutable updates inside stores.
+- **Data Layer Reliability:**
+  - Implemented versioned SQLite database migration system (`migrations.ts`).
+  - Consolidated data hydration into pure mapping functions (`hydration.ts`), fixing epoch timestamp bugs and eliminating duplication.
+- **Testing Infrastructure:** Set up `jest` with `ts-jest` and wrote 97 passing tests for hydration and complex store operations (`workoutStore`, `restTimerStore`, `useElapsedTimer`, etc.).
+- **Error Boundaries:** Created `ErrorBoundary.tsx` and wrapped critical parts of the app (AppNavigator root and individual ExerciseCards) with safe fallbacks.
+
+**Files created:**
+- `src/components/CreateTemplateWizard.tsx`, `SplitListView.tsx`, `SplitFormView.tsx`
+- `src/hooks/useElapsedTimer.ts`, `useWorkoutKeyboard.ts`, `useHomeScreenData.ts`
+- `src/components/TemplatePickerModal.tsx`, `SaveTemplateModal.tsx`, `ErrorBoundary.tsx`
+- `src/stores/restTimerStore.ts`
+- `src/services/migrations.ts`, `hydration.ts`
+- `jest.config.js` and `__tests__` directory
+
+**Files modified:**
+- `WorkoutScreen.tsx`, `SplitsScreen.tsx`, `WorkoutHomeView.tsx` (drastically simplified)
+- `database.ts` (schema decoupled), `workoutStore.ts` (UI state removed)
+
+---
 
 ### 2026-02-23: Phase 1 — Home Screen Visual Refactor
 
@@ -432,11 +464,7 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ---
 
-## Reference Screenshots
 
-Screenshots of competitor apps are available in `.agent/reference/`:
-- `hevy/` — 15 screenshots (homescreen, workout, exercise detail, statistics, profile)
-- `strong/` — 4 screenshots (template, workout screens)
 
 ---
 

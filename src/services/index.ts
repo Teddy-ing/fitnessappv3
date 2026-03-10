@@ -67,4 +67,7 @@ export {
 } from './preferencesService';
 export {
     getAggregatedMetric,
+    getConsistencyStats,
+    getMuscleDistribution,
 } from './analyticsService';
+export { generateMockData } from './mockDataService';

@@ -87,7 +87,7 @@ export interface WorkoutRow {
  * Safely parse a JSON string, returning fallback on failure.
  * Protects against corrupt or malformed data in the DB.
  */
-function safeJsonParse<T>(raw: string | null, fallback: T): T {
+export function safeJsonParse<T>(raw: string | null, fallback: T): T {
     if (!raw) return fallback;
     try {
         return JSON.parse(raw) as T;

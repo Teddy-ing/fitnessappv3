@@ -5,14 +5,20 @@
  * requiring an actual SQLite database.
  */
 
-import { getAggregatedMetric, getDateRangeStart } from '../analyticsService';
+import {
+    getAggregatedMetric,
+    getDateRangeStart,
+    getConsistencyStats,
+    getMuscleDistribution,
+} from '../analyticsService';
 
 // ============================================================
 // Mock database
 // ============================================================
 
 const mockGetAllAsync = jest.fn();
-let mockDb: { getAllAsync: jest.Mock } | null = null;
+const mockGetFirstAsync = jest.fn();
+let mockDb: { getAllAsync: jest.Mock; getFirstAsync: jest.Mock } | null = null;
 
 jest.mock('../database', () => ({
     getDatabase: jest.fn(async () => mockDb),
@@ -24,7 +30,10 @@ jest.mock('../database', () => ({
 
 function setMockDb(available: boolean) {
     if (available) {
-        mockDb = { getAllAsync: mockGetAllAsync };
+        mockDb = {
+            getAllAsync: mockGetAllAsync,
+            getFirstAsync: mockGetFirstAsync,
+        };
     } else {
         mockDb = null;
     }
@@ -48,7 +57,6 @@ describe('getDateRangeStart', () => {
         expect(result).toBeTruthy();
         expect(typeof result).toBe('string');
 
-        // Should be roughly 1 month ago
         const date = new Date(result!);
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
@@ -94,15 +102,11 @@ describe('getAggregatedMetric', () => {
         jest.clearAllMocks();
     });
 
-    // ---- DB unavailable ----
-
     it('returns empty array when DB is unavailable', async () => {
         setMockDb(false);
         const result = await getAggregatedMetric('volume', 'per_month', '3M');
         expect(result).toEqual([]);
     });
-
-    // ---- Volume metric ----
 
     it('returns aggregated volume data per month', async () => {
         setMockDb(true);
@@ -115,40 +119,28 @@ describe('getAggregatedMetric', () => {
         const result = await getAggregatedMetric('volume', 'per_month', '3M');
 
         expect(result).toHaveLength(3);
-        expect(result[0]).toEqual({
-            label: 'Jan',
-            value: 15000,
-            date: '2026-01',
-        });
+        expect(result[0]).toEqual({ label: 'Jan', value: 15000, date: '2026-01' });
         expect(result[1].value).toBe(22000);
         expect(result[2].label).toBe('Mar');
 
-        // Should have been called with a date parameter (not ALL)
         expect(mockGetAllAsync).toHaveBeenCalledTimes(1);
         const [sql, params] = mockGetAllAsync.mock.calls[0];
-        expect(params).toHaveLength(1); // range start date
+        expect(params).toHaveLength(1);
         expect(sql).toContain('total_volume');
         expect(sql).toContain("strftime('%Y-%m'");
     });
 
-    // ---- Sets metric ----
-
     it('queries total_sets for sets metric', async () => {
         setMockDb(true);
-        setMockRows([
-            { bucket_label: 'W10', bucket_date: '2026-W10', value: 42 },
-        ]);
+        setMockRows([{ bucket_label: 'W10', bucket_date: '2026-W10', value: 42 }]);
 
         const result = await getAggregatedMetric('sets', 'per_week', '1M');
-
         expect(result).toHaveLength(1);
         expect(result[0].value).toBe(42);
 
         const [sql] = mockGetAllAsync.mock.calls[0];
         expect(sql).toContain('total_sets');
     });
-
-    // ---- Reps metric (requires JOIN) ----
 
     it('joins workout_sets for reps metric', async () => {
         setMockDb(true);
@@ -158,7 +150,6 @@ describe('getAggregatedMetric', () => {
         ]);
 
         const result = await getAggregatedMetric('reps', 'per_workout', '1M');
-
         expect(result).toHaveLength(2);
         expect(result[0].value).toBe(120);
 
@@ -166,8 +157,6 @@ describe('getAggregatedMetric', () => {
         expect(sql).toContain('workout_sets');
         expect(sql).toContain('SUM(ws.reps)');
     });
-
-    // ---- Duration metric ----
 
     it('queries total_duration for duration metric', async () => {
         setMockDb(true);
@@ -177,54 +166,40 @@ describe('getAggregatedMetric', () => {
         ]);
 
         const result = await getAggregatedMetric('duration', 'per_year', '1Y');
-
         expect(result).toHaveLength(2);
         const [sql] = mockGetAllAsync.mock.calls[0];
         expect(sql).toContain('total_duration');
     });
 
-    // ---- ALL range (no date filter) ----
-
     it('passes no date parameter for ALL range', async () => {
         setMockDb(true);
-        setMockRows([
-            { bucket_label: 'Jan', bucket_date: '2026-01', value: 5000 },
-        ]);
+        setMockRows([{ bucket_label: 'Jan', bucket_date: '2026-01', value: 5000 }]);
 
         await getAggregatedMetric('volume', 'per_month', 'ALL');
 
         const [sql, params] = mockGetAllAsync.mock.calls[0];
-        expect(params).toHaveLength(0); // No date filter for ALL
+        expect(params).toHaveLength(0);
         expect(sql).not.toContain('>=');
     });
-
-    // ---- Return shape ----
 
     it('returns correct shape for empty result set', async () => {
         setMockDb(true);
         setMockRows([]);
-
         const result = await getAggregatedMetric('volume', 'per_week', '3M');
-
         expect(result).toEqual([]);
         expect(Array.isArray(result)).toBe(true);
     });
 
     it('handles null bucket_label gracefully', async () => {
         setMockDb(true);
-        // Simulate a row where SQLite returns null for the label
         mockGetAllAsync.mockResolvedValueOnce([
             { bucket_label: null, bucket_date: '2026-01', value: 100 },
         ]);
-
         const result = await getAggregatedMetric('volume', 'per_month', '1M');
-
         expect(result).toHaveLength(1);
         expect(result[0].label).toBe('');
         expect(result[0].value).toBe(100);
     });
-
-    // ---- Error handling ----
 
     it('returns empty array and logs error on DB failure', async () => {
         setMockDb(true);
@@ -232,7 +207,6 @@ describe('getAggregatedMetric', () => {
         const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         const result = await getAggregatedMetric('volume', 'per_month', '3M');
-
         expect(result).toEqual([]);
         expect(consoleSpy).toHaveBeenCalledWith(
             expect.stringContaining('[AnalyticsService]'),
@@ -241,14 +215,10 @@ describe('getAggregatedMetric', () => {
         consoleSpy.mockRestore();
     });
 
-    // ---- SQL correctness ----
-
     it('always filters for completed workouts', async () => {
         setMockDb(true);
         setMockRows([]);
-
         await getAggregatedMetric('volume', 'per_month', '3M');
-
         const [sql] = mockGetAllAsync.mock.calls[0];
         expect(sql).toContain("w.status = 'completed'");
     });
@@ -256,11 +226,147 @@ describe('getAggregatedMetric', () => {
     it('orders results ascending by bucket', async () => {
         setMockDb(true);
         setMockRows([]);
-
         await getAggregatedMetric('sets', 'per_week', '6M');
-
         const [sql] = mockGetAllAsync.mock.calls[0];
         expect(sql).toContain('ORDER BY');
         expect(sql).toContain('ASC');
+    });
+});
+
+// ============================================================
+// getConsistencyStats
+// ============================================================
+
+describe('getConsistencyStats', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns zeros when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getConsistencyStats('3M');
+        expect(result).toEqual({
+            totalWorkouts: 0,
+            activeDays: 0,
+            currentStreak: 0,
+            avgPerWeek: 0,
+        });
+    });
+
+    it('returns correct counts for total workouts and active days', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ count: 24 });
+        mockGetFirstAsync.mockResolvedValueOnce({ count: 18 });
+        mockGetAllAsync.mockResolvedValueOnce([]);
+
+        const result = await getConsistencyStats('3M');
+
+        expect(result.totalWorkouts).toBe(24);
+        expect(result.activeDays).toBe(18);
+    });
+
+    it('calculates avg per week for bounded range', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ count: 12 });
+        mockGetFirstAsync.mockResolvedValueOnce({ count: 10 });
+        mockGetAllAsync.mockResolvedValueOnce([]);
+
+        const result = await getConsistencyStats('3M');
+
+        // ~12 workouts over ~13 weeks ≈ 0.9/week
+        expect(result.avgPerWeek).toBeGreaterThan(0);
+        expect(result.avgPerWeek).toBeLessThan(2);
+    });
+
+    it('returns zero streak when no workouts exist', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ count: 0 });
+        mockGetFirstAsync.mockResolvedValueOnce({ count: 0 });
+        mockGetAllAsync.mockResolvedValueOnce([]);
+
+        const result = await getConsistencyStats('ALL');
+        expect(result.currentStreak).toBe(0);
+    });
+
+    it('returns zeros on DB error', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockRejectedValueOnce(new Error('DB error'));
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await getConsistencyStats('1M');
+        expect(result.totalWorkouts).toBe(0);
+        expect(consoleSpy).toHaveBeenCalled();
+        consoleSpy.mockRestore();
+    });
+});
+
+// ============================================================
+// getMuscleDistribution
+// ============================================================
+
+describe('getMuscleDistribution', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns empty array when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getMuscleDistribution('volume', '3M');
+        expect(result).toEqual([]);
+    });
+
+    it('returns empty array when no exercise data exists', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([]);
+        const result = await getMuscleDistribution('volume', '3M');
+        expect(result).toEqual([]);
+    });
+
+    it('distributes volume across muscle groups weighted by contribution', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            {
+                exercise_muscle_groups: JSON.stringify([
+                    { muscle: 'chest', contribution: 60, isPrimary: true },
+                    { muscle: 'triceps', contribution: 25, isPrimary: false },
+                    { muscle: 'shoulders', contribution: 15, isPrimary: false },
+                ]),
+                metric_value: 1000,
+            },
+        ]);
+
+        const result = await getMuscleDistribution('volume', '3M');
+
+        expect(result).toHaveLength(3);
+        // Sorted descending by value
+        expect(result[0].muscleGroup).toBe('chest');
+        expect(result[0].value).toBe(600); // 1000 * 0.60
+        expect(result[1].muscleGroup).toBe('triceps');
+        expect(result[1].value).toBe(250); // 1000 * 0.25
+        expect(result[2].muscleGroup).toBe('shoulders');
+        expect(result[2].value).toBe(150); // 1000 * 0.15
+    });
+
+    it('handles malformed JSON gracefully', async () => {
+        setMockDb(true);
+        const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+        mockGetAllAsync.mockResolvedValueOnce([
+            { exercise_muscle_groups: '{broken}', metric_value: 500 },
+        ]);
+
+        const result = await getMuscleDistribution('sets', '1M');
+        expect(result).toEqual([]);
+        consoleSpy.mockRestore();
+    });
+
+    it('returns empty array on DB error', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockRejectedValueOnce(new Error('SQL error'));
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await getMuscleDistribution('reps', 'ALL');
+        expect(result).toEqual([]);
+        expect(consoleSpy).toHaveBeenCalled();
+        consoleSpy.mockRestore();
     });
 });

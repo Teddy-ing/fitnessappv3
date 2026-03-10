@@ -24,6 +24,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useMacroAnalytics } from '../hooks/useMacroAnalytics';
+import ConsistencyCards from '../components/ConsistencyCards';
+import MuscleDistributionChart from '../components/MuscleDistributionChart';
+
 import {
     MetricType,
     TimeBucket,
@@ -298,6 +301,12 @@ function MacroAnalyticsView() {
                 selected={chartRange}
                 onSelect={setChartRange}
             />
+
+            {/* Consistency stats */}
+            <ConsistencyCards range={chartRange} />
+
+            {/* Muscle group distribution */}
+            <MuscleDistributionChart metric={metric} range={chartRange} />
         </View>
     );
 }

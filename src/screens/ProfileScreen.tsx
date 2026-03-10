@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
-import { clearAllData } from '../services';
+import { clearAllData, generateMockData } from '../services';
 import { ProfileStackParamList } from '../navigation/AppNavigator';
 
 type ProfileScreenProps = {
@@ -19,6 +19,8 @@ type ProfileScreenProps = {
 };
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
+    const [isGenerating, setIsGenerating] = React.useState(false);
+
     const handleClearAllData = () => {
         Alert.alert(
             'Clear All Data',
@@ -35,6 +37,31 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                         } catch (error) {
                             console.error('Error clearing data:', error);
                             Alert.alert('Error', 'Failed to clear data');
+                        }
+                    }
+                },
+            ]
+        );
+    };
+
+    const handleGenerateMockData = () => {
+        Alert.alert(
+            'Generate Mock Data',
+            'This will generate 3 months of realistic workout history. This may take a few seconds. Proceed?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Generate',
+                    onPress: async () => {
+                        try {
+                            setIsGenerating(true);
+                            await generateMockData(3);
+                            Alert.alert('Done', 'Mock data generated successfully. Reload the app to see the updated data throughout the app.');
+                        } catch (error) {
+                            console.error('Error generating mock data:', error);
+                            Alert.alert('Error', 'Failed to generate mock data. Check console for details.');
+                        } finally {
+                            setIsGenerating(false);
                         }
                     }
                 },
@@ -156,9 +183,20 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                     <TouchableOpacity
                         style={[styles.menuItem, styles.dangerItem]}
                         onPress={handleClearAllData}
+                        disabled={isGenerating}
                     >
                         <Text style={styles.menuIcon}>🗑️</Text>
                         <Text style={[styles.menuText, styles.dangerText]}>Clear All Data</Text>
+                        <Text style={styles.menuArrow}>›</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={handleGenerateMockData}
+                        disabled={isGenerating}
+                    >
+                        <Text style={styles.menuIcon}>{isGenerating ? '⏳' : '🧪'}</Text>
+                        <Text style={styles.menuText}>{isGenerating ? 'Generating...' : 'Generate Mock Data (3 Months)'}</Text>
                         <Text style={styles.menuArrow}>›</Text>
                     </TouchableOpacity>
                 </View>
