@@ -20,8 +20,9 @@ import {
     Alert,
 } from 'react-native';
 import { ExercisePicker } from '../components';
-import { getTemplates, type Template } from '../services';
+import { getTemplates, createTemplateFromWorkout, type Template } from '../services';
 import { Exercise } from '../models/exercise';
+import { createWorkout, createWorkoutExercise } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { SplitScheduleItem } from '../models/split';
 
@@ -59,9 +60,6 @@ export default function CreateTemplateWizard({
         if (!templateName.trim()) return;
 
         try {
-            const { createTemplateFromWorkout } = await import('../services');
-            const { createWorkout, createWorkoutExercise } = await import('../models/workout');
-
             // Create a workout structure to pass to createTemplateFromWorkout
             const workout = createWorkout(templateName.trim());
             pendingExercises.forEach((pe, index) => {

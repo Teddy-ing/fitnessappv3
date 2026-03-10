@@ -1,9 +1,9 @@
 /**
  * Workout Screen
- * 
+ *
  * The main/primary screen of the app.
  * This is where users log their workouts.
- * 
+ *
  * Features:
  * - Start new workout or use template
  * - Add exercises and log sets
@@ -12,7 +12,7 @@
  * - View workout history
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -20,35 +20,26 @@ import {
     TouchableOpacity,
     ScrollView,
     Alert,
-    Modal,
-    RefreshControl,
-    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
-import { ExerciseCard, ExercisePicker, RestTimer, TemplateCard, WorkoutKeyboard, TemplatePickerModal, SaveTemplateModal } from '../components';
+import { ExerciseCard, ExercisePicker, RestTimer, WorkoutKeyboard, SaveTemplateModal, ErrorBoundary } from '../components';
 import { useElapsedTimer, formatElapsedTime, useWorkoutKeyboard, useHomeScreenData } from '../hooks';
 import {
     saveWorkout,
     findMatchingTemplate,
     startWorkoutFromTemplate,
-    deleteTemplate,
     markWorkoutCompletedToday,
     Template,
 } from '../services';
 import { Workout } from '../models/workout';
-import { Split } from '../models/split';
-import SplitsScreen from './SplitsScreen';
-import TemplatesScreen from './TemplatesScreen';
 import WorkoutHomeView from './WorkoutHomeView';
 
 export default function WorkoutScreen() {
     const {
         activeWorkout,
-        isExercisePickerOpen,
         startWorkout,
         finishWorkout,
         discardWorkout,
@@ -59,19 +50,15 @@ export default function WorkoutScreen() {
         updateSet,
         completeSet,
         toggleSuperset,
-        openExercisePicker,
-        closeExercisePicker,
     } = useWorkoutStore();
 
     // Home screen data - extracted to useHomeScreenData hook
     const {
-        recentWorkouts,
         templates,
         activeSplit,
         currentTemplate,
         currentTemplateIndex,
         workoutDatesThisWeek,
-        isLoading,
         refreshing,
         loadData,
         onRefresh,
@@ -79,10 +66,8 @@ export default function WorkoutScreen() {
         setActiveSplit,
     } = useHomeScreenData();
 
-    // UI toggle states (remain in component)
-    const [showSplitsModal, setShowSplitsModal] = useState(false);
-    const [showTemplatesModal, setShowTemplatesModal] = useState(false);
-    const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+    // Exercise picker visibility — local UI state (not in Zustand store)
+    const [isExercisePickerOpen, setExercisePickerOpen] = useState(false);
 
     // Live timer - extracted to useElapsedTimer hook
     const { elapsedTime } = useElapsedTimer(activeWorkout?.startedAt ?? null);
@@ -107,7 +92,6 @@ export default function WorkoutScreen() {
     } = useWorkoutKeyboard();
 
 
-
     // Handle start workout
     const handleStartWorkout = () => {
         // Reset any pending template modal state
@@ -121,35 +105,12 @@ export default function WorkoutScreen() {
         try {
             const workout = await startWorkoutFromTemplate(template.id);
             if (workout) {
-                // Manually set the workout in the store
-                // The store's startWorkout creates a new one, so we need to set it directly
                 useWorkoutStore.setState({ activeWorkout: workout });
             }
         } catch (error) {
             console.error('Error starting from template:', error);
             Alert.alert('Error', 'Failed to start workout from template');
         }
-    };
-
-
-
-    // Handle delete template
-    const handleDeleteTemplate = async (template: Template) => {
-        Alert.alert(
-            'Delete Template',
-            `Are you sure you want to delete "${template.name}"?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await deleteTemplate(template.id);
-                        await loadData();
-                    }
-                },
-            ]
-        );
     };
 
     // Handle finish workout
@@ -170,26 +131,19 @@ export default function WorkoutScreen() {
             );
         } else {
             try {
-                // Finish and save the workout
                 const workout = await finishWorkout();
                 if (workout) {
                     console.log('[WorkoutScreen] Saving workout...');
                     await saveWorkout(workout);
                     console.log('[WorkoutScreen] Workout saved!');
 
-                    // Mark workout completed for date-based advance
                     await markWorkoutCompletedToday();
-
-                    // Reload data first to ensure history is updated
                     await loadData();
 
-                    // Check if workout matches an existing template
                     const matchingTemplate = await findMatchingTemplate(workout);
                     if (matchingTemplate) {
-                        // Exercises match existing template - no prompt needed
                         console.log('[WorkoutScreen] Workout matches template:', matchingTemplate.name);
                     } else {
-                        // Exercises differ - offer to save as template
                         Alert.alert(
                             'Workout Saved!',
                             'This workout has different exercises than your templates. Save as a new template?',
@@ -213,7 +167,6 @@ export default function WorkoutScreen() {
         }
     };
 
-
     // Handle discard workout
     const handleDiscardWorkout = () => {
         Alert.alert(
@@ -230,9 +183,6 @@ export default function WorkoutScreen() {
             ]
         );
     };
-
-
-
 
     // Calculate workout stats
     const getWorkoutStats = () => {
@@ -256,69 +206,8 @@ export default function WorkoutScreen() {
         return { exercises, sets, volume };
     };
 
-    // formatElapsedTime is now imported from '../hooks'
-
-    // Format workout date for history
-    const formatWorkoutDate = (date: Date): string => {
-        const now = new Date();
-        const diff = now.getTime() - date.getTime();
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-        if (days === 0) return 'Today';
-        if (days === 1) return 'Yesterday';
-        if (days < 7) return `${days} days ago`;
-
-        return date.toLocaleDateString();
-    };
-
-    // Render empty state (no active workout) — delegated to WorkoutHomeView
+    // Render home view (no active workout) — WorkoutHomeView owns its own modals
     if (!activeWorkout) {
-        const homeModals = (
-            <>
-                {/* Splits modal */}
-                <SplitsScreen
-                    visible={showSplitsModal}
-                    onClose={() => setShowSplitsModal(false)}
-                    onSplitSelected={(split) => {
-                        setActiveSplit(split);
-                        loadData();
-                    }}
-                />
-
-                {/* Templates modal */}
-                <TemplatesScreen
-                    visible={showTemplatesModal}
-                    onClose={() => setShowTemplatesModal(false)}
-                    onSelectTemplate={(template) => handleStartFromTemplate(template)}
-                />
-
-                {/* Template picker modal - for switching current position in split */}
-                <TemplatePickerModal
-                    visible={showTemplatePicker}
-                    activeSplit={activeSplit}
-                    templates={templates}
-                    currentTemplateIndex={currentTemplateIndex}
-                    onChangeIndex={async (index) => {
-                        await handleChangeTemplateIndex(index);
-                        setShowTemplatePicker(false);
-                    }}
-                    onClose={() => setShowTemplatePicker(false)}
-                />
-
-                {/* Save as template modal */}
-                <SaveTemplateModal
-                    visible={showSaveTemplateModal}
-                    pendingWorkout={pendingWorkout}
-                    activeSplit={activeSplit}
-                    onClose={() => {
-                        setSaveTemplateModal(false);
-                        setPendingWorkout(null);
-                    }}
-                    onSaved={loadData}
-                />
-            </>
-        );
-
         return (
             <WorkoutHomeView
                 activeSplit={activeSplit}
@@ -330,10 +219,12 @@ export default function WorkoutScreen() {
                 onRefresh={onRefresh}
                 onStartWorkout={handleStartWorkout}
                 onStartFromTemplate={handleStartFromTemplate}
-                onShowSplitsModal={() => setShowSplitsModal(true)}
-                onShowTemplatesModal={() => setShowTemplatesModal(true)}
-                onShowTemplatePicker={() => setShowTemplatePicker(true)}
-                modals={homeModals}
+                onSplitSelected={(split) => {
+                    setActiveSplit(split);
+                    loadData();
+                }}
+                onTemplateIndexChanged={handleChangeTemplateIndex}
+                onDataRefresh={loadData}
             />
         );
     }
@@ -400,27 +291,32 @@ export default function WorkoutScreen() {
                         const canSuperset = index < exercises.length - 1;
 
                         return (
-                            <ExerciseCard
+                            <ErrorBoundary
                                 key={workoutExercise.id}
-                                workoutExercise={workoutExercise}
-                                focusState={focusState}
-                                isInSuperset={isInSuperset}
-                                isLastInSuperset={isLastInSuperset}
-                                canSuperset={canSuperset}
-                                onUpdateSet={(setId, updates) =>
-                                    updateSet(workoutExercise.id, setId, updates)
-                                }
-                                onCompleteSet={(setId) =>
-                                    completeSet(workoutExercise.id, setId)
-                                }
-                                onAddSet={() => addSet(workoutExercise.id)}
-                                onRemoveSet={(setId) =>
-                                    removeSet(workoutExercise.id, setId)
-                                }
-                                onRemoveExercise={() => removeExercise(workoutExercise.id)}
-                                onToggleSuperset={() => toggleSuperset(workoutExercise.id)}
-                                onFocusField={handleFocusField}
-                            />
+                                fallback="card"
+                                label={workoutExercise.exercise.name}
+                            >
+                                <ExerciseCard
+                                    workoutExercise={workoutExercise}
+                                    focusState={focusState}
+                                    isInSuperset={isInSuperset}
+                                    isLastInSuperset={isLastInSuperset}
+                                    canSuperset={canSuperset}
+                                    onUpdateSet={(setId, updates) =>
+                                        updateSet(workoutExercise.id, setId, updates)
+                                    }
+                                    onCompleteSet={(setId) =>
+                                        completeSet(workoutExercise.id, setId)
+                                    }
+                                    onAddSet={() => addSet(workoutExercise.id)}
+                                    onRemoveSet={(setId) =>
+                                        removeSet(workoutExercise.id, setId)
+                                    }
+                                    onRemoveExercise={() => removeExercise(workoutExercise.id)}
+                                    onToggleSuperset={() => toggleSuperset(workoutExercise.id)}
+                                    onFocusField={handleFocusField}
+                                />
+                            </ErrorBoundary>
                         );
                     })
                 )}
@@ -428,7 +324,7 @@ export default function WorkoutScreen() {
                 {/* Add exercise button */}
                 <TouchableOpacity
                     style={styles.addExerciseButton}
-                    onPress={openExercisePicker}
+                    onPress={() => setExercisePickerOpen(true)}
                 >
                     <Text style={styles.addExerciseText}>+ Add Exercise</Text>
                 </TouchableOpacity>
@@ -454,8 +350,11 @@ export default function WorkoutScreen() {
             {/* Exercise picker modal */}
             <ExercisePicker
                 visible={isExercisePickerOpen}
-                onClose={closeExercisePicker}
-                onSelect={addExercise}
+                onClose={() => setExercisePickerOpen(false)}
+                onSelect={(exercise) => {
+                    addExercise(exercise);
+                    setExercisePickerOpen(false);
+                }}
             />
 
             {/* Save as template modal */}
@@ -481,12 +380,6 @@ const styles = StyleSheet.create({
     scrollView: {
         flex: 1,
     },
-    scrollContent: {
-        padding: spacing.md,
-        paddingBottom: spacing.xxl,
-    },
-
-    // (Home screen styles are now in WorkoutHomeView.tsx)
 
     // Workout header
     workoutHeader: {
@@ -565,207 +458,5 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
         fontSize: typography.size.lg,
         fontWeight: typography.weight.medium,
-    },
-
-    // Modal
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: colors.overlay,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: spacing.lg,
-    },
-    modalContent: {
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.xl,
-        padding: spacing.lg,
-        width: '100%',
-        maxWidth: 400,
-    },
-    modalTitle: {
-        color: colors.text.primary,
-        fontSize: typography.size.xl,
-        fontWeight: typography.weight.semibold,
-        marginBottom: spacing.md,
-        textAlign: 'center',
-    },
-    templateInput: {
-        backgroundColor: colors.background.tertiary,
-        color: colors.text.primary,
-        fontSize: typography.size.lg,
-        padding: spacing.md,
-        borderRadius: borderRadius.md,
-        marginBottom: spacing.lg,
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    modalButtonCancel: {
-        flex: 1,
-        paddingVertical: spacing.md,
-        marginRight: spacing.sm,
-        borderRadius: borderRadius.md,
-        alignItems: 'center',
-        backgroundColor: colors.background.tertiary,
-    },
-    modalButtonCancelText: {
-        color: colors.text.primary,
-        fontSize: typography.size.md,
-        fontWeight: typography.weight.medium,
-    },
-    modalButtonSave: {
-        flex: 1,
-        paddingVertical: spacing.md,
-        marginLeft: spacing.sm,
-        borderRadius: borderRadius.md,
-        alignItems: 'center',
-        backgroundColor: colors.accent.primary,
-    },
-    modalButtonSaveText: {
-        color: colors.text.primary,
-        fontSize: typography.size.md,
-        fontWeight: typography.weight.semibold,
-    },
-
-    // Split header styles
-    splitHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: spacing.sm,
-    },
-    splitInfo: {
-        flex: 1,
-    },
-    splitSubtitle: {
-        color: colors.text.secondary,
-        fontSize: typography.size.sm,
-        marginTop: spacing.xs,
-    },
-    browseSplitsButton: {
-        backgroundColor: colors.background.tertiary,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderRadius: borderRadius.md,
-    },
-    browseSplitsText: {
-        color: colors.accent.primary,
-        fontSize: typography.size.sm,
-        fontWeight: typography.weight.medium,
-    },
-
-    // New layout styles
-    browseButtonsRow: {
-        flexDirection: 'row',
-        gap: spacing.sm,
-        marginTop: spacing.lg,
-        marginBottom: spacing.lg,
-    },
-    browseButton: {
-        flex: 1,
-        backgroundColor: colors.background.secondary,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.md,
-        borderRadius: borderRadius.md,
-        alignItems: 'center',
-    },
-    browseButtonText: {
-        color: colors.accent.primary,
-        fontSize: typography.size.sm,
-        fontWeight: typography.weight.medium,
-    },
-    currentCardsRow: {
-        flexDirection: 'row',
-        gap: spacing.md,
-        marginBottom: spacing.lg,
-    },
-    currentCard: {
-        flex: 1,
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.lg,
-        padding: spacing.md,
-        minHeight: 120,
-    },
-    currentCardLabel: {
-        color: colors.text.secondary,
-        fontSize: typography.size.xs,
-        textTransform: 'uppercase',
-        marginBottom: spacing.sm,
-    },
-    currentCardTitle: {
-        color: colors.text.primary,
-        fontSize: typography.size.lg,
-        fontWeight: typography.weight.semibold,
-        marginBottom: spacing.xs,
-    },
-    currentCardSubtitle: {
-        color: colors.text.secondary,
-        fontSize: typography.size.sm,
-    },
-    currentCardAction: {
-        color: colors.accent.primary,
-        fontSize: typography.size.sm,
-    },
-    currentCardEmpty: {
-        color: colors.text.disabled,
-        fontSize: typography.size.sm,
-        flex: 1,
-    },
-    currentCardActions: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 'auto',
-        paddingTop: spacing.sm,
-    },
-    cardActionButton: {
-        paddingVertical: spacing.xs,
-    },
-    cardChangeAction: {
-        color: colors.text.secondary,
-        fontSize: typography.size.sm,
-    },
-
-    // Template picker modal styles
-    pickerSubtitle: {
-        color: colors.text.secondary,
-        fontSize: typography.size.sm,
-        marginBottom: spacing.md,
-        textAlign: 'center',
-    },
-    pickerList: {
-        maxHeight: 300,
-        marginBottom: spacing.md,
-    },
-    pickerItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: colors.background.tertiary,
-        borderRadius: borderRadius.md,
-        padding: spacing.md,
-        marginBottom: spacing.sm,
-    },
-    pickerItemActive: {
-        borderWidth: 2,
-        borderColor: colors.accent.primary,
-    },
-    pickerItemText: {
-        color: colors.text.primary,
-        fontSize: typography.size.md,
-    },
-    pickerItemTextActive: {
-        color: colors.accent.primary,
-        fontWeight: typography.weight.semibold,
-    },
-    pickerItemMeta: {
-        color: colors.text.secondary,
-        fontSize: typography.size.sm,
-    },
-    pickerRestText: {
-        color: colors.text.disabled,
-        fontSize: typography.size.sm,
-        fontStyle: 'italic',
     },
 });

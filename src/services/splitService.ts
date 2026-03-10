@@ -9,6 +9,18 @@ import * as Crypto from 'expo-crypto';
 import { getDatabase } from './database';
 import { Split, createSplit } from '../models/split';
 import { Template, getTemplates } from './templateService';
+import { getSettings, updateSettings } from './preferencesService';
+
+/** Row shape returned by SELECT * FROM splits */
+interface SplitRow {
+    id: string;
+    name: string;
+    description: string | null;
+    is_built_in: number;
+    is_favorite: number;
+    created_at: string;
+    updated_at: string;
+}
 
 /**
  * Get all splits
@@ -17,7 +29,7 @@ export async function getSplits(): Promise<Split[]> {
     const db = await getDatabase();
     if (!db) return [];
 
-    const splitRows = await db.getAllAsync<any>(
+    const splitRows = await db.getAllAsync<SplitRow>(
         `SELECT * FROM splits ORDER BY is_built_in DESC, name ASC`
     );
 
@@ -38,7 +50,7 @@ export async function getSplitById(id: string): Promise<Split | null> {
     const db = await getDatabase();
     if (!db) return null;
 
-    const row = await db.getFirstAsync<any>(
+    const row = await db.getFirstAsync<SplitRow>(
         `SELECT * FROM splits WHERE id = ?`,
         [id]
     );
@@ -130,40 +142,25 @@ export async function deleteSplit(id: string): Promise<void> {
  * Get the active split (selected by user)
  */
 export async function getActiveSplit(): Promise<Split | null> {
-    const db = await getDatabase();
-    if (!db) return null;
-
-    const row = await db.getFirstAsync<{ value: string }>(
-        `SELECT value FROM user_preferences WHERE key = 'active_split_id'`
-    );
-
-    if (!row?.value) return null;
-    return getSplitById(row.value);
+    const settings = await getSettings();
+    if (!settings.activeSplitId) return null;
+    return getSplitById(settings.activeSplitId);
 }
 
 /**
  * Set the active split
  */
 export async function setActiveSplit(splitId: string | null): Promise<void> {
-    const db = await getDatabase();
-    if (!db) return;
-
     if (splitId) {
-        await db.runAsync(
-            `INSERT OR REPLACE INTO user_preferences (key, value) VALUES ('active_split_id', ?)`,
-            [splitId]
-        );
-        // Reset template index when changing splits
-        await db.runAsync(
-            `INSERT OR REPLACE INTO user_preferences (key, value) VALUES ('current_template_index', '0')`
-        );
+        await updateSettings({
+            activeSplitId: splitId,
+            currentTemplateIndex: 0, // Reset when changing splits
+        });
     } else {
-        await db.runAsync(
-            `DELETE FROM user_preferences WHERE key = 'active_split_id'`
-        );
-        await db.runAsync(
-            `DELETE FROM user_preferences WHERE key = 'current_template_index'`
-        );
+        await updateSettings({
+            activeSplitId: null,
+            currentTemplateIndex: 0,
+        });
     }
 }
 
@@ -171,27 +168,15 @@ export async function setActiveSplit(splitId: string | null): Promise<void> {
  * Get current template index (which template is next in the split)
  */
 export async function getCurrentTemplateIndex(): Promise<number> {
-    const db = await getDatabase();
-    if (!db) return 0;
-
-    const row = await db.getFirstAsync<{ value: string }>(
-        `SELECT value FROM user_preferences WHERE key = 'current_template_index'`
-    );
-
-    return row?.value ? parseInt(row.value, 10) : 0;
+    const settings = await getSettings();
+    return settings.currentTemplateIndex;
 }
 
 /**
  * Set current template index
  */
 export async function setCurrentTemplateIndex(index: number): Promise<void> {
-    const db = await getDatabase();
-    if (!db) return;
-
-    await db.runAsync(
-        `INSERT OR REPLACE INTO user_preferences (key, value) VALUES ('current_template_index', ?)`,
-        [index.toString()]
-    );
+    await updateSettings({ currentTemplateIndex: index });
 }
 
 /**
@@ -231,30 +216,18 @@ export async function getCurrentTemplate(): Promise<Template | null> {
 }
 
 /**
- * Get the last workout date (stored in user preferences)
+ * Get the last workout date (stored in user settings)
  */
 export async function getLastWorkoutDate(): Promise<string | null> {
-    const db = await getDatabase();
-    if (!db) return null;
-
-    const row = await db.getFirstAsync<{ value: string }>(
-        `SELECT value FROM user_preferences WHERE key = 'last_workout_date'`
-    );
-
-    return row?.value || null;
+    const settings = await getSettings();
+    return settings.lastWorkoutDate;
 }
 
 /**
  * Set the last workout date
  */
 export async function setLastWorkoutDate(date: string): Promise<void> {
-    const db = await getDatabase();
-    if (!db) return;
-
-    await db.runAsync(
-        `INSERT OR REPLACE INTO user_preferences (key, value) VALUES ('last_workout_date', ?)`,
-        [date]
-    );
+    await updateSettings({ lastWorkoutDate: date });
 }
 
 /**
@@ -340,7 +313,7 @@ export async function getSplitsForTemplate(templateId: string): Promise<SplitInf
 /**
  * Hydrate a split from database row
  */
-async function hydrateSplit(row: any): Promise<Split> {
+async function hydrateSplit(row: SplitRow): Promise<Split> {
     const db = await getDatabase();
     if (!db) throw new Error('Database not available');
 

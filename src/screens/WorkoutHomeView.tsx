@@ -1,9 +1,10 @@
 /**
  * WorkoutHomeView
- * 
+ *
  * The home screen displayed when no workout is active.
- * Extracted from WorkoutScreen for maintainability.
- * 
+ * Owns its own modal visibility state for SplitsScreen, TemplatesScreen,
+ * and TemplatePickerModal.
+ *
  * Layout (matching mockup):
  * 1. Header with settings gear (non-functional)
  * 2. Weekly day tracker
@@ -12,7 +13,7 @@
  * 5. Browse templates / Start empty workout links
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -20,7 +21,6 @@ import {
     TouchableOpacity,
     ScrollView,
     RefreshControl,
-    Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,6 +30,9 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import { Template } from '../services';
 import { Split } from '../models/split';
 import WeeklyTracker from '../components/WeeklyTracker';
+import { TemplatePickerModal } from '../components';
+import SplitsScreen from './SplitsScreen';
+import TemplatesScreen from './TemplatesScreen';
 
 interface WorkoutHomeViewProps {
     // Data
@@ -46,12 +49,9 @@ interface WorkoutHomeViewProps {
     // Actions
     onStartWorkout: () => void;
     onStartFromTemplate: (template: Template) => void;
-    onShowSplitsModal: () => void;
-    onShowTemplatesModal: () => void;
-    onShowTemplatePicker: () => void;
-
-    // Modal components (rendered as children from parent)
-    modals: React.ReactNode;
+    onSplitSelected: (split: Split | null) => void;
+    onTemplateIndexChanged: (index: number) => void;
+    onDataRefresh: () => void;
 }
 
 export default function WorkoutHomeView({
@@ -64,11 +64,15 @@ export default function WorkoutHomeView({
     onRefresh,
     onStartWorkout,
     onStartFromTemplate,
-    onShowSplitsModal,
-    onShowTemplatesModal,
-    onShowTemplatePicker,
-    modals,
+    onSplitSelected,
+    onTemplateIndexChanged,
+    onDataRefresh,
 }: WorkoutHomeViewProps) {
+    // Modal visibility — owned locally, not passed from parent
+    const [showSplitsModal, setShowSplitsModal] = useState(false);
+    const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+    const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+
     // Exercise count for current template
     const exerciseCount = currentTemplate?.exerciseCount ?? 0;
 
@@ -117,7 +121,7 @@ export default function WorkoutHomeView({
 
                     {/* Split Name */}
                     <TouchableOpacity
-                        onPress={onShowSplitsModal}
+                        onPress={() => setShowSplitsModal(true)}
                         activeOpacity={0.7}
                         style={styles.splitNameRow}
                     >
@@ -134,7 +138,7 @@ export default function WorkoutHomeView({
                             <Text style={styles.upNextName}>{currentTemplate.name}</Text>
                             {activeSplit && activeSplit.schedule.length > 1 && (
                                 <TouchableOpacity
-                                    onPress={onShowTemplatePicker}
+                                    onPress={() => setShowTemplatePicker(true)}
                                     style={styles.swapButton}
                                     activeOpacity={0.7}
                                 >
@@ -148,7 +152,7 @@ export default function WorkoutHomeView({
                             <Text style={[styles.upNextLabel, { marginLeft: spacing.xs }]}>Rest Day</Text>
                             {activeSplit.schedule.length > 1 && (
                                 <TouchableOpacity
-                                    onPress={onShowTemplatePicker}
+                                    onPress={() => setShowTemplatePicker(true)}
                                     style={styles.swapButton}
                                     activeOpacity={0.7}
                                 >
@@ -236,7 +240,7 @@ export default function WorkoutHomeView({
                 {/* Footer Links */}
                 <View style={styles.footerLinks}>
                     <TouchableOpacity
-                        onPress={onShowTemplatesModal}
+                        onPress={() => setShowTemplatesModal(true)}
                         activeOpacity={0.7}
                         style={styles.footerLink}
                     >
@@ -256,8 +260,33 @@ export default function WorkoutHomeView({
                 <View style={{ height: spacing.xxl }} />
             </ScrollView>
 
-            {/* Modals rendered from parent */}
-            {modals}
+            {/* Modals — owned by this component */}
+            <SplitsScreen
+                visible={showSplitsModal}
+                onClose={() => setShowSplitsModal(false)}
+                onSplitSelected={(split) => {
+                    onSplitSelected(split);
+                    onDataRefresh();
+                }}
+            />
+
+            <TemplatesScreen
+                visible={showTemplatesModal}
+                onClose={() => setShowTemplatesModal(false)}
+                onSelectTemplate={(template) => onStartFromTemplate(template)}
+            />
+
+            <TemplatePickerModal
+                visible={showTemplatePicker}
+                activeSplit={activeSplit}
+                templates={templates}
+                currentTemplateIndex={currentTemplateIndex}
+                onChangeIndex={async (index) => {
+                    await onTemplateIndexChanged(index);
+                    setShowTemplatePicker(false);
+                }}
+                onClose={() => setShowTemplatePicker(false)}
+            />
         </SafeAreaView>
     );
 }

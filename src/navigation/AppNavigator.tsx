@@ -19,11 +19,30 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing } from '../theme';
 import { useWorkoutStore } from '../stores';
+import { ErrorBoundary } from '../components';
 
 // Placeholder screens - will be replaced with actual implementations
 import WorkoutScreen from '../screens/WorkoutScreen';
 import AssistantScreen from '../screens/AssistantScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+
+// Wrap each screen in its own error boundary so one tab crashing
+// doesn't take down the other tabs
+const WorkoutScreenWithBoundary = () => (
+    <ErrorBoundary fallback="screen" label="WorkoutScreen">
+        <WorkoutScreen />
+    </ErrorBoundary>
+);
+const AssistantScreenWithBoundary = () => (
+    <ErrorBoundary fallback="screen" label="AssistantScreen">
+        <AssistantScreen />
+    </ErrorBoundary>
+);
+const ProfileScreenWithBoundary = () => (
+    <ErrorBoundary fallback="screen" label="ProfileScreen">
+        <ProfileScreen />
+    </ErrorBoundary>
+);
 
 // Tab navigator type definitions
 export type RootTabParamList = {
@@ -169,7 +188,7 @@ export default function AppNavigator() {
                 {/* Left tab: AI Assistant */}
                 <Tab.Screen
                     name="Assistant"
-                    component={AssistantScreen}
+                    component={AssistantScreenWithBoundary}
                     options={{
                         title: 'Assistant',
                     }}
@@ -178,7 +197,7 @@ export default function AppNavigator() {
                 {/* Center tab: Workout (primary) */}
                 <Tab.Screen
                     name="Workout"
-                    component={WorkoutScreen}
+                    component={WorkoutScreenWithBoundary}
                     options={{
                         title: 'Workout',
                         headerShown: false,
@@ -188,7 +207,7 @@ export default function AppNavigator() {
                 {/* Right tab: Profile/Stats */}
                 <Tab.Screen
                     name="Profile"
-                    component={ProfileScreen}
+                    component={ProfileScreenWithBoundary}
                     options={{
                         title: 'Profile',
                     }}

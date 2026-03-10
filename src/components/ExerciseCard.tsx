@@ -9,7 +9,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { WorkoutExercise, WorkoutSet } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
-import { useWorkoutStore } from '../stores';
+import { useRestTimerStore } from '../stores/restTimerStore';
 import SetRow from './SetRow';
 import ActiveRestLine from './ActiveRestLine';
 
@@ -77,7 +77,7 @@ export default function ExerciseCard({
             focusState?.field === field;
     };
 
-    // Get timer state from store
+    // Get timer state from rest timer store
     const {
         restTimerActive,
         restTimerRemaining,
@@ -86,7 +86,7 @@ export default function ExerciseCard({
         activeRestTimerSetId,
         adjustRestTimer,
         stopRestTimer,
-    } = useWorkoutStore();
+    } = useRestTimerStore();
 
     // Check if a specific set has the active timer
     const isSetTimerActive = (setId: string) => {

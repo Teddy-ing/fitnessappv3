@@ -268,6 +268,66 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v3: Replace EAV user_preferences with typed user_settings
+    // ----------------------------------------------------------
+    {
+        version: 3,
+        name: 'typed_user_settings',
+        up: async (db) => {
+            // Create the typed single-row table
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS user_settings (
+                    id INTEGER PRIMARY KEY CHECK (id = 1),
+                    active_split_id TEXT,
+                    current_template_index INTEGER DEFAULT 0,
+                    last_workout_date TEXT,
+                    weight_unit TEXT DEFAULT 'lbs',
+                    distance_unit TEXT DEFAULT 'mi',
+                    theme TEXT DEFAULT 'dark',
+                    default_rest_time INTEGER DEFAULT 90,
+                    auto_start_rest_timer INTEGER DEFAULT 1,
+                    rest_timer_vibration INTEGER DEFAULT 1,
+                    default_sets_per_exercise INTEGER DEFAULT 3,
+                    has_completed_onboarding INTEGER DEFAULT 0
+                );
+            `);
+
+            // Seed the single row
+            await db.execAsync(`INSERT OR IGNORE INTO user_settings (id) VALUES (1);`);
+
+            // Migrate existing EAV data (if any) into the new row
+            const activeSplit = await db.getFirstAsync<{ value: string }>(
+                `SELECT value FROM user_preferences WHERE key = 'active_split_id'`,
+            );
+            const templateIndex = await db.getFirstAsync<{ value: string }>(
+                `SELECT value FROM user_preferences WHERE key = 'current_template_index'`,
+            );
+            const lastDate = await db.getFirstAsync<{ value: string }>(
+                `SELECT value FROM user_preferences WHERE key = 'last_workout_date'`,
+            );
+
+            if (activeSplit?.value) {
+                await db.runAsync(
+                    `UPDATE user_settings SET active_split_id = ? WHERE id = 1`,
+                    [activeSplit.value],
+                );
+            }
+            if (templateIndex?.value) {
+                await db.runAsync(
+                    `UPDATE user_settings SET current_template_index = ? WHERE id = 1`,
+                    [parseInt(templateIndex.value, 10) || 0],
+                );
+            }
+            if (lastDate?.value) {
+                await db.runAsync(
+                    `UPDATE user_settings SET last_workout_date = ? WHERE id = 1`,
+                    [lastDate.value],
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================
@@ -282,6 +342,11 @@ interface UserVersionRow {
  * Run all pending migrations against the database.
  * Reads PRAGMA user_version to determine what has already run,
  * then executes each pending migration's `up` function in order.
+ *
+ * Each migration runs inside a transaction so that a failure mid-way
+ * through a multi-statement migration rolls back all partial changes.
+ * The version stamp is set inside the transaction — it only persists
+ * on commit.
  *
  * Throws on failure — callers should let this propagate to
  * trigger the existing dbInitFailed error path.
@@ -309,17 +374,24 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
         console.log(`[DB] Running migration v${migration.version}: ${migration.name}`);
 
         try {
+            await db.execAsync('BEGIN;');
             await migration.up(db);
+            // Stamp version inside the transaction — only persists on commit
+            await db.execAsync(`PRAGMA user_version = ${migration.version};`);
+            await db.execAsync('COMMIT;');
         } catch (error) {
+            // Roll back partial changes so the DB is never left half-migrated
+            try {
+                await db.execAsync('ROLLBACK;');
+            } catch (rollbackError) {
+                console.error(`[DB] Rollback also failed:`, rollbackError);
+            }
             console.error(
                 `[DB] Migration v${migration.version} (${migration.name}) FAILED:`,
                 error,
             );
             throw error; // Do NOT swallow — let dbInitFailed path handle it
         }
-
-        // Stamp the version after successful migration
-        await db.execAsync(`PRAGMA user_version = ${migration.version};`);
     }
 
     const finalVersion = pending[pending.length - 1].version;

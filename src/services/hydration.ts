@@ -80,6 +80,59 @@ export interface WorkoutRow {
 }
 
 // ============================================================
+// Validation Helpers
+// ============================================================
+
+/**
+ * Safely parse a JSON string, returning fallback on failure.
+ * Protects against corrupt or malformed data in the DB.
+ */
+function safeJsonParse<T>(raw: string | null, fallback: T): T {
+    if (!raw) return fallback;
+    try {
+        return JSON.parse(raw) as T;
+    } catch {
+        console.warn('[Hydration] Malformed JSON, using fallback:', raw.slice(0, 80));
+        return fallback;
+    }
+}
+
+/** Valid SetType values — used to validate strings from the DB */
+const VALID_SET_TYPES = new Set<string>([
+    'warmup', 'working', 'drop', 'failure', 'amrap', 'rest_pause', 'super', 'giant',
+]);
+
+function validSetType(raw: string): WorkoutSet['type'] {
+    return VALID_SET_TYPES.has(raw)
+        ? (raw as WorkoutSet['type'])
+        : 'working'; // safe default
+}
+
+/** Valid SetStatus values */
+const VALID_SET_STATUSES = new Set<string>(['pending', 'completed', 'skipped']);
+
+function validSetStatus(raw: string): WorkoutSet['status'] {
+    return VALID_SET_STATUSES.has(raw)
+        ? (raw as WorkoutSet['status'])
+        : 'pending'; // safe default
+}
+
+/** Valid WorkoutStatus values */
+const VALID_WORKOUT_STATUSES = new Set<string>(['in_progress', 'completed', 'abandoned']);
+
+function validWorkoutStatus(raw: string): Workout['status'] {
+    return VALID_WORKOUT_STATUSES.has(raw)
+        ? (raw as Workout['status'])
+        : 'completed'; // safe default
+}
+
+/** Clamp a nullable number to be non-negative (null passes through) */
+function clampNonNeg(value: number | null): number | null {
+    if (value === null) return null;
+    return Math.max(0, value);
+}
+
+// ============================================================
 // Mapping Functions
 // ============================================================
 
@@ -90,19 +143,19 @@ export function mapSetRow(row: SetRow): WorkoutSet {
     return {
         id: row.id,
         orderIndex: row.order_index,
-        weight: row.weight,
-        reps: row.reps,
-        duration: row.duration,
-        distance: row.distance,
-        type: row.type as WorkoutSet['type'],
-        status: row.status as WorkoutSet['status'],
+        weight: clampNonNeg(row.weight),
+        reps: clampNonNeg(row.reps),
+        duration: clampNonNeg(row.duration),
+        distance: clampNonNeg(row.distance),
+        type: validSetType(row.type),
+        status: validSetStatus(row.status),
         rpe: row.rpe,
         rir: row.rir,
-        suggestedWeight: row.suggested_weight,
-        suggestedReps: row.suggested_reps,
+        suggestedWeight: clampNonNeg(row.suggested_weight),
+        suggestedReps: clampNonNeg(row.suggested_reps),
         note: row.note,
         completedAt: row.completed_at ? new Date(row.completed_at) : null,
-        restDuration: row.rest_duration,
+        restDuration: clampNonNeg(row.rest_duration),
     };
 }
 
@@ -129,8 +182,8 @@ export function mapExerciseRow(row: ExerciseRow): Exercise {
         id: row.exercise_id,
         name: row.exercise_name,
         category: row.exercise_category as Exercise['category'],
-        muscleGroups: JSON.parse(row.exercise_muscle_groups || '[]'),
-        equipment: JSON.parse(row.exercise_equipment || '[]'),
+        muscleGroups: safeJsonParse(row.exercise_muscle_groups, []),
+        equipment: safeJsonParse(row.exercise_equipment, []),
         trackWeight: row.exercise_track_weight === 1,
         trackReps: row.exercise_track_reps === 1,
         trackTime: row.exercise_track_time === 1,
@@ -181,21 +234,22 @@ export function mapWorkoutRow(
     return {
         id: row.id,
         name: row.name,
-        status: row.status as Workout['status'],
+        status: validWorkoutStatus(row.status),
         warmup: null,
         main: mainSection,
         cooldown: null,
         startedAt: new Date(row.started_at),
         completedAt: row.completed_at ? new Date(row.completed_at) : null,
-        totalDuration: row.total_duration,
+        totalDuration: clampNonNeg(row.total_duration),
         location: row.location,
         note: row.note,
         templateId: row.template_id,
-        totalVolume: row.total_volume,
-        totalSets: row.total_sets,
-        muscleGroupsWorked: JSON.parse(row.muscle_groups_worked || '[]'),
+        totalVolume: clampNonNeg(row.total_volume),
+        totalSets: clampNonNeg(row.total_sets),
+        muscleGroupsWorked: safeJsonParse(row.muscle_groups_worked, []),
         dayOfWeek: row.day_of_week,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
     };
 }
+

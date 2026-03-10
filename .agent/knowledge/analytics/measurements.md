@@ -4,6 +4,9 @@ description: Measurements feature spec — 3-tab architecture for body metrics t
 
 # Measurements Feature
 
+> **Architecture note:** This spec aligns with the post-audit codebase (March 2026).
+> See `conventions.md` for guardrails: 600-line component cap, typed DB rows, versioned migrations, hook extraction.
+
 Profile-accessible measurement system with three tabs: Track (input), Trends (visualization), and Gallery (progress photos). Accessed via a Measurements button on the Profile screen, opens as a full-screen view within the Profile tab's navigation stack.
 
 ---
@@ -45,7 +48,7 @@ Each row displays:
 - Current/last value as placeholder hint
 - Tappable → activates numerical input immediately (inline, no extra popup)
 
-**Input method:** Reuse the existing `WorkoutKeyboard` component or a similar inline numeric keyboard pattern. Tapping a metric row should focus that field and show the keyboard.
+**Input method:** Reuse the existing `WorkoutKeyboard` component with a custom hook similar to `useWorkoutKeyboard.ts` (extracted pattern: focus state + keyboard value + dismiss logic). Tapping a metric row should focus that field and show the keyboard.
 
 **Default metrics catalog:**
 
@@ -71,8 +74,9 @@ Each row displays:
 
 "Manage Measurements" button opens a modal where users toggle on/off which metrics appear in the Track list. Each metric has an eye icon toggle.
 
-- Visibility state stored per-user in `user_preferences` as a JSON array of visible metric IDs
-- Key: `visible_measurements`, value: `["bodyweight","body_fat","waist","chest"]`
+- Visibility state stored in `user_settings.visible_measurements` column (TEXT, JSON array of type IDs)
+- Read/write via `preferencesService.ts` (`getSettings()` / `updateSettings()`)
+- Parse with `safeJsonParse()` from `hydration.ts` to protect against corrupt data
 - If a user only cares about bodyweight and waist, they configure this once and never scroll past irrelevant fields
 
 ---
@@ -201,13 +205,16 @@ CREATE INDEX idx_measurements_recorded_at ON measurements(recorded_at);
 CREATE INDEX idx_progress_photos_recorded_at ON progress_photos(recorded_at);
 ```
 
-### New user_preferences keys
+### New `user_settings` columns (via migration)
 
-| Key | Values | Default |
-|-----|--------|---------|
-| `visible_measurements` | JSON array of type IDs | `["bodyweight","body_fat","waist","chest"]` |
-| `measurement_unit_system` | `imperial` / `metric` | `imperial` |
-| `relative_strength_exercise` | exercise ID | null (first use prompts selection) |
+| Column | Type | Default |
+|--------|------|---------|
+| `visible_measurements` | `TEXT` | `'["bodyweight","body_fat","waist","chest"]'` |
+| `relative_strength_exercise` | `TEXT` | `NULL` |
+
+Unit system already exists: `user_settings.weight_unit` and `user_settings.distance_unit`.
+
+Add columns in a new versioned migration in `migrations.ts`. Extend `UserSettings` interface and `DEFAULTS` in `preferencesService.ts`.
 
 ---
 
@@ -221,13 +228,15 @@ ProfileScreen
        ├─ TrackTab
        │    ├─ DateSelector
        │    ├─ AddPhotoHero → camera/picker
-       │    ├─ MetricInputList
-       │    │    └─ MetricInputRow (per visible metric)
+       │    ├─ ErrorBoundary (wraps input list)
+       │    │    └─ MetricInputList
+       │    │         └─ MetricInputRow (per visible metric)
        │    └─ ManageMeasurementsButton → ManageMeasurementsModal
        │
        ├─ TrendsTab
-       │    ├─ SparklineList
-       │    │    └─ SparklineRow (metric name + sparkline + current value)
+       │    ├─ ErrorBoundary (wraps chart list)
+       │    │    └─ SparklineList
+       │    │         └─ SparklineRow (metric name + sparkline + current value)
        │    └─ DetailChartView (full-screen expanded chart)
        │         └─ RelativeStrengthOverlay (bodyweight chart only)
        │
@@ -238,6 +247,11 @@ ProfileScreen
             └─ CompareView (side-by-side split)
 ```
 
+### Hooks (convention: extract when 3+ useState for one concern)
+- `useMeasurementInput(date)` — manages keyboard focus state, current metric, value entry
+- `useSparklineData()` — fetches and caches sparkline data for visible metrics
+- `usePhotoGallery()` — manages photo loading, selection mode, comparison pair
+
 ---
 
 ## Service Layer
@@ -246,12 +260,16 @@ New service file: `src/services/measurementService.ts`
 
 **Required functions:**
 - `getMeasurementTypes()` → returns all measurement type definitions
-- `getVisibleMeasurementTypes()` → filtered by user's visibility preferences
+- `getVisibleMeasurementTypes()` → filtered by user's visibility settings (reads `user_settings.visible_measurements` via `preferencesService`)
 - `logMeasurement(typeId, value, date)` → inserts a new measurement entry
 - `getMeasurementHistory(typeId, startDate?, endDate?)` → returns time-series data for charts
 - `getLatestMeasurements()` → returns most recent value per visible metric
 - `getSparklineData(typeId, days?)` → returns simplified data points for sparkline rendering (default 90 days)
 - `getEstimated1RM(exerciseId, startDate?, endDate?)` → computes 1RM time-series from workout history
+
+**Data layer conventions:**
+- Define typed row interfaces for all query results (e.g., `MeasurementRow`, `MeasurementTypeRow`). Never use `any`.
+- Use `safeJsonParse()` from `hydration.ts` for any JSON columns.
 
 New service file: `src/services/photoService.ts`
 

@@ -17,6 +17,7 @@ import {
     getActiveSplit,
     getCurrentTemplate,
     getCurrentTemplateIndex,
+    setCurrentTemplateIndex,
     getWorkoutDatesThisWeek,
     getTemplatesForSplit,
     checkAndAdvanceIfNewDay,
@@ -97,7 +98,6 @@ export function useHomeScreenData(): UseHomeScreenDataReturn {
 
     const handleChangeTemplateIndex = async (newIndex: number) => {
         try {
-            const { setCurrentTemplateIndex } = await import('../services');
             await setCurrentTemplateIndex(newIndex);
             setCurrentTemplateIndexState(newIndex);
 

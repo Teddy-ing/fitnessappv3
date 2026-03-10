@@ -60,3 +60,8 @@ export {
     getExercisesByCategory,
     searchExercises,
 } from './exerciseService';
+export {
+    getSettings,
+    updateSettings,
+    type UserSettings,
+} from './preferencesService';

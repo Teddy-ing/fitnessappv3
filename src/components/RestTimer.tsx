@@ -9,12 +9,17 @@
  * - Quick adjust buttons (+30s, -30s)
  * - Skip button to dismiss early
  * - Continues running when screen is off
+ * - Auto-starts when a set is completed (via lastCompletedSet signal)
+ * - Fires haptics and notifications when timer reaches 0
  */
 
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import BackgroundTimer from 'react-native-background-timer';
+import * as Haptics from 'expo-haptics';
+import { sendRestTimerNotification } from '../services/notificationService';
 import { useWorkoutStore } from '../stores';
+import { useRestTimerStore } from '../stores/restTimerStore';
 import { colors, spacing, borderRadius, typography } from '../theme';
 
 export default function RestTimer() {
@@ -25,10 +30,50 @@ export default function RestTimer() {
         stopRestTimer,
         adjustRestTimer,
         tickRestTimer,
-    } = useWorkoutStore();
+        startRestTimer,
+        getExerciseRestTime,
+    } = useRestTimerStore();
+
+    // Watch the workout store's completion signal for auto-start
+    const lastCompletedSet = useWorkoutStore(s => s.lastCompletedSet);
+    const activeWorkout = useWorkoutStore(s => s.activeWorkout);
 
     const appState = useRef(AppState.currentState);
     const [isInForeground, setIsInForeground] = React.useState(AppState.currentState === 'active');
+
+    // Auto-start timer when a set is completed
+    const prevTimestamp = useRef<number | null>(null);
+    useEffect(() => {
+        if (!lastCompletedSet) return;
+        // Only react to new signals (avoid re-firing on re-renders)
+        if (lastCompletedSet.timestamp === prevTimestamp.current) return;
+        prevTimestamp.current = lastCompletedSet.timestamp;
+
+        const restDuration = getExerciseRestTime(lastCompletedSet.exerciseId);
+        startRestTimer(restDuration, lastCompletedSet.exerciseId, lastCompletedSet.setId);
+    }, [lastCompletedSet]);
+
+    // Stop timer when workout is finished or discarded
+    const prevWorkoutId = useRef(activeWorkout?.id);
+    useEffect(() => {
+        if (prevWorkoutId.current && !activeWorkout) {
+            // Workout was active and is now gone — stop timer
+            stopRestTimer();
+        }
+        prevWorkoutId.current = activeWorkout?.id;
+    }, [activeWorkout?.id]);
+
+    // Fire side effects when timer finishes (restTimerActive transitions false)
+    const wasActive = useRef(restTimerActive);
+    useEffect(() => {
+        if (wasActive.current && !restTimerActive && restTimerRemaining === 0) {
+            // Timer just finished (not skipped — skip sets remaining to 0 too,
+            // but that's fine, we want feedback in both cases)
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            sendRestTimerNotification();
+        }
+        wasActive.current = restTimerActive;
+    }, [restTimerActive, restTimerRemaining]);
 
     // Use background timer for ticking
     useEffect(() => {

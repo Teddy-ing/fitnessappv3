@@ -10,6 +10,28 @@ import { Exercise, ExerciseCategory, MuscleGroup, Equipment, MuscleContribution,
 import { SEED_EXERCISES } from '../data/exercises';
 import * as Crypto from 'expo-crypto';
 
+/** Row shape returned by SELECT * FROM exercises */
+interface ExerciseDbRow {
+    id: string;
+    name: string;
+    category: string;
+    muscle_groups: string | null;
+    equipment: string | null;
+    description: string | null;
+    instructions: string | null;
+    image_path: string | null;
+    track_weight: number;
+    track_reps: number;
+    track_time: number;
+    track_distance: number;
+    is_custom: number;
+    is_hidden: number;
+    is_favorite: number;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 // Cache for built-in exercise hidden/favorite states
 interface ExerciseOverrides {
     isHidden: boolean;
@@ -27,26 +49,7 @@ export async function getExercises(includeHidden: boolean = false): Promise<Exer
 
     // Get custom exercises from database
     if (db) {
-        const customRows = await db.getAllAsync<{
-            id: string;
-            name: string;
-            category: string;
-            muscle_groups: string | null;
-            equipment: string | null;
-            description: string | null;
-            instructions: string | null;
-            image_path: string | null;
-            track_weight: number;
-            track_reps: number;
-            track_time: number;
-            track_distance: number;
-            is_custom: number;
-            is_hidden: number;
-            is_favorite: number;
-            notes: string | null;
-            created_at: string;
-            updated_at: string;
-        }>(`SELECT * FROM exercises WHERE is_custom = 1`);
+        const customRows = await db.getAllAsync<ExerciseDbRow>(`SELECT * FROM exercises WHERE is_custom = 1`);
 
         const customExercises = customRows.map(row => hydrateExercise(row));
         exercises = [...exercises, ...customExercises];
@@ -115,7 +118,7 @@ export async function getExerciseById(id: string): Promise<Exercise | null> {
     const db = await getDatabase();
     if (!db) return null;
 
-    const row = await db.getFirstAsync<any>(
+    const row = await db.getFirstAsync<ExerciseDbRow>(
         `SELECT * FROM exercises WHERE id = ?`,
         [id]
     );
@@ -360,16 +363,16 @@ export async function searchExercises(
 }
 
 // Helper to hydrate an exercise from DB row
-function hydrateExercise(row: any): Exercise {
+function hydrateExercise(row: ExerciseDbRow): Exercise {
     return {
         id: row.id,
         name: row.name,
         category: row.category as ExerciseCategory,
         muscleGroups: row.muscle_groups ? JSON.parse(row.muscle_groups) : [],
         equipment: row.equipment ? JSON.parse(row.equipment) : ['none'],
-        description: row.description,
+        description: row.description ?? undefined,
         instructions: row.instructions ? JSON.parse(row.instructions) : undefined,
-        imageUrl: row.image_path,
+        imageUrl: row.image_path ?? undefined,
         trackWeight: row.track_weight === 1,
         trackReps: row.track_reps === 1,
         trackTime: row.track_time === 1,

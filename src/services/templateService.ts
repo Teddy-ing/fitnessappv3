@@ -18,6 +18,18 @@ import {
 import { Exercise } from '../models/exercise';
 import { mapExerciseRow, ExerciseRow } from './hydration';
 
+/** Row shape returned by SELECT * FROM templates */
+interface TemplateRow {
+    id: string;
+    name: string;
+    description: string | null;
+    last_used_at: string | null;
+    use_count: number;
+    is_favorite: number;
+    created_at: string;
+    updated_at: string;
+}
+
 /**
  * Template type for the UI
  */
@@ -123,7 +135,7 @@ export async function getTemplates(): Promise<Template[]> {
     const db = await getDatabase();
     if (!db) return [];
 
-    const templateRows = await db.getAllAsync<any>(
+    const templateRows = await db.getAllAsync<TemplateRow>(
         `SELECT * FROM templates ORDER BY last_used_at DESC NULLS LAST, created_at DESC`
     );
 
@@ -144,7 +156,7 @@ export async function getTemplateById(id: string): Promise<Template | null> {
     const db = await getDatabase();
     if (!db) return null;
 
-    const row = await db.getFirstAsync<any>(
+    const row = await db.getFirstAsync<TemplateRow>(
         `SELECT * FROM templates WHERE id = ?`,
         [id]
     );
@@ -200,7 +212,7 @@ export async function findTemplateByName(name: string): Promise<Template | null>
     const db = await getDatabase();
     if (!db) return null;
 
-    const row = await db.getFirstAsync<any>(
+    const row = await db.getFirstAsync<TemplateRow>(
         `SELECT * FROM templates WHERE LOWER(name) = LOWER(?)`,
         [name.trim()]
     );
@@ -217,7 +229,7 @@ export async function findTemplatesByName(name: string): Promise<Template[]> {
     const db = await getDatabase();
     if (!db) return [];
 
-    const rows = await db.getAllAsync<any>(
+    const rows = await db.getAllAsync<TemplateRow>(
         `SELECT * FROM templates WHERE LOWER(name) = LOWER(?)`,
         [name.trim()]
     );
@@ -388,7 +400,7 @@ export async function startWorkoutFromTemplate(templateId: string): Promise<Work
 /**
  * Hydrate a template from database row
  */
-async function hydrateTemplate(row: any): Promise<Template> {
+async function hydrateTemplate(row: TemplateRow): Promise<Template> {
     const db = await getDatabase();
     if (!db) throw new Error('Database not available');
 

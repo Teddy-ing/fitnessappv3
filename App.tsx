@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppNavigator } from './src/navigation';
 import { requestNotificationPermissions, clearAllNotifications, seedPremadeSplits } from './src/services';
+import { ErrorBoundary } from './src/components';
 
 export default function App() {
   const appState = useRef(AppState.currentState);
@@ -44,7 +45,9 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="light" />
-        <AppNavigator />
+        <ErrorBoundary fallback="screen" label="App">
+          <AppNavigator />
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

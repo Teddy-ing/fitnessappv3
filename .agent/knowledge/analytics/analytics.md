@@ -4,6 +4,9 @@ description: Analytics feature spec — macro/micro workout statistics, dual-axi
 
 # Analytics Feature
 
+> **Architecture note:** This spec aligns with the post-audit codebase (March 2026).
+> See `conventions.md` for guardrails: 600-line component cap, typed DB rows, versioned migrations, hook extraction.
+
 Core statistics and visualization system. Two scopes: **Macro** (global workout trends) and **Micro** (per-exercise progression). Accessed from the Profile screen as a dedicated analytics hub.
 
 ---
@@ -72,7 +75,7 @@ Below the time-series chart, a section showing muscle group breakdown:
 
 **Chart type:** Horizontal bar chart or radar chart (configurable via small toggle).
 
-**Data source:** Parse `workout_exercises.exercise_muscle_groups` (JSON string of `{muscleGroup, contribution}` pairs). Aggregate by the selected metric:
+**Data source:** Parse `workout_exercises.exercise_muscle_groups` (JSON string of `{muscleGroup, contribution}` pairs) using `safeJsonParse()` from `hydration.ts`. Aggregate by the selected metric:
 
 | Metric | Calculation |
 |--------|-------------|
@@ -245,8 +248,10 @@ ProfileScreen
        │    │    ├─ MetricSelector (segmented: Volume/Sets/Reps/Duration)
        │    │    ├─ TimeBucketPills (Per Workout/Week/Month/Year)
        │    │    └─ ChartRangePills (1M/3M/6M/1Y/ALL)
-       │    ├─ BarChart (main visualization)
-       │    ├─ MuscleDistributionChart (horizontal bars or radar)
+       │    ├─ ErrorBoundary (wraps chart area)
+       │    │    └─ BarChart (main visualization)
+       │    ├─ ErrorBoundary (wraps distribution)
+       │    │    └─ MuscleDistributionChart (horizontal bars or radar)
        │    ├─ ConsistencyCards (total workouts, active days, streak, avg/week)
        │    └─ FatigueRatioBanner (conditional, when ACR > 1.3)
        │
@@ -255,13 +260,19 @@ ProfileScreen
             ├─ ExerciseList (sorted by recency)
             └─ ExerciseAnalyticsScreen (pushed on tap)
                  ├─ ChartRangePills (shared across all charts)
-                 ├─ Estimated1RMChart (line, with relative strength toggle)
-                 ├─ MaxWeightChart (line)
-                 ├─ WorkoutVolumeChart (bar)
-                 ├─ MaxRepsChart (line)
+                 ├─ ErrorBoundary (wraps each chart)
+                 │    ├─ Estimated1RMChart (line, with relative strength toggle)
+                 │    ├─ MaxWeightChart (line)
+                 │    ├─ WorkoutVolumeChart (bar)
+                 │    └─ MaxRepsChart (line)
                  ├─ BestWeightForRepsTable
                  └─ TrophyBadges (conditional)
 ```
+
+### Hooks (convention: extract when 3+ useState for one concern)
+- `useMacroAnalytics(metric, bucket, range)` — fetches aggregated data, manages chart state
+- `useExerciseAnalytics(exerciseId, range)` — fetches per-exercise time-series
+- `useFatigueRatio()` — computes acute/chronic workload ratio
 
 ---
 
@@ -271,7 +282,7 @@ New service file: `src/services/analyticsService.ts`
 
 **Macro functions:**
 - `getAggregatedMetric(metric, timeBucket, dateRange)` → returns `{label, value}[]` for bar chart
-- `getMuscleDistribution(metric, dateRange)` → returns `{muscleGroup, value}[]`
+- `getMuscleDistribution(metric, dateRange)` → returns `{muscleGroup, value}[]` (use `safeJsonParse` for muscle group JSON)
 - `getConsistencyStats(dateRange)` → returns `{totalWorkouts, activeDays, streak, avgPerWeek}`
 - `getFatigueRatio()` → returns `{acute, chronic, ratio, status}`
 
@@ -286,6 +297,11 @@ New service file: `src/services/analyticsService.ts`
 
 **Trophy function:**
 - `checkTrophyMilestones(dateRange?)` → returns `{milestone, achieved, badgeText}[]`
+
+**Data layer conventions:**
+- Define typed row interfaces for all query results (e.g., `AggregatedMetricRow`). Never use `any`.
+- Use `safeJsonParse()` from `hydration.ts` for JSON columns (`muscle_groups_worked`, `exercise_muscle_groups`).
+- Reuse `mapSetRow` from `hydration.ts` when processing raw set data.
 
 ---
 
@@ -307,7 +323,7 @@ CREATE INDEX idx_workout_exercises_exercise_id ON workout_exercises(exercise_id)
 
 ### Optional: Precomputed Aggregation Cache
 
-For performance on large datasets, consider a materialized cache table:
+For performance on large datasets, consider a materialized cache table (created via versioned migration in `migrations.ts`):
 
 ```sql
 CREATE TABLE IF NOT EXISTS analytics_cache (
@@ -320,6 +336,8 @@ CREATE TABLE IF NOT EXISTS analytics_cache (
 ```
 
 Invalidation: clear relevant cache keys in `workoutService.saveWorkout()` after a workout is completed.
+
+> **Convention:** Parse `data` column with `safeJsonParse()` from `hydration.ts` to protect against corrupt cache entries.
 
 ---
 

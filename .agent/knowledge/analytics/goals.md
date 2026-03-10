@@ -4,6 +4,9 @@ description: Goals feature spec — active/trophy case layout, goal cards with p
 
 # Goals Feature
 
+> **Architecture note:** This spec aligns with the post-audit codebase (March 2026).
+> See `conventions.md` for guardrails: 600-line component cap, typed DB rows, versioned migrations, hook extraction.
+
 Profile-accessible goal tracking system with automatic progress updates from local workout and measurement data. Accessed via a Goals button on the Profile screen, opens as a full-screen view within the Profile stack navigator.
 
 ---
@@ -117,9 +120,9 @@ Two large tappable cards:
 
 ### Step 3: Set Target Value
 
-- Numeric keypad input (reuse `WorkoutKeyboard` pattern)
+- Numeric keypad input (reuse `WorkoutKeyboard` component with a custom hook following `useWorkoutKeyboard.ts` pattern)
 - Display current best prominently: "Current best: 275 lbs"
-- Unit auto-set based on exercise/measurement selection
+- Unit auto-set based on exercise/measurement selection (read `user_settings.weight_unit` via `preferencesService`)
 
 ### Step 4: Set Deadline (Optional)
 
@@ -210,6 +213,7 @@ After every workout save (`workoutService.saveWorkout`) and measurement log (`me
 
 ```typescript
 // Pseudocode: check all active goals for completion
+// IMPORTANT: avoid mutating goal objects in-place (see conventions.md §5 re: immutability)
 const activeGoals = await getActiveGoals();
 for (const goal of activeGoals) {
     const currentBest = await computeCurrentBest(goal);
@@ -224,7 +228,9 @@ for (const goal of activeGoals) {
 
 ## Schema Impact
 
-### New table
+### New table (via versioned migration)
+
+> **Convention:** Create via a new migration in `migrations.ts`. Never use inline `CREATE TABLE`.
 
 ```sql
 CREATE TABLE IF NOT EXISTS goals (
@@ -252,9 +258,29 @@ CREATE INDEX idx_goals_status ON goals(status);
 CREATE INDEX idx_goals_exercise_id ON goals(exercise_id);
 ```
 
-### user_preferences keys
+### Typed row interface
 
-None specific to goals. Quick-add chip visibility could be tracked, but not essential for v1.
+Define in `goalService.ts` (not in `hydration.ts` since goals are a new domain):
+
+```typescript
+interface GoalRow {
+    id: string;
+    goal_type: string;
+    exercise_id: string | null;
+    measurement_type_id: string | null;
+    target_value: number;
+    starting_value: number | null;
+    current_best: number | null;
+    label: string | null;
+    deadline: string | null;
+    status: string;
+    completed_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+```
+
+Never use `any` for query results. Map `GoalRow` to a typed `Goal` model.
 
 ---
 
@@ -266,10 +292,11 @@ ProfileScreen
        ├─ SegmentedControl (Active | Trophy Case)
        │
        ├─ ActiveGoalsTab
-       │    ├─ GoalCard (per active goal)
-       │    │    ├─ ProgressBar (purple gradient fill)
-       │    │    ├─ DeadlineBadge (green/amber/red)
-       │    │    └─ GoalDetailView (expanded on tap, progress chart)
+       │    ├─ ErrorBoundary (wraps goal list)
+       │    │    └─ GoalCard (per active goal)
+       │    │         ├─ ProgressBar (purple gradient fill)
+       │    │         ├─ DeadlineBadge (green/amber/red)
+       │    │         └─ GoalDetailView (expanded on tap, progress chart)
        │    └─ EmptyState (when no active goals)
        │         └─ QuickAddChips
        │
@@ -284,6 +311,11 @@ ProfileScreen
             ├─ Step5_LabelInput
             └─ ConfirmationCard
 ```
+
+### Hooks (convention: extract when 3+ useState for one concern)
+- `useGoalProgress()` — manages goal list state, refresh logic, progress computation
+- `useGoalCreation()` — manages multi-step creation wizard state
+- `useDeadlineWarnings()` — computes which goals are off-track
 
 ---
 
@@ -305,6 +337,10 @@ New service file: `src/services/goalService.ts`
 - `refreshAllGoalProgress()` → batch-updates `current_best` for all active goals (called after workout save)
 - `getGoalProgressHistory(goalId, dateRange?)` → time-series of progress values for the detail chart
 - `checkDeadlineWarnings()` → returns goals that are projected to miss their deadline
+
+**Data layer conventions:**
+- Use typed `GoalRow` interface for all query results. Never use `any`.
+- Reuse `mapSetRow` from `hydration.ts` when computing exercise-based progress from raw set data.
 
 **Quick-add functions:**
 - `getQuickAddSuggestions()` → returns available quick-add chips, resolving bodyweight-relative targets dynamically

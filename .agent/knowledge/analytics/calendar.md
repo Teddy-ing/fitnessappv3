@@ -4,6 +4,9 @@ description: Calendar feature spec — heatmap view, daily modal, filtering, and
 
 # Calendar Feature
 
+> **Architecture note:** This spec aligns with the post-audit codebase (March 2026).
+> See `conventions.md` for guardrails: 600-line component cap, typed DB rows, versioned migrations, hook extraction.
+
 Profile-accessible calendar providing a heatmap of workout history with drill-down, filtering, and journal capabilities.
 
 ---
@@ -103,10 +106,10 @@ Accessed via the gear icon in the sticky header. Opens as a small settings panel
 
 | Setting | Options | Storage |
 |---------|---------|---------|
-| Start day of week | `Sunday` / `Monday` | `user_preferences` key: `calendar_start_day` |
-| Heatmap metric | `volume` (default) / `sets` / `duration` | `user_preferences` key: `calendar_heatmap_metric` |
+| Start day of week | `Sunday` / `Monday` | `user_settings.calendar_start_day` column |
+| Heatmap metric | `volume` (default) / `sets` / `duration` | `user_settings.calendar_heatmap_metric` column |
 
-These are stored in the existing `user_preferences` table (key-value).
+Read/write via `preferencesService.ts` (`getSettings()` / `updateSettings()`).
 
 ---
 
@@ -157,16 +160,20 @@ When active:
 - `workout_exercises` — has `note`, exercise details
 - `workout_sets` — has `weight`, `reps`, `completed_at`
 
-### New tables needed
+### New tables (via versioned migration)
 | Table | Purpose |
 |-------|---------|
 | `personal_records` | Cached PR entries: `exercise_id`, `pr_type` (weight/volume/reps), `value`, `workout_id`, `achieved_at` |
 
-### New user_preferences keys
-| Key | Values | Default |
-|-----|--------|---------|
-| `calendar_start_day` | `sunday` / `monday` | `sunday` |
-| `calendar_heatmap_metric` | `volume` / `sets` / `duration` | `volume` |
+> **Convention:** All new tables must be created via a new migration in `migrations.ts` (e.g., v4). Never use inline `CREATE TABLE` or `ALTER TABLE`.
+
+### New `user_settings` columns (via migration)
+| Column | Type | Default |
+|--------|------|---------|
+| `calendar_start_day` | `TEXT` | `'sunday'` |
+| `calendar_heatmap_metric` | `TEXT` | `'volume'` |
+
+Add these columns to `user_settings` in the migration, then extend `UserSettings` interface and `DEFAULTS` in `preferencesService.ts`.
 
 ### Recommended indexes for performance
 ```sql
@@ -187,11 +194,17 @@ ProfileScreen
        │    ├─ FilterButton → FilterPanel (bottom sheet)
        │    └─ SettingsButton → CalendarSettingsPanel (bottom sheet)
        ├─ CalendarGrid (FlatList/FlashList of MonthBlock items)
-       │    └─ MonthBlock
-       │         └─ DayCell (heatmap fill, PR badge, note indicator)
+       │    └─ ErrorBoundary (wraps each MonthBlock)
+       │         └─ MonthBlock
+       │              └─ DayCell (heatmap fill, PR badge, note indicator)
        ├─ DailyWorkoutModal (bottom sheet)
        └─ JournalView (conditional, replaces grid when Notes filter + Journal toggle active)
 ```
+
+### Hooks (convention: extract when 3+ useState for one concern)
+- `useCalendarData(month, year)` — fetches workout summaries, manages heatmap data
+- `useCalendarFilters()` — manages active filter state (PR, fatigue, notes)
+- `useCalendarSettings()` — reads/writes calendar-specific `user_settings` via `preferencesService`
 
 ---
 
@@ -201,10 +214,15 @@ New service file: `src/services/calendarService.ts`
 
 **Required functions:**
 - `getWorkoutsForMonth(year, month)` — returns workout summaries for heatmap rendering
-- `getWorkoutDetail(workoutId)` — returns full workout with exercises and sets for the daily modal
+- `getWorkoutDetail(workoutId)` — returns full workout with exercises and sets for the daily modal (use `mapWorkoutRow` from `hydration.ts`)
 - `getWorkoutStreak()` — returns current consecutive-week streak count
 - `getPersonalRecordDates(exerciseId?, prType?)` — returns dates where PRs were achieved
 - `getNoteDates(startDate, endDate)` — returns dates that have workout/exercise notes
 - `searchNotes(query)` — full-text search across workout and exercise notes
+
+**Data layer conventions:**
+- Define typed row interfaces for all query results (e.g., `CalendarDayRow`). Never use `any`.
+- Use `safeJsonParse()` from `hydration.ts` for any JSON columns (`muscle_groups_worked`, etc.).
+- Reuse `mapWorkoutRow`/`mapExerciseRow`/`mapSetRow` from `hydration.ts` when assembling full workout detail.
 
 **PR detection** can be computed lazily on first calendar load and cached in `personal_records` table, then incrementally updated when new workouts are saved.

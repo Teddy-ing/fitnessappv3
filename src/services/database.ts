@@ -99,7 +99,9 @@ export async function clearAllData(): Promise<void> {
         await database.execAsync(`DELETE FROM splits_templates;`);
         await database.execAsync(`DELETE FROM splits_schedule;`);
         await database.execAsync(`DELETE FROM splits;`);
-        await database.execAsync(`DELETE FROM user_preferences;`);
+        await database.execAsync(`DELETE FROM user_settings;`);
+        // Re-seed the single settings row with defaults
+        await database.execAsync(`INSERT OR IGNORE INTO user_settings (id) VALUES (1);`);
     } catch (error) {
         console.error('[DB] Error clearing data:', error);
     }
