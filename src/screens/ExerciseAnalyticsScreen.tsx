@@ -31,6 +31,30 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - spacing.md * 4 - 40;
 const CHART_RANGES: ChartRange[] = ['1M', '3M', '6M', '1Y', 'ALL'];
 
+// Shared spacing so line charts and bar chart align their labels at the same x positions
+const CHART_INITIAL_OFFSET = 10;
+const MIN_PER_POINT = 12;
+
+function computeChartSpacing(dataLength: number) {
+    if (dataLength <= 1) {
+        const bw = 22;
+        return { lineSpacing: 40, barWidth: bw, barSpacing: 18, barInitial: CHART_INITIAL_OFFSET - bw / 2, lineInitial: CHART_INITIAL_OFFSET, needsScroll: false };
+    }
+    const ideal = (CHART_WIDTH - CHART_INITIAL_OFFSET * 2) / (dataLength - 1);
+    const perPoint = Math.max(MIN_PER_POINT, ideal);
+    const needsScroll = ideal < MIN_PER_POINT;
+    const bw = Math.max(4, Math.round(perPoint * 0.65));
+    const bs = Math.max(1, perPoint - bw);
+    return {
+        lineSpacing: perPoint,
+        barWidth: bw,
+        barSpacing: bs,
+        barInitial: CHART_INITIAL_OFFSET - bw / 2,
+        lineInitial: CHART_INITIAL_OFFSET,
+        needsScroll,
+    };
+}
+
 // ============================================================
 // Sub-components
 // ============================================================
@@ -86,14 +110,49 @@ function TimeSeriesLineChart({
         );
     }
 
-    const chartData = data.map((d) => ({
-        value: d.value,
-        label: d.label,
-        dataPointText: undefined,
-    }));
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let lastMonth = '';
+
+    const chartData = data.map((d) => {
+        let displayLabel = d.label;
+        let labelComp;
+        const parts = d.label.split('/');
+        if (parts.length === 2) {
+            const currentMonth = parts[0];
+            const currentDay = parts[1];
+            if (currentMonth !== lastMonth) {
+                lastMonth = currentMonth;
+                const monthIndex = parseInt(currentMonth, 10) - 1;
+                const monthName = MONTH_NAMES[monthIndex] || currentMonth;
+                labelComp = () => (
+                    <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
+                        <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
+                        <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
+                    </View>
+                );
+            } else {
+                labelComp = () => (
+                    <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
+                        <Text style={styles.axisText}>{currentDay}</Text>
+                    </View>
+                );
+            }
+            displayLabel = currentDay;
+        }
+
+        return {
+            value: d.value,
+            label: displayLabel,
+            labelComponent: labelComp,
+            fullLabel: d.label,
+            dataPointText: undefined,
+        };
+    });
 
     const maxValue = Math.max(...data.map((d) => d.value)) * 1.15;
     const latestValue = data[data.length - 1]?.value ?? 0;
+
+    const { lineSpacing, lineInitial, needsScroll } = computeChartSpacing(data.length);
 
     return (
         <View style={styles.chartCard}>
@@ -101,6 +160,9 @@ function TimeSeriesLineChart({
                 data={chartData}
                 width={CHART_WIDTH}
                 height={160}
+                xAxisLabelsHeight={36}
+                initialSpacing={lineInitial}
+                spacing={lineSpacing}
                 color={color}
                 thickness={2}
                 noOfSections={4}
@@ -125,12 +187,33 @@ function TimeSeriesLineChart({
                 startOpacity={0.3}
                 endOpacity={0.05}
                 areaChart
-                disableScroll={data.length <= 15}
-                scrollToEnd={data.length > 15}
+                disableScroll={!needsScroll}
+                scrollToEnd={needsScroll}
                 formatYLabel={(val: string) => {
                     const num = Number(val);
                     if (num >= 1000) return `${(num / 1000).toFixed(0)}k`;
                     return String(Math.round(num));
+                }}
+                pointerConfig={{
+                    pointerStripColor: color,
+                    pointerStripWidth: 1,
+                    pointerColor: color,
+                    radius: 5,
+                    pointerLabelWidth: 120,
+                    pointerLabelHeight: 30,
+                    activatePointersOnLongPress: false,
+                    autoAdjustPointerLabelPosition: true,
+                    pointerLabelComponent: (items: any[]) => {
+                        const pointLabel = items[0]?.fullLabel || items[0]?.label || '';
+                        return (
+                            <View style={styles.tooltip}>
+                                <Text style={styles.tooltipText}>
+                                    {pointLabel}: {Math.round((items[0]?.value ?? 0) * 10) / 10}
+                                    {suffix ?? ''}
+                                </Text>
+                            </View>
+                        );
+                    },
                 }}
             />
             <View style={styles.latestRow}>
@@ -156,14 +239,49 @@ function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
         );
     }
 
-    const chartData = data.map((d) => ({
-        value: d.value,
-        label: d.label,
-        frontColor: colors.accent.primary,
-        gradientColor: colors.accent.tertiary,
-    }));
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let lastMonth = '';
+
+    const chartData = data.map((d) => {
+        let displayLabel = d.label;
+        let labelComp;
+        const parts = d.label.split('/');
+        if (parts.length === 2) {
+            const currentMonth = parts[0];
+            const currentDay = parts[1];
+            if (currentMonth !== lastMonth) {
+                lastMonth = currentMonth;
+                const monthIndex = parseInt(currentMonth, 10) - 1;
+                const monthName = MONTH_NAMES[monthIndex] || currentMonth;
+                labelComp = () => (
+                    <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
+                        <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
+                        <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
+                    </View>
+                );
+            } else {
+                labelComp = () => (
+                    <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
+                        <Text style={styles.axisText}>{currentDay}</Text>
+                    </View>
+                );
+            }
+            displayLabel = currentDay;
+        }
+
+        return {
+            value: d.value,
+            label: displayLabel,
+            labelComponent: labelComp,
+            fullLabel: d.label,
+            frontColor: colors.accent.primary,
+            gradientColor: colors.accent.tertiary,
+        };
+    });
 
     const maxValue = Math.max(...data.map((d) => d.value)) * 1.15;
+
+    const { barWidth, barSpacing, barInitial, needsScroll } = computeChartSpacing(data.length);
 
     return (
         <View style={styles.chartCard}>
@@ -171,8 +289,10 @@ function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
                 data={chartData}
                 width={CHART_WIDTH}
                 height={160}
-                barWidth={data.length > 20 ? 8 : data.length > 10 ? 14 : 22}
-                spacing={data.length > 20 ? 4 : data.length > 10 ? 8 : 12}
+                xAxisLabelsHeight={36}
+                initialSpacing={barInitial}
+                barWidth={barWidth}
+                spacing={barSpacing}
                 noOfSections={4}
                 maxValue={maxValue}
                 yAxisTextStyle={styles.axisText}
@@ -194,12 +314,27 @@ function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
                 roundedBottom={false}
                 barBorderTopLeftRadius={4}
                 barBorderTopRightRadius={4}
-                disableScroll={data.length <= 15}
-                scrollToEnd={data.length > 15}
+                disableScroll={!needsScroll}
+                scrollToEnd={needsScroll}
                 formatYLabel={(val: string) => {
                     const num = Number(val);
                     if (num >= 1000) return `${(num / 1000).toFixed(0)}k`;
                     return String(Math.round(num));
+                }}
+                renderTooltip={(item: any, index: number) => {
+                    const isRightSide = index >= data.length * 0.7;
+                    return (
+                        <View style={[
+                            styles.tooltip,
+                            isRightSide && { marginLeft: -100 },
+                        ]}>
+                            <Text style={styles.tooltipText}>
+                                {item.fullLabel || item.label}: {item.value >= 1000
+                                    ? `${(item.value / 1000).toFixed(1)}k`
+                                    : Math.round(item.value)} lbs
+                            </Text>
+                        </View>
+                    );
                 }}
             />
         </View>
@@ -432,5 +567,19 @@ const styles = StyleSheet.create({
     },
     tableDateCell: {
         textAlign: 'right',
+    },
+
+    // Tooltips
+    tooltip: {
+        backgroundColor: colors.background.tertiary,
+        borderRadius: borderRadius.md,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        marginBottom: spacing.xs,
+    },
+    tooltipText: {
+        fontSize: typography.size.xs,
+        fontWeight: typography.weight.semibold,
+        color: colors.text.primary,
     },
 });

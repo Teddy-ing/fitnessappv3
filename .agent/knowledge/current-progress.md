@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Phase 1 complete, entering analytics & widget framework
-- **Status:** Core features + home screen visual refactor complete
-- **Next Milestone:** Phase 2 — Analytics Functions & Profile Screen Scoping
+- **Phase:** Post-MVP Development — Phase 2 (Analytics) complete, moving to Profile & Widgets
+- **Status:** Core features + home screen visual refactor + full analytics implementation complete
+- **Next Milestone:** Profile Screen Refactor & Widget Framework
 
 ---
 
@@ -57,11 +57,13 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Codebase Quality & Testing — Phase 1/2** (God Component Decomposition, `WorkoutScreen`/`SplitsScreen` broken down, Jest setup, typed hydration bugfixes)
 - [x] **Database Reliability** (Versioned migrations system implemented)
 - [x] **Store Architecture Cleanup** (UI state removed from domain stores, RestTimer extracted)
+- [x] **Fix overlapping X-axis labels in Analytics charts** (added dynamic month tick marks while preserving full date tooltips)
+- [x] **Phase 2: Analytics Functions** (Macro charts, muscle distribution pie chart, micro exercise charts, fatigue ratio, tooltips, all backed by 140 passing tests)
 ---
 
 ## In Progress
 
-- [ ] **Phase 2: Analytics Functions & Profile Screen Scoping**
+- [ ] **Phase 3/4: Profile Screen Scoping & Refactor** (Integrating analytics into the Profile view)
 
 ---
 
@@ -122,6 +124,31 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-03-10: Phase 2 — Analytics Implementation
+
+**Duration:** Multi-session over the day
+**Focus:** Building out comprehensive Maco and Micro analytics, powered by raw SQL and rendered with `react-native-gifted-charts`.
+
+**What was done:**
+- Implemented dynamic tick marks on the X-axis for `BarChart`s and `LineChart`s in `AnalyticsScreen.tsx` and `ExerciseAnalyticsScreen.tsx`.
+- Refactored chart data mapping to utilize gifted-charts `labelComponent`. The Month abbreviation (e.g., 'Jan') now correctly and neatly sits directly beneath the Day number when the month changes, bypassing standard text truncation constraints.
+- Increased `xAxisLabelsHeight` to `36` across charts to appropriately accommodate the thicker vertical label.
+- Preserved the full date in the `pointerLabelComponent` and `renderTooltip` tooltip popups by passing a custom `fullLabel` property to the chart data object.
+- **Macro Analytics (`AnalyticsScreen.tsx`):**
+  - Designed the Workouts tab with dual-axis metric/time selections.
+  - Implemented generic `BarChart` for time-bucketed aggregations.
+  - Added 'Consistency Cards' (active days, weekly streak).
+  - Built a dynamic Muscle Distribution `PieChart` on the Breakdown tab.
+  - Created a 'Fatigue Ratio' banner comparing acute (7-day) vs chronic (28-day) workload.
+- **Micro Analytics (`ExerciseAnalyticsScreen.tsx`):**
+  - Line charts for Estimated 1RM, Max Weight, and Max Reps over time.
+  - Bar chart for Volume per session.
+  - Table showing Best Weight for Reps.
+- **UI/UX Polish:** Created interactive touch tooltips for all data points. Hidden tab bar when deeply navigated. Reduced bottom paddings to meet physical screen limits.
+- **Testing:** Wrote 43 extensive unit tests for `analyticsService.ts` using a mocked SQLite database, ensuring full coverage across all edge cases (empty states, missing data, computation accuracy). Total test suite now at 140 passing tests.
+
+---
 
 ### 2026-03-05 to 2026-03-10: God Component Decomposition & Codebase Cleanup
 
@@ -469,6 +496,6 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Last Updated
-- Date: 2026-02-23
-- Session Context: Completed Phase 1 home screen visual refactor, reordered roadmap (analytics before widgets)
+- Date: 2026-03-11
+- Session Context: Fixed overlapping analytics chart x-axis issue by adding dynamic month labels and full date tooltips.
 

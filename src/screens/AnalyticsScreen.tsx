@@ -43,7 +43,7 @@ import {
 import { getPerformedExercises } from '../services/analyticsService';
 import type { ProfileStackParamList } from '../navigation/AppNavigator';
 
-type AnalyticsTab = 'workouts' | 'exercises';
+type AnalyticsTab = 'workouts' | 'breakdown' | 'exercises';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - spacing.md * 2 - spacing.md * 2; // screen padding + card padding
@@ -56,7 +56,7 @@ const CHART_RANGES: ChartRange[] = ['1M', '3M', '6M', '1Y', 'ALL'];
 // Sub-components
 // ============================================================
 
-/** Top-level tab switcher: Workouts | Exercises */
+/** Top-level tab switcher: Workouts | Breakdown | Exercises */
 function TabControl({
     activeTab,
     onTabChange,
@@ -64,26 +64,26 @@ function TabControl({
     activeTab: AnalyticsTab;
     onTabChange: (tab: AnalyticsTab) => void;
 }) {
+    const tabs: { key: AnalyticsTab; label: string }[] = [
+        { key: 'workouts', label: 'Workouts' },
+        { key: 'breakdown', label: 'Breakdown' },
+        { key: 'exercises', label: 'Exercises' },
+    ];
+
     return (
         <View style={styles.tabControl}>
-            <TouchableOpacity
-                style={[styles.tab, activeTab === 'workouts' && styles.tabActive]}
-                onPress={() => onTabChange('workouts')}
-                activeOpacity={0.7}
-            >
-                <Text style={[styles.tabText, activeTab === 'workouts' && styles.tabTextActive]}>
-                    Workouts
-                </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={[styles.tab, activeTab === 'exercises' && styles.tabActive]}
-                onPress={() => onTabChange('exercises')}
-                activeOpacity={0.7}
-            >
-                <Text style={[styles.tabText, activeTab === 'exercises' && styles.tabTextActive]}>
-                    Exercises
-                </Text>
-            </TouchableOpacity>
+            {tabs.map((t) => (
+                <TouchableOpacity
+                    key={t.key}
+                    style={[styles.tab, activeTab === t.key && styles.tabActive]}
+                    onPress={() => onTabChange(t.key)}
+                    activeOpacity={0.7}
+                >
+                    <Text style={[styles.tabText, activeTab === t.key && styles.tabTextActive]}>
+                        {t.label}
+                    </Text>
+                </TouchableOpacity>
+            ))}
         </View>
     );
 }
@@ -200,13 +200,48 @@ function MacroAnalyticsView() {
     } = useMacroAnalytics();
 
     // Transform data into gifted-charts format
-    const chartData = data.map((point) => ({
-        value: metric === 'duration' ? Math.round(point.value / 60) : point.value,
-        label: point.label,
-        frontColor: colors.accent.primary,
-        gradientColor: colors.accent.tertiary,
-        topLabelComponent: undefined,
-    }));
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let lastMonth = '';
+
+    const chartData = data.map((point) => {
+        let displayLabel = point.label;
+        let labelComp;
+        if (timeBucket === 'per_workout') {
+            const parts = point.label.split('/');
+            if (parts.length === 2) {
+                const currentMonth = parts[0];
+                const currentDay = parts[1];
+                if (currentMonth !== lastMonth) {
+                    lastMonth = currentMonth;
+                    const monthIndex = parseInt(currentMonth, 10) - 1;
+                    const monthName = MONTH_NAMES[monthIndex] || currentMonth;
+                    labelComp = () => (
+                        <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
+                            <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
+                            <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
+                        </View>
+                    );
+                } else {
+                    labelComp = () => (
+                        <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
+                            <Text style={styles.axisText}>{currentDay}</Text>
+                        </View>
+                    );
+                }
+                displayLabel = currentDay;
+            }
+        }
+
+        return {
+            value: metric === 'duration' ? Math.round(point.value / 60) : point.value,
+            label: displayLabel,
+            labelComponent: labelComp,
+            fullLabel: point.label,
+            frontColor: colors.accent.primary,
+            gradientColor: colors.accent.tertiary,
+            topLabelComponent: undefined,
+        };
+    });
 
     // Calculate max value for proper Y-axis scaling
     const maxValue = chartData.length > 0
@@ -255,6 +290,7 @@ function MacroAnalyticsView() {
                             data={chartData}
                             width={CHART_WIDTH - 40}
                             height={200}
+                            {...(timeBucket === 'per_workout' ? { xAxisLabelsHeight: 36 } : {})}
                             barWidth={chartData.length > 20 ? 8 : chartData.length > 10 ? 14 : 22}
                             spacing={chartData.length > 20 ? 4 : chartData.length > 10 ? 8 : 12}
                             noOfSections={4}
@@ -287,6 +323,20 @@ function MacroAnalyticsView() {
                                 }
                                 return String(Math.round(num));
                             }}
+                            renderTooltip={(item: any, index: number) => {
+                                const isRightSide = index >= chartData.length * 0.7;
+                                return (
+                                    <View style={[
+                                        styles.tooltip,
+                                        isRightSide && { marginLeft: -100 },
+                                    ]}>
+                                        <Text style={styles.tooltipText}>
+                                            {item.fullLabel || item.label}: {formatMetricValue(item.value, metric)}
+                                            {getYAxisSuffix(metric)}
+                                        </Text>
+                                    </View>
+                                );
+                            }}
                         />
 
                         {/* Summary stat */}
@@ -314,9 +364,6 @@ function MacroAnalyticsView() {
 
             {/* Consistency stats */}
             <ConsistencyCards range={chartRange} />
-
-            {/* Muscle group distribution */}
-            <MuscleDistributionChart metric={metric} range={chartRange} />
         </View>
     );
 }
@@ -347,8 +394,8 @@ function ExerciseListView() {
 
     const filtered = search
         ? exercises.filter((e) =>
-              e.exerciseName.toLowerCase().includes(search.toLowerCase()),
-          )
+            e.exerciseName.toLowerCase().includes(search.toLowerCase()),
+        )
         : exercises;
 
     if (loading) {
@@ -413,6 +460,33 @@ function ExerciseListView() {
 }
 
 // ============================================================
+// Breakdown View (Muscle Distribution)
+// ============================================================
+
+function BreakdownView() {
+    const [metric, setMetric] = useState<MetricType>('volume');
+    const [chartRange, setChartRange] = useState<ChartRange>('3M');
+
+    return (
+        <View>
+            {/* Metric selector */}
+            <MetricSelector selected={metric} onSelect={setMetric} />
+
+            {/* Range pills */}
+            <PillRow
+                items={CHART_RANGES}
+                labels={CHART_RANGE_LABELS}
+                selected={chartRange}
+                onSelect={setChartRange}
+            />
+
+            {/* Pie chart */}
+            <MuscleDistributionChart metric={metric} range={chartRange} />
+        </View>
+    );
+}
+
+// ============================================================
 // Main Screen
 // ============================================================
 
@@ -420,7 +494,7 @@ export default function AnalyticsScreen() {
     const [activeTab, setActiveTab] = useState<AnalyticsTab>('workouts');
 
     return (
-        <SafeAreaView style={styles.container} edges={['bottom']}>
+        <SafeAreaView style={styles.container} edges={[]}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
@@ -428,7 +502,9 @@ export default function AnalyticsScreen() {
             >
                 <TabControl activeTab={activeTab} onTabChange={setActiveTab} />
 
-                {activeTab === 'workouts' ? <MacroAnalyticsView /> : <ExerciseListView />}
+                {activeTab === 'workouts' && <MacroAnalyticsView />}
+                {activeTab === 'breakdown' && <BreakdownView />}
+                {activeTab === 'exercises' && <ExerciseListView />}
             </ScrollView>
         </SafeAreaView>
     );
@@ -448,7 +524,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: spacing.md,
-        paddingBottom: spacing.xxl,
+        paddingBottom: spacing.md,
     },
 
     // Tab control
@@ -631,5 +707,19 @@ const styles = StyleSheet.create({
     exerciseMeta: {
         fontSize: typography.size.xs,
         color: colors.text.secondary,
+    },
+
+    // Tooltips
+    tooltip: {
+        backgroundColor: colors.background.tertiary,
+        borderRadius: borderRadius.md,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        marginBottom: spacing.xs,
+    },
+    tooltipText: {
+        fontSize: typography.size.xs,
+        fontWeight: typography.weight.semibold,
+        color: colors.text.primary,
     },
 });

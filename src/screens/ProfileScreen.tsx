@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: spacing.md,
-        paddingBottom: spacing.xxl,
+        paddingBottom: spacing.md,
     },
 
     // Profile header

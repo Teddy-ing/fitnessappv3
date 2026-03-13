@@ -123,6 +123,11 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
     if (activeWorkout) return null;
 
+    // Hide tab bar when navigated into profile sub-screens (Analytics, etc.)
+    const profileRoute = state.routes.find(r => r.name === 'Profile');
+    const profileChild = profileRoute?.state?.routes?.[profileRoute.state.index ?? 0];
+    if (profileChild && profileChild.name !== 'ProfileHome') return null;
+
     return (
         <View style={styles.tabBarContainer}>
             {/* Purple gradient separator line */}
