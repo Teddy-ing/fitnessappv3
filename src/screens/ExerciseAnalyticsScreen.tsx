@@ -31,8 +31,9 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - spacing.md * 4 - 40;
 const CHART_RANGES: ChartRange[] = ['1M', '3M', '6M', '1Y', 'ALL'];
 
-// Shared spacing so line charts and bar chart align their labels at the same x positions
-const CHART_INITIAL_OFFSET = 10;
+// Shared spacing so line charts and bar chart align their labels at the same x positions.
+// Keep a larger edge offset so the first/last tick labels don't get clipped on short ranges.
+const CHART_INITIAL_OFFSET = 20;
 const MIN_PER_POINT = 12;
 
 function computeChartSpacing(dataLength: number) {
@@ -53,6 +54,15 @@ function computeChartSpacing(dataLength: number) {
         lineInitial: CHART_INITIAL_OFFSET,
         needsScroll,
     };
+}
+
+function createPerWorkoutLabelComponent(day: string, monthName?: string) {
+    return () => (
+        <View style={monthName ? styles.axisLabelMonthContainer : styles.axisLabelDayContainer}>
+            <Text style={[styles.axisText, monthName && styles.axisLabelMonthDay]}>{day}</Text>
+            {monthName && <Text style={styles.axisLabelMonthText}>{monthName}</Text>}
+        </View>
+    );
 }
 
 // ============================================================
@@ -124,18 +134,9 @@ function TimeSeriesLineChart({
                 lastMonth = currentMonth;
                 const monthIndex = parseInt(currentMonth, 10) - 1;
                 const monthName = MONTH_NAMES[monthIndex] || currentMonth;
-                labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
-                        <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
-                        <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
-                    </View>
-                );
+                labelComp = createPerWorkoutLabelComponent(currentDay, monthName);
             } else {
-                labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
-                        <Text style={styles.axisText}>{currentDay}</Text>
-                    </View>
-                );
+                labelComp = createPerWorkoutLabelComponent(currentDay);
             }
             displayLabel = currentDay;
         }
@@ -253,18 +254,9 @@ function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
                 lastMonth = currentMonth;
                 const monthIndex = parseInt(currentMonth, 10) - 1;
                 const monthName = MONTH_NAMES[monthIndex] || currentMonth;
-                labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
-                        <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
-                        <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
-                    </View>
-                );
+                labelComp = createPerWorkoutLabelComponent(currentDay, monthName);
             } else {
-                labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
-                        <Text style={styles.axisText}>{currentDay}</Text>
-                    </View>
-                );
+                labelComp = createPerWorkoutLabelComponent(currentDay);
             }
             displayLabel = currentDay;
         }
@@ -512,6 +504,25 @@ const styles = StyleSheet.create({
     axisText: {
         fontSize: 10,
         color: colors.text.secondary,
+    },
+    axisLabelDayContainer: {
+        alignItems: 'center',
+        width: 20,
+        marginTop: 12,
+    },
+    axisLabelMonthContainer: {
+        alignItems: 'center',
+        width: 34,
+        marginTop: 12,
+    },
+    axisLabelMonthDay: {
+        color: colors.text.primary,
+    },
+    axisLabelMonthText: {
+        color: colors.text.secondary,
+        fontSize: 10,
+        fontWeight: typography.weight.bold,
+        marginTop: 2,
     },
 
     // Latest value row
