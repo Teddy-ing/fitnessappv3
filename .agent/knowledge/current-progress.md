@@ -125,19 +125,6 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Session Log
 
-
-### 2026-03-13: Exercise analytics x-axis/pointer alignment bug fix
-
-**Duration:** Single debugging session
-**Focus:** Fix inconsistent x-axis label centering and tooltip/pointer alignment between line and bar charts in `ExerciseAnalyticsScreen`.
-
-**What was done:**
-- Increased shared chart edge offset (`CHART_INITIAL_OFFSET`) from `10` to `20` so short-range datasets (e.g., 1M) don't clip the first/last tick labels.
-- Replaced duplicated inline `labelComponent` JSX/margin hacks with a shared `createPerWorkoutLabelComponent()` helper so month/day labels render from one source of truth across all exercise charts.
-- Added dedicated axis label styles (`axisLabelDayContainer`, `axisLabelMonthContainer`, `axisLabelMonthDay`, `axisLabelMonthText`) to remove per-chart ad-hoc offsets that were drifting labels from actual data-point x positions.
-- Verified type safety via `npm run typecheck`.
-- Captured a web screenshot artifact for this change; web bundling then reported an existing `expo-sqlite` wasm resolution issue unrelated to the chart alignment logic.
-
 ### 2026-03-10: Phase 2 — Analytics Implementation
 
 **Duration:** Multi-session over the day
