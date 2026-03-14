@@ -7,8 +7,8 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-14 (analytics feature)
-- **Open issues:** 2 (Critical: 0, High: 0, Medium: 1, Low: 1)
-- **Fixed since baseline:** 3
+- **Open issues:** 1 (Critical: 0, High: 0, Medium: 0, Low: 1)
+- **Fixed since baseline:** 4
 
 ---
 
@@ -24,13 +24,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ### Medium (Edge Cases)
 
-#### BH-005 · Duration metric in `getMuscleDistribution()` uses placeholder value `1`
-- **Severity:** Medium
-- **Status:** 🟡 Plausible
-- **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts#L416-L420)
-- **What:** When metric is `'duration'`, the `metricExpr` is hardcoded to `'1'` with the comment "Duration is workout-level, distribute evenly across exercises." This means the muscle distribution for "Duration" shows each muscle group's value as a sum of contribution percentages across exercises — completely independent of actual workout duration. The result is meaningless data: a user who does 3 chest exercises sees "chest: ~180" whether their workout was 20 minutes or 2 hours.
-- **Scenario:** User selects "Duration" on the Breakdown tab and sees muscle group values that don't correspond to any real time metric, which is confusing.
-- **Fix:** Either (a) exclude `duration` from the Breakdown tab's metric selector since it can't meaningfully be distributed per muscle group, or (b) join to `workouts.total_duration`, divide by exercise count, and distribute that fraction by muscle contribution.
+*No open medium issues.*
 
 ### Low (Defensive Gaps)
 
@@ -74,8 +68,15 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
 - **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts)
-- **Root cause:** `GROUP BY ws.reps` with `MAX(ws.weight)` left `achieved_date` as a non-aggregated bare column — the date could come from any row in the group.
-- **Fix applied:** Replaced with CTE using `ROW_NUMBER() OVER (PARTITION BY ws.reps ORDER BY ws.weight DESC, w.completed_at DESC)` to explicitly pick the row with the highest weight (most recent date as tiebreaker).
+- **Root cause:** `GROUP BY ws.reps` with `MAX(ws.weight)` left `achieved_date` as a non-aggregated bare column.
+- **Fix applied:** Replaced with CTE using `ROW_NUMBER()` window function.
+
+#### BH-005 · Duration excluded from Breakdown tab — **RESOLVED 2026-03-14**
+- **Severity:** Medium
+- **Original status:** 🟡 Plausible
+- **File:** [AnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/AnalyticsScreen.tsx)
+- **Root cause:** Duration is a workout-level metric that can't meaningfully be distributed per muscle group. The `getMuscleDistribution()` query used a placeholder value of `1` producing meaningless results.
+- **Fix applied:** Added `BREAKDOWN_METRICS` constant excluding `duration`, passed via new optional `items` prop on `MetricSelector`. Workouts tab still shows all 4 metrics.
 
 ---
 
@@ -103,4 +104,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-14
-- Session Context: BH-004 resolved — getBestWeightForReps query rewritten with ROW_NUMBER() window function
+- Session Context: BH-005 resolved — duration excluded from Breakdown tab metric selector

@@ -50,6 +50,8 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - spacing.md * 2 - spacing.md * 2; // screen padding + card padding
 
 const METRICS: MetricType[] = ['volume', 'sets', 'reps', 'duration'];
+/** Breakdown tab excludes duration — it can't be distributed per muscle group */
+const BREAKDOWN_METRICS: MetricType[] = ['volume', 'sets', 'reps'];
 const TIME_BUCKETS: TimeBucket[] = ['per_workout', 'per_week', 'per_month', 'per_year'];
 const CHART_RANGES: ChartRange[] = ['1M', '3M', '6M', '1Y', 'ALL'];
 
@@ -89,17 +91,20 @@ function TabControl({
     );
 }
 
-/** Segmented control for metric selection (Volume | Sets | Reps | Duration) */
+/** Segmented control for metric selection */
 function MetricSelector({
     selected,
     onSelect,
+    items = METRICS,
 }: {
     selected: MetricType;
     onSelect: (m: MetricType) => void;
+    /** Subset of metrics to show (defaults to all 4) */
+    items?: MetricType[];
 }) {
     return (
         <View style={styles.segmentedControl}>
-            {METRICS.map((m) => (
+            {items.map((m) => (
                 <TouchableOpacity
                     key={m}
                     style={[styles.segment, selected === m && styles.segmentActive]}
@@ -557,8 +562,8 @@ function BreakdownView() {
 
     return (
         <View>
-            {/* Metric selector */}
-            <MetricSelector selected={metric} onSelect={setMetric} />
+            {/* Metric selector (excludes duration — can't distribute per muscle) */}
+            <MetricSelector selected={metric} onSelect={setMetric} items={BREAKDOWN_METRICS} />
 
             {/* Range pills */}
             <PillRow
