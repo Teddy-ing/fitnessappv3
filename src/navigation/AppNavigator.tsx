@@ -57,6 +57,19 @@ const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 // On web, jump straight to the exercise analytics screen for chart debugging
 const IS_WEB = Platform.OS === 'web';
 
+// Wrap analytics screens in their own error boundaries so a chart library
+// crash shows a screen-level fallback instead of taking down the profile stack
+const AnalyticsScreenWithBoundary = () => (
+    <ErrorBoundary fallback="screen" label="AnalyticsScreen">
+        <AnalyticsScreen />
+    </ErrorBoundary>
+);
+const ExerciseAnalyticsScreenWithBoundary = (props: any) => (
+    <ErrorBoundary fallback="screen" label="ExerciseAnalyticsScreen">
+        <ExerciseAnalyticsScreen {...props} />
+    </ErrorBoundary>
+);
+
 function ProfileStackNavigator() {
     return (
         <ErrorBoundary fallback="screen" label="ProfileStack">
@@ -80,14 +93,14 @@ function ProfileStackNavigator() {
                 />
                 <ProfileStack.Screen
                     name="Analytics"
-                    component={AnalyticsScreen}
+                    component={AnalyticsScreenWithBoundary}
                     options={{
                         title: 'Analytics',
                     }}
                 />
                 <ProfileStack.Screen
                     name="ExerciseAnalytics"
-                    component={ExerciseAnalyticsScreen}
+                    component={ExerciseAnalyticsScreenWithBoundary}
                     options={({ route }) => ({
                         title: route.params.exerciseName,
                     })}

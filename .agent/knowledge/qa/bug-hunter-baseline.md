@@ -7,8 +7,8 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-14 (analytics feature)
-- **Open issues:** 1 (Critical: 0, High: 0, Medium: 0, Low: 1)
-- **Fixed since baseline:** 4
+- **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
+- **Fixed since baseline:** 5
 
 ---
 
@@ -28,12 +28,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ### Low (Defensive Gaps)
 
-#### BH-006 · `AnalyticsScreen` and `ExerciseAnalyticsScreen` not wrapped in `ErrorBoundary`
-- **Severity:** Low
-- **Status:** 🔴 Confirmed
-- **File:** [AppNavigator.tsx](file:///c:/Users/teddy/projects/workout-app/src/navigation/AppNavigator.tsx) (wrap points), [AnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/AnalyticsScreen.tsx), [ExerciseAnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx)
-- **What:** Per convention (Bug Hunter checklist: "ErrorBoundary gaps — New screens/components not wrapped"), both analytics screens are stack-pushed within the Profile stack but are not individually wrapped in `<ErrorBoundary>`. The outer `ProfileStack` ErrorBoundary does catch errors, so this is defence-in-depth rather than a crash gap — but a chart library error on one screen would take down the entire profile stack instead of just showing a card-level fallback.
-- **Fix:** Add `<ErrorBoundary fallback="screen" label="AnalyticsScreen">` and `<ErrorBoundary fallback="screen" label="ExerciseAnalyticsScreen">` around the screen components in AppNavigator.
+*No open low issues.*
 
 ---
 
@@ -75,8 +70,15 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
 - **File:** [AnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/AnalyticsScreen.tsx)
-- **Root cause:** Duration is a workout-level metric that can't meaningfully be distributed per muscle group. The `getMuscleDistribution()` query used a placeholder value of `1` producing meaningless results.
-- **Fix applied:** Added `BREAKDOWN_METRICS` constant excluding `duration`, passed via new optional `items` prop on `MetricSelector`. Workouts tab still shows all 4 metrics.
+- **Root cause:** Duration can't meaningfully be distributed per muscle group.
+- **Fix applied:** Added `BREAKDOWN_METRICS` constant excluding `duration`, passed via optional `items` prop on `MetricSelector`.
+
+#### BH-006 · Analytics screens wrapped in `ErrorBoundary` — **RESOLVED 2026-03-14**
+- **Severity:** Low
+- **Original status:** 🔴 Confirmed
+- **File:** [AppNavigator.tsx](file:///c:/Users/teddy/projects/workout-app/src/navigation/AppNavigator.tsx)
+- **Root cause:** Analytics screens were only covered by the outer ProfileStack boundary. A chart crash would take down the entire stack.
+- **Fix applied:** Added `AnalyticsScreenWithBoundary` and `ExerciseAnalyticsScreenWithBoundary` wrapper components in AppNavigator.
 
 ---
 
@@ -104,4 +106,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-14
-- Session Context: BH-005 resolved — duration excluded from Breakdown tab metric selector
+- Session Context: All analytics QA issues resolved (BH-001 through BH-006)
