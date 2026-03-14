@@ -40,11 +40,11 @@ interface UseWorkoutKeyboardReturn {
 }
 
 export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
-    const {
-        activeWorkout,
-        updateSet,
-        completeSet,
-    } = useWorkoutStore();
+    // PP-002 fix: Fine-grained selector — only subscribe to activeWorkout.
+    // Actions are stable references; access via getState() to avoid full-store subscription.
+    const activeWorkout = useWorkoutStore(s => s.activeWorkout);
+    const updateSet = useWorkoutStore.getState().updateSet;
+    const completeSet = useWorkoutStore.getState().completeSet;
 
     const [focusState, setFocusState] = useState<FocusState | null>(null);
     const [keyboardValue, setKeyboardValue] = useState('');

@@ -12,7 +12,7 @@
  * - View workout history
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     View,
     Text,
@@ -39,8 +39,10 @@ import { Workout } from '../models/workout';
 import WorkoutHomeView from './WorkoutHomeView';
 
 export default function WorkoutScreen() {
+    // PP-001 fix: Fine-grained selector — only re-render when activeWorkout changes.
+    // Actions are stable references; access via getState() to avoid subscribing to them.
+    const activeWorkout = useWorkoutStore(s => s.activeWorkout);
     const {
-        activeWorkout,
         startWorkout,
         finishWorkout,
         discardWorkout,
@@ -51,7 +53,7 @@ export default function WorkoutScreen() {
         updateSet,
         completeSet,
         toggleSuperset,
-    } = useWorkoutStore();
+    } = useWorkoutStore.getState();
 
     // Home screen data - extracted to useHomeScreenData hook
     const {
@@ -198,8 +200,8 @@ export default function WorkoutScreen() {
         return () => sub.remove();
     }, [activeWorkout !== null]);
 
-    // Calculate workout stats
-    const getWorkoutStats = () => {
+    // PP-008 fix: memoize workout stats so they only recompute when activeWorkout changes
+    const stats = useMemo(() => {
         if (!activeWorkout) return { exercises: 0, sets: 0, volume: 0 };
 
         const exercises = activeWorkout.main.exercises.length;
@@ -218,7 +220,7 @@ export default function WorkoutScreen() {
         });
 
         return { exercises, sets, volume };
-    };
+    }, [activeWorkout]);
 
     // Render home view (no active workout) — WorkoutHomeView owns its own modals
     if (!activeWorkout) {
@@ -242,9 +244,6 @@ export default function WorkoutScreen() {
             />
         );
     }
-
-    // Render active workout
-    const stats = getWorkoutStats();
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -303,10 +302,11 @@ export default function WorkoutScreen() {
                         const isInSuperset = Boolean(workoutExercise.supersetGroupId);
                         const isLastInSuperset = isInSuperset && (!nextExercise || nextExercise.supersetGroupId !== workoutExercise.supersetGroupId);
                         const canSuperset = index < exercises.length - 1;
+                        const exId = workoutExercise.id;
 
                         return (
                             <ErrorBoundary
-                                key={workoutExercise.id}
+                                key={exId}
                                 fallback="card"
                                 label={workoutExercise.exercise.name}
                             >
@@ -316,18 +316,13 @@ export default function WorkoutScreen() {
                                     isInSuperset={isInSuperset}
                                     isLastInSuperset={isLastInSuperset}
                                     canSuperset={canSuperset}
-                                    onUpdateSet={(setId, updates) =>
-                                        updateSet(workoutExercise.id, setId, updates)
-                                    }
-                                    onCompleteSet={(setId) =>
-                                        completeSet(workoutExercise.id, setId)
-                                    }
-                                    onAddSet={() => addSet(workoutExercise.id)}
-                                    onRemoveSet={(setId) =>
-                                        removeSet(workoutExercise.id, setId)
-                                    }
-                                    onRemoveExercise={() => removeExercise(workoutExercise.id)}
-                                    onToggleSuperset={() => toggleSuperset(workoutExercise.id)}
+                                    exerciseId={exId}
+                                    onUpdateSet={updateSet}
+                                    onCompleteSet={completeSet}
+                                    onAddSet={addSet}
+                                    onRemoveSet={removeSet}
+                                    onRemoveExercise={removeExercise}
+                                    onToggleSuperset={toggleSuperset}
                                     onFocusField={handleFocusField}
                                 />
                             </ErrorBoundary>

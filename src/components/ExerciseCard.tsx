@@ -20,23 +20,29 @@ export interface FocusState {
     field: 'weight' | 'reps';
 }
 
+// PP-006 fix: Props now accept store-shaped action signatures + exerciseId.
+// This lets the parent pass stable references (e.g. from getState()), avoiding
+// inline arrow closures that defeat React.memo.
 interface ExerciseCardProps {
     workoutExercise: WorkoutExercise;
+    exerciseId: string;
     focusState?: FocusState | null;
     isInSuperset?: boolean;           // Is this exercise part of a superset?
     isLastInSuperset?: boolean;       // Is this the last exercise in its superset group?
     canSuperset?: boolean;            // Can this exercise be linked (not last in list)?
-    onUpdateSet: (setId: string, updates: Partial<WorkoutSet>) => void;
-    onCompleteSet: (setId: string) => void;
-    onAddSet: () => void;
-    onRemoveSet: (setId: string) => void;
-    onRemoveExercise: () => void;
-    onToggleSuperset?: () => void;
+    onUpdateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
+    onCompleteSet: (exerciseId: string, setId: string) => void;
+    onAddSet: (exerciseId: string) => void;
+    onRemoveSet: (exerciseId: string, setId: string) => void;
+    onRemoveExercise: (exerciseId: string) => void;
+    onToggleSuperset?: (exerciseId: string) => void;
     onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
 }
 
-export default function ExerciseCard({
+// PP-005 fix: React.memo prevents re-rendering when parent re-renders but props haven't changed
+function ExerciseCardInner({
     workoutExercise,
+    exerciseId,
     focusState,
     isInSuperset = false,
     isLastInSuperset = false,
@@ -77,16 +83,15 @@ export default function ExerciseCard({
             focusState?.field === field;
     };
 
-    // Get timer state from rest timer store
-    const {
-        restTimerActive,
-        restTimerRemaining,
-        restTimerDuration,
-        activeRestTimerExerciseId,
-        activeRestTimerSetId,
-        adjustRestTimer,
-        stopRestTimer,
-    } = useRestTimerStore();
+    // PP-003 fix: Fine-grained selectors — only subscribe to fields this card reads.
+    // Prevents all ExerciseCards from re-rendering on every timer tick.
+    const restTimerActive = useRestTimerStore(s => s.restTimerActive);
+    const restTimerRemaining = useRestTimerStore(s => s.restTimerRemaining);
+    const restTimerDuration = useRestTimerStore(s => s.restTimerDuration);
+    const activeRestTimerExerciseId = useRestTimerStore(s => s.activeRestTimerExerciseId);
+    const activeRestTimerSetId = useRestTimerStore(s => s.activeRestTimerSetId);
+    const adjustRestTimer = useRestTimerStore(s => s.adjustRestTimer);
+    const stopRestTimer = useRestTimerStore(s => s.stopRestTimer);
 
     // Check if a specific set has the active timer
     const isSetTimerActive = (setId: string) => {
@@ -110,7 +115,7 @@ export default function ExerciseCard({
                     <Text style={styles.exerciseName}>{exercise.name}</Text>
                     <Text style={styles.muscleTag}>{formattedMuscle}</Text>
                 </View>
-                <TouchableOpacity style={styles.menuButton} onPress={onRemoveExercise}>
+                <TouchableOpacity style={styles.menuButton} onPress={() => onRemoveExercise(exerciseId)}>
                     <Text style={styles.menuIcon}>×</Text>
                 </TouchableOpacity>
             </View>
@@ -142,12 +147,12 @@ export default function ExerciseCard({
                             trackTime={exercise.trackTime}
                             isWeightFocused={isFieldFocused(set.id, 'weight')}
                             isRepsFocused={isFieldFocused(set.id, 'reps')}
-                            onUpdate={(updates) => onUpdateSet(set.id, updates)}
-                            onComplete={() => onCompleteSet(set.id)}
-                            onRemove={() => onRemoveSet(set.id)}
-                            onFocusWeight={() => onFocusField?.(workoutExercise.id, set.id, 'weight')}
-                            onFocusReps={() => onFocusField?.(workoutExercise.id, set.id, 'reps')}
-                            onChangeSetType={(newType) => onUpdateSet(set.id, { type: newType })}
+                            onUpdate={(updates) => onUpdateSet(exerciseId, set.id, updates)}
+                            onComplete={() => onCompleteSet(exerciseId, set.id)}
+                            onRemove={() => onRemoveSet(exerciseId, set.id)}
+                            onFocusWeight={() => onFocusField?.(exerciseId, set.id, 'weight')}
+                            onFocusReps={() => onFocusField?.(exerciseId, set.id, 'reps')}
+                            onChangeSetType={(newType) => onUpdateSet(exerciseId, set.id, { type: newType })}
                         />
                         {/* Show rest timer after completed sets */}
                         {isSetTimerActive(set.id) && (
@@ -165,11 +170,11 @@ export default function ExerciseCard({
 
             {/* Add set and superset buttons */}
             <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.addSetButton} onPress={onAddSet}>
+                <TouchableOpacity style={styles.addSetButton} onPress={() => onAddSet(exerciseId)}>
                     <Text style={styles.addSetText}>+ Add Set</Text>
                 </TouchableOpacity>
                 {canSuperset && onToggleSuperset && (
-                    <TouchableOpacity style={styles.supersetButton} onPress={onToggleSuperset}>
+                    <TouchableOpacity style={styles.supersetButton} onPress={() => onToggleSuperset?.(exerciseId)}>
                         <Text style={styles.supersetButtonText}>
                             {isInSuperset ? '🔗 Unlink' : '🔗 Link'}
                         </Text>
@@ -196,6 +201,8 @@ export default function ExerciseCard({
         </View>
     );
 }
+
+export default React.memo(ExerciseCardInner);
 
 const styles = StyleSheet.create({
     card: {

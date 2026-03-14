@@ -56,10 +56,10 @@ export function useHomeScreenData(): UseHomeScreenDataReturn {
 
     const loadData = async () => {
         try {
-            // Check if we should advance template (new day after workout)
-            await checkAndAdvanceIfNewDay();
-
-            const [workouts, active, currentIdx, weekDates] = await Promise.all([
+            // PP-010 fix: Run advance check in parallel with data fetches
+            // instead of blocking serially before them
+            const [, workouts, active, currentIdx, weekDates] = await Promise.all([
+                checkAndAdvanceIfNewDay(),
                 getWorkouts(5),
                 getActiveSplit(),
                 getCurrentTemplateIndex(),

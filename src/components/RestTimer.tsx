@@ -23,16 +23,15 @@ import { useRestTimerStore } from '../stores/restTimerStore';
 import { colors, spacing, borderRadius, typography } from '../theme';
 
 export default function RestTimer() {
-    const {
-        restTimerActive,
-        restTimerRemaining,
-        restTimerDuration,
-        stopRestTimer,
-        adjustRestTimer,
-        tickRestTimer,
-        startRestTimer,
-        getExerciseRestTime,
-    } = useRestTimerStore();
+    // PP-009 fix: Fine-grained selectors to avoid full-store subscription
+    const restTimerActive = useRestTimerStore(s => s.restTimerActive);
+    const restTimerRemaining = useRestTimerStore(s => s.restTimerRemaining);
+    const restTimerDuration = useRestTimerStore(s => s.restTimerDuration);
+    const stopRestTimer = useRestTimerStore(s => s.stopRestTimer);
+    const adjustRestTimer = useRestTimerStore(s => s.adjustRestTimer);
+    const tickRestTimer = useRestTimerStore(s => s.tickRestTimer);
+    const startRestTimer = useRestTimerStore(s => s.startRestTimer);
+    const getExerciseRestTime = useRestTimerStore(s => s.getExerciseRestTime);
 
     // Watch the workout store's completion signal for auto-start
     const lastCompletedSet = useWorkoutStore(s => s.lastCompletedSet);

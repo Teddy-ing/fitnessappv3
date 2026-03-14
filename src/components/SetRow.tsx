@@ -31,7 +31,8 @@ interface SetRowProps {
     onChangeSetType?: (newType: SetType) => void;  // Called when set type changed
 }
 
-export default function SetRow({
+// PP-005 fix: React.memo prevents re-rendering when sibling sets change
+function SetRowInner({
     set,
     setNumber,
     trackWeight,
@@ -255,6 +256,8 @@ export default function SetRow({
         </Swipeable>
     );
 }
+
+export default React.memo(SetRowInner);
 
 const styles = StyleSheet.create({
     row: {

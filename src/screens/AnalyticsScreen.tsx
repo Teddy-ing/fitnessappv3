@@ -8,7 +8,7 @@
  * Accessed from ProfileScreen → stack navigation push.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -205,54 +205,57 @@ function MacroAnalyticsView() {
         setChartRange,
     } = useMacroAnalytics();
 
-    // Transform data into gifted-charts format
-    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    let lastMonth = '';
+    // PP-007 fix: memoize chart data transformation to avoid recreating on every render
+    const { chartData, maxValue } = useMemo(() => {
+        const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let lastMonth = '';
 
-    const chartData = data.map((point) => {
-        let displayLabel = point.label;
-        let labelComp;
-        if (timeBucket === 'per_workout') {
-            const parts = point.label.split('/');
-            if (parts.length === 2) {
-                const currentMonth = parts[0];
-                const currentDay = parts[1];
-                if (currentMonth !== lastMonth) {
-                    lastMonth = currentMonth;
-                    const monthIndex = parseInt(currentMonth, 10) - 1;
-                    const monthName = MONTH_NAMES[monthIndex] || currentMonth;
-                    labelComp = () => (
-                        <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
-                            <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
-                            <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
-                        </View>
-                    );
-                } else {
-                    labelComp = () => (
-                        <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
-                            <Text style={styles.axisText}>{currentDay}</Text>
-                        </View>
-                    );
+        const transformed = data.map((point) => {
+            let displayLabel = point.label;
+            let labelComp;
+            if (timeBucket === 'per_workout') {
+                const parts = point.label.split('/');
+                if (parts.length === 2) {
+                    const currentMonth = parts[0];
+                    const currentDay = parts[1];
+                    if (currentMonth !== lastMonth) {
+                        lastMonth = currentMonth;
+                        const monthIndex = parseInt(currentMonth, 10) - 1;
+                        const monthName = MONTH_NAMES[monthIndex] || currentMonth;
+                        labelComp = () => (
+                            <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
+                                <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
+                                <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
+                            </View>
+                        );
+                    } else {
+                        labelComp = () => (
+                            <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
+                                <Text style={styles.axisText}>{currentDay}</Text>
+                            </View>
+                        );
+                    }
+                    displayLabel = currentDay;
                 }
-                displayLabel = currentDay;
             }
-        }
 
-        return {
-            value: metric === 'duration' ? Math.round(point.value / 60) : point.value,
-            label: displayLabel,
-            labelComponent: labelComp,
-            fullLabel: point.label,
-            frontColor: colors.accent.primary,
-            gradientColor: colors.accent.tertiary,
-            topLabelComponent: undefined,
-        };
-    });
+            return {
+                value: metric === 'duration' ? Math.round(point.value / 60) : point.value,
+                label: displayLabel,
+                labelComponent: labelComp,
+                fullLabel: point.label,
+                frontColor: colors.accent.primary,
+                gradientColor: colors.accent.tertiary,
+                topLabelComponent: undefined,
+            };
+        });
 
-    // Calculate max value for proper Y-axis scaling
-    const maxValue = chartData.length > 0
-        ? Math.max(...chartData.map((d) => d.value)) * 1.15
-        : 100;
+        const max = transformed.length > 0
+            ? Math.max(...transformed.map((d) => d.value)) * 1.15
+            : 100;
+
+        return { chartData: transformed, maxValue: max };
+    }, [data, metric, timeBucket]);
 
     return (
         <View>

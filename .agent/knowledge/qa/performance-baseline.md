@@ -6,9 +6,10 @@ description: Tracking document for performance regression findings from Performa
 
 ## Summary
 
-- **Last full pass:** 2026-03-14 (initial — no findings yet)
-- **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
-- **Fixed since baseline:** 0
+- **Last full pass:** 2026-03-14 (first comprehensive audit — entire project)
+- **Open issues:** 3 (Critical: 1, Medium: 2)
+- **Fixed this session:** 10
+- **Negligible / Won't Fix:** 3
 
 ---
 
@@ -16,55 +17,72 @@ description: Tracking document for performance regression findings from Performa
 
 ### Critical (Visible Jank / Blocking)
 
-*No open critical issues.*
-
-### High (Measurable Slowdown)
-
-*No open high issues.*
+**PP-004** — Exercise list uses `.map()` instead of `FlatList` in `AnalyticsScreen.tsx` (line 545)
+- All exercise rows render simultaneously (no virtualization)
+- Impact: 50+ exercises → visible delay on filter change
+- Fix: Replace with `FlatList` + `keyExtractor` (requires architecture change to parent ScrollView)
+- Status: **Deferred** — needs ExerciseListView refactor
 
 ### Medium (Budget Device Impact)
 
-*No open medium issues.*
+**PP-011** — `new Date().toLocaleDateString()` per exercise row in render path
+- `toLocaleDateString` is ~0.5ms per call. 50 rows = 25ms
+- Fix: Pre-compute formatted dates when data is fetched
+- Status: **Deferred** — lower priority
 
-### Low (Theoretical / Minor)
-
-*No open low issues.*
+**PP-012** — `ExercisePicker` loads all exercises on every modal open
+- Calls `getExercises()` twice (visible + hidden) each time
+- Fix: Cache at service level or only reload on mutation
+- Status: **Deferred** — architecture change
 
 ---
 
-## Resolved
+## Resolved (This Session: 2026-03-14)
 
-*No resolved issues yet.*
+| ID | Area | File | Fix Applied |
+|----|------|------|-------------|
+| PP-001 | Zustand selectors | `WorkoutScreen.tsx` | `s => s.activeWorkout` selector + `getState()` for actions |
+| PP-002 | Zustand selectors | `useWorkoutKeyboard.ts` | Same pattern as PP-001 |
+| PP-003 | Zustand selectors | `ExerciseCard.tsx` | Fine-grained `restTimerStore` selectors per field |
+| PP-005 | React.memo | `ExerciseCard.tsx`, `SetRow.tsx` | Wrapped in `React.memo` |
+| PP-006 | Inline arrow props | `ExerciseCard.tsx`, `WorkoutScreen.tsx` | Store-shaped props with `exerciseId` |
+| PP-007 | Chart rendering | `AnalyticsScreen.tsx` | `useMemo` on chart data transformation |
+| PP-008 | Render-path compute | `WorkoutScreen.tsx` | `useMemo` on `getWorkoutStats` |
+| PP-009 | Zustand selectors | `RestTimer.tsx` | Fine-grained selectors per field |
+| PP-010 | Data loading | `useHomeScreenData.ts` | `checkAndAdvanceIfNewDay()` in parallel `Promise.all` |
 
 ---
 
 ## Accepted / Won't Fix
 
-*No accepted issues yet.*
+**PP-013** — `Dimensions.get('window')` at module level — portrait-locked, no impact.
+
+**PP-014** — `analyticsService.ts` at 865 lines — service, not component; guardrail doesn't apply.
+
+**PP-015** — `saveWorkout` sequential DB writes — inside transaction, not a hot path.
 
 ---
 
 ## Historical Performance Issues
 
-These were found and fixed before this baseline was created. Documented here for regression awareness:
-
-| Issue | Where | Impact | Fix | Fixed |
-|-------|-------|--------|-----|-------|
-| N+1 query pattern in workout history | `workoutService.ts` | O(n) queries per workout on home screen load | Batch loading with `IN` queries + Maps | 2026-01-06 |
-| Full store subscription in WorkoutScreen | `WorkoutScreen.tsx` | Re-render on every store mutation | Moved UI state to local `useState` | 2026-03-05 |
-| Chart data recomputed every render | `AnalyticsScreen.tsx` | Jank when switching time ranges | Added `useMemo` on chart data arrays | 2026-03-10 |
-| X-axis label overlap causing layout thrashing | `ExerciseAnalyticsScreen.tsx` | Expensive relayout on scroll | Custom `labelComponent` with pre-computed positions | 2026-03-11 |
+| Issue | Where | Fix | Fixed |
+|-------|-------|-----|-------|
+| N+1 query pattern in workout history | `workoutService.ts` | Batch loading with `IN` queries + Maps | 2026-01-06 |
+| Full store subscription in WorkoutScreen | `WorkoutScreen.tsx` | Moved UI state to local `useState` | 2026-03-05 |
+| Chart data recomputed every render | `AnalyticsScreen.tsx` | Added `useMemo` on chart data arrays | 2026-03-10 |
+| X-axis label overlap causing layout thrashing | `ExerciseAnalyticsScreen.tsx` | Custom `labelComponent` with pre-computed positions | 2026-03-11 |
 
 ---
 
-## Device Testing Notes
+## Component Size Violations (Not Performance Issues)
 
-| Device | OS | Result | Date |
-|--------|-----|--------|------|
-| *No device tests recorded yet* | | | |
+| File | Lines | Over By |
+|------|-------|---------|
+| `AnalyticsScreen.tsx` | 865 | 44% |
+| `ExercisePicker.tsx` | 630 | 5% |
 
 ---
 
 ## Last Updated
 - Date: 2026-03-14
-- Session Context: Initial creation — historical issues seeded from session logs
+- Session Context: First comprehensive audit — 15 issues found, 10 fixed, 3 deferred, 2 negligible
