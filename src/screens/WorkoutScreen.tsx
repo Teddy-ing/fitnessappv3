@@ -233,7 +233,7 @@ export default function WorkoutScreen() {
     const stats = getWorkoutStats();
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             {/* Workout header */}
             <View style={styles.workoutHeader}>
                 <View style={styles.workoutHeaderTop}>

@@ -176,7 +176,7 @@ function getYAxisSuffix(metric: MetricType): string {
         case 'volume':
             return ' lbs';
         case 'duration':
-            return ' ';
+            return '';
         default:
             return '';
     }
@@ -494,7 +494,7 @@ export default function AnalyticsScreen() {
     const [activeTab, setActiveTab] = useState<AnalyticsTab>('workouts');
 
     return (
-        <SafeAreaView style={styles.container} edges={[]}>
+        <SafeAreaView style={styles.container} edges={['bottom']}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}

@@ -42,6 +42,13 @@ These rules are enforced to prevent the specific categories of tech debt that ha
 6. **State reset on lifecycle boundaries**
    Hooks that manage state tied to a specific entity (e.g., a workout, a split) must reset their state when that entity's identity changes. Use a `useEffect` watching the entity's ID and a `useRef` to track the previous value.
 
+7. **SafeAreaView edges must match tab bar visibility**
+   The custom tab bar already handles `insets.bottom`. When it hides (active workout, profile sub-screens), screens must provide their own bottom safe area. Rules:
+   - **Tab bar visible** → Use plain `<View>` (tab bar handles bottom inset)
+   - **Tab bar hidden + stack header** → Use `<SafeAreaView edges={['bottom']}>` (header handles top)
+   - **Tab bar hidden + no header** → Use `<SafeAreaView edges={['top', 'bottom']}>`
+   - Never use `edges={[]}` or omit bottom when the tab bar is hidden — this causes content to clip behind the system navigation bar.
+
 ### Git Practices
 - Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
 - Feature branches from `main`
@@ -116,5 +123,5 @@ src/
 ---
 
 ## Last Updated
-- Date: 2026-03-06
-- Session Context: Added 6 coding guardrails from WorkoutScreen decomposition learnings
+- Date: 2026-03-13
+- Session Context: Added guardrail #7 — SafeAreaView edges must match tab bar visibility
