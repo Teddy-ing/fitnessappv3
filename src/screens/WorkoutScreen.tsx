@@ -12,7 +12,7 @@
  * - View workout history
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -20,6 +20,7 @@ import {
     TouchableOpacity,
     ScrollView,
     Alert,
+    BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -183,6 +184,19 @@ export default function WorkoutScreen() {
             ]
         );
     };
+
+    // Intercept Android back button during active workout
+    useEffect(() => {
+        if (!activeWorkout) return;
+
+        const onBackPress = () => {
+            handleDiscardWorkout();
+            return true; // prevent default back navigation
+        };
+
+        const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        return () => sub.remove();
+    }, [activeWorkout !== null]);
 
     // Calculate workout stats
     const getWorkoutStats = () => {
