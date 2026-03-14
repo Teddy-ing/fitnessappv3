@@ -43,8 +43,7 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
     // PP-002 fix: Fine-grained selector — only subscribe to activeWorkout.
     // Actions are stable references; access via getState() to avoid full-store subscription.
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
-    const updateSet = useWorkoutStore.getState().updateSet;
-    const completeSet = useWorkoutStore.getState().completeSet;
+    const { updateSet, completeSet } = useWorkoutStore.getState();
 
     const [focusState, setFocusState] = useState<FocusState | null>(null);
     const [keyboardValue, setKeyboardValue] = useState('');

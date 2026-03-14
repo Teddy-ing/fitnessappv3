@@ -7,28 +7,15 @@ description: Tracking document for performance regression findings from Performa
 ## Summary
 
 - **Last full pass:** 2026-03-14 (first comprehensive audit — entire project)
-- **Open issues:** 3 (Critical: 1, Medium: 2)
-- **Fixed this session:** 10
+- **Open issues:** 1 (Medium: 1)
+- **Fixed this session:** 12
 - **Negligible / Won't Fix:** 3
 
 ---
 
 ## Open Issues
 
-### Critical (Visible Jank / Blocking)
-
-**PP-004** — Exercise list uses `.map()` instead of `FlatList` in `AnalyticsScreen.tsx` (line 545)
-- All exercise rows render simultaneously (no virtualization)
-- Impact: 50+ exercises → visible delay on filter change
-- Fix: Replace with `FlatList` + `keyExtractor` (requires architecture change to parent ScrollView)
-- Status: **Deferred** — needs ExerciseListView refactor
-
 ### Medium (Budget Device Impact)
-
-**PP-011** — `new Date().toLocaleDateString()` per exercise row in render path
-- `toLocaleDateString` is ~0.5ms per call. 50 rows = 25ms
-- Fix: Pre-compute formatted dates when data is fetched
-- Status: **Deferred** — lower priority
 
 **PP-012** — `ExercisePicker` loads all exercises on every modal open
 - Calls `getExercises()` twice (visible + hidden) each time
@@ -50,6 +37,8 @@ description: Tracking document for performance regression findings from Performa
 | PP-008 | Render-path compute | `WorkoutScreen.tsx` | `useMemo` on `getWorkoutStats` |
 | PP-009 | Zustand selectors | `RestTimer.tsx` | Fine-grained selectors per field |
 | PP-010 | Data loading | `useHomeScreenData.ts` | `checkAndAdvanceIfNewDay()` in parallel `Promise.all` |
+| PP-004 | FlatList | `AnalyticsScreen.tsx` | Replaced `.map()` with `FlatList` virtualization + `ListHeaderComponent` |
+| PP-011 | Render-path compute | `AnalyticsScreen.tsx` | Pre-computed date strings in `useMemo` |
 
 ---
 

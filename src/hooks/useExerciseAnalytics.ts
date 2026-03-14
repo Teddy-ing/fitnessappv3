@@ -94,7 +94,7 @@ export function useExerciseAnalytics(exerciseId: string) {
         if (Platform.OS === 'web') {
             const mock = getWebMockData(chartRange);
             setState({ ...mock, loading: false });
-            return;
+            return () => {};
         }
 
         Promise.all([

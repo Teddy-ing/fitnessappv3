@@ -84,6 +84,9 @@ function ProfileStackNavigator() {
                         fontWeight: '600',
                     },
                     headerShadowVisible: false,
+                    contentStyle: {
+                        backgroundColor: colors.background.primary,
+                    },
                 }}
             >
                 <ProfileStack.Screen

@@ -8,7 +8,7 @@
  * Accessed from ProfileScreen → stack navigation push.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     View,
     Text,
@@ -414,7 +414,7 @@ function getMuscleGroupsForFilter(filter: ExerciseFilter): string[] | undefined 
     }
 }
 
-function ExerciseListView() {
+function ExerciseListView({ ListHeaderComponent }: { ListHeaderComponent?: React.ReactElement }) {
     const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
     const [exercises, setExercises] = useState<PerformedExercise[]>([]);
     const [search, setSearch] = useState('');
@@ -438,13 +438,25 @@ function ExerciseListView() {
     }, [activeFilter]);
 
     // Client-side search within the fetched list
-    const filtered = search
-        ? exercises.filter((e) =>
-            e.exerciseName.toLowerCase().includes(search.toLowerCase()),
-        )
-        : exercises;
+    const filtered = useMemo(() => {
+        const list = search
+            ? exercises.filter((e) =>
+                e.exerciseName.toLowerCase().includes(search.toLowerCase()),
+            )
+            : exercises;
 
-    const renderExerciseRow = ({ item: ex }: { item: PerformedExercise }) => (
+        // PP-011 fix: pre-compute formatted dates so toLocaleDateString
+        // isn't called per row inside the render path
+        return list.map((ex) => ({
+            ...ex,
+            _formattedDate: new Date(ex.lastPerformed).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+            }),
+        }));
+    }, [exercises, search]);
+
+    const renderExerciseRow = useCallback(({ item: ex }: { item: PerformedExercise & { _formattedDate: string } }) => (
         <TouchableOpacity
             style={styles.exerciseRow}
             activeOpacity={0.6}
@@ -467,10 +479,7 @@ function ExerciseListView() {
                 <Text style={styles.exerciseMeta}>
                     {ex.totalSessions} session{ex.totalSessions !== 1 ? 's' : ''}
                     {' · Last: '}
-                    {new Date(ex.lastPerformed).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                    })}
+                    {ex._formattedDate}
                 </Text>
             </View>
             <MaterialIcons
@@ -479,7 +488,9 @@ function ExerciseListView() {
                 color={colors.text.disabled}
             />
         </TouchableOpacity>
-    );
+    ), [navigation]);
+
+    const keyExtractor = useCallback((item: PerformedExercise) => item.exerciseId, []);
 
     const emptyMessage = search
         ? 'No matching exercises'
@@ -487,8 +498,11 @@ function ExerciseListView() {
             ? 'No exercises performed yet'
             : `No ${EXERCISE_FILTERS.find((f) => f.key === activeFilter)?.label ?? ''} exercises found`;
 
-    return (
-        <View>
+    // Search bar + filter pills become the FlatList header
+    const listHeader = useMemo(() => (
+        <>
+            {ListHeaderComponent}
+
             {/* Layer 1: Search Bar */}
             <View style={styles.searchContainer}>
                 <MaterialIcons
@@ -533,25 +547,35 @@ function ExerciseListView() {
                     </TouchableOpacity>
                 ))}
             </ScrollView>
+        </>
+    ), [ListHeaderComponent, search, activeFilter]);
 
-            {/* Layer 3: Dynamic List */}
-            {loading ? (
-                <View style={styles.exerciseLoading}>
-                    <ActivityIndicator size="large" color={colors.accent.primary} />
-                </View>
-            ) : filtered.length === 0 ? (
-                <View style={styles.placeholderContainer}>
-                    <MaterialIcons name="fitness-center" size={48} color={colors.text.disabled} />
-                    <Text style={styles.placeholderText}>{emptyMessage}</Text>
-                </View>
-            ) : (
-                filtered.map((ex) => (
-                    <React.Fragment key={ex.exerciseId}>
-                        {renderExerciseRow({ item: ex })}
-                    </React.Fragment>
-                ))
-            )}
-        </View>
+    const emptyComponent = useMemo(() => (
+        loading ? (
+            <View style={styles.exerciseLoading}>
+                <ActivityIndicator size="large" color={colors.accent.primary} />
+            </View>
+        ) : (
+            <View style={styles.placeholderContainer}>
+                <MaterialIcons name="fitness-center" size={48} color={colors.text.disabled} />
+                <Text style={styles.placeholderText}>{emptyMessage}</Text>
+            </View>
+        )
+    ), [loading, emptyMessage]);
+
+    // PP-004 fix: FlatList virtualizes the exercise list so only
+    // visible rows are rendered. Replaces the old .map() approach.
+    return (
+        <FlatList
+            data={loading ? [] : filtered}
+            renderItem={renderExerciseRow}
+            keyExtractor={keyExtractor}
+            ListHeaderComponent={listHeader}
+            ListEmptyComponent={emptyComponent}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+        />
     );
 }
 
@@ -589,6 +613,20 @@ function BreakdownView() {
 export default function AnalyticsScreen() {
     const [activeTab, setActiveTab] = useState<AnalyticsTab>('workouts');
 
+    const tabHeader = useMemo(() => (
+        <TabControl activeTab={activeTab} onTabChange={setActiveTab} />
+    ), [activeTab]);
+
+    // PP-004 fix: Exercises tab uses FlatList (owns its own scrolling),
+    // other tabs use ScrollView since they don't need virtualization.
+    if (activeTab === 'exercises') {
+        return (
+            <SafeAreaView style={styles.container} edges={['bottom']}>
+                <ExerciseListView ListHeaderComponent={tabHeader} />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['bottom']}>
             <ScrollView
@@ -600,7 +638,6 @@ export default function AnalyticsScreen() {
 
                 {activeTab === 'workouts' && <MacroAnalyticsView />}
                 {activeTab === 'breakdown' && <BreakdownView />}
-                {activeTab === 'exercises' && <ExerciseListView />}
             </ScrollView>
         </SafeAreaView>
     );

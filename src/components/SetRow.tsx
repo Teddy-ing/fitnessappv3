@@ -13,27 +13,32 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { WorkoutSet, SetType } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
 
+// PP-005 fix: Props use store-shaped action signatures so the parent can pass
+// stable references (from getState()) instead of inline arrow closures.
+// This makes React.memo effective — SetRow only re-renders when its own data changes.
 interface SetRowProps {
     set: WorkoutSet;
+    exerciseId: string;
+    setId: string;
     setNumber: number;
     trackWeight: boolean;
     trackReps: boolean;
     trackTime: boolean;
     weightUnit?: 'lbs' | 'kg';
     showSwipeHint?: boolean;
-    isWeightFocused?: boolean;  // Highlight weight field
-    isRepsFocused?: boolean;    // Highlight reps field
-    onUpdate: (updates: Partial<WorkoutSet>) => void;
-    onComplete: () => void;
-    onRemove: () => void;
-    onFocusWeight?: () => void;  // Called when weight field tapped
-    onFocusReps?: () => void;    // Called when reps field tapped
-    onChangeSetType?: (newType: SetType) => void;  // Called when set type changed
+    isWeightFocused?: boolean;
+    isRepsFocused?: boolean;
+    onUpdateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
+    onCompleteSet: (exerciseId: string, setId: string) => void;
+    onRemoveSet: (exerciseId: string, setId: string) => void;
+    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
 }
 
 // PP-005 fix: React.memo prevents re-rendering when sibling sets change
 function SetRowInner({
     set,
+    exerciseId,
+    setId,
     setNumber,
     trackWeight,
     trackReps,
@@ -42,12 +47,10 @@ function SetRowInner({
     showSwipeHint = false,
     isWeightFocused = false,
     isRepsFocused = false,
-    onUpdate,
-    onComplete,
-    onRemove,
-    onFocusWeight,
-    onFocusReps,
-    onChangeSetType,
+    onUpdateSet,
+    onCompleteSet,
+    onRemoveSet,
+    onFocusField,
 }: SetRowProps) {
     const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
@@ -86,17 +89,17 @@ function SetRowInner({
 
     // Handle set type change
     const handleSetTypePress = () => {
-        if (!onChangeSetType || isCompleted) return;
+        if (isCompleted) return;
 
         Alert.alert(
             'Set Type',
             'Choose set type',
             [
-                { text: 'Working', onPress: () => onChangeSetType('working') },
-                { text: 'Warmup', onPress: () => onChangeSetType('warmup') },
-                { text: 'Drop Set', onPress: () => onChangeSetType('drop') },
-                { text: 'Failure', onPress: () => onChangeSetType('failure') },
-                { text: 'AMRAP', onPress: () => onChangeSetType('amrap') },
+                { text: 'Working', onPress: () => onUpdateSet(exerciseId, setId, { type: 'working' }) },
+                { text: 'Warmup', onPress: () => onUpdateSet(exerciseId, setId, { type: 'warmup' }) },
+                { text: 'Drop Set', onPress: () => onUpdateSet(exerciseId, setId, { type: 'drop' }) },
+                { text: 'Failure', onPress: () => onUpdateSet(exerciseId, setId, { type: 'failure' }) },
+                { text: 'AMRAP', onPress: () => onUpdateSet(exerciseId, setId, { type: 'amrap' }) },
                 { text: 'Cancel', style: 'cancel' },
             ]
         );
@@ -115,25 +118,25 @@ function SetRowInner({
     // Handle weight change
     const handleWeightChange = (text: string) => {
         const weight = text === '' ? null : parseFloat(text.replace(/[^0-9.]/g, ''));
-        onUpdate({ weight: isNaN(weight as number) ? null : weight });
+        onUpdateSet(exerciseId, setId, { weight: isNaN(weight as number) ? null : weight });
     };
 
     // Handle reps change
     const handleRepsChange = (text: string) => {
         const reps = text === '' ? null : parseInt(text.replace(/[^0-9]/g, ''), 10);
-        onUpdate({ reps: isNaN(reps as number) ? null : reps });
+        onUpdateSet(exerciseId, setId, { reps: isNaN(reps as number) ? null : reps });
     };
 
     // Handle duration change (for stretches/isometrics)
     const handleDurationChange = (text: string) => {
         const duration = text === '' ? null : parseInt(text.replace(/[^0-9]/g, ''), 10);
-        onUpdate({ duration: isNaN(duration as number) ? null : duration });
+        onUpdateSet(exerciseId, setId, { duration: isNaN(duration as number) ? null : duration });
     };
 
     // Handle delete with animation
     const handleDelete = () => {
         swipeableRef.current?.close();
-        onRemove();
+        onRemoveSet(exerciseId, setId);
     };
 
     // Render delete action
@@ -171,7 +174,7 @@ function SetRowInner({
                 <TouchableOpacity
                     style={getBadgeStyle()}
                     onPress={handleSetTypePress}
-                    disabled={isCompleted || !onChangeSetType}
+                    disabled={isCompleted}
                 >
                     <Text style={getBadgeTextStyle()}>
                         {getSetTypeLabel(set.type)}
@@ -191,7 +194,7 @@ function SetRowInner({
                 {trackWeight && (
                     <TouchableOpacity
                         style={styles.inputContainer}
-                        onPress={onFocusWeight}
+                        onPress={() => onFocusField?.(exerciseId, setId, 'weight')}
                         activeOpacity={0.7}
                     >
                         <View style={[styles.inputDisplay, isWeightFocused && styles.inputFocused, isCompleted && styles.inputCompleted]}>
@@ -207,7 +210,7 @@ function SetRowInner({
                 {trackReps && (
                     <TouchableOpacity
                         style={styles.inputContainer}
-                        onPress={onFocusReps}
+                        onPress={() => onFocusField?.(exerciseId, setId, 'reps')}
                         activeOpacity={0.7}
                     >
                         <View style={[styles.inputDisplay, isRepsFocused && styles.inputFocused, isCompleted && styles.inputCompleted]}>
@@ -239,7 +242,7 @@ function SetRowInner({
                 {/* Completion checkbox */}
                 <TouchableOpacity
                     style={[styles.checkbox, isCompleted && styles.checkboxCompleted]}
-                    onPress={onComplete}
+                    onPress={() => onCompleteSet(exerciseId, setId)}
                 >
                     {isCompleted && (
                         <Text style={styles.checkmark}>✓</Text>

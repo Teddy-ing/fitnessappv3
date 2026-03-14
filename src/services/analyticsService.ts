@@ -159,12 +159,20 @@ function buildBucketExpression(
                 labelExpr: `strftime('%m/%d', ${dateColumn})`,
                 orderExpr: `${dateColumn}`,
             };
-        case 'per_week':
+        case 'per_week': {
+            // ISO 8601 week: find the Thursday of the ISO week via SQLite date modifiers.
+            // This avoids strftime('%W') which uses non-ISO (Sunday/Monday-start) numbering
+            // and disagrees with JS ISO week helpers near year boundaries.
+            const isoThu = `date(${dateColumn}, '-3 days', 'weekday 4')`;
+            const isoYear = `strftime('%Y', ${isoThu})`;
+            const isoWeek = `((strftime('%j', ${isoThu}) - 1) / 7 + 1)`;
+            const isoKey = `${isoYear} || '-W' || printf('%02d', ${isoWeek})`;
             return {
-                groupExpr: `strftime('%Y-W%W', ${dateColumn})`,
-                labelExpr: `'W' || strftime('%W', ${dateColumn})`,
-                orderExpr: `strftime('%Y-W%W', ${dateColumn})`,
+                groupExpr: isoKey,
+                labelExpr: `'W' || ${isoWeek}`,
+                orderExpr: isoKey,
             };
+        }
         case 'per_month':
             return {
                 groupExpr: `strftime('%Y-%m', ${dateColumn})`,

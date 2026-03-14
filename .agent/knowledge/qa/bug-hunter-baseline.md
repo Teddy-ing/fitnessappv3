@@ -8,7 +8,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 - **Last full pass:** 2026-03-14 (analytics feature)
 - **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
-- **Fixed since baseline:** 5
+- **Fixed since baseline:** 6
 
 ---
 
@@ -50,7 +50,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Original status:** 🟡 Plausible
 - **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts)
 - **Root cause:** SQLite `strftime('%W', ...)` uses non-ISO week numbering while JS `getISOWeekNumber()` uses ISO 8601. These disagreed near year boundaries.
-- **Fix applied:** Replaced SQL `strftime('%Y-W%W', ...)` query with raw `DATE(completed_at)` fetches. All week key computation now happens in JS using new `getISOWeekYear()` and `toISOWeekKey()` helpers.
+- **Fix applied:** Streak calculation replaced with raw `DATE(completed_at)` fetches; week keys computed in JS via `getISOWeekYear()` / `toISOWeekKey()`. Chart `buildBucketExpression` `per_week` case also updated to use ISO 8601 Thursday-pivot formula (`date(col, '-3 days', 'weekday 4')`) instead of `strftime('%W')`.
 
 #### BH-003 · `Text.onPress` replaced with `TouchableOpacity` in RangePills — **RESOLVED 2026-03-14**
 - **Severity:** Medium
@@ -80,14 +80,18 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Root cause:** Analytics screens were only covered by the outer ProfileStack boundary. A chart crash would take down the entire stack.
 - **Fix applied:** Added `AnalyticsScreenWithBoundary` and `ExerciseAnalyticsScreenWithBoundary` wrapper components in AppNavigator.
 
+#### BH-002 · Missing cleanup return in `useExerciseAnalytics` web path — **RESOLVED 2026-03-14**
+- **Severity:** High
+- **Original status:** ➖ Accepted
+- **File:** [useExerciseAnalytics.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useExerciseAnalytics.ts)
+- **Root cause:** Web mock-data path in `useEffect` returned bare `return;` instead of a cleanup function, breaking React's cleanup contract.
+- **Fix applied:** Changed `return;` to `return () => {};` so both code paths consistently return cleanup functions.
+
 ---
 
 ## Accepted / Won't Fix
 
-#### BH-002 · Missing cleanup return in `useExerciseAnalytics` web path — **ACCEPTED 2026-03-14**
-- **Severity:** High
-- **Reason:** Web version uses temporary mock data for visual debugging only. Not a production concern.
-- **File:** [useExerciseAnalytics.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useExerciseAnalytics.ts#L94-L98)
+*No accepted issues.*
 
 ---
 
@@ -106,4 +110,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-14
-- Session Context: All analytics QA issues resolved (BH-001 through BH-006)
+- Session Context: BH-001 fully resolved (buildBucketExpression per_week now ISO 8601). BH-002 promoted from Accepted to Resolved. All 6 issues now fully resolved.

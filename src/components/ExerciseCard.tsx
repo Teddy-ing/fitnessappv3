@@ -141,18 +141,18 @@ function ExerciseCardInner({
                     <React.Fragment key={set.id}>
                         <SetRow
                             set={set}
+                            exerciseId={exerciseId}
+                            setId={set.id}
                             setNumber={set.type === 'warmup' ? 0 : workingSetNumber(index)}
                             trackWeight={exercise.trackWeight}
                             trackReps={exercise.trackReps}
                             trackTime={exercise.trackTime}
                             isWeightFocused={isFieldFocused(set.id, 'weight')}
                             isRepsFocused={isFieldFocused(set.id, 'reps')}
-                            onUpdate={(updates) => onUpdateSet(exerciseId, set.id, updates)}
-                            onComplete={() => onCompleteSet(exerciseId, set.id)}
-                            onRemove={() => onRemoveSet(exerciseId, set.id)}
-                            onFocusWeight={() => onFocusField?.(exerciseId, set.id, 'weight')}
-                            onFocusReps={() => onFocusField?.(exerciseId, set.id, 'reps')}
-                            onChangeSetType={(newType) => onUpdateSet(exerciseId, set.id, { type: newType })}
+                            onUpdateSet={onUpdateSet}
+                            onCompleteSet={onCompleteSet}
+                            onRemoveSet={onRemoveSet}
+                            onFocusField={onFocusField}
                         />
                         {/* Show rest timer after completed sets */}
                         {isSetTimerActive(set.id) && (
