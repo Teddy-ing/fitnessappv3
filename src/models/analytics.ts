@@ -56,6 +56,8 @@ export interface PerformedExercise {
     lastPerformed: string;
     /** Number of distinct workouts containing this exercise */
     totalSessions: number;
+    /** Primary muscle group (first primary from muscle_groups JSON), if available */
+    primaryMuscle?: string;
 }
 
 /** Generic time-series data point for per-exercise charts */

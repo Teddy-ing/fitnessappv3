@@ -42,9 +42,9 @@ interface CountRow {
     count: number;
 }
 
-/** Row for weekly workout presence (streak calculation) */
-interface WeekRow {
-    week_key: string;
+/** Row for streak calculation — raw completed dates */
+interface DateRow {
+    workout_date: string;
 }
 
 /** Row for muscle distribution source data */
@@ -59,6 +59,7 @@ interface PerformedExerciseRow {
     exercise_name: string;
     last_performed: string;
     total_sessions: number;
+    exercise_muscle_groups: string | null;
 }
 
 /** Row for per-exercise time series (date + value) */
@@ -313,18 +314,24 @@ export async function getConsistencyStats(
         }
 
         // Current streak: consecutive ISO weeks with ≥1 workout (walking backward)
-        const weekRows = await db.getAllAsync<WeekRow>(
-            `SELECT DISTINCT strftime('%Y-W%W', completed_at) AS week_key
-             FROM workouts WHERE status = 'completed'
-             ORDER BY week_key DESC`,
+        // BH-001 fix: Fetch raw dates and compute ISO week keys entirely in JS
+        // to avoid mismatch between SQLite's %W (non-ISO) and JS ISO 8601 weeks.
+        const dateRows = await db.getAllAsync<DateRow>(
+            `SELECT DISTINCT DATE(completed_at) AS workout_date
+             FROM workouts WHERE status = 'completed'`,
         );
 
         let currentStreak = 0;
-        if (weekRows.length > 0) {
-            // Build the current ISO week key
+        if (dateRows.length > 0) {
+            // Build a set of ISO week keys from raw dates
+            const weekSet = new Set<string>();
+            for (const row of dateRows) {
+                const d = new Date(row.workout_date + 'T00:00:00');
+                weekSet.add(toISOWeekKey(d));
+            }
+
             const now = new Date();
-            const currentWeekKey = `${now.getFullYear()}-W${String(getISOWeekNumber(now)).padStart(2, '0')}`;
-            const weekSet = new Set(weekRows.map((r) => r.week_key));
+            const currentWeekKey = toISOWeekKey(now);
 
             // Walk backward week by week from current week
             const checkDate = new Date(now);
@@ -342,7 +349,7 @@ export async function getConsistencyStats(
             }
 
             for (let i = 0; i < 200; i++) {
-                const weekKey = `${checkDate.getFullYear()}-W${String(getISOWeekNumber(checkDate)).padStart(2, '0')}`;
+                const weekKey = toISOWeekKey(checkDate);
                 if (weekSet.has(weekKey)) {
                     currentStreak++;
                     checkDate.setDate(checkDate.getDate() - 7);
@@ -359,13 +366,30 @@ export async function getConsistencyStats(
     }
 }
 
-/** Get ISO week number for a date */
+/** Get ISO 8601 week number for a date */
 function getISOWeekNumber(date: Date): number {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     const dayNum = d.getUTCDay() || 7;
     d.setUTCDate(d.getUTCDate() + 4 - dayNum);
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+/**
+ * Get ISO 8601 week-year for a date.
+ * The ISO week-year can differ from the calendar year near Jan 1 / Dec 31.
+ * E.g., Dec 31, 2024 is in ISO week 1 of 2025.
+ */
+function getISOWeekYear(date: Date): number {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    return d.getUTCFullYear();
+}
+
+/** Build an ISO week key like "2026-W11" from a Date */
+function toISOWeekKey(date: Date): string {
+    return `${getISOWeekYear(date)}-W${String(getISOWeekNumber(date)).padStart(2, '0')}`;
 }
 
 // ============================================================
@@ -483,9 +507,15 @@ function formatDateLabel(isoDate: string): string {
 /**
  * Get list of exercises the user has performed, with metadata.
  * Sorted by most recently performed.
+ *
+ * @param range - Date window filter
+ * @param muscleGroups - Optional array of muscle group strings to filter by.
+ *   When provided, only exercises whose exercise_muscle_groups JSON contains
+ *   at least one of the specified muscles are returned.
  */
 export async function getPerformedExercises(
     range: ChartRange,
+    muscleGroups?: string[],
 ): Promise<PerformedExercise[]> {
     const db = await getDatabase();
     if (!db) return [];
@@ -495,27 +525,52 @@ export async function getPerformedExercises(
         const whereRange = rangeStart ? `AND w.completed_at >= ?` : '';
         const params: string[] = rangeStart ? [rangeStart] : [];
 
+        // Build optional muscle group filter
+        let muscleFilter = '';
+        if (muscleGroups && muscleGroups.length > 0) {
+            const conditions = muscleGroups.map((mg) => {
+                params.push(`%"muscle":"${mg}"%`);
+                return `we.exercise_muscle_groups LIKE ?`;
+            });
+            muscleFilter = `AND (${conditions.join(' OR ')})`;
+        }
+
         const sql = `
             SELECT
                 we.exercise_id,
                 we.exercise_name,
                 MAX(w.completed_at) AS last_performed,
-                COUNT(DISTINCT w.id) AS total_sessions
+                COUNT(DISTINCT w.id) AS total_sessions,
+                we.exercise_muscle_groups
             FROM workout_exercises we
             JOIN workouts w ON w.id = we.workout_id
-            WHERE w.status = 'completed' ${whereRange}
+            WHERE w.status = 'completed' ${whereRange} ${muscleFilter}
             GROUP BY we.exercise_id
             ORDER BY last_performed DESC
         `;
 
         const rows = await db.getAllAsync<PerformedExerciseRow>(sql, params);
 
-        return rows.map((r) => ({
-            exerciseId: r.exercise_id,
-            exerciseName: r.exercise_name,
-            lastPerformed: r.last_performed,
-            totalSessions: r.total_sessions,
-        }));
+        return rows.map((r) => {
+            // Extract primary muscle from JSON
+            let primaryMuscle: string | undefined;
+            const muscleData = safeJsonParse<MuscleContribution[]>(
+                r.exercise_muscle_groups,
+                [],
+            );
+            const primary = muscleData.find((m) => m.isPrimary);
+            if (primary) {
+                primaryMuscle = primary.muscle;
+            }
+
+            return {
+                exerciseId: r.exercise_id,
+                exerciseName: r.exercise_name,
+                lastPerformed: r.last_performed,
+                totalSessions: r.total_sessions,
+                primaryMuscle,
+            };
+        });
     } catch (error) {
         console.error('[AnalyticsService] Failed to get performed exercises:', error);
         return [];

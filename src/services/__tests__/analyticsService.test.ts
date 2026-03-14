@@ -401,12 +401,14 @@ describe('getPerformedExercises', () => {
                 exercise_name: 'Bench Press',
                 last_performed: '2026-03-10T10:00:00Z',
                 total_sessions: 12,
+                exercise_muscle_groups: null,
             },
             {
                 exercise_id: 'ex2',
                 exercise_name: 'Squat',
                 last_performed: '2026-03-08T10:00:00Z',
                 total_sessions: 8,
+                exercise_muscle_groups: null,
             },
         ]);
 
@@ -427,6 +429,63 @@ describe('getPerformedExercises', () => {
         const result = await getPerformedExercises('ALL');
         expect(result).toEqual([]);
         consoleSpy.mockRestore();
+    });
+
+    it('applies LIKE filter when muscleGroups are provided', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            {
+                exercise_id: 'ex1',
+                exercise_name: 'Bench Press',
+                last_performed: '2026-03-10T10:00:00Z',
+                total_sessions: 5,
+                exercise_muscle_groups: JSON.stringify([
+                    { muscle: 'chest', contribution: 60, isPrimary: true },
+                ]),
+            },
+        ]);
+
+        const result = await getPerformedExercises('ALL', ['chest']);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].exerciseName).toBe('Bench Press');
+        expect(result[0].primaryMuscle).toBe('chest');
+
+        const [sql, params] = mockGetAllAsync.mock.calls[0];
+        expect(sql).toContain('LIKE');
+        expect(params).toContain('%"muscle":"chest"%');
+    });
+
+    it('ORs multiple muscle groups in filter', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([]);
+
+        await getPerformedExercises('3M', ['quads', 'hamstrings', 'glutes', 'calves']);
+
+        const [sql, params] = mockGetAllAsync.mock.calls[0];
+        expect(sql).toContain('OR');
+        expect(params).toContain('%"muscle":"quads"%');
+        expect(params).toContain('%"muscle":"hamstrings"%');
+    });
+
+    it('extracts primaryMuscle from muscle groups JSON', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            {
+                exercise_id: 'ex1',
+                exercise_name: 'Squat',
+                last_performed: '2026-03-10T10:00:00Z',
+                total_sessions: 8,
+                exercise_muscle_groups: JSON.stringify([
+                    { muscle: 'quads', contribution: 50, isPrimary: true },
+                    { muscle: 'glutes', contribution: 30, isPrimary: true },
+                    { muscle: 'core', contribution: 20, isPrimary: false },
+                ]),
+            },
+        ]);
+
+        const result = await getPerformedExercises('ALL');
+        expect(result[0].primaryMuscle).toBe('quads');
     });
 });
 

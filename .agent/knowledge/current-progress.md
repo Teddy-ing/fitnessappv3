@@ -59,6 +59,7 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Store Architecture Cleanup** (UI state removed from domain stores, RestTimer extracted)
 - [x] **Fix overlapping X-axis labels in Analytics charts** (added dynamic month tick marks while preserving full date tooltips)
 - [x] **Phase 2: Analytics Functions** (Macro charts, muscle distribution pie chart, micro exercise charts, fatigue ratio, tooltips, all backed by 140 passing tests)
+- [x] **Exercise List 3-Layer Navigation** (Search bar + muscle group filter pills + dynamic list with icon placeholders, SQL LIKE filter on exercise_muscle_groups)
 ---
 
 ## In Progress
@@ -496,6 +497,26 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Last Updated
-- Date: 2026-03-11
-- Session Context: Fixed overlapping analytics chart x-axis issue by adding dynamic month labels and full date tooltips.
+- Date: 2026-03-13
+- Session Context: Refactored exercise list into 3-layer navigation (search + filter pills + dynamic list)
 
+### 2026-03-13 (Late Evening): Exercise List 3-Layer Navigation Refactor
+
+**Duration:** ~1 hour
+**Focus:** Refactoring the Exercises tab in AnalyticsScreen into a 3-layer navigation architecture
+
+**What was done:**
+- **Data layer:** Enhanced `getPerformedExercises()` in `analyticsService.ts` with optional `muscleGroups[]` filter using SQL `LIKE` on `exercise_muscle_groups` JSON
+- **Model update:** Added `primaryMuscle` to `PerformedExercise` interface in `analytics.ts`
+- **UI rewrite:** Replaced flat exercise list with 3-layer architecture:
+  - Layer 1: Search bar with icon
+  - Layer 2: Horizontal filter pills (Recent/Chest/Back/Legs/Shoulders/Arms/Core)
+  - Layer 3: Dynamic list with icon placeholders, re-fetches per filter
+- **Composite pill mapping:** Legs→quads/hamstrings/glutes/calves, Arms→biceps/triceps/forearms, Back→back/lats/traps
+- **Tests:** Added 3 new test cases (46/46 total passing)
+
+**Files modified:**
+- `src/models/analytics.ts` — Added `primaryMuscle` field
+- `src/services/analyticsService.ts` — Muscle group SQL filter + primary muscle extraction
+- `src/screens/AnalyticsScreen.tsx` — 3-layer ExerciseListView rewrite
+- `src/services/__tests__/analyticsService.test.ts` — 3 new tests
