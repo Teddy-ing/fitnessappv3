@@ -7,8 +7,8 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-14 (analytics feature)
-- **Open issues:** 3 (Critical: 0, High: 0, Medium: 2, Low: 1)
-- **Fixed since baseline:** 2
+- **Open issues:** 2 (Critical: 0, High: 0, Medium: 1, Low: 1)
+- **Fixed since baseline:** 3
 
 ---
 
@@ -23,14 +23,6 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 *No open high issues.*
 
 ### Medium (Edge Cases)
-
-#### BH-004 · `getBestWeightForReps` returns wrong `achieved_date` due to GROUP BY ambiguity
-- **Severity:** Medium
-- **Status:** 🟡 Plausible
-- **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts#L742-L756)
-- **What:** The query groups by `ws.reps` and selects `MAX(ws.weight) AS weight` alongside `DATE(w.completed_at) AS achieved_date`. In SQLite, the non-aggregated column `achieved_date` is not guaranteed to come from the same row as `MAX(ws.weight)` — SQLite *may* return the date from any row in the group (this is a well-known SQLite behaviour difference from MySQL). This means the "Best Weight for Reps" table could show the wrong date for a given rep/weight PR.
-- **Scenario:** User hits 225 lbs for 5 reps on March 1st, then only 205 lbs for 5 reps on March 10th. The table shows "225 lbs — Mar 10" because SQLite returned the date from the later row even though MAX(weight) came from the earlier one.
-- **Fix:** Use a subquery or window function: `SELECT ws.reps, ws.weight, DATE(w.completed_at) AS achieved_date FROM ... WHERE (ws.reps, ws.weight) IN (SELECT reps, MAX(weight) FROM workout_sets ... GROUP BY reps) ...` or use the SQLite-specific behaviour guarantee (since SQLite does guarantee the non-aggregated column comes from the MAX row as a documented extension) and document the reliance.
 
 #### BH-005 · Duration metric in `getMuscleDistribution()` uses placeholder value `1`
 - **Severity:** Medium
@@ -76,7 +68,14 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Original status:** 🔴 Confirmed
 - **File:** [ExerciseAnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx)
 - **Root cause:** `RangePills` used `<Text onPress>` with mixed View/Text styles — no touch feedback, broken `borderRadius` on Android.
-- **Fix applied:** Replaced with `<TouchableOpacity>` wrapping `<Text>`, split the `pill` style into container (`pill`/`pillActive`) and text (`pillText`/`pillTextActive`) styles. Matches the pattern used everywhere else in the app.
+- **Fix applied:** Replaced with `<TouchableOpacity>` wrapping `<Text>`, split the `pill` style into container and text styles.
+
+#### BH-004 · `getBestWeightForReps` returns correct `achieved_date` — **RESOLVED 2026-03-14**
+- **Severity:** Medium
+- **Original status:** 🟡 Plausible
+- **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts)
+- **Root cause:** `GROUP BY ws.reps` with `MAX(ws.weight)` left `achieved_date` as a non-aggregated bare column — the date could come from any row in the group.
+- **Fix applied:** Replaced with CTE using `ROW_NUMBER() OVER (PARTITION BY ws.reps ORDER BY ws.weight DESC, w.completed_at DESC)` to explicitly pick the row with the highest weight (most recent date as tiebreaker).
 
 ---
 
@@ -104,4 +103,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-14
-- Session Context: BH-002 accepted (web-only), BH-003 resolved — Text.onPress replaced with TouchableOpacity in ExerciseAnalyticsScreen
+- Session Context: BH-004 resolved — getBestWeightForReps query rewritten with ROW_NUMBER() window function

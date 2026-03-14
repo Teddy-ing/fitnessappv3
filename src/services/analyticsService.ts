@@ -762,20 +762,31 @@ export async function getBestWeightForReps(
     if (!db) return [];
 
     try {
+        // BH-004 fix: Use ROW_NUMBER() window function to guarantee
+        // achieved_date comes from the same row as the best weight.
+        // Tiebreaker: most recent date when same weight hit multiple times.
         const sql = `
-            SELECT
-                ws.reps,
-                MAX(ws.weight) AS weight,
-                DATE(w.completed_at) AS achieved_date
-            FROM workout_sets ws
-            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-            JOIN workouts w ON w.id = we.workout_id
-            WHERE we.exercise_id = ?
-              AND w.status = 'completed'
-              AND ws.weight > 0 AND ws.reps > 0
-              AND ws.reps <= 15
-            GROUP BY ws.reps
-            ORDER BY ws.reps ASC
+            WITH ranked AS (
+                SELECT
+                    ws.reps,
+                    ws.weight,
+                    DATE(w.completed_at) AS achieved_date,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY ws.reps
+                        ORDER BY ws.weight DESC, w.completed_at DESC
+                    ) AS rn
+                FROM workout_sets ws
+                JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                JOIN workouts w ON w.id = we.workout_id
+                WHERE we.exercise_id = ?
+                  AND w.status = 'completed'
+                  AND ws.weight > 0 AND ws.reps > 0
+                  AND ws.reps <= 15
+            )
+            SELECT reps, weight, achieved_date
+            FROM ranked
+            WHERE rn = 1
+            ORDER BY reps ASC
         `;
 
         const rows = await db.getAllAsync<BestWeightRow>(sql, [exerciseId]);
