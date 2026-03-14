@@ -7,8 +7,8 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-14 (analytics feature)
-- **Open issues:** 5 (Critical: 0, High: 1, Medium: 3, Low: 1)
-- **Fixed since baseline:** 1
+- **Open issues:** 3 (Critical: 0, High: 0, Medium: 2, Low: 1)
+- **Fixed since baseline:** 2
 
 ---
 
@@ -20,23 +20,9 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ### High (Incorrect Behavior)
 
-#### BH-002 · Missing cleanup return in `useExerciseAnalytics` web path
-- **Severity:** High
-- **Status:** 🔴 Confirmed
-- **File:** [useExerciseAnalytics.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useExerciseAnalytics.ts#L94-L98)
-- **What:** When `Platform.OS === 'web'`, the early return on line 97 skips the `return () => { cancelled = true; }` cleanup function. React expects useEffect to return either `undefined` or a cleanup function consistently. More critically, since the `cancelled` flag is never tied to cleanup, a rapid `exerciseId` or `chartRange` change on web causes the *previous* effect's mock data to overwrite the next one's state (race condition with setState).
-- **Scenario:** User taps between range pills quickly on the web preview — the final chart may show data from the wrong range since effects are not properly cancelled.
-- **Fix:** Move the early return *inside* the promise-based flow, or add `return () => { cancelled = true; }` in the web branch too, and guard the `setState` call with `if (!cancelled)`.
+*No open high issues.*
 
 ### Medium (Edge Cases)
-
-#### BH-003 · `Text.onPress` used instead of `TouchableOpacity` for range pills
-- **Severity:** Medium
-- **Status:** 🔴 Confirmed
-- **File:** [ExerciseAnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L78-L86)
-- **What:** The `RangePills` component uses `<Text onPress={...}>` (line 81) inside a `<View>`. While `Text.onPress` works on both iOS and Android, it has no touchable feedback (no opacity change, no ripple), making the pills feel unresponsive. This also diverges from every other pill/tab control in the app (which all use `TouchableOpacity`). More importantly, the `styles.pill` object contains `borderRadius` and `overflow: 'hidden'` set as `Text` style properties — on Android, `Text` does not support `overflow` and `borderRadius` behaves inconsistently, leading to square corners on some devices.
-- **Scenario:** User on an older Android device sees unstyled square text instead of pill shapes.
-- **Fix:** Replace `<Text onPress>` with `<TouchableOpacity onPress>` wrapping a `<Text>`, matching the pattern used in `AnalyticsScreen.tsx`'s `PillRow` component.
 
 #### BH-004 · `getBestWeightForReps` returns wrong `achieved_date` due to GROUP BY ambiguity
 - **Severity:** Medium
@@ -82,14 +68,24 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Severity:** High
 - **Original status:** 🟡 Plausible
 - **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts)
-- **Root cause:** SQLite `strftime('%W', ...)` uses non-ISO week numbering (W00-W53, starting from Jan 1) while JS `getISOWeekNumber()` uses ISO 8601 (W01-W53, starting from the week containing the year's first Thursday). These disagreed near year boundaries.
-- **Fix applied:** Replaced the SQL `strftime('%Y-W%W', ...)` query with raw `DATE(completed_at)` fetches. All week key computation now happens in JS using new `getISOWeekYear()` and `toISOWeekKey()` helpers, ensuring consistency. The `per_week` chart bucket still uses `%W` for display grouping (cosmetic only — no cross-system comparisons).
+- **Root cause:** SQLite `strftime('%W', ...)` uses non-ISO week numbering while JS `getISOWeekNumber()` uses ISO 8601. These disagreed near year boundaries.
+- **Fix applied:** Replaced SQL `strftime('%Y-W%W', ...)` query with raw `DATE(completed_at)` fetches. All week key computation now happens in JS using new `getISOWeekYear()` and `toISOWeekKey()` helpers.
+
+#### BH-003 · `Text.onPress` replaced with `TouchableOpacity` in RangePills — **RESOLVED 2026-03-14**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [ExerciseAnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx)
+- **Root cause:** `RangePills` used `<Text onPress>` with mixed View/Text styles — no touch feedback, broken `borderRadius` on Android.
+- **Fix applied:** Replaced with `<TouchableOpacity>` wrapping `<Text>`, split the `pill` style into container (`pill`/`pillActive`) and text (`pillText`/`pillTextActive`) styles. Matches the pattern used everywhere else in the app.
 
 ---
 
 ## Accepted / Won't Fix
 
-*No accepted issues yet.*
+#### BH-002 · Missing cleanup return in `useExerciseAnalytics` web path — **ACCEPTED 2026-03-14**
+- **Severity:** High
+- **Reason:** Web version uses temporary mock data for visual debugging only. Not a production concern.
+- **File:** [useExerciseAnalytics.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useExerciseAnalytics.ts#L94-L98)
 
 ---
 
@@ -108,4 +104,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-14
-- Session Context: BH-001 resolved — ISO-week mismatch fix applied to streak calculation in analyticsService.ts
+- Session Context: BH-002 accepted (web-only), BH-003 resolved — Text.onPress replaced with TouchableOpacity in ExerciseAnalyticsScreen

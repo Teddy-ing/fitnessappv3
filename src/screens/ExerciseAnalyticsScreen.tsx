@@ -13,6 +13,7 @@ import {
     Text,
     StyleSheet,
     ScrollView,
+    TouchableOpacity,
     ActivityIndicator,
     Dimensions,
 } from 'react-native';
@@ -75,14 +76,16 @@ function RangePills({
             contentContainerStyle={styles.pillRow}
         >
             {CHART_RANGES.map((r) => (
-                <View key={r}>
-                    <Text
-                        style={[styles.pill, selected === r && styles.pillActive]}
-                        onPress={() => onSelect(r)}
-                    >
+                <TouchableOpacity
+                    key={r}
+                    style={[styles.pill, selected === r && styles.pillActive]}
+                    onPress={() => onSelect(r)}
+                    activeOpacity={0.7}
+                >
+                    <Text style={[styles.pillText, selected === r && styles.pillTextActive]}>
                         {CHART_RANGE_LABELS[r]}
                     </Text>
-                </View>
+                </TouchableOpacity>
             ))}
         </ScrollView>
     );
@@ -468,13 +471,16 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.sm,
         borderRadius: borderRadius.full,
         backgroundColor: colors.background.secondary,
-        fontSize: typography.size.xs,
-        fontWeight: typography.weight.medium,
-        color: colors.text.secondary,
-        overflow: 'hidden',
     },
     pillActive: {
         backgroundColor: colors.accent.primary,
+    },
+    pillText: {
+        fontSize: typography.size.xs,
+        fontWeight: typography.weight.medium,
+        color: colors.text.secondary,
+    },
+    pillTextActive: {
         color: colors.text.primary,
         fontWeight: typography.weight.semibold,
     },
