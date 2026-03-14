@@ -176,7 +176,7 @@ function getYAxisSuffix(metric: MetricType): string {
         case 'volume':
             return ' lbs';
         case 'duration':
-            return ' min';
+            return ' ';
         default:
             return '';
     }

@@ -13,7 +13,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -54,10 +54,14 @@ export type ProfileStackParamList = {
 
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 
+// On web, jump straight to the exercise analytics screen for chart debugging
+const IS_WEB = Platform.OS === 'web';
+
 function ProfileStackNavigator() {
     return (
         <ErrorBoundary fallback="screen" label="ProfileStack">
             <ProfileStack.Navigator
+                initialRouteName={IS_WEB ? 'ExerciseAnalytics' : 'ProfileHome'}
                 screenOptions={{
                     headerStyle: {
                         backgroundColor: colors.background.primary,
@@ -87,6 +91,7 @@ function ProfileStackNavigator() {
                     options={({ route }) => ({
                         title: route.params.exerciseName,
                     })}
+                    initialParams={IS_WEB ? { exerciseId: 'mock', exerciseName: 'Mock Bench Press' } : undefined}
                 />
             </ProfileStack.Navigator>
         </ErrorBoundary>

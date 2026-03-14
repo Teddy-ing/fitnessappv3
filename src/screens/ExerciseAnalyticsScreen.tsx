@@ -31,26 +31,27 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - spacing.md * 4 - 40;
 const CHART_RANGES: ChartRange[] = ['1M', '3M', '6M', '1Y', 'ALL'];
 
-// Shared spacing so line charts and bar chart align their labels at the same x positions
-const CHART_INITIAL_OFFSET = 10;
+// Bar chart needs manual spacing; LineChart uses adjustToWidth to auto-fit.
+// The library's adjustToWidth computes: spacing = (width - yAxisLabelWidth - initialSpacing) / (n-1)
+// which properly accounts for the y-axis label area and aligns data points with labels.
+const Y_AXIS_WIDTH = 35; // library default yAxisLabelWidth
+const LIB_INITIAL_SPACING = 20; // library default initialSpacing
 const MIN_PER_POINT = 12;
 
 function computeChartSpacing(dataLength: number) {
     if (dataLength <= 1) {
-        const bw = 22;
-        return { lineSpacing: 40, barWidth: bw, barSpacing: 18, barInitial: CHART_INITIAL_OFFSET - bw / 2, lineInitial: CHART_INITIAL_OFFSET, needsScroll: false };
+        return { barWidth: 22, barSpacing: 18, needsScroll: false };
     }
-    const ideal = (CHART_WIDTH - CHART_INITIAL_OFFSET * 2) / (dataLength - 1);
+    // For bar chart, compute usable data area same as library does
+    const dataArea = CHART_WIDTH - Y_AXIS_WIDTH - LIB_INITIAL_SPACING;
+    const ideal = dataArea / (dataLength - 1);
     const perPoint = Math.max(MIN_PER_POINT, ideal);
     const needsScroll = ideal < MIN_PER_POINT;
     const bw = Math.max(4, Math.round(perPoint * 0.65));
     const bs = Math.max(1, perPoint - bw);
     return {
-        lineSpacing: perPoint,
         barWidth: bw,
         barSpacing: bs,
-        barInitial: CHART_INITIAL_OFFSET - bw / 2,
-        lineInitial: CHART_INITIAL_OFFSET,
         needsScroll,
     };
 }
@@ -125,14 +126,14 @@ function TimeSeriesLineChart({
                 const monthIndex = parseInt(currentMonth, 10) - 1;
                 const monthName = MONTH_NAMES[monthIndex] || currentMonth;
                 labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
+                    <View style={{ alignItems: 'center', width: 34, marginLeft: -17, marginTop: 12 }}>
                         <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
                         <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
                     </View>
                 );
             } else {
                 labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
+                    <View style={{ alignItems: 'center', width: 20, marginLeft: -10, marginTop: 12 }}>
                         <Text style={styles.axisText}>{currentDay}</Text>
                     </View>
                 );
@@ -152,7 +153,7 @@ function TimeSeriesLineChart({
     const maxValue = Math.max(...data.map((d) => d.value)) * 1.15;
     const latestValue = data[data.length - 1]?.value ?? 0;
 
-    const { lineSpacing, lineInitial, needsScroll } = computeChartSpacing(data.length);
+    const { needsScroll } = computeChartSpacing(data.length);
 
     return (
         <View style={styles.chartCard}>
@@ -161,8 +162,8 @@ function TimeSeriesLineChart({
                 width={CHART_WIDTH}
                 height={160}
                 xAxisLabelsHeight={36}
-                initialSpacing={lineInitial}
-                spacing={lineSpacing}
+                adjustToWidth
+                initialSpacing={0}
                 color={color}
                 thickness={2}
                 noOfSections={4}
@@ -281,7 +282,7 @@ function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
 
     const maxValue = Math.max(...data.map((d) => d.value)) * 1.15;
 
-    const { barWidth, barSpacing, barInitial, needsScroll } = computeChartSpacing(data.length);
+    const { barWidth, barSpacing, needsScroll } = computeChartSpacing(data.length);
 
     return (
         <View style={styles.chartCard}>
@@ -290,7 +291,6 @@ function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
                 width={CHART_WIDTH}
                 height={160}
                 xAxisLabelsHeight={36}
-                initialSpacing={barInitial}
                 barWidth={barWidth}
                 spacing={barSpacing}
                 noOfSections={4}

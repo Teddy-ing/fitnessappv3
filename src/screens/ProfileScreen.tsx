@@ -7,7 +7,6 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
@@ -70,7 +69,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
@@ -201,7 +200,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
