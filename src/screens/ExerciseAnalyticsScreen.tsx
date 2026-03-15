@@ -25,6 +25,7 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import { useExerciseAnalytics } from '../hooks/useExerciseAnalytics';
 import { ChartRange, CHART_RANGE_LABELS, ExerciseTimeSeriesPoint } from '../models/analytics';
 import type { ProfileStackParamList } from '../navigation/AppNavigator';
+import { createLabelProcessor, BAR_CHART_MARGINS, LINE_CHART_MARGINS } from '../utils/chartLabels';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ExerciseAnalytics'>;
 
@@ -114,40 +115,15 @@ function TimeSeriesLineChart({
         );
     }
 
-    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    let lastMonth = '';
+    const processLabel = createLabelProcessor(LINE_CHART_MARGINS, styles.axisText);
 
     const chartData = data.map((d) => {
-        let displayLabel = d.label;
-        let labelComp;
-        const parts = d.label.split('/');
-        if (parts.length === 2) {
-            const currentMonth = parts[0];
-            const currentDay = parts[1];
-            if (currentMonth !== lastMonth) {
-                lastMonth = currentMonth;
-                const monthIndex = parseInt(currentMonth, 10) - 1;
-                const monthName = MONTH_NAMES[monthIndex] || currentMonth;
-                labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 34, marginLeft: -17, marginTop: 12 }}>
-                        <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
-                        <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
-                    </View>
-                );
-            } else {
-                labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 20, marginLeft: -10, marginTop: 12 }}>
-                        <Text style={styles.axisText}>{currentDay}</Text>
-                    </View>
-                );
-            }
-            displayLabel = currentDay;
-        }
+        const { displayLabel, labelComponent } = processLabel(d.label);
 
         return {
             value: d.value,
             label: displayLabel,
-            labelComponent: labelComp,
+            labelComponent,
             fullLabel: d.label,
             dataPointText: undefined,
         };
@@ -243,40 +219,15 @@ function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
         );
     }
 
-    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    let lastMonth = '';
+    const processLabel = createLabelProcessor(BAR_CHART_MARGINS, styles.axisText);
 
     const chartData = data.map((d) => {
-        let displayLabel = d.label;
-        let labelComp;
-        const parts = d.label.split('/');
-        if (parts.length === 2) {
-            const currentMonth = parts[0];
-            const currentDay = parts[1];
-            if (currentMonth !== lastMonth) {
-                lastMonth = currentMonth;
-                const monthIndex = parseInt(currentMonth, 10) - 1;
-                const monthName = MONTH_NAMES[monthIndex] || currentMonth;
-                labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
-                        <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
-                        <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
-                    </View>
-                );
-            } else {
-                labelComp = () => (
-                    <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
-                        <Text style={styles.axisText}>{currentDay}</Text>
-                    </View>
-                );
-            }
-            displayLabel = currentDay;
-        }
+        const { displayLabel, labelComponent } = processLabel(d.label);
 
         return {
             value: d.value,
             label: displayLabel,
-            labelComponent: labelComp,
+            labelComponent,
             fullLabel: d.label,
             frontColor: colors.accent.primary,
             gradientColor: colors.accent.tertiary,

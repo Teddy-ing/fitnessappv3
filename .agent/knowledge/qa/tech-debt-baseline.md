@@ -7,8 +7,8 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-14 (analytics feature post-completion)
-- **Open issues:** 4 (Active: 1, Latent: 3)
-- **Fixed since baseline:** 1
+- **Open issues:** 3 (Active: 0, Latent: 3)
+- **Fixed since baseline:** 2
 
 ---
 
@@ -16,16 +16,7 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 Issues that will cause problems in the next 1–2 roadmap phases.
 
-### TD-002 · Duplicated chart label formatting logic across 3 files
-
-- **Category:** DRY violation / anti-pattern
-- **Files:**
-  - [AnalyticsScreen.tsx:209-240](file:///c:/Users/teddy/projects/workout-app/src/screens/AnalyticsScreen.tsx#L209-L240)
-  - [ExerciseAnalyticsScreen.tsx:117-154](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L117-L154)
-  - [ExerciseAnalyticsScreen.tsx:246-284](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L246-L284)
-- **What:** The `MONTH_NAMES` array, `lastMonth` tracking, and the `labelComponent` factory (month header vs day-only label) are copy-pasted 3 times with only minor `marginLeft` differences.
-- **Why active:** Any label formatting bug fix must be applied 3 times. The recent x-axis alignment debugging (conv history) was made harder by this. When new chart types are added for ML features, a 4th copy will appear.
-- **Recommended fix:** Extract a shared `buildChartLabelComponent(label, options)` utility in `src/utils/chartLabels.ts` that takes margin/width config and returns the `labelComponent`. Reduces each call site to one line.
+*No open active debt issues.*
 
 ---
 
@@ -76,6 +67,15 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - `PillRow.tsx` — generic pill row component
   - `MetricSelector.tsx` — metric segmented control
 - **Result:** `AnalyticsScreen.tsx` reduced to 148 lines. All extracted files well under 600 lines.
+
+### TD-002 · Duplicated chart label formatting logic across 3 files — **RESOLVED 2026-03-14**
+
+- **Category:** DRY violation / anti-pattern
+- **Original:** `MONTH_NAMES`, `lastMonth` tracking, and `labelComponent` factory copy-pasted 3× across `MacroAnalyticsView.tsx` and `ExerciseAnalyticsScreen.tsx` with only minor margin differences.
+- **Fix applied:** Created `src/utils/chartLabels.tsx` with:
+  - `createLabelProcessor()` — stateful factory that tracks months and returns `labelComponent` per data point
+  - `BAR_CHART_MARGINS` / `LINE_CHART_MARGINS` — preset configs for each chart type
+- **Result:** ~75 lines of duplicated code eliminated. All 3 call sites reduced to 2-line invocations. Future chart types just import a preset.
 
 ---
 
@@ -141,10 +141,10 @@ Areas to monitor as the app approaches later roadmap phases:
 | Service file boundaries | 5 services, `analyticsService` at 873 lines | ML features (Phase 7) — needs split per TD-003 |
 | Hydration layer | Single mapping file | Every new model field = hydration update needed — fragile |
 | Unit hardcoding (`lbs`) | Everywhere in analytics | Phase 5 (Settings) — kg/lbs toggle per TD-004 |
-| Chart label logic | Copy-pasted 3×  | Next chart type addition per TD-002 |
+| Chart label logic | Shared via `chartLabels.tsx` | ✅ Resolved (TD-002) |
 
 ---
 
 ## Last Updated
 - Date: 2026-03-14
-- Session Context: TD-001 resolved — AnalyticsScreen extracted from 902 → 148 lines. 4 open issues remain (1 active, 3 latent).
+- Session Context: TD-002 resolved — chart label logic deduplicated into `src/utils/chartLabels.tsx`. 0 active issues remain, 3 latent.

@@ -22,6 +22,7 @@ import ConsistencyCards from '../ConsistencyCards';
 import FatigueRatioBanner from '../FatigueRatioBanner';
 import MetricSelector from './MetricSelector';
 import PillRow from './PillRow';
+import { createLabelProcessor, BAR_CHART_MARGINS } from '../../utils/chartLabels';
 
 import {
     MetricType,
@@ -98,36 +99,15 @@ export default function MacroAnalyticsView() {
 
     // PP-007 fix: memoize chart data transformation to avoid recreating on every render
     const { chartData, maxValue } = useMemo(() => {
-        const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        let lastMonth = '';
+        const processLabel = createLabelProcessor(BAR_CHART_MARGINS, styles.axisText);
 
         const transformed = data.map((point) => {
             let displayLabel = point.label;
             let labelComp;
             if (timeBucket === 'per_workout') {
-                const parts = point.label.split('/');
-                if (parts.length === 2) {
-                    const currentMonth = parts[0];
-                    const currentDay = parts[1];
-                    if (currentMonth !== lastMonth) {
-                        lastMonth = currentMonth;
-                        const monthIndex = parseInt(currentMonth, 10) - 1;
-                        const monthName = MONTH_NAMES[monthIndex] || currentMonth;
-                        labelComp = () => (
-                            <View style={{ alignItems: 'center', width: 34, marginLeft: -11, marginTop: 12 }}>
-                                <Text style={[styles.axisText, { color: colors.text.primary }]}>{currentDay}</Text>
-                                <Text style={[styles.axisText, { fontWeight: 'bold', color: colors.text.secondary, marginTop: 2 }]}>{monthName}</Text>
-                            </View>
-                        );
-                    } else {
-                        labelComp = () => (
-                            <View style={{ alignItems: 'center', width: 20, marginLeft: -4, marginTop: 12 }}>
-                                <Text style={styles.axisText}>{currentDay}</Text>
-                            </View>
-                        );
-                    }
-                    displayLabel = currentDay;
-                }
+                const result = processLabel(point.label);
+                displayLabel = result.displayLabel;
+                labelComp = result.labelComponent;
             }
 
             return {
