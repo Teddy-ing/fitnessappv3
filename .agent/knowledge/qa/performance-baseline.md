@@ -67,8 +67,9 @@ description: Tracking document for performance regression findings from Performa
 
 | File | Lines | Over By |
 |------|-------|---------|
-| `AnalyticsScreen.tsx` | 865 | 44% |
 | `ExercisePicker.tsx` | 630 | 5% |
+
+*`AnalyticsScreen.tsx` resolved (902 → 148 lines) via extraction to `src/components/analytics/`.*
 
 ---
 
