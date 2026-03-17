@@ -112,7 +112,10 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                         <Text style={styles.menuArrow}>›</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('Calendar')}
+                    >
                         <Text style={styles.menuIcon}>📅</Text>
                         <Text style={styles.menuText}>Workout Calendar</Text>
                         <Text style={styles.menuArrow}>›</Text>

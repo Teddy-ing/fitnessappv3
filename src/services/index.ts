@@ -78,3 +78,11 @@ export {
     getFatigueRatio,
 } from './analyticsService';
 export { generateMockData } from './mockDataService';
+export {
+    getWorkoutsForMonth,
+    getWorkoutStreak,
+    getRestDaysThisWeek,
+    getWorkoutDetail,
+    getWorkoutsForDate,
+    type CalendarDayData,
+} from './calendarService';

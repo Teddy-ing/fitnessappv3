@@ -27,6 +27,8 @@ export interface UserSettings {
     restTimerVibration: boolean;
     defaultSetsPerExercise: number;
     hasCompletedOnboarding: boolean;
+    calendarStartDay: string;
+    calendarHeatmapMetric: string;
 }
 
 /** Raw row from the user_settings table (snake_case, integers for booleans) */
@@ -43,6 +45,8 @@ interface UserSettingsRow {
     rest_timer_vibration: number;
     default_sets_per_exercise: number;
     has_completed_onboarding: number;
+    calendar_start_day: string;
+    calendar_heatmap_metric: string;
 }
 
 /** Default settings — used if the row doesn't exist yet */
@@ -58,6 +62,8 @@ const DEFAULTS: UserSettings = {
     restTimerVibration: true,
     defaultSetsPerExercise: 3,
     hasCompletedOnboarding: false,
+    calendarStartDay: 'sunday',
+    calendarHeatmapMetric: 'volume',
 };
 
 // ============================================================
@@ -90,6 +96,8 @@ export async function getSettings(): Promise<UserSettings> {
         restTimerVibration: row.rest_timer_vibration === 1,
         defaultSetsPerExercise: row.default_sets_per_exercise,
         hasCompletedOnboarding: row.has_completed_onboarding === 1,
+        calendarStartDay: row.calendar_start_day ?? 'sunday',
+        calendarHeatmapMetric: row.calendar_heatmap_metric ?? 'volume',
     };
 }
 
@@ -124,6 +132,8 @@ export async function updateSettings(
         restTimerVibration: 'rest_timer_vibration',
         defaultSetsPerExercise: 'default_sets_per_exercise',
         hasCompletedOnboarding: 'has_completed_onboarding',
+        calendarStartDay: 'calendar_start_day',
+        calendarHeatmapMetric: 'calendar_heatmap_metric',
     };
 
     const setClauses: string[] = [];

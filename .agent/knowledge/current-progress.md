@@ -65,6 +65,7 @@ description: Living document tracking completed work, in-progress tasks, next st
 ## In Progress
 
 - [ ] **Phase 3/4: Profile Screen Scoping & Refactor** (Integrating analytics into the Profile view)
+- [ ] **Phase 3: Calendar Feature** (Phase 1 complete: DB + Service layer. Phase 2 pending: UI & Components)
 
 ---
 
@@ -497,8 +498,32 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Last Updated
-- Date: 2026-03-13
-- Session Context: Refactored exercise list into 3-layer navigation (search + filter pills + dynamic list)
+- Date: 2026-03-16
+- Session Context: Implemented Phase 1 (Foundation) of the Calendar Feature
+
+### 2026-03-16: Calendar Feature Development (Phase 1)
+
+**Duration:** ~2 hours (Recovered session)
+**Focus:** Building the foundation for the upcoming Calendar feature
+
+**What was done:**
+- **Database setup:** Successfully implemented database migrations to support the calendar feature.
+- **Service layer:** Updated user preferences service to support calendar settings.
+- **Calendar logic:** Created `calendarService.ts` to power the calendar, including data functions for:
+  - `getWorkoutsForMonth`: Extracts aggregated day-level data for heatmaps.
+  - `getWorkoutStreak`: Computes consecutive consecutive ISO-week streak.
+  - `getRestDaysThisWeek`: Extends the split functionality.
+  - `getWorkoutDetail` & `getWorkoutsForDate`: Deep dive into specific dates.
+- **Setup:** Configured the React Native Reanimated environment to prepare for complex UI rendering.
+
+**Files created:**
+- `src/services/calendarService.ts`
+
+**Next Steps (Phase 2):**
+- Build out the UI components across the Profile/Calendar view
+- Implement the actual Calendar heatmap rendering
+
+---
 
 ### 2026-03-13 (Late Evening): Exercise List 3-Layer Navigation Refactor
 

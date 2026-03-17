@@ -14,7 +14,7 @@ My motivation to audit the codebase didn't come from the app breaking; it came f
 
 Curious if my app suffered from the same fate, I asked my primary AI assistant to review the codebase for readability and maintainability. The AI returned a very positive review, praising the structure and noting no major issues beyond a few large files. 
 
-While reassuring, I am acutely aware of a common LLM flaw: **sycophancy**. AI assistants are naturally polite and default to telling users what they want to hear. Wanting an objective, brutal truth, I took the context of my app and the first AI's polite review to a different LLM (Gemini 1.5 Pro) for a sanity check.
+While reassuring, I am acutely aware of a common LLM flaw: **sycophancy**. AI assistants are naturally polite and default to telling users what they want to hear. Wanting an objective, brutal truth, I took the context of my app and the first AI's polite review to a different LLM (Gemini 3.1 Pro) for a sanity check.
 
 ## The Audit: Discovering the "Middle State"
 

@@ -328,6 +328,35 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v4: Calendar settings columns + completed_at index
+    // ----------------------------------------------------------
+    {
+        version: 4,
+        name: 'calendar_settings_and_index',
+        up: async (db) => {
+            // Calendar-specific settings on user_settings
+            const hasStartDay = await columnExists(db, 'user_settings', 'calendar_start_day');
+            if (!hasStartDay) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN calendar_start_day TEXT DEFAULT 'sunday';`,
+                );
+            }
+
+            const hasMetric = await columnExists(db, 'user_settings', 'calendar_heatmap_metric');
+            if (!hasMetric) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN calendar_heatmap_metric TEXT DEFAULT 'volume';`,
+                );
+            }
+
+            // Performance index for calendar month queries
+            await db.execAsync(
+                `CREATE INDEX IF NOT EXISTS idx_workouts_completed_at ON workouts(completed_at);`,
+            );
+        },
+    },
 ];
 
 // ============================================================

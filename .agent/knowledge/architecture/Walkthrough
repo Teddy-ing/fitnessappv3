@@ -2,18 +2,8 @@
 
 This walkthrough explains how your fitness app works from the ground up. Even without deep TypeScript/React Native experience, you'll understand the patterns and data flow.
 
----
-
-## Table of Contents
-1. [The Big Picture](#the-big-picture)
-2. [Data Models (The Foundation)](#data-models)
-3. [Services (Database Layer)](#services)
-4. [State Management (Zustand Store)](#state-management)
-5. [Components (UI Building Blocks)](#components)
-6. [Screens (Full Pages)](#screens)
-7. [Theme (Styling System)](#theme)
-8. [How It All Connects](#how-it-all-connects)
-
+![alt text](image.png)
+Reading this diagram: Data flows from bottom to top. Models define the shape of data. Services read/write that data to the database. The Store holds the "current" state for the active workout. UI layers display and modify state.
 ---
 
 ## The Big Picture

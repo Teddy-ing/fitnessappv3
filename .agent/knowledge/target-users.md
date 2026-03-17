@@ -94,17 +94,17 @@ Veterans are:
 
 ## Feature Mapping by User Type
 
-| Feature | Veteran | Intermediate | Beginner |
-|---------|---------|--------------|----------|
-| Quick logging (no friction) | ⭐ Critical | Important | Nice |
-| Custom templates | ⭐ Critical | ⭐ Critical | Later |
-| Pre-built templates | Nice | Important | ⭐ Critical |
-| Progressive overload tracking | ⭐ Critical | ⭐ Critical | Later |
-| Analytics/graphs | ⭐ Critical | Important | Nice |
-| Exercise instructions | Rarely | Sometimes | ⭐ Critical |
-| Rest timer | Important | Important | Important |
-| Import/export | ⭐ Critical | Important | Rarely |
-| Beginner guidance mode | Never | Rarely | ⭐ Critical |
+| Feature                       | Veteran    | Intermediate | Beginner |
+|-------------------------------|------------|--------------|----------|
+| Quick logging (no friction)   | ⭐ Critical| Important    | Nice |
+| Custom templates              | ⭐ Critical| ⭐ Critical | Later |
+| Pre-built templates           | Nice       | Important    | ⭐ Critical |
+| Progressive overload tracking | ⭐ Critical| ⭐ Critical | Later |
+| Analytics/graphs              | ⭐ Critical| Important   | Nice |
+| Exercise instructions         | Rarely     | Sometimes    | ⭐ Critical |
+| Rest timer                    | Important  | Important    | Important |
+| Import/export                 | ⭐ Critical| Important    | Rarely |
+| Beginner guidance mode        | Never      | Rarely       | ⭐ Critical |
 
 ---
 
