@@ -7,24 +7,14 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-17 (calendar feature post-completion)
-- **Open issues:** 8 (Active: 3, Latent: 5)
-- **Fixed since baseline:** 3
+- **Open issues:** 7 (Active: 2, Latent: 5)
+- **Fixed since baseline:** 4
 
 ---
 
 ## Open Issues — Active Debt
 
 Issues that will cause problems in the next 1–2 roadmap phases.
-
-### TD-007 · ISO week helpers duplicated across two services
-
-- **Category:** DRY violation / anti-pattern
-- **Files:**
-  - [calendarService.ts:76-95](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L76-L95) — `getISOWeekNumber`, `getISOWeekYear`, `toISOWeekKey`
-  - [analyticsService.ts:378-400](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts#L378-L400) — identical functions
-- **What:** Three ISO week calculation functions are copy-pasted between `calendarService.ts` and `analyticsService.ts`. The comment on line 72 of `calendarService.ts` even acknowledges this: `"(shared logic with analyticsService)"`.
-- **Why active:** Any bug fix to week computation (e.g., year-boundary edge cases) must be applied in two places. This is exactly the pattern that created TD-002 (chart labels) which was fixed 3 days ago.
-- **Recommended fix:** Extract to `src/utils/dateUtils.ts` or `src/utils/isoWeek.ts`. Both services import from there. ~15 min fix.
 
 ### TD-008 · `formatDuration` duplicated in DailyWorkoutModal and JournalView
 
@@ -110,6 +100,13 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - `PillRow.tsx` — generic pill row component
   - `MetricSelector.tsx` — metric segmented control
 - **Result:** `AnalyticsScreen.tsx` reduced to 148 lines. All extracted files well under 600 lines.
+
+### TD-007 · ISO week helpers duplicated across two services — **RESOLVED 2026-03-17**
+
+- **Category:** DRY violation / anti-pattern
+- **Original:** `getISOWeekNumber`, `getISOWeekYear`, `toISOWeekKey` copy-pasted between `calendarService.ts` and `analyticsService.ts`.
+- **Fix applied:** Created `src/utils/isoWeek.ts` with shared exported functions. Both services now import from the shared utility.
+- **Result:** ~45 lines of duplicated code eliminated. Future week-boundary fixes apply in one place.
 
 ### TD-006 · `CalendarScreen.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-17**
 
@@ -203,4 +200,4 @@ Areas to monitor as the app approaches later roadmap phases:
 
 ## Last Updated
 - Date: 2026-03-17
-- Session Context: Tech Debt Auditor pass on calendar feature (Phases A–E). TD-006 resolved (CalendarScreen 1056→310 lines). 3 active issues remain (TD-007, TD-008, TD-010), 5 latent (TD-003, TD-004, TD-005, TD-009, TD-011).
+- Session Context: Tech Debt Auditor pass on calendar feature. TD-006 and TD-007 resolved. 2 active issues remain (TD-008, TD-010), 5 latent (TD-003, TD-004, TD-005, TD-009, TD-011).

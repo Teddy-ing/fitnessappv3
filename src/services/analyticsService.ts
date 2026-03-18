@@ -374,31 +374,8 @@ export async function getConsistencyStats(
     }
 }
 
-/** Get ISO 8601 week number for a date */
-function getISOWeekNumber(date: Date): number {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-}
-
-/**
- * Get ISO 8601 week-year for a date.
- * The ISO week-year can differ from the calendar year near Jan 1 / Dec 31.
- * E.g., Dec 31, 2024 is in ISO week 1 of 2025.
- */
-function getISOWeekYear(date: Date): number {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    return d.getUTCFullYear();
-}
-
-/** Build an ISO week key like "2026-W11" from a Date */
-function toISOWeekKey(date: Date): string {
-    return `${getISOWeekYear(date)}-W${String(getISOWeekNumber(date)).padStart(2, '0')}`;
-}
+// ISO week helpers — imported from shared utility
+import { toISOWeekKey } from '../utils/isoWeek';
 
 // ============================================================
 // Muscle Distribution

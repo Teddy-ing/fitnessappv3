@@ -24,8 +24,12 @@ These apply regardless of framework:
 
 These rules are enforced to prevent the specific categories of tech debt that have bitten this project:
 
-1. **Component size limit (600 lines)**
-   Component files should stay under 600 lines. If a component exceeds this during implementation, stop and extract state domains into hooks or child components before continuing.
+1. **Component size limit (600 lines) — two-tier rule**
+   Component files should stay under 600 lines. This is enforced in two tiers:
+   - **During active feature development:** A file may temporarily exceed 600 lines while the feature is being built across multiple phases. Premature extraction creates churn because component boundaries are moving targets. Note the overshoot and plan to extract post-completion.
+   - **After feature completion:** Any file over 600 lines is active debt and must be extracted before the next feature phase begins. Run the tech debt auditor workflow to catch and resolve these immediately while the code is fresh.
+   
+   *Rationale:* Every god-component in this project (WorkoutScreen 1600→385, SplitsScreen 1258→225, AnalyticsScreen 902→148, CalendarScreen 1056→310) followed the same pattern: grew during multi-phase development, then was cleanly extracted once boundaries were stable. The right abstraction only becomes obvious after the feature is complete.
 
 2. **Avoid `any` types**
    Do not use `any` in TypeScript. If `any` is truly unavoidable (e.g., React Native API quirks like `Alert.alert` button arrays), add a `// eslint-disable-next-line` comment with a short justification.
@@ -123,5 +127,5 @@ src/
 ---
 
 ## Last Updated
-- Date: 2026-03-13
-- Session Context: Added guardrail #7 — SafeAreaView edges must match tab bar visibility
+- Date: 2026-03-17
+- Session Context: Refined guardrail #1 — two-tier component size rule (allow temporary overshoot during development, enforce extraction post-completion)
