@@ -6,9 +6,9 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 ## Summary
 
-- **Last full pass:** 2026-03-14 (analytics feature post-completion)
-- **Open issues:** 3 (Active: 0, Latent: 3)
-- **Fixed since baseline:** 2
+- **Last full pass:** 2026-03-17 (calendar feature post-completion)
+- **Open issues:** 8 (Active: 3, Latent: 5)
+- **Fixed since baseline:** 3
 
 ---
 
@@ -16,7 +16,33 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 Issues that will cause problems in the next 1–2 roadmap phases.
 
-*No open active debt issues.*
+### TD-007 · ISO week helpers duplicated across two services
+
+- **Category:** DRY violation / anti-pattern
+- **Files:**
+  - [calendarService.ts:76-95](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L76-L95) — `getISOWeekNumber`, `getISOWeekYear`, `toISOWeekKey`
+  - [analyticsService.ts:378-400](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts#L378-L400) — identical functions
+- **What:** Three ISO week calculation functions are copy-pasted between `calendarService.ts` and `analyticsService.ts`. The comment on line 72 of `calendarService.ts` even acknowledges this: `"(shared logic with analyticsService)"`.
+- **Why active:** Any bug fix to week computation (e.g., year-boundary edge cases) must be applied in two places. This is exactly the pattern that created TD-002 (chart labels) which was fixed 3 days ago.
+- **Recommended fix:** Extract to `src/utils/dateUtils.ts` or `src/utils/isoWeek.ts`. Both services import from there. ~15 min fix.
+
+### TD-008 · `formatDuration` duplicated in DailyWorkoutModal and JournalView
+
+- **Category:** DRY violation
+- **Files:**
+  - [DailyWorkoutModal.tsx:57-63](file:///c:/Users/teddy/projects/workout-app/src/components/DailyWorkoutModal.tsx#L57-L63) — `formatDuration(seconds)`
+  - [JournalView.tsx:38-44](file:///c:/Users/teddy/projects/workout-app/src/components/JournalView.tsx#L38-L44) — identical function
+- **What:** The same seconds-to-`"1h 05m"` formatting function is copy-pasted between two calendar components. `formatVolume` in `DailyWorkoutModal.tsx` is also a one-off that could be shared.
+- **Why active:** These components were just built — if not extracted now, the pattern will continue into Profile widgets and any future component that shows workout summaries.
+- **Recommended fix:** Create `src/utils/formatters.ts` with `formatDuration`, `formatVolume`, and potentially `formatDateHeader`. ~10 min fix.
+
+### TD-010 · `DailyWorkoutModal` contains raw DB query bypassing service layer
+
+- **Category:** Service boundary violation
+- **File:** [DailyWorkoutModal.tsx:82-96](file:///c:/Users/teddy/projects/workout-app/src/components/DailyWorkoutModal.tsx#L82-L96) — `getPRSetIdsForDate()`
+- **What:** The `getPRSetIdsForDate` function imports `getDatabase` directly and runs a raw SQL query inside a UI component file. All other data access goes through service files. This breaks the established data access pattern where components call services, never the database directly.
+- **Why active:** Widget framework (Phase 3) and Profile refactor (Phase 4) will need PR data too. Having this query trapped in a modal component forces copy-paste or circular imports.
+- **Recommended fix:** Move `getPRSetIdsForDate` to `calendarService.ts` and export it. The component should import from `services/`. ~5 min fix.
 
 ---
 
@@ -32,7 +58,7 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Will break at:** ML features adding prediction queries, widget framework adding dashboard queries
 - **Recommended fix (when):** Before Phase 5, extract `exerciseAnalyticsService.ts` (micro-level queries: lines 504–858) from the current file. Keep `analyticsService.ts` for macro-level queries.
 
-### TD-004 · Hardcoded `" lbs"` unit across analytics UI
+### TD-004 · Hardcoded `" lbs"` unit across analytics UI + calendar modal
 
 - **Category:** Scalability / internationalization
 - **Files:**
@@ -40,6 +66,7 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - [ExerciseAnalyticsScreen.tsx:387,391](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L387-L391) — `suffix=" lbs"` prop
   - [ExerciseAnalyticsScreen.tsx:337](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L337) — hardcoded `lbs` in tooltip
   - [ExerciseAnalyticsScreen.tsx:417](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L417) — `{row.weight} lbs` in table
+  - **[NEW]** [DailyWorkoutModal.tsx:68](file:///c:/Users/teddy/projects/workout-app/src/components/DailyWorkoutModal.tsx#L68) — `formatVolume` appends `' lbs'`
 - **Why latent:** Settings phase (Phase 5) will need kg/lbs toggle. All these hardcoded strings will need updating.
 - **Will break at:** Settings feature — unit preference toggle
 - **Recommended fix (when):** When implementing Settings, create a `useUnitPreference()` hook that reads from user settings and returns formatted weight strings. Replace all hardcoded `lbs` with the hook's output.
@@ -51,6 +78,22 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **What:** `ExerciseFilter` type and `getMuscleGroupsForFilter()` hardcode the mapping from filter pill labels to DB muscle group values. If new muscle groups are added to exercises or the taxonomy changes, this mapping must be manually updated.
 - **Why latent:** Current exercise set is stable. But import/export feature (Phase 6) could introduce exercises with muscle groups not in this mapping.
 - **Recommended fix (when):** When implementing import, derive filter pills dynamically from `SELECT DISTINCT muscle FROM ...` or from the exercise model's muscle group enum.
+
+### TD-009 · `CalendarDayData` type defined in service file instead of `src/models/`
+
+- **Category:** Type ownership / guardrail #5 deviation
+- **File:** [calendarService.ts:31-44](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L31-L44) — `CalendarDayData` interface + `JournalEntry` interface
+- **What:** `CalendarDayData` is exported from `calendarService.ts` and imported by `CalendarScreen.tsx`. `JournalEntry` is similarly exported and used by `JournalView.tsx`. Guardrail #5 says canonical types live in `src/models/`. The current precedent is that model types used across file boundaries should be in `models/`.
+- **Why latent:** Only two consumers each right now. Will become problematic when widgets or Profile refactor need these same types.
+- **Recommended fix (when):** Create `src/models/calendar.ts` with `CalendarDayData`, `JournalEntry`, and `MonthData`. Import from models in both service and component files.
+
+### TD-011 · `calendarService.ts` is 848 lines and growing toward monolith territory
+
+- **Category:** Service boundary concern
+- **File:** [calendarService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts) — 848 lines
+- **Why latent:** Contains 10 exported functions spanning 4 distinct domains: heatmap queries, streak/rest computation, PR backfill, journal search, and fatigue detection. This mirrors the `analyticsService.ts` pattern (TD-003). The service was built all at once as part of the calendar feature, so the growth was rapid.
+- **Will break at:** Widget framework (Phase 3) will likely add calendar-widget queries. Import/export (Phase 6) may need to write/read PR records.
+- **Recommended fix (when):** Before Phase 5, consider extracting `personalRecordsService.ts` (backfill + PR date queries) from `calendarService.ts`. Keep `calendarService.ts` for heatmap, streak, and workout date queries. Fatigue detection could go either way.
 
 ---
 
@@ -67,6 +110,17 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - `PillRow.tsx` — generic pill row component
   - `MetricSelector.tsx` — metric segmented control
 - **Result:** `AnalyticsScreen.tsx` reduced to 148 lines. All extracted files well under 600 lines.
+
+### TD-006 · `CalendarScreen.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-17**
+
+- **Guardrail violated:** #1 (Component size limit)
+- **Original:** 1056 lines (76% over limit)
+- **Fix applied:** Extracted to `src/components/calendar/`:
+  - `CalendarHeader.tsx` — streak/rest badges + metric/filter/journal controls (~290 lines)
+  - `MonthBlock.tsx` — month grid with `DayCell` sub-component (~305 lines)
+  - `types.ts` — shared types (`MonthData`), constants, and pure helpers (~107 lines)
+  - `index.ts` — barrel exports
+- **Result:** `CalendarScreen.tsx` reduced to ~310 lines (71% reduction). All extracted files well under 600 lines.
 
 ### TD-002 · Duplicated chart label formatting logic across 3 files — **RESOLVED 2026-03-14**
 
@@ -118,15 +172,15 @@ These were identified and fixed before this baseline was created. Documented her
 
 These guardrails in `conventions.md` were created specifically to prevent tech debt recurrence. The Tech Debt Auditor should verify compliance with all of them:
 
-| # | Guardrail | Analytics Status |
-|---|-----------|-----------------|
-| 1 | Component size limit (600 lines) | ✅ `AnalyticsScreen.tsx` at 148 lines (TD-001 resolved) |
-| 2 | Avoid `any` types | ⚠️ 3 instances in chart callbacks — accepted (TD-A01) |
-| 3 | Database schema changes require versioned migrations | ✅ No schema changes in analytics |
-| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ Both hooks properly extracted |
-| 5 | Canonical types live in `src/models/` | ✅ All types in `models/analytics.ts`, service uses local row types only |
-| 6 | State reset on lifecycle boundaries | ✅ `useExerciseAnalytics` re-fetches on `exerciseId` change |
-| 7 | SafeAreaView edges must match tab bar visibility | ✅ Both screens use `edges={['bottom']}` (tab bar hidden, stack header handles top) |
+| # | Guardrail | Calendar Feature Status |
+|---|-----------|------------------------|
+| 1 | Component size limit (600 lines) | ✅ `CalendarScreen.tsx` at ~310 lines (TD-006 resolved) |
+| 2 | Avoid `any` types | ✅ No `any` usage in any calendar file |
+| 3 | Database schema changes require versioned migrations | ✅ v5 migration used for `personal_records` table |
+| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ CalendarScreen has 12 `useState` but they span multiple concerns (data, filters, UI) — no single concern exceeds 3 |
+| 5 | Canonical types live in `src/models/` | ⚠️ `CalendarDayData` and `JournalEntry` in service file (TD-009) |
+| 6 | State reset on lifecycle boundaries | ✅ `DailyWorkoutModal` uses effect cleanup with `cancelled` flag on `date` change |
+| 7 | SafeAreaView edges must match tab bar visibility | ✅ `CalendarScreen` uses `edges={['bottom']}` (tab bar hidden, stack header handles top) |
 
 ---
 
@@ -135,16 +189,18 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 Areas to monitor as the app approaches later roadmap phases:
 
 | Concern | Current State | Will Break At |
-|---------|--------------|--------------:|
+|---------|--------------|--------------|
 | Navigation structure (3 tabs + modals) | Adequate for current features | Phase 5 (Settings) may need nested stacks or drawer |
 | SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
-| Service file boundaries | 5 services, `analyticsService` at 873 lines | ML features (Phase 7) — needs split per TD-003 |
+| Service file boundaries | 6 services, `analyticsService` at 873 lines, **`calendarService` at 848 lines** | ML features (Phase 7), Widget framework (Phase 3) |
 | Hydration layer | Single mapping file | Every new model field = hydration update needed — fragile |
-| Unit hardcoding (`lbs`) | Everywhere in analytics | Phase 5 (Settings) — kg/lbs toggle per TD-004 |
+| Unit hardcoding (`lbs`) | Analytics + calendar modal | Phase 5 (Settings) — kg/lbs toggle per TD-004 |
 | Chart label logic | Shared via `chartLabels.tsx` | ✅ Resolved (TD-002) |
+| Calendar component size | ✅ Resolved (TD-006) — 310 lines | — |
+| **ISO week helper duplication** | **Identical functions in 2 services** | **Any week-boundary bug fix** |
 
 ---
 
 ## Last Updated
-- Date: 2026-03-14
-- Session Context: TD-002 resolved — chart label logic deduplicated into `src/utils/chartLabels.tsx`. 0 active issues remain, 3 latent.
+- Date: 2026-03-17
+- Session Context: Tech Debt Auditor pass on calendar feature (Phases A–E). TD-006 resolved (CalendarScreen 1056→310 lines). 3 active issues remain (TD-007, TD-008, TD-010), 5 latent (TD-003, TD-004, TD-005, TD-009, TD-011).
