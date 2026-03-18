@@ -7,8 +7,8 @@ description: Tracking document for performance regression findings from Performa
 ## Summary
 
 - **Last full pass:** 2026-03-17 (Calendar Feature QA pass)
-- **Open issues:** 4 (High: 0, Medium: 3, Low: 1)
-- **Fixed this session:** 2
+- **Open issues:** 3 (Medium: 2, Low: 1)
+- **Fixed this session:** 3
 - **Negligible / Won't Fix:** 5
 
 ---
@@ -16,14 +16,6 @@ description: Tracking document for performance regression findings from Performa
 ## Open Issues
 
 ### Medium (Budget Device Impact)
-
-**PP-018** — `getFatigueDates()` loads full exercise history on every month load
-- Queries all completed sets for **all time** up to end of month (`AND DATE(w.completed_at) < ?`)
-- For a user with 6+ months of history, this scans thousands of rows per call
-- Called in `loadMonthData()` via `Promise.all` — fires for every month in the initial batch of 6
-- Fix: Limit lookback to 3 months prior (12 trailing sessions covers the 4-session window generously), or cache results
-- Status: **Open**
-- Affected tier: **Budget devices** (CPU + I/O on large datasets)
 
 **PP-019** — `CalendarScreen.tsx` — Inline arrow closures on `DayCell.onPress`
 - `MonthBlock` render: `onPress={hasWorkout && cell.date ? () => onDayPress(cell.date!) : undefined}`
@@ -55,6 +47,7 @@ description: Tracking document for performance regression findings from Performa
 |----|------|------|-------------|
 | PP-016 | N+1 query | `calendarService.ts` | Batch `IN (...)` query for exercise notes in `searchNotes()` |
 | PP-017 | N+1 query | `calendarService.ts` | Batch `IN (...)` queries for exercises + sets in `getWorkoutsForDate()` |
+| PP-018 | Full-history scan | `calendarService.ts` | Added 3-month lookback floor to `getFatigueDates()` query |
 
 ---
 

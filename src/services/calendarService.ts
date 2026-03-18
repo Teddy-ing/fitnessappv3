@@ -774,8 +774,14 @@ export async function getFatigueDates(
         const ny = month === 12 ? year + 1 : year;
         const endDate = `${ny}-${String(nm).padStart(2, '0')}-01`;
 
-        // Get per-exercise, per-session volume for all time up to end of month
-        // We need historical data to compute trailing averages
+        // PP-018 fix: Limit lookback to 3 months before the target month.
+        // The trailing average only needs 4 prior sessions per exercise,
+        // so 3 months is generous while avoiding a full-history scan.
+        const lookbackMonth = month - 3 <= 0 ? month - 3 + 12 : month - 3;
+        const lookbackYear = month - 3 <= 0 ? year - 1 : year;
+        const lookbackDate = `${lookbackYear}-${String(lookbackMonth).padStart(2, '0')}-01`;
+
+        // Get per-exercise, per-session volume within the lookback window
         const rows = await db.getAllAsync<FatigueSessionRow>(`
             SELECT
                 we.exercise_id,
@@ -787,10 +793,11 @@ export async function getFatigueDates(
             WHERE w.status = 'completed'
               AND ws.status = 'completed'
               AND ws.weight > 0 AND ws.reps > 0
+              AND DATE(w.completed_at) >= ?
               AND DATE(w.completed_at) < ?
             GROUP BY we.exercise_id, DATE(w.completed_at)
             ORDER BY we.exercise_id, w.completed_at ASC
-        `, [endDate]);
+        `, [lookbackDate, endDate]);
 
         if (rows.length === 0) return new Set();
 
