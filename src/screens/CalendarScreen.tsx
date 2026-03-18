@@ -130,6 +130,7 @@ function getMetricValue(day: CalendarDayData, metric: string): number {
 
 interface DayCellProps {
     dayNumber: number | null;
+    date: string | null;
     heatmapOpacity: number;
     isToday: boolean;
     hasWorkout: boolean;
@@ -139,11 +140,12 @@ interface DayCellProps {
     showPRFilter: boolean;
     showNoteFilter: boolean;
     showFatigueFilter: boolean;
-    onPress?: () => void;
+    onDayPress: (date: string) => void;
 }
 
 const DayCell = React.memo(function DayCell({
     dayNumber,
+    date,
     heatmapOpacity,
     isToday,
     hasWorkout,
@@ -153,8 +155,14 @@ const DayCell = React.memo(function DayCell({
     showPRFilter,
     showNoteFilter,
     showFatigueFilter,
-    onPress,
+    onDayPress,
 }: DayCellProps) {
+    // PP-019 fix: callback lives inside the memoized component,
+    // so the parent never creates per-cell closures.
+    const handlePress = useCallback(() => {
+        if (date) onDayPress(date);
+    }, [date, onDayPress]);
+
     if (dayNumber === null) {
         return <View style={styles.dayCell} />;
     }
@@ -174,7 +182,7 @@ const DayCell = React.memo(function DayCell({
                 },
                 isToday && styles.todayCell,
             ]}
-            onPress={onPress}
+            onPress={handlePress}
             disabled={!hasWorkout}
             activeOpacity={0.7}
         >
@@ -303,6 +311,7 @@ const MonthBlock = React.memo(function MonthBlock({
                         <DayCell
                             key={i}
                             dayNumber={cell.dayNumber}
+                            date={cell.date}
                             heatmapOpacity={opacity}
                             isToday={isToday}
                             hasWorkout={hasWorkout}
@@ -312,11 +321,7 @@ const MonthBlock = React.memo(function MonthBlock({
                             showPRFilter={showPRFilter}
                             showNoteFilter={showNoteFilter}
                             showFatigueFilter={showFatigueFilter}
-                            onPress={
-                                hasWorkout && cell.date
-                                    ? () => onDayPress(cell.date!)
-                                    : undefined
-                            }
+                            onDayPress={onDayPress}
                         />
                     );
                 })}
