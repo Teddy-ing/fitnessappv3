@@ -90,6 +90,8 @@ export {
     backfillPersonalRecords,
     searchNotes,
     getFatigueDates,
+    getPRSetIdsForDate,
     type CalendarDayData,
     type JournalEntry,
+    type PRSetIds,
 } from './calendarService';

@@ -68,6 +68,9 @@ interface RestDayCountRow {
     rest_count: number;
 }
 
+/** Set of workout_set IDs that are personal records */
+export type PRSetIds = Set<string>;
+
 // ============================================================
 // ISO Week helpers — imported from shared utility
 // ============================================================
@@ -822,6 +825,30 @@ export async function getFatigueDates(
         return fatigueDates;
     } catch (error) {
         console.error('[CalendarService] getFatigueDates failed:', error);
+        return new Set();
+    }
+}
+
+// ============================================================
+// Personal Record Set IDs
+// ============================================================
+
+/**
+ * Fetch the set IDs that are current personal records for a specific date.
+ * Used by DailyWorkoutModal to show PR badges on individual sets.
+ */
+export async function getPRSetIdsForDate(date: string): Promise<PRSetIds> {
+    const db = await getDatabase();
+    if (!db) return new Set();
+
+    try {
+        const rows = await db.getAllAsync<{ set_id: string }>(
+            `SELECT set_id FROM personal_records
+             WHERE DATE(achieved_at) = ? AND is_current = 1`,
+            [date],
+        );
+        return new Set(rows.map((r) => r.set_id));
+    } catch {
         return new Set();
     }
 }

@@ -21,10 +21,10 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
-import { getWorkoutsForDate } from '../services';
-import { getDatabase } from '../services/database';
+import { getWorkoutsForDate, getPRSetIdsForDate, type PRSetIds } from '../services';
 import { useWorkoutStore } from '../stores';
 import { navigateToTab } from '../navigation/navigationRef';
+import { formatDuration, formatVolume } from '../utils/formatters';
 import type { Workout, WorkoutExercise, WorkoutSet } from '../models/workout';
 
 // ============================================================
@@ -36,8 +36,8 @@ interface DailyWorkoutModalProps {
     onClose: () => void;
 }
 
-/** Set IDs that are personal records */
-type PRSetIds = Set<string>;
+
+
 
 // ============================================================
 // Helpers
@@ -53,21 +53,6 @@ function formatDateHeader(dateStr: string): string {
     });
 }
 
-/** Format seconds → "1h 05m" or "45m" */
-function formatDuration(seconds: number | null): string {
-    if (!seconds || seconds <= 0) return '—';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
-    return `${m}m`;
-}
-
-/** Format volume → "12,500 lbs" */
-function formatVolume(volume: number | null): string {
-    if (!volume || volume <= 0) return '—';
-    return volume.toLocaleString() + ' lbs';
-}
-
 /** Summarize a set concisely: "225 × 8" or "BW × 12" or "30s" */
 function formatSet(set: WorkoutSet): string {
     if (set.duration && !set.weight && !set.reps) {
@@ -76,23 +61,6 @@ function formatSet(set: WorkoutSet): string {
     const weight = set.weight != null ? `${set.weight}` : 'BW';
     const reps = set.reps ?? '?';
     return `${weight} × ${reps}`;
-}
-
-/** Fetch set IDs that are PRs for a specific date */
-async function getPRSetIdsForDate(date: string): Promise<PRSetIds> {
-    const db = await getDatabase();
-    if (!db) return new Set();
-
-    try {
-        const rows = await db.getAllAsync<{ set_id: string }>(
-            `SELECT set_id FROM personal_records
-             WHERE DATE(achieved_at) = ? AND is_current = 1`,
-            [date],
-        );
-        return new Set(rows.map((r) => r.set_id));
-    } catch {
-        return new Set();
-    }
 }
 
 // ============================================================

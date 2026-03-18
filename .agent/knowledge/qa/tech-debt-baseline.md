@@ -7,32 +7,14 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-17 (calendar feature post-completion)
-- **Open issues:** 7 (Active: 2, Latent: 5)
-- **Fixed since baseline:** 4
+- **Open issues:** 5 (Active: 0, Latent: 5)
+- **Fixed since baseline:** 6
 
 ---
 
 ## Open Issues — Active Debt
 
-Issues that will cause problems in the next 1–2 roadmap phases.
-
-### TD-008 · `formatDuration` duplicated in DailyWorkoutModal and JournalView
-
-- **Category:** DRY violation
-- **Files:**
-  - [DailyWorkoutModal.tsx:57-63](file:///c:/Users/teddy/projects/workout-app/src/components/DailyWorkoutModal.tsx#L57-L63) — `formatDuration(seconds)`
-  - [JournalView.tsx:38-44](file:///c:/Users/teddy/projects/workout-app/src/components/JournalView.tsx#L38-L44) — identical function
-- **What:** The same seconds-to-`"1h 05m"` formatting function is copy-pasted between two calendar components. `formatVolume` in `DailyWorkoutModal.tsx` is also a one-off that could be shared.
-- **Why active:** These components were just built — if not extracted now, the pattern will continue into Profile widgets and any future component that shows workout summaries.
-- **Recommended fix:** Create `src/utils/formatters.ts` with `formatDuration`, `formatVolume`, and potentially `formatDateHeader`. ~10 min fix.
-
-### TD-010 · `DailyWorkoutModal` contains raw DB query bypassing service layer
-
-- **Category:** Service boundary violation
-- **File:** [DailyWorkoutModal.tsx:82-96](file:///c:/Users/teddy/projects/workout-app/src/components/DailyWorkoutModal.tsx#L82-L96) — `getPRSetIdsForDate()`
-- **What:** The `getPRSetIdsForDate` function imports `getDatabase` directly and runs a raw SQL query inside a UI component file. All other data access goes through service files. This breaks the established data access pattern where components call services, never the database directly.
-- **Why active:** Widget framework (Phase 3) and Profile refactor (Phase 4) will need PR data too. Having this query trapped in a modal component forces copy-paste or circular imports.
-- **Recommended fix:** Move `getPRSetIdsForDate` to `calendarService.ts` and export it. The component should import from `services/`. ~5 min fix.
+No active debt. All items resolved or deferred to latent.
 
 ---
 
@@ -100,6 +82,20 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - `PillRow.tsx` — generic pill row component
   - `MetricSelector.tsx` — metric segmented control
 - **Result:** `AnalyticsScreen.tsx` reduced to 148 lines. All extracted files well under 600 lines.
+
+### TD-010 · `DailyWorkoutModal` raw DB query bypassing service layer — **RESOLVED 2026-03-17**
+
+- **Category:** Service boundary violation
+- **Original:** `getPRSetIdsForDate()` imported `getDatabase` directly in a UI component.
+- **Fix applied:** Moved `getPRSetIdsForDate` to `calendarService.ts`, exported via barrel. Component now imports from `services/`.
+- **Result:** No UI components import `getDatabase` anymore. PR query is reusable by future widgets.
+
+### TD-008 · `formatDuration` duplicated in DailyWorkoutModal and JournalView — **RESOLVED 2026-03-17**
+
+- **Category:** DRY violation
+- **Original:** Identical `formatDuration` in both files, `formatVolume` as one-off in modal.
+- **Fix applied:** Created `src/utils/formatters.ts` with `formatDuration(seconds, fallback?)` and `formatVolume(volume, fallback?)`. Both components import from shared utility. JournalView passes `''` fallback to preserve conditional badge display.
+- **Result:** ~30 lines of duplicated code eliminated. Shared formatters available for future components.
 
 ### TD-007 · ISO week helpers duplicated across two services — **RESOLVED 2026-03-17**
 
@@ -200,4 +196,4 @@ Areas to monitor as the app approaches later roadmap phases:
 
 ## Last Updated
 - Date: 2026-03-17
-- Session Context: Tech Debt Auditor pass on calendar feature. TD-006 and TD-007 resolved. 2 active issues remain (TD-008, TD-010), 5 latent (TD-003, TD-004, TD-005, TD-009, TD-011).
+- Session Context: Tech Debt Auditor pass on calendar feature. All 4 active issues resolved (TD-006, TD-007, TD-008, TD-010). 5 latent issues remain (TD-003, TD-004, TD-005, TD-009, TD-011).

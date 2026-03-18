@@ -18,6 +18,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { searchNotes, type JournalEntry } from '../services';
+import { formatDuration } from '../utils/formatters';
 
 // ============================================================
 // Helpers
@@ -34,21 +35,14 @@ function formatDate(dateStr: string): string {
     });
 }
 
-/** Format seconds → "47m" or "1h 05m" */
-function formatDuration(seconds: number | null): string {
-    if (!seconds || seconds <= 0) return '';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
-    return `${m}m`;
-}
+
 
 // ============================================================
 // Sub-components
 // ============================================================
 
 function JournalCard({ entry }: { entry: JournalEntry }) {
-    const duration = formatDuration(entry.duration);
+    const duration = formatDuration(entry.duration, '');
 
     return (
         <View style={styles.card}>
