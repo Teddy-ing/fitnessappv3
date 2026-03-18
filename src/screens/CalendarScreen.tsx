@@ -641,14 +641,17 @@ export default function CalendarScreen() {
         setLoadingMore(true);
 
         const oldest = months[0];
+        // Compute all target months first, then load in parallel (PP-020 fix)
+        const targets: Array<[number, number]> = [];
         let [y, m] = prevMonth(oldest.year, oldest.month);
-
-        const newMonths: MonthData[] = [];
         for (let i = 0; i < MONTHS_TO_LOAD_ON_SCROLL; i++) {
-            const monthData = await loadMonthData(y, m);
-            newMonths.push(monthData);
+            targets.push([y, m]);
             [y, m] = prevMonth(y, m);
         }
+
+        const newMonths = await Promise.all(
+            targets.map(([ty, tm]) => loadMonthData(ty, tm)),
+        );
 
         // Prepend older months (reversed so oldest is first)
         setMonths(prev => [...newMonths.reverse(), ...prev]);
@@ -674,14 +677,18 @@ export default function CalendarScreen() {
 
         setLoadingMore(true);
 
+        // Compute all target months first, then load in parallel (PP-020 fix)
+        const targets: Array<[number, number]> = [];
         let [y, m] = nextMonth(newest.year, newest.month);
-        const newMonths: MonthData[] = [];
         for (let i = 0; i < MONTHS_TO_LOAD_ON_SCROLL; i++) {
             if (y > currentYear || (y === currentYear && m > currentMonth)) break;
-            const monthData = await loadMonthData(y, m);
-            newMonths.push(monthData);
+            targets.push([y, m]);
             [y, m] = nextMonth(y, m);
         }
+
+        const newMonths = await Promise.all(
+            targets.map(([ty, tm]) => loadMonthData(ty, tm)),
+        );
 
         setMonths(prev => [...prev, ...newMonths]);
         setLoadingMore(false);

@@ -7,22 +7,15 @@ description: Tracking document for performance regression findings from Performa
 ## Summary
 
 - **Last full pass:** 2026-03-17 (Calendar Feature QA pass)
-- **Open issues:** 1 (Low: 1)
-- **Fixed this session:** 5
+- **Open issues:** 0
+- **Fixed this session:** 6
 - **Negligible / Won't Fix:** 5
 
 ---
 
 ## Open Issues
 
-### Low
-
-**PP-020** — `loadOlderMonths()` sequential await in a loop
-- Loads 3 older months **sequentially** (`for` loop with `await loadMonthData`)
-- Each `loadMonthData` fires 4 parallel queries, but the months themselves are serialized
-- Fix: Use `Promise.all([loadMonthData(m1), loadMonthData(m2), loadMonthData(m3)])`
-- Status: **Open**
-- Affected tier: **Budget devices** (perceived latency on scroll)
+None 🎉
 
 ---
 
@@ -35,6 +28,7 @@ description: Tracking document for performance regression findings from Performa
 | PP-018 | Full-history scan | `calendarService.ts` | Added 3-month lookback floor to `getFatigueDates()` query |
 | PP-019 | Inline arrow props | `CalendarScreen.tsx` | Moved callback inside `DayCell` via `useCallback`; parent passes stable `date` + `onDayPress` |
 | PP-012 | Redundant loading | `exerciseService.ts` | Module-level cache with invalidation on all 5 mutation functions |
+| PP-020 | Sequential await | `CalendarScreen.tsx` | `Promise.all` for parallel month loading in `loadOlderMonths`/`loadNewerMonths` |
 
 ---
 
