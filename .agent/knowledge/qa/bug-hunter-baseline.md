@@ -7,8 +7,8 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-17 (calendar feature — Phases A–E)
-- **Open issues:** 2 (Critical: 0, High: 0, Medium: 1, Low: 1)
-- **Fixed since baseline:** 6
+- **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
+- **Fixed since baseline:** 11
 
 ---
 
@@ -24,25 +24,11 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ### Medium (Edge Cases)
 
-#### BH-010 · `navigationRef` typed as `any` — violates conventions guardrail #2
-
-- **Severity:** Medium
-- **Triage status:** 🔴 Confirmed
-- **File:** [navigationRef.ts](file:///c:/Users/teddy/projects/workout-app/src/navigation/navigationRef.ts#L11)
-- **Root cause:** `createNavigationContainerRef<any>()` uses `any` as the generic type parameter. Conventions guardrail #2 explicitly prohibits `any` types. This means `navigateToTab` accepts any string, including typos like `'Profle'`, without compile-time checking.
-- **Fix:** Define a `RootTabParamList` type and use `createNavigationContainerRef<RootTabParamList>()`. Type the `tabName` parameter of `navigateToTab` accordingly. Add `// eslint-disable-next-line` with justification if a proper type can't be defined due to circular imports.
-
----
+*No open medium issues.*
 
 ### Low (Defensive Gaps)
 
-#### BH-011 · `updateWorkout` not exported in default export object of `workoutService.ts`
-
-- **Severity:** Low
-- **Triage status:** 🔴 Confirmed
-- **File:** [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts#L431-L438)
-- **Root cause:** The `updateWorkout` function is a named export but is missing from the default export object at lines 431-438. While the app currently imports `updateWorkout` via barrel exports (`services/index.ts`), any consumer using the default import pattern (`import workoutService from './workoutService'`) would not have access to `updateWorkout`. This is inconsistent with the rest of the service's exports.
-- **Fix:** Add `updateWorkout` to the default export object.
+*No open low issues.*
 
 ---
 
@@ -100,6 +86,20 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Root cause:** Analytics screens were only covered by the outer ProfileStack boundary. A chart crash would take down the entire stack.
 - **Fix applied:** Added `AnalyticsScreenWithBoundary` and `ExerciseAnalyticsScreenWithBoundary` wrapper components in AppNavigator.
 
+#### BH-011 · `updateWorkout` not exported in default export object of `workoutService.ts` — **RESOLVED 2026-03-17**
+- **Severity:** Low
+- **Original status:** 🔴 Confirmed
+- **File:** [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts#L431-L439)
+- **Root cause:** `updateWorkout` was a named export but missing from the default export object.
+- **Fix applied:** Added `updateWorkout` to the default export object.
+
+#### BH-010 · `navigationRef` typed as `any` — violates conventions guardrail #2 — **RESOLVED 2026-03-17**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [navigationRef.ts](file:///c:/Users/teddy/projects/workout-app/src/navigation/navigationRef.ts)
+- **Root cause:** `createNavigationContainerRef<any>()` and untyped `tabName: string` parameter.
+- **Fix applied:** Used existing `RootTabParamList` from `AppNavigator.tsx`. Typed `tabName` as `keyof RootTabParamList`. Removed `as never` cast.
+
 #### BH-009 · `getWorkoutsForDate` casts `SetRow` without `workout_exercise_id` in type — **RESOLVED 2026-03-17**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
@@ -151,4 +151,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-17
-- Session Context: Calendar feature (Phases A–E) QA pass. BH-007, BH-008, BH-009 fixed. 2 issues remaining (BH-010, BH-011).
+- Session Context: Calendar feature QA pass complete. All 5 issues (BH-007 through BH-011) resolved. Zero open issues.

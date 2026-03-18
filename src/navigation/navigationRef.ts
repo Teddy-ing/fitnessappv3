@@ -7,15 +7,16 @@
  */
 
 import { createNavigationContainerRef } from '@react-navigation/native';
+import type { RootTabParamList } from './AppNavigator';
 
-export const navigationRef = createNavigationContainerRef<any>();
+export const navigationRef = createNavigationContainerRef<RootTabParamList>();
 
 /**
  * Navigate to a specific tab in the bottom tab navigator.
  * Safe-to-call even before the NavigationContainer is mounted.
  */
-export function navigateToTab(tabName: string) {
+export function navigateToTab(tabName: keyof RootTabParamList) {
     if (navigationRef.isReady()) {
-        navigationRef.navigate(tabName as never);
+        navigationRef.navigate(tabName);
     }
 }

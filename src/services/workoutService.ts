@@ -430,6 +430,7 @@ export async function getWorkoutDatesThisWeek(): Promise<Date[]> {
 
 export default {
     saveWorkout,
+    updateWorkout,
     getWorkouts,
     getWorkoutById,
     deleteWorkout,
