@@ -140,16 +140,24 @@ export default function WorkoutScreen() {
             );
         } else {
             try {
+                // BH-007 fix: Snapshot edit-mode state BEFORE finishWorkout() clears it.
+                // finishWorkout() resets isEditMode/original* to false/null in the store,
+                // so reading them after the await would see the cleared values.
+                const wasEditMode = isEditMode;
+                const savedDuration = originalDuration;
+                const savedCompletedAt = originalCompletedAt;
+                const savedStartedAt = originalStartedAt;
+
                 const workout = await finishWorkout();
                 if (workout) {
-                    if (isEditMode) {
+                    if (wasEditMode) {
                         // Edit mode: restore original timestamps + duration,
                         // skip template prompt, navigate back to calendar
                         const editedWorkout = {
                             ...workout,
-                            totalDuration: originalDuration ?? workout.totalDuration,
-                            completedAt: originalCompletedAt ?? workout.completedAt,
-                            startedAt: originalStartedAt ?? workout.startedAt,
+                            totalDuration: savedDuration ?? workout.totalDuration,
+                            completedAt: savedCompletedAt ?? workout.completedAt,
+                            startedAt: savedStartedAt ?? workout.startedAt,
                         };
                         console.log('[WorkoutScreen] Updating edited workout...');
                         await updateWorkout(editedWorkout);
