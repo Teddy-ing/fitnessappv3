@@ -7,7 +7,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-17 (calendar feature — Phases A–E)
-- **Open issues:** 4 (Critical: 0, High: 1, Medium: 2, Low: 1)
+- **Open issues:** 3 (Critical: 0, High: 0, Medium: 2, Low: 1)
 - **Fixed since baseline:** 6
 
 ---
@@ -20,16 +20,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ### High (Incorrect Behavior)
 
-#### BH-008 · `backfillPersonalRecords` uses manual `BEGIN/COMMIT` instead of `withTransactionAsync`
-
-- **Severity:** High
-- **Triage status:** 🟡 Plausible
-- **File:** [calendarService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L545-L600)
-- **Root cause:** The `backfillPersonalRecords` function uses `db.execAsync('BEGIN;')` / `db.execAsync('COMMIT;')` for transaction management. If any of the `INSERT` calls throw, the `catch` block tries `db.execAsync('ROLLBACK;')` — but because `execAsync` errors are also swallowed at that level (the catch silently eats the rollback error), a partial write can leave the DB in an inconsistent state. More critically, the Expo SQLite WAL-mode can interact poorly with manual `BEGIN/COMMIT` when other read operations are in flight (`Promise.all` in `loadMonthData`). The rest of the codebase correctly uses `withTransactionAsync` — this function is the only outlier.
-- **Scenario:** If the backfill crashes mid-way (e.g. phone runs low on memory with a large history), some exercises have PR records and others don't. The `pr_backfill_complete` flag isn't set, so the next app open re-runs the backfill — but existing records will cause UNIQUE constraint failures if the PR IDs collide (UUIDs make this unlikely but the pattern is still wrong).
-- **Fix:** Replace `execAsync('BEGIN;')` / `execAsync('COMMIT;')` with `db.withTransactionAsync(async () => { ... })`, matching the pattern used in `saveWorkout` and `updateWorkout`.
-
----
+*No open high issues.*
 
 ### Medium (Edge Cases)
 
@@ -119,6 +110,13 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Root cause:** Analytics screens were only covered by the outer ProfileStack boundary. A chart crash would take down the entire stack.
 - **Fix applied:** Added `AnalyticsScreenWithBoundary` and `ExerciseAnalyticsScreenWithBoundary` wrapper components in AppNavigator.
 
+#### BH-008 · `backfillPersonalRecords` uses manual `BEGIN/COMMIT` instead of `withTransactionAsync` — **RESOLVED 2026-03-17**
+- **Severity:** High
+- **Original status:** 🟡 Plausible
+- **File:** [calendarService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L545-L600)
+- **Root cause:** Manual `BEGIN`/`COMMIT`/`ROLLBACK` pattern was inconsistent with the rest of the codebase and risked partial writes on failure.
+- **Fix applied:** Replaced with `db.withTransactionAsync()`, removed manual rollback catch block.
+
 #### BH-007 · `finishWorkout` reads stale `isEditMode` / `original*` after `set()` clears them — **RESOLVED 2026-03-17**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
@@ -156,4 +154,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-17
-- Session Context: Calendar feature (Phases A–E) QA pass. 5 new issues found (BH-007 through BH-011). BH-007 fixed — snapshot edit-mode state before finishWorkout() clears it. 4 issues remaining.
+- Session Context: Calendar feature (Phases A–E) QA pass. BH-007 and BH-008 fixed. 3 issues remaining (BH-009, BH-010, BH-011).

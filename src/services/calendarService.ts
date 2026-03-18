@@ -542,60 +542,59 @@ export async function backfillPersonalRecords(): Promise<void> {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
         `;
 
-        await db.execAsync('BEGIN;');
+        // BH-008 fix: Use withTransactionAsync instead of manual BEGIN/COMMIT
+        // to ensure proper rollback on failure and consistency with the rest of the codebase.
+        await db.withTransactionAsync(async () => {
+            for (const [exerciseId, sets] of exerciseMap.entries()) {
+                let maxWeightSet = sets[0];
+                let maxRepsSet = sets[0];
+                let maxE1rmSet = sets[0];
+                let maxE1rmValue = 0;
 
-        for (const [exerciseId, sets] of exerciseMap.entries()) {
-            let maxWeightSet = sets[0];
-            let maxRepsSet = sets[0];
-            let maxE1rmSet = sets[0];
-            let maxE1rmValue = 0;
-
-            for (const set of sets) {
-                if (set.weight > maxWeightSet.weight) maxWeightSet = set;
-                if (set.reps > maxRepsSet.reps) maxRepsSet = set;
-                const e1rm = set.weight * (1 + set.reps / 30);
-                if (e1rm > maxE1rmValue) {
-                    maxE1rmValue = e1rm;
-                    maxE1rmSet = set;
+                for (const set of sets) {
+                    if (set.weight > maxWeightSet.weight) maxWeightSet = set;
+                    if (set.reps > maxRepsSet.reps) maxRepsSet = set;
+                    const e1rm = set.weight * (1 + set.reps / 30);
+                    if (e1rm > maxE1rmValue) {
+                        maxE1rmValue = e1rm;
+                        maxE1rmSet = set;
+                    }
                 }
+
+                await db.runAsync(insertSql, [
+                    Crypto.randomUUID(), exerciseId, maxWeightSet.exercise_name,
+                    maxWeightSet.workout_id, maxWeightSet.set_id,
+                    'max_weight', maxWeightSet.weight,
+                    maxWeightSet.reps, maxWeightSet.weight,
+                    maxWeightSet.achieved_at, now,
+                ]);
+
+                await db.runAsync(insertSql, [
+                    Crypto.randomUUID(), exerciseId, maxRepsSet.exercise_name,
+                    maxRepsSet.workout_id, maxRepsSet.set_id,
+                    'max_reps', maxRepsSet.reps,
+                    maxRepsSet.reps, maxRepsSet.weight,
+                    maxRepsSet.achieved_at, now,
+                ]);
+
+                await db.runAsync(insertSql, [
+                    Crypto.randomUUID(), exerciseId, maxE1rmSet.exercise_name,
+                    maxE1rmSet.workout_id, maxE1rmSet.set_id,
+                    'max_e1rm', Math.round(maxE1rmValue * 10) / 10,
+                    maxE1rmSet.reps, maxE1rmSet.weight,
+                    maxE1rmSet.achieved_at, now,
+                ]);
             }
 
-            await db.runAsync(insertSql, [
-                Crypto.randomUUID(), exerciseId, maxWeightSet.exercise_name,
-                maxWeightSet.workout_id, maxWeightSet.set_id,
-                'max_weight', maxWeightSet.weight,
-                maxWeightSet.reps, maxWeightSet.weight,
-                maxWeightSet.achieved_at, now,
-            ]);
-
-            await db.runAsync(insertSql, [
-                Crypto.randomUUID(), exerciseId, maxRepsSet.exercise_name,
-                maxRepsSet.workout_id, maxRepsSet.set_id,
-                'max_reps', maxRepsSet.reps,
-                maxRepsSet.reps, maxRepsSet.weight,
-                maxRepsSet.achieved_at, now,
-            ]);
-
-            await db.runAsync(insertSql, [
-                Crypto.randomUUID(), exerciseId, maxE1rmSet.exercise_name,
-                maxE1rmSet.workout_id, maxE1rmSet.set_id,
-                'max_e1rm', Math.round(maxE1rmValue * 10) / 10,
-                maxE1rmSet.reps, maxE1rmSet.weight,
-                maxE1rmSet.achieved_at, now,
-            ]);
-        }
-
-        await db.runAsync(
-            `UPDATE user_settings SET pr_backfill_complete = 1 WHERE id = 1`,
-        );
-
-        await db.execAsync('COMMIT;');
+            await db.runAsync(
+                `UPDATE user_settings SET pr_backfill_complete = 1 WHERE id = 1`,
+            );
+        });
 
         console.log(
             `[CalendarService] PR backfill complete: ${exerciseMap.size} exercises, ${exerciseMap.size * 3} records`,
         );
     } catch (error) {
-        try { await db.execAsync('ROLLBACK;'); } catch (_) {}
         console.error('[CalendarService] PR backfill failed:', error);
     }
 }
