@@ -334,7 +334,7 @@ export async function getWorkoutsForDate(
 
             if (exerciseIds.length > 0) {
                 const placeholders = exerciseIds.map(() => '?').join(',');
-                const setRows = await db.getAllAsync<SetRow>(
+                const setRows = await db.getAllAsync<SetRowWithParent>(
                     `SELECT * FROM workout_sets
                      WHERE workout_exercise_id IN (${placeholders})
                      ORDER BY order_index ASC`,
@@ -342,7 +342,7 @@ export async function getWorkoutsForDate(
                 );
 
                 for (const setRow of setRows) {
-                    const key = (setRow as SetRow & { workout_exercise_id: string }).workout_exercise_id;
+                    const key = setRow.workout_exercise_id;
                     if (!setsByExerciseId.has(key)) {
                         setsByExerciseId.set(key, []);
                     }

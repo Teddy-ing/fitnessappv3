@@ -7,7 +7,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-17 (calendar feature — Phases A–E)
-- **Open issues:** 3 (Critical: 0, High: 0, Medium: 2, Low: 1)
+- **Open issues:** 2 (Critical: 0, High: 0, Medium: 1, Low: 1)
 - **Fixed since baseline:** 6
 
 ---
@@ -23,16 +23,6 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 *No open high issues.*
 
 ### Medium (Edge Cases)
-
-#### BH-009 · `getWorkoutsForDate` casts `SetRow` without `workout_exercise_id` in type
-
-- **Severity:** Medium
-- **Triage status:** 🔴 Confirmed
-- **File:** [calendarService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L337-L350)
-- **Root cause:** On line 337, `getWorkoutsForDate` queries `workout_sets` with `SELECT *`, then on line 345 casts each row with `(setRow as SetRow & { workout_exercise_id: string }).workout_exercise_id`. The `SetRow` type from `hydration.ts` does not include `workout_exercise_id`, so this inline cast is used as a workaround. However, the exact same pattern is handled cleanly in `getWorkoutDetail` (line 57-59) with a proper `SetRowWithParent` interface that extends `SetRow`. The inconsistency means that if the `workout_sets` schema ever changes the column name, this cast would silently break (returning `undefined` as the key, grouping all sets under one exercise).
-- **Fix:** Use the existing `SetRowWithParent` interface (already defined at line 57) instead of the inline cast on line 345.
-
----
 
 #### BH-010 · `navigationRef` typed as `any` — violates conventions guardrail #2
 
@@ -110,6 +100,13 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 - **Root cause:** Analytics screens were only covered by the outer ProfileStack boundary. A chart crash would take down the entire stack.
 - **Fix applied:** Added `AnalyticsScreenWithBoundary` and `ExerciseAnalyticsScreenWithBoundary` wrapper components in AppNavigator.
 
+#### BH-009 · `getWorkoutsForDate` casts `SetRow` without `workout_exercise_id` in type — **RESOLVED 2026-03-17**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [calendarService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L335-L350)
+- **Root cause:** Used inline `as SetRow & { workout_exercise_id: string }` cast instead of the existing `SetRowWithParent` interface.
+- **Fix applied:** Replaced `getAllAsync<SetRow>` with `getAllAsync<SetRowWithParent>` and removed the inline cast.
+
 #### BH-008 · `backfillPersonalRecords` uses manual `BEGIN/COMMIT` instead of `withTransactionAsync` — **RESOLVED 2026-03-17**
 - **Severity:** High
 - **Original status:** 🟡 Plausible
@@ -154,4 +151,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-17
-- Session Context: Calendar feature (Phases A–E) QA pass. BH-007 and BH-008 fixed. 3 issues remaining (BH-009, BH-010, BH-011).
+- Session Context: Calendar feature (Phases A–E) QA pass. BH-007, BH-008, BH-009 fixed. 2 issues remaining (BH-010, BH-011).
