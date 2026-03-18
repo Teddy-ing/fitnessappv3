@@ -7,22 +7,13 @@ description: Tracking document for performance regression findings from Performa
 ## Summary
 
 - **Last full pass:** 2026-03-17 (Calendar Feature QA pass)
-- **Open issues:** 5 (High: 1, Medium: 3, Low: 1)
-- **Fixed this session:** 1
+- **Open issues:** 4 (High: 0, Medium: 3, Low: 1)
+- **Fixed this session:** 2
 - **Negligible / Won't Fix:** 5
 
 ---
 
 ## Open Issues
-
-### High (Budget + Mid-Range Device Impact)
-
-**PP-017** — `getWorkoutsForDate()` N+1 query pattern in `calendarService.ts`
-- For each workout on a date, separately fetches exercises then sets **inside a `for` loop**
-- If a user logs 3 workouts on one day (AM/PM split), this fires 7+ queries instead of 3
-- Fix: Batch all workout IDs, load all exercises with single `IN (...)` query, then all sets with single `IN (...)` query — same proven pattern as `getWorkouts()` in `workoutService.ts`
-- Status: **Open**
-- Affected tier: **All devices** (I/O bound, triggered on every day-cell tap)
 
 ### Medium (Budget Device Impact)
 
@@ -63,6 +54,7 @@ description: Tracking document for performance regression findings from Performa
 | ID | Area | File | Fix Applied |
 |----|------|------|-------------|
 | PP-016 | N+1 query | `calendarService.ts` | Batch `IN (...)` query for exercise notes in `searchNotes()` |
+| PP-017 | N+1 query | `calendarService.ts` | Batch `IN (...)` queries for exercises + sets in `getWorkoutsForDate()` |
 
 ---
 

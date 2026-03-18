@@ -303,6 +303,9 @@ export async function getWorkoutDetail(
 /**
  * Get all workouts for a specific date.
  * Returns an array of full Workout objects.
+ *
+ * Uses batch IN (...) queries (PP-017 fix) — same pattern as
+ * workoutService.getWorkouts() to avoid N+1.
  */
 export async function getWorkoutsForDate(
     date: string,
@@ -319,41 +322,55 @@ export async function getWorkoutsForDate(
             [date],
         );
 
-        const workouts: Workout[] = [];
+        if (workoutRows.length === 0) return [];
 
-        for (const workoutRow of workoutRows) {
-            const exerciseRows = await db.getAllAsync<ExerciseRow>(
-                `SELECT * FROM workout_exercises
-                 WHERE workout_id = ?
-                 ORDER BY order_index ASC`,
-                [workoutRow.id],
+        // Batch load all exercises for these workouts
+        const workoutIds = workoutRows.map((w) => w.id);
+        const wPlaceholders = workoutIds.map(() => '?').join(',');
+
+        const exerciseRows = await db.getAllAsync<ExerciseRow & { workout_id: string }>(
+            `SELECT * FROM workout_exercises
+             WHERE workout_id IN (${wPlaceholders})
+             ORDER BY workout_id, order_index ASC`,
+            workoutIds,
+        );
+
+        // Batch load all sets for these exercises
+        const exerciseIds = exerciseRows.map((e) => e.id);
+        const setsByExerciseId = new Map<string, SetRow[]>();
+
+        if (exerciseIds.length > 0) {
+            const ePlaceholders = exerciseIds.map(() => '?').join(',');
+            const setRows = await db.getAllAsync<SetRowWithParent>(
+                `SELECT * FROM workout_sets
+                 WHERE workout_exercise_id IN (${ePlaceholders})
+                 ORDER BY workout_exercise_id, order_index ASC`,
+                exerciseIds,
             );
 
-            const exerciseIds = exerciseRows.map((e) => e.id);
-            const setsByExerciseId = new Map<string, SetRow[]>();
-
-            if (exerciseIds.length > 0) {
-                const placeholders = exerciseIds.map(() => '?').join(',');
-                const setRows = await db.getAllAsync<SetRowWithParent>(
-                    `SELECT * FROM workout_sets
-                     WHERE workout_exercise_id IN (${placeholders})
-                     ORDER BY order_index ASC`,
-                    exerciseIds,
-                );
-
-                for (const setRow of setRows) {
-                    const key = setRow.workout_exercise_id;
-                    if (!setsByExerciseId.has(key)) {
-                        setsByExerciseId.set(key, []);
-                    }
-                    setsByExerciseId.get(key)!.push(setRow);
+            for (const setRow of setRows) {
+                const key = setRow.workout_exercise_id;
+                if (!setsByExerciseId.has(key)) {
+                    setsByExerciseId.set(key, []);
                 }
+                setsByExerciseId.get(key)!.push(setRow);
             }
-
-            workouts.push(mapWorkoutRow(workoutRow, exerciseRows, setsByExerciseId));
         }
 
-        return workouts;
+        // Group exercises by workout ID
+        const exercisesByWorkout = new Map<string, ExerciseRow[]>();
+        for (const ex of exerciseRows) {
+            const wId = ex.workout_id;
+            if (!exercisesByWorkout.has(wId)) {
+                exercisesByWorkout.set(wId, []);
+            }
+            exercisesByWorkout.get(wId)!.push(ex);
+        }
+
+        // Hydrate all workouts using shared mapper
+        return workoutRows.map((row) =>
+            mapWorkoutRow(row, exercisesByWorkout.get(row.id) || [], setsByExerciseId),
+        );
     } catch (error) {
         console.error('[CalendarService] Failed to get workouts for date:', error);
         return [];
