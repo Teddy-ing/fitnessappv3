@@ -18,4 +18,6 @@ export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as ConsistencyCards } from './ConsistencyCards';
 export { default as MuscleDistributionChart } from './MuscleDistributionChart';
 export { default as FatigueRatioBanner } from './FatigueRatioBanner';
+export { default as DailyWorkoutModal } from './DailyWorkoutModal';
+export { default as JournalView } from './JournalView';
 

@@ -29,6 +29,7 @@ export interface UserSettings {
     hasCompletedOnboarding: boolean;
     calendarStartDay: string;
     calendarHeatmapMetric: string;
+    prBackfillComplete: boolean;
 }
 
 /** Raw row from the user_settings table (snake_case, integers for booleans) */
@@ -47,6 +48,7 @@ interface UserSettingsRow {
     has_completed_onboarding: number;
     calendar_start_day: string;
     calendar_heatmap_metric: string;
+    pr_backfill_complete: number;
 }
 
 /** Default settings — used if the row doesn't exist yet */
@@ -64,6 +66,7 @@ const DEFAULTS: UserSettings = {
     hasCompletedOnboarding: false,
     calendarStartDay: 'sunday',
     calendarHeatmapMetric: 'volume',
+    prBackfillComplete: false,
 };
 
 // ============================================================
@@ -98,6 +101,7 @@ export async function getSettings(): Promise<UserSettings> {
         hasCompletedOnboarding: row.has_completed_onboarding === 1,
         calendarStartDay: row.calendar_start_day ?? 'sunday',
         calendarHeatmapMetric: row.calendar_heatmap_metric ?? 'volume',
+        prBackfillComplete: row.pr_backfill_complete === 1,
     };
 }
 
@@ -134,6 +138,7 @@ export async function updateSettings(
         hasCompletedOnboarding: 'has_completed_onboarding',
         calendarStartDay: 'calendar_start_day',
         calendarHeatmapMetric: 'calendar_heatmap_metric',
+        prBackfillComplete: 'pr_backfill_complete',
     };
 
     const setClauses: string[] = [];

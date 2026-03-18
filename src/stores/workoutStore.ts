@@ -34,9 +34,16 @@ interface WorkoutState {
     // Signal for timer auto-start (set by completeSet, consumed by RestTimer)
     lastCompletedSet: CompletedSetSignal | null;
 
+    // Edit mode: true when editing a historical workout from the calendar
+    isEditMode: boolean;
+    originalDuration: number | null;
+    originalCompletedAt: Date | null;
+    originalStartedAt: Date | null;
+
 
     // Actions - Workout lifecycle
     startWorkout: (name?: string) => void;
+    loadWorkoutForEditing: (workout: Workout) => void;
     finishWorkout: () => Promise<Workout | null>;
     discardWorkout: () => void;
 
@@ -57,6 +64,10 @@ interface WorkoutState {
 export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     activeWorkout: null,
     lastCompletedSet: null,
+    isEditMode: false,
+    originalDuration: null,
+    originalCompletedAt: null,
+    originalStartedAt: null,
 
 
     // ========================================
@@ -65,7 +76,27 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
     startWorkout: (name?: string) => {
         const workout = createWorkout(name);
-        set({ activeWorkout: workout });
+        set({ activeWorkout: workout, isEditMode: false, originalDuration: null, originalCompletedAt: null, originalStartedAt: null });
+    },
+
+    loadWorkoutForEditing: (workout: Workout) => {
+        // Load historical workout for editing.
+        // Set status to in_progress, reset completedAt, and update timestamps.
+        // The original ID is preserved so updateWorkout updates the same record.
+        set({
+            activeWorkout: {
+                ...workout,
+                status: 'in_progress',
+                completedAt: null,
+                startedAt: new Date(),
+                updatedAt: new Date(),
+            },
+            lastCompletedSet: null,
+            isEditMode: true,
+            originalDuration: workout.totalDuration ?? null,
+            originalCompletedAt: workout.completedAt ?? null,
+            originalStartedAt: workout.startedAt ?? null,
+        });
     },
 
     finishWorkout: async () => {
@@ -107,6 +138,10 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         set({
             activeWorkout: null,
             lastCompletedSet: null,
+            isEditMode: false,
+            originalDuration: null,
+            originalCompletedAt: null,
+            originalStartedAt: null,
         });
 
         return completedWorkout;
@@ -116,6 +151,10 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         set({
             activeWorkout: null,
             lastCompletedSet: null,
+            isEditMode: false,
+            originalDuration: null,
+            originalCompletedAt: null,
+            originalStartedAt: null,
         });
     },
 

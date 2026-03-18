@@ -60,12 +60,12 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Fix overlapping X-axis labels in Analytics charts** (added dynamic month tick marks while preserving full date tooltips)
 - [x] **Phase 2: Analytics Functions** (Macro charts, muscle distribution pie chart, micro exercise charts, fatigue ratio, tooltips, all backed by 140 passing tests)
 - [x] **Exercise List 3-Layer Navigation** (Search bar + muscle group filter pills + dynamic list with icon placeholders, SQL LIKE filter on exercise_muscle_groups)
+- [x] **Phase 3: Calendar Feature** (Phases A–E complete: all spec items implemented — heatmap grid, modal, PR/notes/fatigue filters, journal view, edit workout button, 10 service functions, 39 calendar tests)
 ---
 
 ## In Progress
 
 - [ ] **Phase 3/4: Profile Screen Scoping & Refactor** (Integrating analytics into the Profile view)
-- [ ] **Phase 3: Calendar Feature** (Phase 1 complete: DB + Service layer. Phase 2 pending: UI & Components)
 
 ---
 
@@ -126,6 +126,59 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-03-17: Calendar Feature — Phases D–E + Bug Fixes (Feature Complete)
+
+**Duration:** Multi-session
+**Focus:** Completing the remaining calendar spec items: Journal View, Fatigue Tracking filter, Edit Workout flow, and fixing several critical bugs.
+
+**What was done:**
+
+- **Phase D — Journal View + Fatigue Tracking:**
+  - `searchNotes(query?)` — Chronological journal entries with workout + exercise notes, optional keyword filtering
+  - `getFatigueDates(year, month)` — Per-exercise volume regression detection (≤80% of 4-session trailing average)
+  - `JournalView.tsx` — Searchable vertical timeline with debounced search, replacing calendar grid when Notes + Journal active
+  - ⚡ Fatigue toggle pill with red dot overlays on flagged day cells
+  - 📖 Journal toggle pill (conditionally rendered when Notes filter is active)
+
+- **Phase E — Edit Workout:**
+  - `navigationRef.ts` — Root navigation ref for programmatic cross-tab navigation
+  - `loadWorkoutForEditing(workout)` — Loads historical workout into store, preserving original ID
+  - "Edit Workout" button on each WorkoutCard in DailyWorkoutModal
+  - Active workout confirmation guard (alert before replacing in-progress workout)
+  - `updateWorkout(workout)` — Delete-then-insert transactional update in workoutService
+  - Edit mode flag (Option A) — 4 conditionals in WorkoutScreen:
+    - Frozen original duration (not live timer)
+    - Rest timer hidden
+    - "Save" / "Cancel" header text
+    - Simplified save flow (no template prompt, navigates back to Calendar)
+
+- **Bug Fixes:**
+  - **Infinite scroll viewport shift:** Fixed calendar jumping on slow scroll/prepend by implementing `onViewableItemsChanged`-based anchor with `maintainVisibleContentPosition`
+  - **Calendar starts on wrong month:** Auto-scrolls to current month on mount
+  - **UNIQUE constraint error on save:** `finishWorkout` was re-inserting with same ID; fixed with dedicated `updateWorkout()` (delete → re-insert)
+  - **Workout data loss on edit-save:** `completedAt` was overwritten to today's date; now stores and restores `originalCompletedAt`/`originalStartedAt`
+  - **Nav bar disappears after edit-save:** Added `navigateToTab('Profile')` to return to Calendar tab
+  - **Modal not scrollable on Android:** Added `nestedScrollEnabled={true}` to ScrollView inside Pressable, increased maxHeight to 90%
+
+**Files created:**
+- `src/components/JournalView.tsx`
+- `src/navigation/navigationRef.ts`
+
+**Files modified:**
+- `src/services/calendarService.ts` (2 new functions: `searchNotes`, `getFatigueDates`)
+- `src/services/workoutService.ts` (`updateWorkout`)
+- `src/services/index.ts` (new exports)
+- `src/stores/workoutStore.ts` (`loadWorkoutForEditing`, `isEditMode`, `originalDuration`, `originalCompletedAt`, `originalStartedAt`)
+- `src/screens/WorkoutScreen.tsx` (edit mode conditionals)
+- `src/screens/CalendarScreen.tsx` (fatigue filter, journal toggle, styles)
+- `src/components/DailyWorkoutModal.tsx` (edit button, scroll fix)
+- `src/components/index.ts` (JournalView export)
+- `src/navigation/AppNavigator.tsx` (navigationRef wiring)
+
+**Tests added:** 7 new tests for `searchNotes` and `getFatigueDates` (39 total calendar tests, 13 workoutStore tests)
+
+---
 
 ### 2026-03-10: Phase 2 — Analytics Implementation
 
@@ -498,8 +551,8 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Last Updated
-- Date: 2026-03-16
-- Session Context: Implemented Phase 1 (Foundation) of the Calendar Feature
+- Date: 2026-03-17
+- Session Context: Completed Phase C (Filter System) of the Calendar Feature
 
 ### 2026-03-16: Calendar Feature Development (Phase 1)
 
@@ -522,6 +575,53 @@ description: Living document tracking completed work, in-progress tasks, next st
 **Next Steps (Phase 2):**
 - Build out the UI components across the Profile/Calendar view
 - Implement the actual Calendar heatmap rendering
+
+---
+
+### 2026-03-17: Calendar Feature Development (Phase 2 — UI & Polish)
+
+**Duration:** ~30 min
+**Focus:** Completing the calendar UI with interactive elements
+
+**What was done:**
+- **DailyWorkoutModal:** Created `DailyWorkoutModal.tsx` — bottom-sheet modal triggered on day press, showing date header, summary badges (volume/sets/duration), and workout cards with exercise/set breakdowns.
+- **Heatmap metric toggle:** Added Volume / Sets / Duration pill row to the CalendarHeader. Tapping a pill updates `heatmapMetric` state and re-normalizes heatmap colors, persisted via `updateSettings()`.
+- **Start-day toggle:** Added Sun / Mon segmented control. Swaps grid column layout and persists via `updateSettings()`.
+- **Wiring:** Replaced `console.log` stub in `handleDayPress` with `DailyWorkoutModal` open state.
+- **Barrel export:** Added `DailyWorkoutModal` to `src/components/index.ts`.
+- **Verification:** 22/22 calendar tests pass, TypeScript compiles with zero errors.
+
+**Files created:**
+- `src/components/DailyWorkoutModal.tsx`
+
+**Files modified:**
+- `src/screens/CalendarScreen.tsx` — Header controls + modal integration
+- `src/components/index.ts` — Added DailyWorkoutModal export
+
+---
+
+### 2026-03-17: Calendar Feature (Phase C — Filter System)
+
+**Duration:** ~25 min
+**Focus:** PR detection and notes filter overlays on calendar heatmap
+
+**What was done:**
+- **v5 Migration:** Created `personal_records` table with `exercise_id`, `record_type`, `value`, `achieved_at` columns + 3 indexes. Added `pr_backfill_complete` flag to `user_settings`.
+- **Service Functions:** Added `backfillPersonalRecords()` (retroactive PR scan), `getPersonalRecordDates()`, `getNoteDates()` (3-way UNION across note columns).
+- **Preferences:** Extended `preferencesService.ts` with `prBackfillComplete` boolean.
+- **Filter UI:** Added 🏆 PRs and 📝 Notes toggle pills in CalendarHeader. Active filters show ⭐ star indicator (PRs) and amber dot (notes) on matching day cells, with non-matching workout days dimmed to 25% opacity.
+- **Data Loading:** Extended `loadMonthData` to fetch PR/note dates in parallel with workout data.
+- **Fix:** Fixed viewport-shift-on-prepend FlatList bug (`maintainVisibleContentPosition` + ref cooldown guard). Fixed initial scroll position to show current month.
+- **Tests:** Added 10 new tests (3 per query function + 4 for backfill). All 32 tests pass.
+- **Verification:** TypeScript compiles with zero errors.
+
+**Files created/modified:**
+- `src/services/migrations.ts` — v5 migration
+- `src/services/calendarService.ts` — 3 new functions
+- `src/services/preferencesService.ts` — prBackfillComplete field
+- `src/screens/CalendarScreen.tsx` — Filter state, overlays, pills
+- `src/services/index.ts` — 3 new exports
+- `src/services/__tests__/calendarService.test.ts` — 10 new tests
 
 ---
 

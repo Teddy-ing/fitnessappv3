@@ -2,6 +2,7 @@
 export { getDatabase, isDatabaseAvailable, closeDatabase, clearAllData } from './database';
 export {
     saveWorkout,
+    updateWorkout,
     getWorkouts,
     getWorkoutById,
     deleteWorkout,
@@ -84,5 +85,11 @@ export {
     getRestDaysThisWeek,
     getWorkoutDetail,
     getWorkoutsForDate,
+    getPersonalRecordDates,
+    getNoteDates,
+    backfillPersonalRecords,
+    searchNotes,
+    getFatigueDates,
     type CalendarDayData,
+    type JournalEntry,
 } from './calendarService';

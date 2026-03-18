@@ -357,6 +357,47 @@ const MIGRATIONS: Migration[] = [
             );
         },
     },
+
+    // ----------------------------------------------------------
+    // v5: Personal records table + backfill flag
+    // ----------------------------------------------------------
+    {
+        version: 5,
+        name: 'personal_records_table',
+        up: async (db) => {
+            // Materialized PR table — populated by backfill, updated on workout save
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS personal_records (
+                    id TEXT PRIMARY KEY,
+                    exercise_id TEXT NOT NULL,
+                    exercise_name TEXT NOT NULL,
+                    workout_id TEXT NOT NULL,
+                    set_id TEXT NOT NULL,
+                    record_type TEXT NOT NULL,
+                    value REAL NOT NULL,
+                    reps INTEGER,
+                    weight REAL,
+                    achieved_at TEXT NOT NULL,
+                    is_current INTEGER DEFAULT 1,
+                    created_at TEXT NOT NULL
+                );
+            `);
+
+            await db.execAsync(`
+                CREATE INDEX IF NOT EXISTS idx_pr_exercise ON personal_records(exercise_id);
+                CREATE INDEX IF NOT EXISTS idx_pr_date ON personal_records(achieved_at);
+                CREATE INDEX IF NOT EXISTS idx_pr_type ON personal_records(record_type, is_current);
+            `);
+
+            // Flag to gate one-time backfill
+            const hasFlag = await columnExists(db, 'user_settings', 'pr_backfill_complete');
+            if (!hasFlag) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN pr_backfill_complete INTEGER DEFAULT 0;`,
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

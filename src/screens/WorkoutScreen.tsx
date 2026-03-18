@@ -30,6 +30,7 @@ import { ExerciseCard, ExercisePicker, RestTimer, WorkoutKeyboard, SaveTemplateM
 import { useElapsedTimer, formatElapsedTime, useWorkoutKeyboard, useHomeScreenData } from '../hooks';
 import {
     saveWorkout,
+    updateWorkout,
     findMatchingTemplate,
     startWorkoutFromTemplate,
     markWorkoutCompletedToday,
@@ -37,11 +38,16 @@ import {
 } from '../services';
 import { Workout } from '../models/workout';
 import WorkoutHomeView from './WorkoutHomeView';
+import { navigateToTab } from '../navigation/navigationRef';
 
 export default function WorkoutScreen() {
     // PP-001 fix: Fine-grained selector — only re-render when activeWorkout changes.
     // Actions are stable references; access via getState() to avoid subscribing to them.
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
+    const isEditMode = useWorkoutStore(s => s.isEditMode);
+    const originalDuration = useWorkoutStore(s => s.originalDuration);
+    const originalCompletedAt = useWorkoutStore(s => s.originalCompletedAt);
+    const originalStartedAt = useWorkoutStore(s => s.originalStartedAt);
     const {
         startWorkout,
         finishWorkout,
@@ -123,7 +129,7 @@ export default function WorkoutScreen() {
             0
         ) ?? 0;
 
-        if (completedSets === 0) {
+        if (completedSets === 0 && !isEditMode) {
             Alert.alert(
                 'No Sets Completed',
                 'You haven\'t completed any sets. Are you sure you want to finish?',
@@ -136,31 +142,48 @@ export default function WorkoutScreen() {
             try {
                 const workout = await finishWorkout();
                 if (workout) {
-                    console.log('[WorkoutScreen] Saving workout...');
-                    await saveWorkout(workout);
-                    console.log('[WorkoutScreen] Workout saved!');
-
-                    await markWorkoutCompletedToday();
-                    await loadData();
-
-                    const matchingTemplate = await findMatchingTemplate(workout);
-                    if (matchingTemplate) {
-                        console.log('[WorkoutScreen] Workout matches template:', matchingTemplate.name);
+                    if (isEditMode) {
+                        // Edit mode: restore original timestamps + duration,
+                        // skip template prompt, navigate back to calendar
+                        const editedWorkout = {
+                            ...workout,
+                            totalDuration: originalDuration ?? workout.totalDuration,
+                            completedAt: originalCompletedAt ?? workout.completedAt,
+                            startedAt: originalStartedAt ?? workout.startedAt,
+                        };
+                        console.log('[WorkoutScreen] Updating edited workout...');
+                        await updateWorkout(editedWorkout);
+                        console.log('[WorkoutScreen] Workout updated!');
+                        // Navigate back to the Profile tab (Calendar)
+                        navigateToTab('Profile');
                     } else {
-                        Alert.alert(
-                            'Workout Saved!',
-                            'This workout has different exercises than your templates. Save as a new template?',
-                            [
-                                { text: 'No Thanks', style: 'cancel' },
-                                {
-                                    text: 'Save Template',
-                                    onPress: () => {
-                                        setPendingWorkout(workout);
-                                        setSaveTemplateModal(true);
-                                    }
-                                },
-                            ]
-                        );
+                        // Normal mode: save + template prompt
+                        console.log('[WorkoutScreen] Saving workout...');
+                        await saveWorkout(workout);
+                        console.log('[WorkoutScreen] Workout saved!');
+
+                        await markWorkoutCompletedToday();
+                        await loadData();
+
+                        const matchingTemplate = await findMatchingTemplate(workout);
+                        if (matchingTemplate) {
+                            console.log('[WorkoutScreen] Workout matches template:', matchingTemplate.name);
+                        } else {
+                            Alert.alert(
+                                'Workout Saved!',
+                                'This workout has different exercises than your templates. Save as a new template?',
+                                [
+                                    { text: 'No Thanks', style: 'cancel' },
+                                    {
+                                        text: 'Save Template',
+                                        onPress: () => {
+                                            setPendingWorkout(workout);
+                                            setSaveTemplateModal(true);
+                                        }
+                                    },
+                                ]
+                            );
+                        }
                     }
                 }
             } catch (error) {
@@ -251,18 +274,24 @@ export default function WorkoutScreen() {
             <View style={styles.workoutHeader}>
                 <View style={styles.workoutHeaderTop}>
                     <TouchableOpacity onPress={handleDiscardWorkout}>
-                        <Text style={styles.discardButton}>Discard</Text>
+                        <Text style={styles.discardButton}>{isEditMode ? 'Cancel' : 'Discard'}</Text>
                     </TouchableOpacity>
-                    <Text style={styles.workoutTitle}>{activeWorkout.name}</Text>
+                    <Text style={styles.workoutTitle}>
+                        {isEditMode ? `Editing: ${activeWorkout.name}` : activeWorkout.name}
+                    </Text>
                     <TouchableOpacity onPress={handleFinishWorkout}>
-                        <Text style={styles.finishButton}>Finish</Text>
+                        <Text style={styles.finishButton}>{isEditMode ? 'Save' : 'Finish'}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Stats row */}
                 <View style={styles.statsRow}>
                     <View style={styles.stat}>
-                        <Text style={styles.statValue}>{formatElapsedTime(elapsedTime)}</Text>
+                        <Text style={styles.statValue}>
+                            {isEditMode
+                                ? formatElapsedTime(originalDuration ?? 0)
+                                : formatElapsedTime(elapsedTime)}
+                        </Text>
                         <Text style={styles.statLabel}>Duration</Text>
                     </View>
                     <View style={styles.stat}>
@@ -339,8 +368,8 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
             </ScrollView>
 
-            {/* Rest Timer */}
-            <RestTimer />
+            {/* Rest Timer — hidden in edit mode */}
+            {!isEditMode && <RestTimer />}
 
             {/* Custom Workout Keyboard */}
             <WorkoutKeyboard

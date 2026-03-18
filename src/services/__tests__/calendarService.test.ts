@@ -11,6 +11,11 @@ import {
     getRestDaysThisWeek,
     getWorkoutDetail,
     getWorkoutsForDate,
+    getPersonalRecordDates,
+    getNoteDates,
+    backfillPersonalRecords,
+    searchNotes,
+    getFatigueDates,
 } from '../calendarService';
 
 // ============================================================
@@ -19,10 +24,21 @@ import {
 
 const mockGetAllAsync = jest.fn();
 const mockGetFirstAsync = jest.fn();
-let mockDb: { getAllAsync: jest.Mock; getFirstAsync: jest.Mock } | null = null;
+const mockRunAsync = jest.fn();
+const mockExecAsync = jest.fn();
+let mockDb: {
+    getAllAsync: jest.Mock;
+    getFirstAsync: jest.Mock;
+    runAsync: jest.Mock;
+    execAsync: jest.Mock;
+} | null = null;
 
 jest.mock('../database', () => ({
     getDatabase: jest.fn(async () => mockDb),
+}));
+
+jest.mock('expo-crypto', () => ({
+    randomUUID: jest.fn(() => 'mock-uuid-' + Math.random().toString(36).substr(2, 8)),
 }));
 
 // ============================================================
@@ -34,6 +50,8 @@ function setMockDb(available: boolean) {
         mockDb = {
             getAllAsync: mockGetAllAsync,
             getFirstAsync: mockGetFirstAsync,
+            runAsync: mockRunAsync,
+            execAsync: mockExecAsync,
         };
     } else {
         mockDb = null;
@@ -385,5 +403,223 @@ describe('getWorkoutsForDate', () => {
         const result = await getWorkoutsForDate('2026-03-10');
         expect(result).toEqual([]);
         consoleSpy.mockRestore();
+    });
+});
+
+// ============================================================
+// getPersonalRecordDates
+// ============================================================
+
+describe('getPersonalRecordDates', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('returns empty set when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getPersonalRecordDates(2026, 3);
+        expect(result).toEqual(new Set());
+    });
+
+    it('returns set of PR dates for the given month', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            { pr_date: '2026-03-05' },
+            { pr_date: '2026-03-12' },
+            { pr_date: '2026-03-20' },
+        ]);
+
+        const result = await getPersonalRecordDates(2026, 3);
+        expect(result).toEqual(new Set(['2026-03-05', '2026-03-12', '2026-03-20']));
+    });
+
+    it('returns empty set on DB error', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockRejectedValueOnce(new Error('fail'));
+        const spy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await getPersonalRecordDates(2026, 3);
+        expect(result).toEqual(new Set());
+        spy.mockRestore();
+    });
+});
+
+// ============================================================
+// getNoteDates
+// ============================================================
+
+describe('getNoteDates', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('returns empty set when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getNoteDates(2026, 3);
+        expect(result).toEqual(new Set());
+    });
+
+    it('returns set of note dates for the given month', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            { note_date: '2026-03-01' },
+            { note_date: '2026-03-15' },
+        ]);
+
+        const result = await getNoteDates(2026, 3);
+        expect(result).toEqual(new Set(['2026-03-01', '2026-03-15']));
+    });
+
+    it('returns empty set on DB error', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockRejectedValueOnce(new Error('fail'));
+        const spy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await getNoteDates(2026, 3);
+        expect(result).toEqual(new Set());
+        spy.mockRestore();
+    });
+});
+
+// ============================================================
+// backfillPersonalRecords
+// ============================================================
+
+describe('backfillPersonalRecords', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('skips backfill when DB is unavailable', async () => {
+        setMockDb(false);
+        await backfillPersonalRecords();
+        expect(mockRunAsync).not.toHaveBeenCalled();
+    });
+
+    it('skips backfill when flag is already set', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ pr_backfill_complete: 1 });
+
+        await backfillPersonalRecords();
+        // Should not have fetched sets or run inserts
+        expect(mockGetAllAsync).not.toHaveBeenCalled();
+    });
+
+    it('marks complete even with no workout data', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ pr_backfill_complete: 0 });
+        mockGetAllAsync.mockResolvedValueOnce([]);
+
+        await backfillPersonalRecords();
+        expect(mockRunAsync).toHaveBeenCalledWith(
+            expect.stringContaining('pr_backfill_complete = 1'),
+        );
+    });
+
+    it('handles DB error gracefully', async () => {
+        setMockDb(true);
+        mockGetFirstAsync.mockResolvedValueOnce({ pr_backfill_complete: 0 });
+        mockGetAllAsync.mockRejectedValueOnce(new Error('fail'));
+        mockExecAsync.mockResolvedValueOnce(undefined); // ROLLBACK
+        const spy = jest.spyOn(console, 'error').mockImplementation();
+
+        await backfillPersonalRecords();
+        expect(spy).toHaveBeenCalled();
+        spy.mockRestore();
+    });
+});
+
+// ============================================================
+// searchNotes
+// ============================================================
+
+describe('searchNotes', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('returns empty array when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await searchNotes();
+        expect(result).toEqual([]);
+    });
+
+    it('returns journal entries with workout and exercise notes', async () => {
+        setMockDb(true);
+        // First call: workout rows
+        mockGetAllAsync.mockResolvedValueOnce([
+            {
+                workout_id: 'w1',
+                workout_name: 'Push Day',
+                workout_note: 'Felt strong today',
+                duration: 2820,
+                date: '2026-03-15',
+            },
+        ]);
+        // Second call: exercise notes for w1
+        mockGetAllAsync.mockResolvedValueOnce([
+            { exercise_name: 'Bench Press', note: 'New grip width' },
+        ]);
+
+        const result = await searchNotes();
+        expect(result).toHaveLength(1);
+        expect(result[0].workoutNote).toBe('Felt strong today');
+        expect(result[0].exerciseNotes).toHaveLength(1);
+        expect(result[0].exerciseNotes[0].name).toBe('Bench Press');
+    });
+
+    it('returns empty array on DB error', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockRejectedValueOnce(new Error('fail'));
+        const spy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await searchNotes();
+        expect(result).toEqual([]);
+        spy.mockRestore();
+    });
+});
+
+// ============================================================
+// getFatigueDates
+// ============================================================
+
+describe('getFatigueDates', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('returns empty set when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getFatigueDates(2026, 3);
+        expect(result).toEqual(new Set());
+    });
+
+    it('detects regression dates when volume drops to 80% of trailing avg', async () => {
+        setMockDb(true);
+        // Simulate exercise with 5 sessions, last one is a big drop
+        mockGetAllAsync.mockResolvedValueOnce([
+            { exercise_id: 'ex1', workout_date: '2026-02-01', session_volume: 1000 },
+            { exercise_id: 'ex1', workout_date: '2026-02-08', session_volume: 1000 },
+            { exercise_id: 'ex1', workout_date: '2026-02-15', session_volume: 1000 },
+            { exercise_id: 'ex1', workout_date: '2026-02-22', session_volume: 1000 },
+            { exercise_id: 'ex1', workout_date: '2026-03-01', session_volume: 500 }, // 50% of avg = flagged
+        ]);
+
+        const result = await getFatigueDates(2026, 3);
+        expect(result.has('2026-03-01')).toBe(true);
+    });
+
+    it('returns empty set when no regression detected', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            { exercise_id: 'ex1', workout_date: '2026-02-01', session_volume: 1000 },
+            { exercise_id: 'ex1', workout_date: '2026-02-08', session_volume: 1000 },
+            { exercise_id: 'ex1', workout_date: '2026-02-15', session_volume: 1000 },
+            { exercise_id: 'ex1', workout_date: '2026-02-22', session_volume: 1000 },
+            { exercise_id: 'ex1', workout_date: '2026-03-01', session_volume: 950 }, // 95% = NOT flagged
+        ]);
+
+        const result = await getFatigueDates(2026, 3);
+        expect(result.size).toBe(0);
+    });
+
+    it('returns empty set on DB error', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockRejectedValueOnce(new Error('fail'));
+        const spy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = await getFatigueDates(2026, 3);
+        expect(result).toEqual(new Set());
+        spy.mockRestore();
     });
 });

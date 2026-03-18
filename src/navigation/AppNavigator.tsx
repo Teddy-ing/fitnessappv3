@@ -21,6 +21,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme';
 import { useWorkoutStore } from '../stores';
 import { ErrorBoundary } from '../components';
+import { navigationRef } from './navigationRef';
 
 // Screen imports
 import WorkoutScreen from '../screens/WorkoutScreen';
@@ -262,7 +263,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
  */
 export default function AppNavigator() {
     return (
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
             <Tab.Navigator
                 initialRouteName="Workout"
                 tabBar={(props) => <CustomTabBar {...props} />}

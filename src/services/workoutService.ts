@@ -126,6 +126,129 @@ export async function saveWorkout(workout: Workout): Promise<void> {
 }
 
 /**
+ * Update an existing workout (delete old data, then re-insert).
+ * Used when editing a historical workout from the calendar.
+ */
+export async function updateWorkout(workout: Workout): Promise<void> {
+    const db = await getDatabase();
+    if (!db) {
+        console.log('[WorkoutService] Database not available - workout not updated (Expo Go mode)');
+        return;
+    }
+
+    try {
+        await db.withTransactionAsync(async () => {
+            // Delete old child rows first (no CASCADE on FK)
+            // 1. Delete sets for all exercises in this workout
+            await db.runAsync(
+                `DELETE FROM workout_sets WHERE workout_exercise_id IN (
+                    SELECT id FROM workout_exercises WHERE workout_id = ?
+                )`,
+                [workout.id],
+            );
+
+            // 2. Delete exercises
+            await db.runAsync(
+                `DELETE FROM workout_exercises WHERE workout_id = ?`,
+                [workout.id],
+            );
+
+            // 3. Delete the workout row itself
+            await db.runAsync(
+                `DELETE FROM workouts WHERE id = ?`,
+                [workout.id],
+            );
+
+            // 4. Re-insert workout
+            await db.runAsync(
+                `INSERT INTO workouts (
+                    id, name, status, started_at, completed_at, total_duration,
+                    total_volume, total_sets, muscle_groups_worked, location,
+                    note, template_id, day_of_week, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    workout.id,
+                    workout.name,
+                    workout.status,
+                    workout.startedAt.toISOString(),
+                    workout.completedAt?.toISOString() ?? null,
+                    workout.totalDuration,
+                    workout.totalVolume,
+                    workout.totalSets,
+                    JSON.stringify(workout.muscleGroupsWorked),
+                    workout.location,
+                    workout.note,
+                    workout.templateId,
+                    workout.dayOfWeek,
+                    workout.createdAt.toISOString(),
+                    workout.updatedAt.toISOString(),
+                ],
+            );
+
+            // 5. Re-insert exercises and sets
+            for (const exercise of workout.main.exercises) {
+                await db.runAsync(
+                    `INSERT INTO workout_exercises (
+                        id, workout_id, exercise_id, exercise_name, exercise_category,
+                        exercise_muscle_groups, exercise_equipment, exercise_track_weight,
+                        exercise_track_reps, exercise_track_time, order_index,
+                        superset_group_id, note
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        exercise.id,
+                        workout.id,
+                        exercise.exerciseId,
+                        exercise.exercise.name,
+                        exercise.exercise.category,
+                        JSON.stringify(exercise.exercise.muscleGroups),
+                        JSON.stringify(exercise.exercise.equipment),
+                        exercise.exercise.trackWeight ? 1 : 0,
+                        exercise.exercise.trackReps ? 1 : 0,
+                        exercise.exercise.trackTime ? 1 : 0,
+                        exercise.orderIndex,
+                        exercise.supersetGroupId,
+                        exercise.note,
+                    ],
+                );
+
+                for (const set of exercise.sets) {
+                    await db.runAsync(
+                        `INSERT INTO workout_sets (
+                            id, workout_exercise_id, order_index, weight, reps,
+                            duration, distance, type, status, rpe, rir,
+                            suggested_weight, suggested_reps, note, completed_at, rest_duration
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            set.id,
+                            exercise.id,
+                            set.orderIndex,
+                            set.weight,
+                            set.reps,
+                            set.duration,
+                            set.distance,
+                            set.type,
+                            set.status,
+                            set.rpe,
+                            set.rir,
+                            set.suggestedWeight,
+                            set.suggestedReps,
+                            set.note,
+                            set.completedAt?.toISOString() ?? null,
+                            set.restDuration,
+                        ],
+                    );
+                }
+            }
+        });
+
+        console.log('[WorkoutService] Workout updated successfully:', workout.id);
+    } catch (error) {
+        console.error('[WorkoutService] Failed to update workout:', error);
+        throw error;
+    }
+}
+
+/**
  * Get recent workouts with pagination
  * Uses optimized batch queries to avoid N+1 pattern
  */

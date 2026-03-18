@@ -11,6 +11,7 @@
  */
 
 import { getDatabase } from './database';
+import * as Crypto from 'expo-crypto';
 import {
     mapWorkoutRow,
     mapExerciseRow,
@@ -356,5 +357,450 @@ export async function getWorkoutsForDate(
     } catch (error) {
         console.error('[CalendarService] Failed to get workouts for date:', error);
         return [];
+    }
+}
+
+// ============================================================
+// getPersonalRecordDates
+// ============================================================
+
+/** Raw row for PR date query */
+interface PRDateRow {
+    pr_date: string;
+}
+
+/**
+ * Get the set of ISO date strings where personal records were achieved
+ * in the given month.
+ */
+export async function getPersonalRecordDates(
+    year: number,
+    month: number,
+): Promise<Set<string>> {
+    const db = await getDatabase();
+    if (!db) return new Set();
+
+    try {
+        const monthStr = String(month).padStart(2, '0');
+        const startDate = `${year}-${monthStr}-01`;
+        const nm = month === 12 ? 1 : month + 1;
+        const ny = month === 12 ? year + 1 : year;
+        const endDate = `${ny}-${String(nm).padStart(2, '0')}-01`;
+
+        const rows = await db.getAllAsync<PRDateRow>(
+            `SELECT DISTINCT DATE(achieved_at) AS pr_date
+             FROM personal_records
+             WHERE is_current = 1
+               AND DATE(achieved_at) >= ?
+               AND DATE(achieved_at) < ?`,
+            [startDate, endDate],
+        );
+
+        return new Set(rows.map((r) => r.pr_date));
+    } catch (error) {
+        console.error('[CalendarService] Failed to get PR dates:', error);
+        return new Set();
+    }
+}
+
+// ============================================================
+// getNoteDates
+// ============================================================
+
+/** Raw row for note date query */
+interface NoteDateRow {
+    note_date: string;
+}
+
+/**
+ * Get ISO date strings where any workout, exercise, or set
+ * has a non-empty note in the given month.
+ */
+export async function getNoteDates(
+    year: number,
+    month: number,
+): Promise<Set<string>> {
+    const db = await getDatabase();
+    if (!db) return new Set();
+
+    try {
+        const monthStr = String(month).padStart(2, '0');
+        const startDate = `${year}-${monthStr}-01`;
+        const nm = month === 12 ? 1 : month + 1;
+        const ny = month === 12 ? year + 1 : year;
+        const endDate = `${ny}-${String(nm).padStart(2, '0')}-01`;
+
+        const sql = `
+            SELECT DISTINCT DATE(w.completed_at) AS note_date
+            FROM workouts w
+            WHERE w.status = 'completed'
+              AND w.note IS NOT NULL AND w.note != ''
+              AND DATE(w.completed_at) >= ? AND DATE(w.completed_at) < ?
+
+            UNION
+
+            SELECT DISTINCT DATE(w.completed_at) AS note_date
+            FROM workout_exercises we
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE w.status = 'completed'
+              AND we.note IS NOT NULL AND we.note != ''
+              AND DATE(w.completed_at) >= ? AND DATE(w.completed_at) < ?
+
+            UNION
+
+            SELECT DISTINCT DATE(w.completed_at) AS note_date
+            FROM workout_sets ws
+            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE w.status = 'completed'
+              AND ws.note IS NOT NULL AND ws.note != ''
+              AND DATE(w.completed_at) >= ? AND DATE(w.completed_at) < ?
+        `;
+
+        const rows = await db.getAllAsync<NoteDateRow>(sql, [
+            startDate, endDate,
+            startDate, endDate,
+            startDate, endDate,
+        ]);
+
+        return new Set(rows.map((r) => r.note_date));
+    } catch (error) {
+        console.error('[CalendarService] Failed to get note dates:', error);
+        return new Set();
+    }
+}
+
+// ============================================================
+// backfillPersonalRecords
+// ============================================================
+
+/** Row shape for the backfill query */
+interface BackfillSetRow {
+    exercise_id: string;
+    exercise_name: string;
+    workout_id: string;
+    set_id: string;
+    weight: number;
+    reps: number;
+    achieved_at: string;
+}
+
+/**
+ * One-time retroactive scan of all completed workout sets.
+ * For each exercise, finds max_weight, max_reps, and max_e1rm.
+ * Idempotent — skips if `pr_backfill_complete` flag is set.
+ */
+export async function backfillPersonalRecords(): Promise<void> {
+    const db = await getDatabase();
+    if (!db) return;
+
+    try {
+        // Check if backfill already done
+        const flagRow = await db.getFirstAsync<{ pr_backfill_complete: number }>(
+            `SELECT pr_backfill_complete FROM user_settings WHERE id = 1`,
+        );
+        if (flagRow?.pr_backfill_complete === 1) return;
+
+        const rows = await db.getAllAsync<BackfillSetRow>(`
+            SELECT
+                we.exercise_id,
+                we.exercise_name,
+                w.id AS workout_id,
+                ws.id AS set_id,
+                ws.weight,
+                ws.reps,
+                DATE(w.completed_at) AS achieved_at
+            FROM workout_sets ws
+            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE w.status = 'completed'
+              AND ws.status = 'completed'
+              AND ws.weight > 0 AND ws.reps > 0
+            ORDER BY we.exercise_id, w.completed_at ASC
+        `);
+
+        if (rows.length === 0) {
+            await db.runAsync(
+                `UPDATE user_settings SET pr_backfill_complete = 1 WHERE id = 1`,
+            );
+            return;
+        }
+
+        // Group by exercise
+        const exerciseMap = new Map<string, BackfillSetRow[]>();
+        for (const row of rows) {
+            if (!exerciseMap.has(row.exercise_id)) {
+                exerciseMap.set(row.exercise_id, []);
+            }
+            exerciseMap.get(row.exercise_id)!.push(row);
+        }
+
+        const now = new Date().toISOString();
+        const insertSql = `
+            INSERT INTO personal_records
+            (id, exercise_id, exercise_name, workout_id, set_id, record_type, value, reps, weight, achieved_at, is_current, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        `;
+
+        await db.execAsync('BEGIN;');
+
+        for (const [exerciseId, sets] of exerciseMap.entries()) {
+            let maxWeightSet = sets[0];
+            let maxRepsSet = sets[0];
+            let maxE1rmSet = sets[0];
+            let maxE1rmValue = 0;
+
+            for (const set of sets) {
+                if (set.weight > maxWeightSet.weight) maxWeightSet = set;
+                if (set.reps > maxRepsSet.reps) maxRepsSet = set;
+                const e1rm = set.weight * (1 + set.reps / 30);
+                if (e1rm > maxE1rmValue) {
+                    maxE1rmValue = e1rm;
+                    maxE1rmSet = set;
+                }
+            }
+
+            await db.runAsync(insertSql, [
+                Crypto.randomUUID(), exerciseId, maxWeightSet.exercise_name,
+                maxWeightSet.workout_id, maxWeightSet.set_id,
+                'max_weight', maxWeightSet.weight,
+                maxWeightSet.reps, maxWeightSet.weight,
+                maxWeightSet.achieved_at, now,
+            ]);
+
+            await db.runAsync(insertSql, [
+                Crypto.randomUUID(), exerciseId, maxRepsSet.exercise_name,
+                maxRepsSet.workout_id, maxRepsSet.set_id,
+                'max_reps', maxRepsSet.reps,
+                maxRepsSet.reps, maxRepsSet.weight,
+                maxRepsSet.achieved_at, now,
+            ]);
+
+            await db.runAsync(insertSql, [
+                Crypto.randomUUID(), exerciseId, maxE1rmSet.exercise_name,
+                maxE1rmSet.workout_id, maxE1rmSet.set_id,
+                'max_e1rm', Math.round(maxE1rmValue * 10) / 10,
+                maxE1rmSet.reps, maxE1rmSet.weight,
+                maxE1rmSet.achieved_at, now,
+            ]);
+        }
+
+        await db.runAsync(
+            `UPDATE user_settings SET pr_backfill_complete = 1 WHERE id = 1`,
+        );
+
+        await db.execAsync('COMMIT;');
+
+        console.log(
+            `[CalendarService] PR backfill complete: ${exerciseMap.size} exercises, ${exerciseMap.size * 3} records`,
+        );
+    } catch (error) {
+        try { await db.execAsync('ROLLBACK;'); } catch (_) {}
+        console.error('[CalendarService] PR backfill failed:', error);
+    }
+}
+
+// ============================================================
+// searchNotes (Journal View)
+// ============================================================
+
+/** A single journal entry (workout-level + exercise notes) */
+export interface JournalEntry {
+    date: string;          // ISO date
+    workoutId: string;
+    workoutName: string;
+    workoutNote: string | null;
+    duration: number | null;
+    exerciseNotes: Array<{ name: string; note: string }>;
+}
+
+/**
+ * Search across workout and exercise notes.
+ * Returns a chronological list of entries (newest first).
+ * Optional `query` filters by keyword (case-insensitive LIKE).
+ */
+export async function searchNotes(query?: string): Promise<JournalEntry[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    try {
+        // Build WHERE clause for keyword filter
+        let noteFilter = '';
+        const params: string[] = [];
+
+        if (query && query.trim().length > 0) {
+            const keyword = `%${query.trim()}%`;
+            noteFilter = `AND (w.note LIKE ? OR we_notes.exercise_note LIKE ?)`;
+            params.push(keyword, keyword);
+        }
+
+        // Get workouts that have any note (workout-level or exercise-level)
+        const sql = `
+            SELECT DISTINCT
+                w.id AS workout_id,
+                w.name AS workout_name,
+                w.note AS workout_note,
+                w.total_duration AS duration,
+                DATE(w.completed_at) AS date
+            FROM workouts w
+            LEFT JOIN (
+                SELECT workout_id, GROUP_CONCAT(note, '||') AS exercise_note
+                FROM workout_exercises
+                WHERE note IS NOT NULL AND note != ''
+                GROUP BY workout_id
+            ) we_notes ON we_notes.workout_id = w.id
+            WHERE w.status = 'completed'
+              AND (
+                  (w.note IS NOT NULL AND w.note != '')
+                  OR we_notes.exercise_note IS NOT NULL
+              )
+              ${noteFilter}
+            ORDER BY w.completed_at DESC
+        `;
+
+        const workoutRows = await db.getAllAsync<{
+            workout_id: string;
+            workout_name: string;
+            workout_note: string | null;
+            duration: number | null;
+            date: string;
+        }>(sql, params);
+
+        // For each workout, fetch exercise-level notes
+        const entries: JournalEntry[] = [];
+        for (const row of workoutRows) {
+            const exerciseNoteRows = await db.getAllAsync<{
+                exercise_name: string;
+                note: string;
+            }>(
+                `SELECT exercise_name, note FROM workout_exercises
+                 WHERE workout_id = ? AND note IS NOT NULL AND note != ''
+                 ORDER BY order_index ASC`,
+                [row.workout_id],
+            );
+
+            // If there's a keyword filter, skip entries where neither the workout note
+            // nor any exercise note matches
+            if (query && query.trim().length > 0) {
+                const kw = query.trim().toLowerCase();
+                const workoutNoteMatch = row.workout_note?.toLowerCase().includes(kw);
+                const exerciseMatch = exerciseNoteRows.some(
+                    (e) => e.note.toLowerCase().includes(kw),
+                );
+                if (!workoutNoteMatch && !exerciseMatch) continue;
+            }
+
+            entries.push({
+                date: row.date,
+                workoutId: row.workout_id,
+                workoutName: row.workout_name,
+                workoutNote: row.workout_note || null,
+                duration: row.duration,
+                exerciseNotes: exerciseNoteRows.map((e) => ({
+                    name: e.exercise_name,
+                    note: e.note,
+                })),
+            });
+        }
+
+        return entries;
+    } catch (error) {
+        console.error('[CalendarService] searchNotes failed:', error);
+        return [];
+    }
+}
+
+// ============================================================
+// getFatigueDates
+// ============================================================
+
+/** Row shape for fatigue detection query */
+interface FatigueSessionRow {
+    exercise_id: string;
+    workout_date: string;
+    session_volume: number;
+}
+
+/**
+ * Detect days where exercise volume regressed compared to the
+ * 4-session trailing average. If any exercise on a given day had
+ * volume ≤80% of its trailing average, that date is flagged.
+ */
+export async function getFatigueDates(
+    year: number,
+    month: number,
+): Promise<Set<string>> {
+    const db = await getDatabase();
+    if (!db) return new Set();
+
+    try {
+        const monthStr = String(month).padStart(2, '0');
+        const startDate = `${year}-${monthStr}-01`;
+        const nm = month === 12 ? 1 : month + 1;
+        const ny = month === 12 ? year + 1 : year;
+        const endDate = `${ny}-${String(nm).padStart(2, '0')}-01`;
+
+        // Get per-exercise, per-session volume for all time up to end of month
+        // We need historical data to compute trailing averages
+        const rows = await db.getAllAsync<FatigueSessionRow>(`
+            SELECT
+                we.exercise_id,
+                DATE(w.completed_at) AS workout_date,
+                SUM(ws.weight * ws.reps) AS session_volume
+            FROM workout_sets ws
+            JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+            JOIN workouts w ON w.id = we.workout_id
+            WHERE w.status = 'completed'
+              AND ws.status = 'completed'
+              AND ws.weight > 0 AND ws.reps > 0
+              AND DATE(w.completed_at) < ?
+            GROUP BY we.exercise_id, DATE(w.completed_at)
+            ORDER BY we.exercise_id, w.completed_at ASC
+        `, [endDate]);
+
+        if (rows.length === 0) return new Set();
+
+        // Group by exercise
+        const exerciseHistory = new Map<string, FatigueSessionRow[]>();
+        for (const row of rows) {
+            if (!exerciseHistory.has(row.exercise_id)) {
+                exerciseHistory.set(row.exercise_id, []);
+            }
+            exerciseHistory.get(row.exercise_id)!.push(row);
+        }
+
+        const fatigueDates = new Set<string>();
+
+        // For each exercise, check sessions within the target month
+        for (const [, sessions] of exerciseHistory.entries()) {
+            for (let i = 0; i < sessions.length; i++) {
+                const session = sessions[i];
+
+                // Only flag dates within the target month
+                if (session.workout_date < startDate || session.workout_date >= endDate) {
+                    continue;
+                }
+
+                // Need at least 4 prior sessions for a trailing average
+                if (i < 4) continue;
+
+                // Compute 4-session trailing average (sessions i-4 to i-1)
+                let trailingSum = 0;
+                for (let j = i - 4; j < i; j++) {
+                    trailingSum += sessions[j].session_volume;
+                }
+                const trailingAvg = trailingSum / 4;
+
+                // Flag if volume dropped to ≤80% of trailing average
+                if (trailingAvg > 0 && session.session_volume <= trailingAvg * 0.8) {
+                    fatigueDates.add(session.workout_date);
+                }
+            }
+        }
+
+        return fatigueDates;
+    } catch (error) {
+        console.error('[CalendarService] getFatigueDates failed:', error);
+        return new Set();
     }
 }
