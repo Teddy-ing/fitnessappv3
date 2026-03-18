@@ -7,20 +7,13 @@ description: Tracking document for performance regression findings from Performa
 ## Summary
 
 - **Last full pass:** 2026-03-17 (Calendar Feature QA pass)
-- **Open issues:** 2 (Medium: 1, Low: 1)
-- **Fixed this session:** 4
+- **Open issues:** 1 (Low: 1)
+- **Fixed this session:** 5
 - **Negligible / Won't Fix:** 5
 
 ---
 
 ## Open Issues
-
-### Medium (Budget Device Impact)
-
-**PP-012** — `ExercisePicker` loads all exercises on every modal open *(carry-over)*
-- Calls `getExercises()` twice (visible + hidden) each time
-- Fix: Cache at service level or only reload on mutation
-- Status: **Deferred** — architecture change
 
 ### Low
 
@@ -41,6 +34,7 @@ description: Tracking document for performance regression findings from Performa
 | PP-017 | N+1 query | `calendarService.ts` | Batch `IN (...)` queries for exercises + sets in `getWorkoutsForDate()` |
 | PP-018 | Full-history scan | `calendarService.ts` | Added 3-month lookback floor to `getFatigueDates()` query |
 | PP-019 | Inline arrow props | `CalendarScreen.tsx` | Moved callback inside `DayCell` via `useCallback`; parent passes stable `date` + `onDayPress` |
+| PP-012 | Redundant loading | `exerciseService.ts` | Module-level cache with invalidation on all 5 mutation functions |
 
 ---
 

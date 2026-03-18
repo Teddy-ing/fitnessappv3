@@ -10,6 +10,27 @@ import { Exercise, ExerciseCategory, MuscleGroup, Equipment, MuscleContribution,
 import { SEED_EXERCISES } from '../data/exercises';
 import * as Crypto from 'expo-crypto';
 
+// ============================================================
+// Module-level exercise cache (PP-012 fix)
+// ============================================================
+//
+// getExercises() is called twice on every ExercisePicker open
+// (visible + hidden). The exercise list only changes on mutation,
+// so we cache both variants and invalidate on write.
+
+interface ExerciseCache {
+    visible: Exercise[] | null;   // includeHidden = false
+    all: Exercise[] | null;       // includeHidden = true
+}
+
+const exerciseCache: ExerciseCache = { visible: null, all: null };
+
+/** Clear the exercise cache. Called automatically by mutation functions. */
+export function invalidateExerciseCache(): void {
+    exerciseCache.visible = null;
+    exerciseCache.all = null;
+}
+
 /** Row shape returned by SELECT * FROM exercises */
 interface ExerciseDbRow {
     id: string;
@@ -42,6 +63,12 @@ interface ExerciseOverrides {
  * Get all exercises (built-in + custom), optionally including hidden
  */
 export async function getExercises(includeHidden: boolean = false): Promise<Exercise[]> {
+    // Return cached data if available (PP-012 fix)
+    const cacheKey = includeHidden ? 'all' : 'visible';
+    if (exerciseCache[cacheKey]) {
+        return exerciseCache[cacheKey]!;
+    }
+
     const db = await getDatabase();
 
     // Start with built-in exercises
@@ -89,6 +116,9 @@ export async function getExercises(includeHidden: boolean = false): Promise<Exer
         if (a.isFavorite !== b.isFavorite) return b.isFavorite ? 1 : -1;
         return a.name.localeCompare(b.name);
     });
+
+    // Store in cache
+    exerciseCache[cacheKey] = exercises;
 
     return exercises;
 }
@@ -181,6 +211,7 @@ export async function createCustomExercise(
         ]
     );
 
+    invalidateExerciseCache();
     return getExerciseById(id);
 }
 
@@ -240,6 +271,7 @@ export async function updateExercise(
         ]
     );
 
+    invalidateExerciseCache();
     return getExerciseById(id);
 }
 
@@ -254,6 +286,7 @@ export async function deleteExercise(id: string): Promise<boolean> {
     if (!existing || !existing.isCustom) return false; // Can't delete built-in
 
     await db.runAsync(`DELETE FROM exercises WHERE id = ?`, [id]);
+    invalidateExerciseCache();
     return true;
 }
 
@@ -295,6 +328,7 @@ export async function toggleExerciseHidden(id: string): Promise<boolean> {
         }
     }
 
+    invalidateExerciseCache();
     return !existing.isHidden;
 }
 
@@ -336,6 +370,7 @@ export async function toggleExerciseFavorite(id: string): Promise<boolean> {
         }
     }
 
+    invalidateExerciseCache();
     return !existing.isFavorite;
 }
 
@@ -395,4 +430,5 @@ export default {
     toggleExerciseFavorite,
     getExercisesByCategory,
     searchExercises,
+    invalidateExerciseCache,
 };
