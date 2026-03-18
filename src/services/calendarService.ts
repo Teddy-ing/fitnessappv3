@@ -665,25 +665,46 @@ export async function searchNotes(query?: string): Promise<JournalEntry[]> {
             date: string;
         }>(sql, params);
 
-        // For each workout, fetch exercise-level notes
-        const entries: JournalEntry[] = [];
-        for (const row of workoutRows) {
+        // Batch-load exercise-level notes for all matched workouts (PP-016 fix)
+        const workoutIds = workoutRows.map((r) => r.workout_id);
+        const notesByWorkout = new Map<string, Array<{ name: string; note: string }>>();
+
+        if (workoutIds.length > 0) {
+            const placeholders = workoutIds.map(() => '?').join(',');
             const exerciseNoteRows = await db.getAllAsync<{
+                workout_id: string;
                 exercise_name: string;
                 note: string;
             }>(
-                `SELECT exercise_name, note FROM workout_exercises
-                 WHERE workout_id = ? AND note IS NOT NULL AND note != ''
-                 ORDER BY order_index ASC`,
-                [row.workout_id],
+                `SELECT workout_id, exercise_name, note FROM workout_exercises
+                 WHERE workout_id IN (${placeholders})
+                   AND note IS NOT NULL AND note != ''
+                 ORDER BY workout_id, order_index ASC`,
+                workoutIds,
             );
+
+            for (const row of exerciseNoteRows) {
+                if (!notesByWorkout.has(row.workout_id)) {
+                    notesByWorkout.set(row.workout_id, []);
+                }
+                notesByWorkout.get(row.workout_id)!.push({
+                    name: row.exercise_name,
+                    note: row.note,
+                });
+            }
+        }
+
+        // Build entries with pre-loaded exercise notes
+        const entries: JournalEntry[] = [];
+        for (const row of workoutRows) {
+            const exerciseNotes = notesByWorkout.get(row.workout_id) ?? [];
 
             // If there's a keyword filter, skip entries where neither the workout note
             // nor any exercise note matches
             if (query && query.trim().length > 0) {
                 const kw = query.trim().toLowerCase();
                 const workoutNoteMatch = row.workout_note?.toLowerCase().includes(kw);
-                const exerciseMatch = exerciseNoteRows.some(
+                const exerciseMatch = exerciseNotes.some(
                     (e) => e.note.toLowerCase().includes(kw),
                 );
                 if (!workoutNoteMatch && !exerciseMatch) continue;
@@ -695,10 +716,7 @@ export async function searchNotes(query?: string): Promise<JournalEntry[]> {
                 workoutName: row.workout_name,
                 workoutNote: row.workout_note || null,
                 duration: row.duration,
-                exerciseNotes: exerciseNoteRows.map((e) => ({
-                    name: e.exercise_name,
-                    note: e.note,
-                })),
+                exerciseNotes,
             });
         }
 

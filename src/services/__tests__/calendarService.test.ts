@@ -548,9 +548,9 @@ describe('searchNotes', () => {
                 date: '2026-03-15',
             },
         ]);
-        // Second call: exercise notes for w1
+        // Second call: batch exercise notes (includes workout_id for grouping)
         mockGetAllAsync.mockResolvedValueOnce([
-            { exercise_name: 'Bench Press', note: 'New grip width' },
+            { workout_id: 'w1', exercise_name: 'Bench Press', note: 'New grip width' },
         ]);
 
         const result = await searchNotes();

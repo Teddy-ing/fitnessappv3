@@ -6,25 +6,67 @@ description: Tracking document for performance regression findings from Performa
 
 ## Summary
 
-- **Last full pass:** 2026-03-14 (first comprehensive audit — entire project)
-- **Open issues:** 1 (Medium: 1)
-- **Fixed this session:** 12
-- **Negligible / Won't Fix:** 3
+- **Last full pass:** 2026-03-17 (Calendar Feature QA pass)
+- **Open issues:** 5 (High: 1, Medium: 3, Low: 1)
+- **Fixed this session:** 1
+- **Negligible / Won't Fix:** 5
 
 ---
 
 ## Open Issues
 
+### High (Budget + Mid-Range Device Impact)
+
+**PP-017** — `getWorkoutsForDate()` N+1 query pattern in `calendarService.ts`
+- For each workout on a date, separately fetches exercises then sets **inside a `for` loop**
+- If a user logs 3 workouts on one day (AM/PM split), this fires 7+ queries instead of 3
+- Fix: Batch all workout IDs, load all exercises with single `IN (...)` query, then all sets with single `IN (...)` query — same proven pattern as `getWorkouts()` in `workoutService.ts`
+- Status: **Open**
+- Affected tier: **All devices** (I/O bound, triggered on every day-cell tap)
+
 ### Medium (Budget Device Impact)
 
-**PP-012** — `ExercisePicker` loads all exercises on every modal open
+**PP-018** — `getFatigueDates()` loads full exercise history on every month load
+- Queries all completed sets for **all time** up to end of month (`AND DATE(w.completed_at) < ?`)
+- For a user with 6+ months of history, this scans thousands of rows per call
+- Called in `loadMonthData()` via `Promise.all` — fires for every month in the initial batch of 6
+- Fix: Limit lookback to 3 months prior (12 trailing sessions covers the 4-session window generously), or cache results
+- Status: **Open**
+- Affected tier: **Budget devices** (CPU + I/O on large datasets)
+
+**PP-019** — `CalendarScreen.tsx` — Inline arrow closures on `DayCell.onPress`
+- `MonthBlock` render: `onPress={hasWorkout && cell.date ? () => onDayPress(cell.date!) : undefined}`
+- Creates a new closure per cell per render, defeating `React.memo` on `DayCell`
+- With 6 months loaded (≈180 cells), this creates 180 closures every render
+- Fix: Pass `date` as a prop and call `onDayPress` from inside `DayCell` using a stable callback
+- Status: **Open**
+- Affected tier: **Budget devices** (GC pressure on scroll)
+
+**PP-012** — `ExercisePicker` loads all exercises on every modal open *(carry-over)*
 - Calls `getExercises()` twice (visible + hidden) each time
 - Fix: Cache at service level or only reload on mutation
 - Status: **Deferred** — architecture change
 
+### Low
+
+**PP-020** — `loadOlderMonths()` sequential await in a loop
+- Loads 3 older months **sequentially** (`for` loop with `await loadMonthData`)
+- Each `loadMonthData` fires 4 parallel queries, but the months themselves are serialized
+- Fix: Use `Promise.all([loadMonthData(m1), loadMonthData(m2), loadMonthData(m3)])`
+- Status: **Open**
+- Affected tier: **Budget devices** (perceived latency on scroll)
+
 ---
 
-## Resolved (This Session: 2026-03-14)
+## Resolved (This Session: 2026-03-17)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|-------------|
+| PP-016 | N+1 query | `calendarService.ts` | Batch `IN (...)` query for exercise notes in `searchNotes()` |
+
+---
+
+## Resolved (Session: 2026-03-14)
 
 | ID | Area | File | Fix Applied |
 |----|------|------|-------------|
@@ -50,6 +92,10 @@ description: Tracking document for performance regression findings from Performa
 
 **PP-015** — `saveWorkout` sequential DB writes — inside transaction, not a hot path.
 
+**PP-021** — `DailyWorkoutModal` uses `useWorkoutStore.getState()` inside callback — correct pattern (not a subscription), no re-render impact.
+
+**PP-022** — `DailyWorkoutModal` sub-components (`WorkoutCard`, `ExerciseCard`, `SetRow`, `SummaryBadge`) not wrapped in `React.memo` — inside a modal with a few items, not a hot path. Would matter if a user logged 10+ exercises per workout.
+
 ---
 
 ## Historical Performance Issues
@@ -68,11 +114,19 @@ description: Tracking document for performance regression findings from Performa
 | File | Lines | Over By |
 |------|-------|---------|
 | `ExercisePicker.tsx` | 630 | 5% |
+| `CalendarScreen.tsx` | 1044 | **74%** |
+| `calendarService.ts` | 806 | N/A (service, guardrail doesn't apply) |
+| `DailyWorkoutModal.tsx` | 624 | 4% |
 
 *`AnalyticsScreen.tsx` resolved (902 → 148 lines) via extraction to `src/components/analytics/`.*
+
+**CalendarScreen.tsx** at 1044 lines is the most significant violation. ~230 lines are styles. The header, month block, and day cell are already extracted as sub-components, but the main `CalendarScreen` function (lines 528-808) manages 11 `useState` hooks, 8 callbacks, and 2 side effects. Recommended extraction:
+- `useCalendarData` hook (data loading, month management, scroll-to-load)
+- `CalendarHeader` to its own file
+- Move styles to a separate file or co-locate with extracted components
 
 ---
 
 ## Last Updated
-- Date: 2026-03-14
-- Session Context: First comprehensive audit — 15 issues found, 10 fixed, 3 deferred, 2 negligible
+- Date: 2026-03-17
+- Session Context: Calendar Feature performance audit — 7 new issues found, 0 fixed (identification pass), 2 negligible
