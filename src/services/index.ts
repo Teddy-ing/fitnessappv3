@@ -95,3 +95,21 @@ export {
     type JournalEntry,
     type PRSetIds,
 } from './calendarService';
+export {
+    getMeasurementTypes,
+    getVisibleMeasurementTypes,
+    logMeasurement,
+    updateMeasurement,
+    deleteMeasurement,
+    getMeasurementHistory,
+    getLatestMeasurements,
+    getSparklineData,
+    getMeasurementsForDate,
+} from './measurementService';
+export {
+    saveProgressPhoto,
+    getProgressPhotos,
+    deleteProgressPhoto,
+    getPhotoWithBodyweight,
+    getPhotoUri,
+} from './photoService';

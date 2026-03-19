@@ -398,6 +398,97 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+    // ----------------------------------------------------------
+    // v6: Measurements system — types catalog, log, photos
+    // ----------------------------------------------------------
+    {
+        version: 6,
+        name: 'measurements_and_photos',
+        up: async (db) => {
+            // Measurement type catalog (available metrics)
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS measurement_types (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    unit_imperial TEXT NOT NULL,
+                    unit_metric TEXT NOT NULL,
+                    default_visible INTEGER DEFAULT 0,
+                    order_index INTEGER NOT NULL
+                );
+            `);
+
+            // Measurement log entries (user-recorded values)
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS measurements (
+                    id TEXT PRIMARY KEY,
+                    measurement_type_id TEXT NOT NULL,
+                    value REAL NOT NULL,
+                    recorded_at TEXT NOT NULL,
+                    note TEXT,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (measurement_type_id) REFERENCES measurement_types(id)
+                );
+            `);
+
+            // Progress photos
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS progress_photos (
+                    id TEXT PRIMARY KEY,
+                    file_path TEXT NOT NULL,
+                    recorded_at TEXT NOT NULL,
+                    bodyweight REAL,
+                    note TEXT,
+                    created_at TEXT NOT NULL
+                );
+            `);
+
+            // Indexes
+            await db.execAsync(`
+                CREATE INDEX IF NOT EXISTS idx_measurements_type_date
+                    ON measurements(measurement_type_id, recorded_at);
+                CREATE INDEX IF NOT EXISTS idx_measurements_recorded_at
+                    ON measurements(recorded_at);
+                CREATE INDEX IF NOT EXISTS idx_progress_photos_recorded_at
+                    ON progress_photos(recorded_at);
+            `);
+
+            // Seed default measurement types
+            await db.execAsync(`
+                INSERT OR IGNORE INTO measurement_types (id, name, category, unit_imperial, unit_metric, default_visible, order_index) VALUES
+                    ('bodyweight',    'Bodyweight',     'core',  'lbs', 'kg', 1, 1),
+                    ('body_fat',      'Body Fat %',     'core',  '%',   '%',  1, 2),
+                    ('waist',         'Waist',          'torso', 'in',  'cm', 1, 3),
+                    ('chest',         'Chest',          'torso', 'in',  'cm', 1, 4),
+                    ('shoulders',     'Shoulders',      'torso', 'in',  'cm', 0, 5),
+                    ('hips',          'Hips',           'torso', 'in',  'cm', 0, 6),
+                    ('left_bicep',    'Left Bicep',     'arms',  'in',  'cm', 0, 7),
+                    ('right_bicep',   'Right Bicep',    'arms',  'in',  'cm', 0, 8),
+                    ('left_forearm',  'Left Forearm',   'arms',  'in',  'cm', 0, 9),
+                    ('right_forearm', 'Right Forearm',  'arms',  'in',  'cm', 0, 10),
+                    ('left_thigh',    'Left Thigh',     'legs',  'in',  'cm', 0, 11),
+                    ('right_thigh',   'Right Thigh',    'legs',  'in',  'cm', 0, 12),
+                    ('left_calf',     'Left Calf',      'legs',  'in',  'cm', 0, 13),
+                    ('right_calf',    'Right Calf',     'legs',  'in',  'cm', 0, 14),
+                    ('neck',          'Neck',           'other', 'in',  'cm', 0, 15);
+            `);
+
+            // User settings columns for measurement preferences
+            const hasVisible = await columnExists(db, 'user_settings', 'visible_measurements');
+            if (!hasVisible) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN visible_measurements TEXT DEFAULT '["bodyweight","body_fat","waist","chest"]';`,
+                );
+            }
+
+            const hasRelStrength = await columnExists(db, 'user_settings', 'relative_strength_exercise');
+            if (!hasRelStrength) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN relative_strength_exercise TEXT;`,
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

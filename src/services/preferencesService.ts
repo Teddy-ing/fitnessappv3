@@ -9,6 +9,7 @@
  */
 
 import { getDatabase } from './database';
+import { safeJsonParse } from './hydration';
 
 // ============================================================
 // Types
@@ -30,6 +31,8 @@ export interface UserSettings {
     calendarStartDay: string;
     calendarHeatmapMetric: string;
     prBackfillComplete: boolean;
+    visibleMeasurements: string[];
+    relativeStrengthExercise: string | null;
 }
 
 /** Raw row from the user_settings table (snake_case, integers for booleans) */
@@ -49,9 +52,13 @@ interface UserSettingsRow {
     calendar_start_day: string;
     calendar_heatmap_metric: string;
     pr_backfill_complete: number;
+    visible_measurements: string | null;
+    relative_strength_exercise: string | null;
 }
 
 /** Default settings — used if the row doesn't exist yet */
+const DEFAULT_VISIBLE_MEASUREMENTS = ['bodyweight', 'body_fat', 'waist', 'chest'];
+
 const DEFAULTS: UserSettings = {
     activeSplitId: null,
     currentTemplateIndex: 0,
@@ -67,6 +74,8 @@ const DEFAULTS: UserSettings = {
     calendarStartDay: 'sunday',
     calendarHeatmapMetric: 'volume',
     prBackfillComplete: false,
+    visibleMeasurements: DEFAULT_VISIBLE_MEASUREMENTS,
+    relativeStrengthExercise: null,
 };
 
 // ============================================================
@@ -102,6 +111,11 @@ export async function getSettings(): Promise<UserSettings> {
         calendarStartDay: row.calendar_start_day ?? 'sunday',
         calendarHeatmapMetric: row.calendar_heatmap_metric ?? 'volume',
         prBackfillComplete: row.pr_backfill_complete === 1,
+        visibleMeasurements: safeJsonParse<string[]>(
+            row.visible_measurements,
+            DEFAULT_VISIBLE_MEASUREMENTS,
+        ),
+        relativeStrengthExercise: row.relative_strength_exercise ?? null,
     };
 }
 
@@ -139,6 +153,8 @@ export async function updateSettings(
         calendarStartDay: 'calendar_start_day',
         calendarHeatmapMetric: 'calendar_heatmap_metric',
         prBackfillComplete: 'pr_backfill_complete',
+        visibleMeasurements: 'visible_measurements',
+        relativeStrengthExercise: 'relative_strength_exercise',
     };
 
     const setClauses: string[] = [];
@@ -153,6 +169,9 @@ export async function updateSettings(
         // Convert booleans to integers for SQLite
         if (typeof value === 'boolean') {
             values.push(value ? 1 : 0);
+        } else if (Array.isArray(value)) {
+            // JSON arrays (e.g., visibleMeasurements) → stringify
+            values.push(JSON.stringify(value));
         } else {
             values.push(value as string | number | null);
         }
