@@ -121,7 +121,10 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                         <Text style={styles.menuArrow}>›</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('Measurements')}
+                    >
                         <Text style={styles.menuIcon}>📏</Text>
                         <Text style={styles.menuText}>Body Measurements</Text>
                         <Text style={styles.menuArrow}>›</Text>

@@ -168,4 +168,58 @@ export async function generateMockData(months: number = 3): Promise<void> {
         await saveWorkout(workout);
         progressWeightMultiplier += weightIncrement;
     }
+
+    // ============================================================
+    // Generate mock measurements
+    // ============================================================
+
+    // Measurement configs: [typeId, startValue, endValue, noiseRange, frequency]
+    // frequency: 1 = every day in the period, 7 = weekly
+    const measurementConfigs: {
+        typeId: string;
+        startVal: number;
+        endVal: number;
+        noise: number;
+        freqDays: number;
+        decimals: number;
+    }[] = [
+        { typeId: 'bodyweight',  startVal: 195,  endVal: 185,  noise: 1.5, freqDays: 1,  decimals: 1 },
+        { typeId: 'body_fat',    startVal: 18,   endVal: 15,   noise: 0.5, freqDays: 7,  decimals: 1 },
+        { typeId: 'waist',       startVal: 36,   endVal: 33.5, noise: 0.3, freqDays: 7,  decimals: 1 },
+        { typeId: 'chest',       startVal: 42,   endVal: 43.5, noise: 0.3, freqDays: 7,  decimals: 1 },
+        { typeId: 'left_arm',    startVal: 14.5, endVal: 15.2, noise: 0.2, freqDays: 14, decimals: 1 },
+        { typeId: 'right_arm',   startVal: 14.7, endVal: 15.4, noise: 0.2, freqDays: 14, decimals: 1 },
+        { typeId: 'shoulders',   startVal: 48,   endVal: 49,   noise: 0.3, freqDays: 14, decimals: 1 },
+    ];
+
+    for (const cfg of measurementConfigs) {
+        for (let daysAgo = daysToGenerate; daysAgo >= 0; daysAgo -= cfg.freqDays) {
+            // Skip some entries randomly for realism (~15% skip rate)
+            if (Math.random() < 0.15) continue;
+
+            const measureDate = new Date(now.getTime() - daysAgo * MS_PER_DAY);
+            const dateStr = `${measureDate.getFullYear()}-${String(measureDate.getMonth() + 1).padStart(2, '0')}-${String(measureDate.getDate()).padStart(2, '0')}`;
+
+            // Linear interpolation + noise
+            const progress = 1 - (daysAgo / daysToGenerate);
+            const baseValue = cfg.startVal + (cfg.endVal - cfg.startVal) * progress;
+            const noise = (Math.random() - 0.5) * 2 * cfg.noise;
+            const value = parseFloat((baseValue + noise).toFixed(cfg.decimals));
+
+            const id = 'mock-m-' + cfg.typeId + '-' + dateStr;
+            const createdAt = measureDate.toISOString();
+
+            await db.runAsync(
+                `INSERT OR IGNORE INTO measurements (id, measurement_type_id, value, recorded_at, note, created_at)
+                 VALUES (?, ?, ?, ?, NULL, ?)`,
+                [id, cfg.typeId, value, dateStr, createdAt],
+            );
+        }
+    }
+
+    // Set default visible measurements so Track tab shows data immediately
+    await db.runAsync(
+        `UPDATE user_settings SET visible_measurements = ? WHERE id = 1`,
+        [JSON.stringify(['bodyweight', 'body_fat', 'waist', 'chest', 'left_arm', 'right_arm', 'shoulders'])],
+    );
 }
