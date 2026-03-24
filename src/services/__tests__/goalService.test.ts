@@ -13,10 +13,12 @@ import {
     deleteGoal,
     markGoalCompleted,
     abandonGoal,
+} from '../goalService';
+import {
     computeCurrentBest,
     refreshAllGoalProgress,
     getCurrentBestForTarget,
-} from '../goalService';
+} from '../goalProgressService';
 
 // ============================================================
 // Mock database
@@ -506,14 +508,16 @@ describe('refreshAllGoalProgress', () => {
         expect(result).toEqual([]);
     });
 
-    it('updates current_best for all active goals', async () => {
+    it('updates current_best for all active goals (batched)', async () => {
         setMockDb(true);
         // First call: getActiveGoals
         mockGetAllAsync.mockResolvedValueOnce([
             makeGoalRow({ id: 'g1', target_value: 315, current_best: 285 }),
         ]);
-        // computeCurrentBest (exercise_1rm): calls getDatabase + getFirstAsync
-        mockGetFirstAsync.mockResolvedValueOnce({ best: 295 });
+        // Batch 1RM query returns result for bench-press
+        mockGetAllAsync.mockResolvedValueOnce([
+            { exercise_id: 'bench-press', best: 295 },
+        ]);
         // UPDATE current_best
         mockRunAsync.mockResolvedValueOnce(undefined);
 
@@ -526,14 +530,16 @@ describe('refreshAllGoalProgress', () => {
         expect(sql).toContain('current_best = ?');
     });
 
-    it('marks goals as completed when target is reached', async () => {
+    it('marks goals as completed when target is reached (batched)', async () => {
         setMockDb(true);
         // getActiveGoals
         mockGetAllAsync.mockResolvedValueOnce([
             makeGoalRow({ id: 'g1', target_value: 315, current_best: 310 }),
         ]);
-        // computeCurrentBest returns value >= target
-        mockGetFirstAsync.mockResolvedValueOnce({ best: 320 });
+        // Batch 1RM query returns value >= target
+        mockGetAllAsync.mockResolvedValueOnce([
+            { exercise_id: 'bench-press', best: 320 },
+        ]);
         // UPDATE current_best
         mockRunAsync.mockResolvedValueOnce(undefined);
         // markGoalCompleted

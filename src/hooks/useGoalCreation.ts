@@ -49,6 +49,7 @@ export interface UseGoalCreation {
     state: GoalCreationState;
     // Step navigation
     goBack: () => void;
+    goToStep: (step: CreationStep) => void;
     canGoBack: boolean;
     // Step 1: Type selection
     selectCategory: (category: GoalCategory) => void;
@@ -69,6 +70,16 @@ export interface UseGoalCreation {
     submit: () => Promise<boolean>;
     // Reset
     reset: () => void;
+    // Pre-fill for quick-add chips
+    prefill: (params: PrefillParams) => void;
+}
+
+export interface PrefillParams {
+    category: GoalCategory;
+    exerciseMetric?: ExerciseMetric;
+    targetValue?: string;
+    /** Seed exercise name to search for (e.g., 'Barbell Bench Press') */
+    exerciseName?: string;
 }
 
 // ============================================================
@@ -133,6 +144,17 @@ export function useGoalCreation(): UseGoalCreation {
 
     const canGoBack = state.step !== 'type';
 
+    /** Navigate to any previously visited step (only backward navigation allowed). */
+    const goToStep = useCallback((targetStep: CreationStep) => {
+        const STEP_ORDER: CreationStep[] = ['type', 'exercise', 'exercise_metric', 'measurement', 'target', 'deadline', 'label', 'confirm'];
+        const currentIdx = STEP_ORDER.indexOf(state.step);
+        const targetIdx = STEP_ORDER.indexOf(targetStep);
+        // Only allow navigating backward
+        if (targetIdx < currentIdx) {
+            setState((prev) => ({ ...prev, step: targetStep }));
+        }
+    }, [state.step]);
+
     // ----------------------------------------------------------
     // Step 1: Type selection
     // ----------------------------------------------------------
@@ -163,19 +185,23 @@ export function useGoalCreation(): UseGoalCreation {
     }, []);
 
     const selectExerciseMetric = useCallback(async (metric: ExerciseMetric) => {
-        setState((prev) => ({
-            ...prev,
-            exerciseMetric: metric,
-            step: 'target',
-        }));
+        // Capture exerciseId before setState to avoid stale closure
+        let exerciseId: string | undefined;
+        setState((prev) => {
+            exerciseId = prev.exercise?.id ?? undefined;
+            return {
+                ...prev,
+                exerciseMetric: metric,
+                step: 'target',
+            };
+        });
 
-        // Fetch current best in background
-        const exerciseId = state.exercise?.id;
+        // Fetch current best in background using the captured ID
         if (exerciseId) {
             const best = await getCurrentBestForTarget(metric, exerciseId);
             setState((prev) => ({ ...prev, currentBest: best }));
         }
-    }, [state.exercise?.id]);
+    }, []);
 
     const selectMeasurementType = useCallback(async (type: MeasurementType) => {
         setState((prev) => ({
@@ -276,9 +302,43 @@ export function useGoalCreation(): UseGoalCreation {
         setState({ ...INITIAL_STATE });
     }, []);
 
+    /**
+     * Pre-fill the wizard for quick-add chips.
+     * Sets category/metric/target and jumps to the appropriate next step.
+     */
+    const prefill = useCallback((params: PrefillParams) => {
+        const { category, exerciseMetric, targetValue } = params;
+
+        if (category === 'consistency') {
+            // Consistency: jump to target with value pre-filled
+            setState({
+                ...INITIAL_STATE,
+                category: 'consistency',
+                step: targetValue ? 'target' : 'target',
+                targetValue: targetValue ?? '',
+            });
+        } else if (category === 'exercise') {
+            // Exercise: open exercise picker, user still needs to pick exercise
+            setState({
+                ...INITIAL_STATE,
+                category: 'exercise',
+                step: 'exercise',
+                exerciseMetric: exerciseMetric ?? null,
+            });
+        } else {
+            // Measurement: open measurement picker
+            setState({
+                ...INITIAL_STATE,
+                category: 'measurement',
+                step: 'measurement',
+            });
+        }
+    }, []);
+
     return {
         state,
         goBack,
+        goToStep,
         canGoBack,
         selectCategory,
         selectExercise,
@@ -292,5 +352,6 @@ export function useGoalCreation(): UseGoalCreation {
         confirmLabel,
         submit,
         reset,
+        prefill,
     };
 }

@@ -11,17 +11,18 @@
  * Sub-components:
  * - GoalCard — progress bar, deadline badge, title (src/components/goals/)
  * - CompletedGoalCard — gold accent 100% card (src/components/goals/)
+ * - GoalContextMenu — long-press action sheet (src/components/goals/)
+ * - GoalEmptyState — empty state + quick-add chips (src/components/goals/)
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     FlatList,
     TouchableOpacity,
     Alert,
-    Modal,
+    Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -35,15 +36,19 @@ import {
     markGoalCompleted,
     abandonGoal,
 } from '../services';
-import { getExerciseById } from '../services/exerciseService';
+import { getExercises } from '../services/exerciseService';
 import { getMeasurementTypes } from '../services/measurementService';
 import type { Goal, GoalType } from '../models';
 import type { MeasurementType } from '../models/measurement';
+import type { Exercise } from '../models/exercise';
 import SegmentedControl from '../components/measurements/SegmentedControl';
 import GoalCard, { type GoalDisplayInfo } from '../components/goals/GoalCard';
 import CompletedGoalCard from '../components/goals/CompletedGoalCard';
 import GoalCreationModal from '../components/goals/GoalCreationModal';
 import GoalDetailModal from '../components/goals/GoalDetailModal';
+import GoalContextMenu from '../components/goals/GoalContextMenu';
+import GoalEmptyState from '../components/goals/GoalEmptyState';
+import type { PrefillParams } from '../hooks/useGoalCreation';
 
 // ============================================================
 // Types
@@ -54,14 +59,6 @@ type TabId = 'active' | 'trophy';
 const TABS: { id: TabId; label: string }[] = [
     { id: 'active', label: 'Active' },
     { id: 'trophy', label: 'Trophy Case' },
-];
-
-// Quick-add chip definitions (onPress wired in Phase 4)
-const QUICK_ADD_CHIPS = [
-    { label: 'Bench 135 lbs', emoji: '🏋️' },
-    { label: 'Squat 1.5× BW', emoji: '🦵' },
-    { label: 'Deadlift 2× BW', emoji: '💪' },
-    { label: '30 Day Streak', emoji: '🔥' },
 ];
 
 // Metric labels for exercise goal types
@@ -90,6 +87,7 @@ export default function GoalsScreen() {
 
     // Creation modal state
     const [showCreation, setShowCreation] = useState(false);
+    const [prefillData, setPrefillData] = useState<PrefillParams | null>(null);
 
     // Detail modal state
     const [detailGoal, setDetailGoal] = useState<Goal | null>(null);
@@ -116,7 +114,7 @@ export default function GoalsScreen() {
     }, []);
 
     // --------------------------------------------------------
-    // Display info resolution
+    // Display info resolution (PP-033 fix: batch via cached getExercises)
     // --------------------------------------------------------
 
     const resolveDisplayInfoBatch = async (
@@ -124,26 +122,35 @@ export default function GoalsScreen() {
     ): Promise<Map<string, GoalDisplayInfo>> => {
         const map = new Map<string, GoalDisplayInfo>();
 
-        // Batch-fetch measurement types once
-        let measurementTypes: MeasurementType[] = [];
+        // Batch-fetch measurement types + exercises once (PP-033)
         const hasMeasurementGoals = goals.some((g) => g.goalType === 'measurement');
-        if (hasMeasurementGoals) {
-            measurementTypes = await getMeasurementTypes();
+        const hasExerciseGoals = goals.some((g) => !!g.exerciseId);
+
+        const [measurementTypes, exercises] = await Promise.all([
+            hasMeasurementGoals ? getMeasurementTypes() : Promise.resolve([]),
+            hasExerciseGoals ? getExercises() : Promise.resolve([]),
+        ]);
+
+        // Build Map for O(1) lookups
+        const exerciseMap = new Map<string, Exercise>();
+        for (const ex of exercises) {
+            exerciseMap.set(ex.id, ex);
         }
 
-        // Resolve each goal's display info
+        // Resolve each goal's display info (no more per-goal DB calls)
         for (const goal of goals) {
-            const info = await resolveGoalDisplayInfo(goal, measurementTypes);
+            const info = resolveGoalDisplayInfo(goal, measurementTypes, exerciseMap);
             map.set(goal.id, info);
         }
 
         return map;
     };
 
-    const resolveGoalDisplayInfo = async (
+    const resolveGoalDisplayInfo = (
         goal: Goal,
         measurementTypes: MeasurementType[],
-    ): Promise<GoalDisplayInfo> => {
+        exerciseMap: Map<string, Exercise>,
+    ): GoalDisplayInfo => {
         const metricLabel = METRIC_LABELS[goal.goalType];
 
         if (goal.goalType === 'consistency') {
@@ -160,7 +167,7 @@ export default function GoalsScreen() {
         }
 
         if (goal.exerciseId) {
-            const exercise = await getExerciseById(goal.exerciseId);
+            const exercise = exerciseMap.get(goal.exerciseId);
             return {
                 name: exercise?.name ?? 'Exercise',
                 metricLabel,
@@ -249,150 +256,29 @@ export default function GoalsScreen() {
     // Render helpers
     // --------------------------------------------------------
 
-    const renderActiveGoal = ({ item: goal }: { item: Goal }) => {
-        const info = displayInfoMap.get(goal.id) ?? {
-            name: 'Goal',
-            metricLabel: '',
-            unit: '',
-        };
+    const defaultInfo: GoalDisplayInfo = { name: 'Goal', metricLabel: '', unit: '' };
 
-        return (
-            <GoalCard
-                goal={goal}
-                displayInfo={info}
-                onPress={() => setDetailGoal(goal)}
-                onLongPress={() => handleLongPress(goal)}
-            />
-        );
-    };
-
-    const renderCompletedGoal = ({ item: goal }: { item: Goal }) => {
-        const info = displayInfoMap.get(goal.id) ?? {
-            name: 'Goal',
-            metricLabel: '',
-            unit: '',
-        };
-
-        return (
-            <CompletedGoalCard
-                goal={goal}
-                displayInfo={info}
-                onPress={() => setDetailGoal(goal)}
-                onLongPress={() => handleLongPress(goal)}
-            />
-        );
-    };
-
-    const renderEmptyState = () => (
-        <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🎯</Text>
-            <Text style={styles.emptyTitle}>What are we aiming for?</Text>
-            <Text style={styles.emptySubtitle}>
-                Set a target and watch your progress
-            </Text>
-
-            {/* Quick-add chips */}
-            <View style={styles.chipGrid}>
-                {QUICK_ADD_CHIPS.map((chip) => (
-                    <TouchableOpacity
-                        key={chip.label}
-                        style={styles.quickAddChip}
-                        activeOpacity={0.7}
-                        // onPress wired in Phase 4
-                    >
-                        <Text style={styles.chipEmoji}>{chip.emoji}</Text>
-                        <Text style={styles.chipLabel}>{chip.label}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <TouchableOpacity
-                style={styles.createCustomButton}
-                activeOpacity={0.7}
-                onPress={() => setShowCreation(true)}
-            >
-                <MaterialIcons name="add" size={18} color={colors.accent.primary} />
-                <Text style={styles.createCustomText}>Create Custom Goal</Text>
-            </TouchableOpacity>
-        </View>
+    const renderActiveGoal = ({ item: goal }: { item: Goal }) => (
+        <GoalCard
+            goal={goal}
+            displayInfo={displayInfoMap.get(goal.id) ?? defaultInfo}
+            onPress={() => setDetailGoal(goal)}
+            onLongPress={() => handleLongPress(goal)}
+        />
     );
 
-    const renderTrophyEmpty = () => (
-        <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🏆</Text>
-            <Text style={styles.emptyTitle}>No trophies yet</Text>
-            <Text style={styles.emptySubtitle}>
-                Completed goals will appear here
-            </Text>
-        </View>
+    const renderCompletedGoal = ({ item: goal }: { item: Goal }) => (
+        <CompletedGoalCard
+            goal={goal}
+            displayInfo={displayInfoMap.get(goal.id) ?? defaultInfo}
+            onPress={() => setDetailGoal(goal)}
+            onLongPress={() => handleLongPress(goal)}
+        />
     );
 
-    // --------------------------------------------------------
-    // Context menu modal
-    // --------------------------------------------------------
-
-    const renderContextMenu = () => {
-        if (!contextGoal) return null;
-        const isActive = contextGoal.status === 'active';
-
-        return (
-            <Modal
-                visible={contextVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setContextVisible(false)}
-            >
-                <TouchableOpacity
-                    style={styles.modalOverlay}
-                    activeOpacity={1}
-                    onPress={() => setContextVisible(false)}
-                >
-                    <View style={styles.contextMenu}>
-                        {isActive && (
-                            <TouchableOpacity
-                                style={styles.contextMenuItem}
-                                onPress={() => handleContextAction('complete')}
-                            >
-                                <MaterialIcons
-                                    name="check-circle"
-                                    size={20}
-                                    color={colors.accent.success}
-                                />
-                                <Text style={styles.contextMenuText}>Mark Complete</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {isActive && (
-                            <TouchableOpacity
-                                style={styles.contextMenuItem}
-                                onPress={() => handleContextAction('abandon')}
-                            >
-                                <MaterialIcons
-                                    name="pause-circle-filled"
-                                    size={20}
-                                    color={colors.accent.warning}
-                                />
-                                <Text style={styles.contextMenuText}>Abandon</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        <TouchableOpacity
-                            style={[styles.contextMenuItem, styles.contextMenuItemLast]}
-                            onPress={() => handleContextAction('delete')}
-                        >
-                            <MaterialIcons
-                                name="delete"
-                                size={20}
-                                color={colors.accent.error}
-                            />
-                            <Text style={[styles.contextMenuText, { color: colors.accent.error }]}>
-                                Delete
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </TouchableOpacity>
-            </Modal>
-        );
+    const handleQuickAdd = (prefill: PrefillParams) => {
+        setPrefillData(prefill);
+        setShowCreation(true);
     };
 
     // --------------------------------------------------------
@@ -410,7 +296,10 @@ export default function GoalsScreen() {
             <View style={styles.tabContent}>
                 {activeTab === 'active' && (
                     activeGoals.length === 0 && !isLoading ? (
-                        renderEmptyState()
+                        <GoalEmptyState
+                            onQuickAdd={handleQuickAdd}
+                            onCreateCustom={() => setShowCreation(true)}
+                        />
                     ) : (
                         <FlatList
                             data={activeGoals}
@@ -423,7 +312,13 @@ export default function GoalsScreen() {
                 )}
                 {activeTab === 'trophy' && (
                     completedGoals.length === 0 && !isLoading ? (
-                        renderTrophyEmpty()
+                        <View style={styles.emptyState}>
+                            <Text style={styles.emptyEmoji}>🏆</Text>
+                            <Text style={styles.emptyTitle}>No trophies yet</Text>
+                            <Text style={styles.emptySubtitle}>
+                                Completed goals will appear here
+                            </Text>
+                        </View>
                     ) : (
                         <FlatList
                             data={completedGoals}
@@ -436,10 +331,15 @@ export default function GoalsScreen() {
                 )}
             </View>
 
-            {/* Context menu modal */}
-            {renderContextMenu()}
+            {/* Context menu */}
+            <GoalContextMenu
+                visible={contextVisible}
+                goal={contextGoal}
+                onAction={handleContextAction}
+                onClose={() => setContextVisible(false)}
+            />
 
-            {/* FAB — opens creation flow (Phase 4) */}
+            {/* FAB — opens creation flow */}
             <TouchableOpacity
                 style={styles.fab}
                 activeOpacity={0.85}
@@ -456,15 +356,19 @@ export default function GoalsScreen() {
             {/* Goal creation modal */}
             <GoalCreationModal
                 visible={showCreation}
-                onClose={() => setShowCreation(false)}
+                onClose={() => {
+                    setShowCreation(false);
+                    setPrefillData(null);
+                }}
                 onCreated={loadGoals}
+                prefillData={prefillData}
             />
 
             {/* Goal detail modal */}
             <GoalDetailModal
                 visible={!!detailGoal}
                 goal={detailGoal}
-                displayInfo={detailGoal ? displayInfoMap.get(detailGoal.id) ?? { name: 'Goal', metricLabel: '', unit: '' } : null}
+                displayInfo={detailGoal ? displayInfoMap.get(detailGoal.id) ?? defaultInfo : null}
                 onClose={() => setDetailGoal(null)}
             />
         </SafeAreaView>
@@ -488,7 +392,7 @@ const styles = StyleSheet.create({
         paddingBottom: 80, // Space for FAB
     },
 
-    // Empty state
+    // Trophy empty state (kept inline — only 5 lines of JSX)
     emptyState: {
         flex: 1,
         alignItems: 'center',
@@ -510,77 +414,6 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         textAlign: 'center',
         marginBottom: spacing.xl,
-    },
-
-    // Quick-add chips
-    chipGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        gap: spacing.sm,
-        marginBottom: spacing.lg,
-    },
-    quickAddChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.xl,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderWidth: 1,
-        borderColor: colors.glass.border,
-    },
-    chipEmoji: {
-        fontSize: 16,
-        marginRight: spacing.xs,
-    },
-    chipLabel: {
-        fontSize: typography.size.sm,
-        color: colors.text.primary,
-        fontWeight: typography.weight.medium,
-    },
-
-    // Create custom button
-    createCustomButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: spacing.sm,
-    },
-    createCustomText: {
-        fontSize: typography.size.md,
-        color: colors.accent.primary,
-        fontWeight: typography.weight.semibold,
-        marginLeft: spacing.xs,
-    },
-
-    // Context menu modal
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: colors.overlay,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    contextMenu: {
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.lg,
-        width: 240,
-        overflow: 'hidden',
-    },
-    contextMenuItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    contextMenuItemLast: {
-        borderBottomWidth: 0,
-    },
-    contextMenuText: {
-        fontSize: typography.size.md,
-        color: colors.text.primary,
-        marginLeft: spacing.sm,
     },
 
     // FAB

@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import type { Goal } from '../../models';
+import { getProgressPercent, formatTitle } from './goalUtils';
 
 // ============================================================
 // Types
@@ -46,11 +47,6 @@ interface GoalCardProps {
 // ============================================================
 // Helpers
 // ============================================================
-
-function getProgressPercent(goal: Goal): number {
-    if (!goal.currentBest || !goal.targetValue) return 0;
-    return Math.min(100, Math.round((goal.currentBest / goal.targetValue) * 100));
-}
 
 function getDeadlineBadge(goal: Goal): { text: string; color: string } | null {
     if (!goal.deadline) return null;
@@ -86,19 +82,11 @@ function getDeadlineBadge(goal: Goal): { text: string; color: string } | null {
     };
 }
 
-function formatTitle(goal: Goal, info: GoalDisplayInfo): string {
-    if (goal.goalType === 'consistency') {
-        return `${goal.targetValue} Workouts`;
-    }
-    const suffix = info.metricLabel ? ` ${info.metricLabel}` : '';
-    return `${info.name}${suffix}: ${goal.targetValue} ${info.unit}`;
-}
-
 // ============================================================
 // Component
 // ============================================================
 
-export default function GoalCard({ goal, displayInfo, onPress, onLongPress }: GoalCardProps) {
+export default React.memo(function GoalCard({ goal, displayInfo, onPress, onLongPress }: GoalCardProps) {
     const percent = getProgressPercent(goal);
     const badge = getDeadlineBadge(goal);
 
@@ -152,10 +140,10 @@ export default function GoalCard({ goal, displayInfo, onPress, onLongPress }: Go
             </View>
         </TouchableOpacity>
     );
-}
+});
 
 // Re-export helpers for testing
-export { getProgressPercent, getDeadlineBadge, formatTitle };
+export { getDeadlineBadge };
 
 // ============================================================
 // Styles

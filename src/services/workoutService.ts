@@ -6,8 +6,9 @@
  */
 
 import { getDatabase } from './database';
-import { refreshAllGoalProgress } from './goalService';
+import { refreshAllGoalProgress } from './goalProgressService';
 import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
+import { toLocalISOString } from '../utils/localDate';
 import {
     Workout,
     WorkoutExercise,
@@ -49,8 +50,8 @@ export async function saveWorkout(workout: Workout): Promise<void> {
                     workout.id,
                     workout.name,
                     workout.status,
-                    workout.startedAt.toISOString(),
-                    workout.completedAt?.toISOString() ?? null,
+                    toLocalISOString(workout.startedAt),
+                    workout.completedAt ? toLocalISOString(workout.completedAt) : null,
                     workout.totalDuration,
                     workout.totalVolume,
                     workout.totalSets,
@@ -59,8 +60,8 @@ export async function saveWorkout(workout: Workout): Promise<void> {
                     workout.note,
                     workout.templateId,
                     workout.dayOfWeek,
-                    workout.createdAt.toISOString(),
-                    workout.updatedAt.toISOString(),
+                    toLocalISOString(workout.createdAt),
+                    toLocalISOString(workout.updatedAt),
                 ]
             );
 
@@ -113,7 +114,7 @@ export async function saveWorkout(workout: Workout): Promise<void> {
                             set.suggestedWeight,
                             set.suggestedReps,
                             set.note,
-                            set.completedAt?.toISOString() ?? null,
+                            set.completedAt ? toLocalISOString(set.completedAt) : null,
                             set.restDuration,
                         ]
                     );
@@ -181,8 +182,8 @@ export async function updateWorkout(workout: Workout): Promise<void> {
                     workout.id,
                     workout.name,
                     workout.status,
-                    workout.startedAt.toISOString(),
-                    workout.completedAt?.toISOString() ?? null,
+                    toLocalISOString(workout.startedAt),
+                    workout.completedAt ? toLocalISOString(workout.completedAt) : null,
                     workout.totalDuration,
                     workout.totalVolume,
                     workout.totalSets,
@@ -191,8 +192,8 @@ export async function updateWorkout(workout: Workout): Promise<void> {
                     workout.note,
                     workout.templateId,
                     workout.dayOfWeek,
-                    workout.createdAt.toISOString(),
-                    workout.updatedAt.toISOString(),
+                    toLocalISOString(workout.createdAt),
+                    toLocalISOString(workout.updatedAt),
                 ],
             );
 
@@ -244,7 +245,7 @@ export async function updateWorkout(workout: Workout): Promise<void> {
                             set.suggestedWeight,
                             set.suggestedReps,
                             set.note,
-                            set.completedAt?.toISOString() ?? null,
+                            set.completedAt ? toLocalISOString(set.completedAt) : null,
                             set.restDuration,
                         ],
                     );
@@ -257,8 +258,8 @@ export async function updateWorkout(workout: Workout): Promise<void> {
         // Fire-and-forget: refresh goal progress after successful update
         refreshAllGoalProgress()
             .then((completed) => {
-                for (const goal of completed) {
-                    console.log(`[WorkoutService] Goal completed: ${goal.label ?? goal.id}`);
+                if (completed.length > 0) {
+                    useGoalCelebrationStore.getState().celebrate(completed);
                 }
             })
             .catch((err) => console.warn('[WorkoutService] Goal refresh failed:', err));
@@ -433,7 +434,7 @@ export async function getWorkoutDatesThisWeek(): Promise<Date[]> {
             `SELECT DISTINCT DATE(completed_at) as completed_at FROM workouts 
              WHERE completed_at >= ? AND completed_at <= ?
              ORDER BY completed_at`,
-            [monday.toISOString(), sunday.toISOString()]
+            [toLocalISOString(monday), toLocalISOString(sunday)]
         );
 
         // Parse YYYY-MM-DD strings as local dates (not UTC) to avoid day-shift

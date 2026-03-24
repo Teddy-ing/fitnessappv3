@@ -277,7 +277,7 @@ export function DeadlineStep({ deadline, onSetDeadline, onConfirm }: DeadlineSte
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.continueButton, !deadline && styles.continueButtonDisabled]}
+                    style={[styles.continueButton, styles.continueButtonInRow, !deadline && styles.continueButtonDisabled]}
                     onPress={onConfirm}
                     disabled={!deadline}
                     activeOpacity={0.7}
@@ -329,7 +329,7 @@ export function LabelStep({ label, onChangeLabel, onConfirm }: LabelStepProps) {
                     <Text style={styles.skipButtonText}>Skip</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.continueButton} onPress={onConfirm} activeOpacity={0.7}>
+                <TouchableOpacity style={[styles.continueButton, styles.continueButtonInRow]} onPress={onConfirm} activeOpacity={0.7}>
                     <Text style={styles.continueButtonText}>Continue</Text>
                 </TouchableOpacity>
             </View>
@@ -503,11 +503,19 @@ const styles = StyleSheet.create({
 
     // Buttons
     continueButton: {
-        flex: 1,
         backgroundColor: colors.accent.primary,
         borderRadius: borderRadius.lg,
         paddingVertical: spacing.md,
+        paddingHorizontal: spacing.xl,
         alignItems: 'center',
+        alignSelf: 'center',
+        marginTop: spacing.lg,
+    },
+    continueButtonInRow: {
+        flex: 1,
+        marginTop: 0,
+        alignSelf: 'auto' as const,
+        paddingHorizontal: spacing.md,
     },
     continueButtonDisabled: {
         opacity: 0.4,

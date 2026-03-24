@@ -22,29 +22,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import type { Goal } from '../../models';
 import type { GoalDisplayInfo } from './GoalCard';
+import { formatDate, formatTitle } from './goalUtils';
 
 // ============================================================
-// Helpers
+// Constants
 // ============================================================
 
 const GOLD_GRADIENT = ['#f59e0b', '#eab308'] as const;
 const GOLD_COLOR = '#f59e0b';
-
-function formatDate(isoStr: string): string {
-    return new Date(isoStr).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
-
-function formatTitle(goal: Goal, info: GoalDisplayInfo): string {
-    if (goal.goalType === 'consistency') {
-        return `${goal.targetValue} Workouts`;
-    }
-    const suffix = info.metricLabel ? ` ${info.metricLabel}` : '';
-    return `${info.name}${suffix}: ${goal.targetValue} ${info.unit}`;
-}
 
 // ============================================================
 // Component
@@ -57,7 +42,7 @@ interface CompletedGoalCardProps {
     onLongPress?: () => void;
 }
 
-export default function CompletedGoalCard({
+export default React.memo(function CompletedGoalCard({
     goal,
     displayInfo,
     onPress,
@@ -114,7 +99,7 @@ export default function CompletedGoalCard({
             </View>
         </TouchableOpacity>
     );
-}
+});
 
 // ============================================================
 // Styles

@@ -6,10 +6,10 @@ description: Tracking document for performance regression findings from Performa
 
 ## Summary
 
-- **Last full pass:** 2026-03-23 (Measurements Feature QA pass)
+- **Last full pass:** 2026-03-24 (comprehensive full-project scan — 65+ files)
 - **Open issues:** 0
-- **Fixed this session:** 6
-- **Negligible / Won't Fix:** 7
+- **Fixed this session:** 0 (clean pass)
+- **Negligible / Won't Fix:** 9
 
 ---
 
@@ -18,6 +18,14 @@ description: Tracking document for performance regression findings from Performa
 None 🎉
 
 ---
+
+## Resolved (Session: 2026-03-24 — Goals Feature)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|-------------|
+| PP-031 | N+1 query / sequential await | `goalService.ts` | Batched `refreshAllGoalProgress()` — groups active goals by type, runs one aggregation query per type (1RM, volume, reps, measurement, consistency) with `IN(...)`, then batch-UPDATEs. Reduces 20+ serial DB round-trips to ~6–7 total. |
+| PP-032 | React.memo | `GoalCard.tsx`, `CompletedGoalCard.tsx` | Wrapped both card components in `React.memo`. Props are primitives + stable Map lookups, so memoization is effective. |
+| PP-033 | Sequential DB calls | `GoalsScreen.tsx` | Replaced per-goal `getExerciseById()` loop with single cached `getExercises()` call + `Map<id, Exercise>` lookup. Eliminates N DB round-trips for exercise goal display info. |
 
 ## Resolved (Session: 2026-03-23)
 
@@ -79,6 +87,10 @@ None 🎉
 
 **PP-029** — `MetricInputRow` list uses `.map()` — acceptable for ~10–12 items.
 
+**PP-034** — `MeasurementStep` in `GoalCreationSteps.tsx` uses `ScrollView` + `.map()` instead of `FlatList` for measurement type list — only ~15 items (seeded measurement types), not a hot path, inside a modal wizard step.
+
+**PP-035** — `Dimensions.get('window')` at module level in `GoalCelebrationOverlay.tsx` — same as PP-013/PP-027, portrait-locked.
+
 ---
 
 ## Historical Performance Issues
@@ -93,5 +105,5 @@ None 🎉
 ---
 
 ## Last Updated
-- Date: 2026-03-23
-- Session Context: Measurements Feature performance audit — 8 issues found, 6 fixed, 2 negligible moved to won't-fix
+- Date: 2026-03-24
+- Session Context: Comprehensive full-project Performance Profiler scan covering 65+ files (stores, screens, hooks, components, services, charts). Zero new regressions found. All 8 checklist areas (Zustand selectors, FlatList, SQLite queries, chart rendering, memory leaks, UI thread blocking, asset loading, JSON.parse) verified clean.

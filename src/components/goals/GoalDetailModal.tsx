@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import type { Goal } from '../../models';
 import type { GoalDisplayInfo } from './GoalCard';
+import { getProgressPercent, formatDate } from './goalUtils';
 
 // ============================================================
 // Props
@@ -37,20 +38,6 @@ interface GoalDetailModalProps {
 // ============================================================
 // Helpers
 // ============================================================
-
-function getProgressPercent(goal: Goal): number {
-    if (!goal.currentBest || !goal.targetValue) return 0;
-    return Math.min(100, Math.round((goal.currentBest / goal.targetValue) * 100));
-}
-
-function formatDate(isoString: string): string {
-    const d = new Date(isoString);
-    return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
 
 function getDaysElapsed(goal: Goal): number {
     const now = new Date();

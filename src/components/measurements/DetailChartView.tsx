@@ -12,7 +12,6 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    FlatList,
     Dimensions,
     ActivityIndicator,
 } from 'react-native';
@@ -28,6 +27,7 @@ import { getSettings, updateSettings } from '../../services/preferencesService';
 import type { MeasurementType } from '../../models';
 import type { Exercise } from '../../models/exercise';
 import type { ChartRange } from '../../models/analytics';
+import OverlayExercisePicker from './OverlayExercisePicker';
 
 // ============================================================
 // Constants
@@ -394,37 +394,12 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
 
             {/* Exercise picker modal */}
             {showExercisePicker && (
-                <View style={styles.pickerOverlay}>
-                    <View style={styles.pickerModal}>
-                        <View style={styles.pickerHeader}>
-                            <Text style={styles.pickerTitle}>Select Exercise</Text>
-                            <TouchableOpacity onPress={() => setShowExercisePicker(false)}>
-                                <Text style={styles.pickerDone}>Done</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <FlatList
-                            style={styles.pickerList}
-                            data={allExercises.filter(e => e.trackWeight)}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item: ex }) => (
-                                <TouchableOpacity
-                                    style={[
-                                        styles.pickerRow,
-                                        ex.id === overlayExerciseId && styles.pickerRowActive,
-                                    ]}
-                                    onPress={() => handleSelectExercise(ex)}
-                                >
-                                    <Text style={[
-                                        styles.pickerRowText,
-                                        ex.id === overlayExerciseId && styles.pickerRowTextActive,
-                                    ]}>
-                                        {ex.name}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-                        />
-                    </View>
-                </View>
+                <OverlayExercisePicker
+                    exercises={allExercises}
+                    selectedId={overlayExerciseId}
+                    onSelect={handleSelectExercise}
+                    onClose={() => setShowExercisePicker(false)}
+                />
             )}
         </View>
     );
@@ -605,58 +580,5 @@ const styles = StyleSheet.create({
     legendText: {
         color: colors.text.secondary,
         fontSize: 10,
-    },
-
-    // Exercise picker modal
-    pickerOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        justifyContent: 'flex-end',
-        zIndex: 100,
-    },
-    pickerModal: {
-        backgroundColor: colors.background.secondary,
-        borderTopLeftRadius: borderRadius.xl,
-        borderTopRightRadius: borderRadius.xl,
-        maxHeight: '60%',
-    },
-    pickerHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: spacing.lg,
-        paddingVertical: spacing.md,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.separator,
-    },
-    pickerTitle: {
-        color: colors.text.primary,
-        fontSize: typography.size.lg,
-        fontWeight: typography.weight.semibold as '600',
-    },
-    pickerDone: {
-        color: colors.accent.primary,
-        fontSize: typography.size.md,
-        fontWeight: typography.weight.semibold as '600',
-    },
-    pickerList: {
-        paddingBottom: spacing.xl,
-    },
-    pickerRow: {
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.separator,
-    },
-    pickerRowActive: {
-        backgroundColor: colors.accent.primary + '15',
-    },
-    pickerRowText: {
-        color: colors.text.primary,
-        fontSize: typography.size.md,
-    },
-    pickerRowTextActive: {
-        color: colors.accent.primary,
-        fontWeight: typography.weight.semibold as '600',
     },
 });

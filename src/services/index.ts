@@ -122,7 +122,9 @@ export {
     deleteGoal,
     markGoalCompleted,
     abandonGoal,
+} from './goalService';
+export {
     computeCurrentBest,
     refreshAllGoalProgress,
     getCurrentBestForTarget,
-} from './goalService';
+} from './goalProgressService';

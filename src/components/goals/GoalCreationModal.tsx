@@ -25,7 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing, typography } from '../../theme';
-import { useGoalCreation } from '../../hooks/useGoalCreation';
+import { useGoalCreation, type PrefillParams, type CreationStep } from '../../hooks/useGoalCreation';
 import { getMeasurementTypes } from '../../services/measurementService';
 import { getSettings } from '../../services/preferencesService';
 import type { MeasurementType } from '../../models/measurement';
@@ -48,6 +48,8 @@ interface GoalCreationModalProps {
     visible: boolean;
     onClose: () => void;
     onCreated: () => void;
+    /** Pre-fill data for quick-add chips */
+    prefillData?: PrefillParams | null;
 }
 
 // ============================================================
@@ -58,6 +60,7 @@ export default function GoalCreationModal({
     visible,
     onClose,
     onCreated,
+    prefillData,
 }: GoalCreationModalProps) {
     const wizard = useGoalCreation();
     const { state } = wizard;
@@ -70,6 +73,10 @@ export default function GoalCreationModal({
     useEffect(() => {
         if (visible) {
             loadData();
+            // Apply prefill data if provided
+            if (prefillData) {
+                wizard.prefill(prefillData);
+            }
         }
     }, [visible]);
 
@@ -106,6 +113,16 @@ export default function GoalCreationModal({
     // Step indicator
     // --------------------------------------------------------
 
+    // Map step indicator index → CreationStep for backward navigation
+    const STEP_INDEX_MAP: Record<number, CreationStep> = {
+        0: 'type',
+        1: state.category === 'measurement' ? 'measurement' : state.category === 'exercise' ? 'exercise' : 'type',
+        2: 'target',
+        3: 'deadline',
+        4: 'label',
+        5: 'confirm',
+    };
+
     const renderStepIndicator = () => {
         const stepNames = ['Type', 'Target', 'Value', 'Deadline', 'Label', 'Confirm'];
         const stepIndex = (() => {
@@ -124,25 +141,37 @@ export default function GoalCreationModal({
 
         return (
             <View style={styles.stepIndicator}>
-                {stepNames.map((name, i) => (
-                    <View key={name} style={styles.stepDot}>
-                        <View
-                            style={[
-                                styles.dot,
-                                i <= stepIndex && styles.dotActive,
-                                i === stepIndex && styles.dotCurrent,
-                            ]}
-                        />
-                        <Text
-                            style={[
-                                styles.stepLabel,
-                                i <= stepIndex && styles.stepLabelActive,
-                            ]}
+                {stepNames.map((name, i) => {
+                    const canTap = i < stepIndex; // Only allow tapping past steps
+                    const stepForIndex = STEP_INDEX_MAP[i];
+
+                    return (
+                        <TouchableOpacity
+                            key={name}
+                            style={styles.stepDot}
+                            disabled={!canTap}
+                            onPress={() => canTap && stepForIndex && wizard.goToStep(stepForIndex)}
+                            activeOpacity={canTap ? 0.6 : 1}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
-                            {name}
-                        </Text>
-                    </View>
-                ))}
+                            <View
+                                style={[
+                                    styles.dot,
+                                    i <= stepIndex && styles.dotActive,
+                                    i === stepIndex && styles.dotCurrent,
+                                ]}
+                            />
+                            <Text
+                                style={[
+                                    styles.stepLabel,
+                                    i <= stepIndex && styles.stepLabelActive,
+                                ]}
+                            >
+                                {name}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
         );
     };
@@ -224,7 +253,7 @@ export default function GoalCreationModal({
             visible={visible}
             animationType="slide"
             presentationStyle="pageSheet"
-            onRequestClose={handleClose}
+            onRequestClose={wizard.canGoBack ? wizard.goBack : handleClose}
         >
             <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
                 {/* Header */}

@@ -11,10 +11,11 @@
  */
 
 import { getDatabase } from './database';
-import { refreshAllGoalProgress } from './goalService';
+import { refreshAllGoalProgress } from './goalProgressService';
 import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import { MeasurementType, Measurement } from '../models/measurement';
 import { generateId } from '../utils/uuid';
+import { toLocalISOString } from '../utils/localDate';
 
 // ============================================================
 // Row types (typed DB results)
@@ -148,7 +149,7 @@ export async function logMeasurement(
 
     try {
         const id = generateId();
-        const now = new Date().toISOString();
+        const now = toLocalISOString(new Date());
 
         await db.runAsync(
             `INSERT INTO measurements (id, measurement_type_id, value, recorded_at, note, created_at)

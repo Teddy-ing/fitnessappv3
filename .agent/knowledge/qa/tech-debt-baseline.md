@@ -6,15 +6,15 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 ## Summary
 
-- **Last full pass:** 2026-03-23 (measurements feature post-completion)
+- **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
 - **Open issues:** 6 (Active: 0, Latent: 6)
-- **Fixed since baseline:** 9
+- **Fixed since baseline:** 14
 
 ---
 
 ## Open Issues — Active Debt
 
-No active debt. All items resolved.
+_No active debt items._
 
 ---
 
@@ -30,23 +30,26 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Will break at:** ML features adding prediction queries, widget framework adding dashboard queries
 - **Recommended fix (when):** Before Phase 5, extract `exerciseAnalyticsService.ts` (micro-level queries: lines 504–858) from the current file. Keep `analyticsService.ts` for macro-level queries.
 
-### TD-004 · Hardcoded `" lbs"` unit across analytics UI + calendar modal + measurements gallery
+### TD-004 · Hardcoded `" lbs"` unit across analytics UI + calendar modal + measurements gallery + goals
 
 - **Category:** Scalability / internationalization
-- **Files:**
-  - [AnalyticsScreen.tsx:183](file:///c:/Users/teddy/projects/workout-app/src/screens/AnalyticsScreen.tsx#L183) — `getYAxisSuffix` returns `' lbs'`
-  - [ExerciseAnalyticsScreen.tsx:387,391](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L387-L391) — `suffix=" lbs"` prop
-  - [ExerciseAnalyticsScreen.tsx:337](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L337) — hardcoded `lbs` in tooltip
-  - [ExerciseAnalyticsScreen.tsx:417](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L417) — `{row.weight} lbs` in table
-  - [DailyWorkoutModal.tsx:68](file:///c:/Users/teddy/projects/workout-app/src/components/DailyWorkoutModal.tsx#L68) — `formatVolume` appends `' lbs'`
-  - **[NEW]** [GalleryTab.tsx:90](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L90) — `{photo.bodyweight} lbs` in grid badge
-  - **[NEW]** [GalleryTab.tsx:247](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L247) — `{currentPhoto.bodyweight} lbs` in viewer header
-  - **[NEW]** [GalleryTab.tsx:402,424](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L402) — `{left.bodyweight} lbs` / `{right.bodyweight} lbs` in compare view
-  - **[NEW]** [GalleryTab.tsx:439](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L439) — `{diff.toFixed(1)} lbs` in compare delta
+- **Files (20 instances across 13 files):**
+  - [MacroAnalyticsView.tsx:75](file:///c:/Users/teddy/projects/workout-app/src/components/analytics/MacroAnalyticsView.tsx#L75) — `getYAxisSuffix` returns `' lbs'`
+  - [ExerciseAnalyticsScreen.tsx:288,338,342,368](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L288) — `suffix=" lbs"` props + tooltip + table
+  - [formatters.ts:20](file:///c:/Users/teddy/projects/workout-app/src/utils/formatters.ts#L20) — `formatVolume` appends `' lbs'`
+  - [PhotoCell.tsx:77](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/PhotoCell.tsx#L77) — `{photo.bodyweight} lbs`
+  - [PhotoViewer.tsx:108](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/PhotoViewer.tsx#L108) — `{currentPhoto.bodyweight} lbs`
+  - [CompareView.tsx:68,90,105](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/CompareView.tsx#L68) — `{left/right.bodyweight} lbs` + delta
+  - [GoalsScreen.tsx:174](file:///c:/Users/teddy/projects/workout-app/src/screens/GoalsScreen.tsx#L174) — `unit: 'lbs'` in `resolveGoalDisplayInfo`
+  - [GoalCreationModal.tsx:70](file:///c:/Users/teddy/projects/workout-app/src/components/goals/GoalCreationModal.tsx#L70) — `useState('lbs')` default
+  - [GoalEmptyState.tsx:28](file:///c:/Users/teddy/projects/workout-app/src/components/goals/GoalEmptyState.tsx#L28) — `'Bench 135 lbs'` chip label
+  - [WorkoutHomeView.tsx:225](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutHomeView.tsx#L225) — `lbs` in workout widget
+  - [WorkoutKeyboard.tsx:106](file:///c:/Users/teddy/projects/workout-app/src/components/WorkoutKeyboard.tsx#L106) — `case 'weight': return 'lbs'`
+  - [SetRow.tsx:46](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx#L46) — `weightUnit = 'lbs'` default prop
 - **Why latent:** Settings phase (Phase 5) will need kg/lbs toggle. All these hardcoded strings will need updating.
 - **Will break at:** Settings feature — unit preference toggle
 - **Recommended fix (when):** When implementing Settings, create a `useUnitPreference()` hook that reads from user settings and returns formatted weight strings. Replace all hardcoded `lbs` with the hook's output.
-- **Note:** `MeasurementsScreen.tsx` and `TrendsTab.tsx` correctly read `weightUnit` from settings and use `unitImperial/unitMetric` from the type catalog — only `GalleryTab.tsx` hardcodes the unit.
+- **Note:** `MeasurementsScreen.tsx` and `TrendsTab.tsx` correctly read `weightUnit` from settings — these are the only two files currently doing it right.
 
 ### TD-005 · `ExerciseFilter` → muscle group mapping is hardcoded in UI
 
@@ -56,13 +59,18 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Why latent:** Current exercise set is stable. But import/export feature (Phase 6) could introduce exercises with muscle groups not in this mapping.
 - **Recommended fix (when):** When implementing import, derive filter pills dynamically from `SELECT DISTINCT muscle FROM ...` or from the exercise model's muscle group enum.
 
-### TD-009 · `CalendarDayData` type defined in service file instead of `src/models/`
+### TD-009 · Cross-boundary types defined in service files instead of `src/models/`
 
 - **Category:** Type ownership / guardrail #5 deviation
-- **File:** [calendarService.ts:31-44](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L31-L44) — `CalendarDayData` interface + `JournalEntry` interface
-- **What:** `CalendarDayData` is exported from `calendarService.ts` and imported by `CalendarScreen.tsx`. `JournalEntry` is similarly exported and used by `JournalView.tsx`. Guardrail #5 says canonical types live in `src/models/`. The current precedent is that model types used across file boundaries should be in `models/`.
-- **Why latent:** Only two consumers each right now. Will become problematic when widgets or Profile refactor need these same types.
-- **Recommended fix (when):** Create `src/models/calendar.ts` with `CalendarDayData`, `JournalEntry`, and `MonthData`. Import from models in both service and component files.
+- **Files:**
+  - [calendarService.ts:31,607](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L31) — `CalendarDayData`, `JournalEntry`, `PRSetIds`
+  - [templateService.ts:36,49](file:///c:/Users/teddy/projects/workout-app/src/services/templateService.ts#L36) — `Template`, `TemplateExercise`
+  - [splitService.ts:283](file:///c:/Users/teddy/projects/workout-app/src/services/splitService.ts#L283) — `SplitInfo`
+  - [preferencesService.ts:19](file:///c:/Users/teddy/projects/workout-app/src/services/preferencesService.ts#L19) — `UserSettings`
+- **What:** Multiple service files export types that are imported by UI components. Guardrail #5 says canonical types live in `src/models/`. These are cross-boundary types used by 2+ consumers each.
+- **Why latent:** Currently functional via barrel re-exports. Will become problematic when widgets, import/export, or settings features need these same types from different entry points.
+- **Recommended fix (when):** Before Phase 5, create `src/models/template.ts`, `src/models/calendar.ts`, `src/models/preferences.ts` and move the cross-boundary interfaces there. Services import from models.
+- **Note:** `hydration.ts` row types (`SetRow`, `ExerciseRow`, `WorkoutRow`) are internal DB mapping types — acceptable to keep in the hydration file.
 
 ### TD-011 · `calendarService.ts` is 848 lines and growing toward monolith territory
 
@@ -83,9 +91,42 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Why latent:** Four copies of the same date → ISO string formatting logic. Currently small and unlikely to contain bugs, but any timezone edge-case fix would need to be applied in 4 places.
 - **Recommended fix (when):** During the next refactor cycle, add `formatISODate(date: Date): string` to `src/utils/formatters.ts` (where `formatDuration` and `formatVolume` already live) and import from there. Low-risk, ~10-line change.
 
+
+
 ---
 
 ## Resolved
+
+### TD-020 · `DetailChartView.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-24**
+
+- **Guardrail violated:** #1 (Component size limit)
+- **Original:** 624 lines
+- **Fix applied:** Extracted `OverlayExercisePicker.tsx` (113 lines) — exercise picker modal with FlatList + styles.
+- **Result:** `DetailChartView.tsx` reduced to 547 lines. `OverlayExercisePicker.tsx` at 113 lines.
+
+### TD-016 · `GoalsScreen.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-24**
+
+- **Guardrail violated:** #1 (Component size limit)
+- **Original:** 643 lines
+- **Fix applied:** Extracted `GoalContextMenu.tsx` (140 lines) and `GoalEmptyState.tsx` (155 lines) to `src/components/goals/`.
+- **Result:** `GoalsScreen.tsx` reduced to 440 lines. Both extracted files well under 600 lines.
+
+### TD-017 · `goalService.ts` exceeds 600-line service guardrail — **RESOLVED 2026-03-24**
+
+- **Guardrail violated:** #1 (File size limit)
+- **Original:** 632 lines
+- **Fix applied:** Extracted progress computation into `src/services/goalProgressService.ts` (396 lines) — `computeCurrentBest`, 5 type-specific compute functions, `refreshAllGoalProgress`, `getCurrentBestForTarget`.
+- **Result:** `goalService.ts` reduced to 260 lines (CRUD only). `goalProgressService.ts` at 396 lines.
+
+### TD-018 · `getProgressPercent` + `formatDate` duplicated across goals components — **RESOLVED 2026-03-24**
+
+- **Category:** DRY violation
+- **Fix applied:** Created `src/components/goals/goalUtils.ts` (60 lines) with shared `getProgressPercent()`, `formatDate()`, and `formatTitle()`. Updated `GoalCard.tsx`, `CompletedGoalCard.tsx`, and `GoalDetailModal.tsx` to import from `goalUtils`.
+
+### TD-019 · `formatTitle` duplicated between GoalCard and CompletedGoalCard — **RESOLVED 2026-03-24**
+
+- **Category:** DRY violation
+- **Fix applied:** Consolidated into `goalUtils.ts` alongside TD-018.
 
 ### TD-001 · `AnalyticsScreen.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-14**
 
@@ -209,15 +250,15 @@ These were identified and fixed before this baseline was created. Documented her
 
 These guardrails in `conventions.md` were created specifically to prevent tech debt recurrence. The Tech Debt Auditor should verify compliance with all of them:
 
-| # | Guardrail | Measurements Feature Status |
+| # | Guardrail | Full-Project Status |
 |---|-----------|----------------------------|
-| 1 | Component size limit (600 lines) | ✅ All files under limit post-extraction (TD-012/013/014 resolved) |
-| 2 | Avoid `any` types | ✅ No `any` usage in any measurement file |
-| 3 | Database schema changes require versioned migrations | ✅ v6 migration used for `measurement_types`, `measurements`, `progress_photos` tables |
-| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ `MeasurementsScreen` has 7 `useState` for Track tab but they span keyboard + data + UI — acceptable |
-| 5 | Canonical types live in `src/models/` | ✅ `MeasurementType`, `Measurement`, `ProgressPhoto` all in `src/models/measurement.ts` |
-| 6 | State reset on lifecycle boundaries | ✅ `DetailChartView` reloads on `type.id` change; `TrendsTab` reloads on mount |
-| 7 | SafeAreaView edges must match tab bar visibility | ✅ `MeasurementsScreen` uses `edges={['bottom']}` (tab bar hidden, stack header handles top) |
+| 1 | Component size limit (600 lines) | ✅ All components under 600 lines (TD-020 resolved). Services `analyticsService.ts` 755, `calendarService.ts` 741 tracked as latent (TD-003/011). |
+| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted) and `SaveTemplateModal` Alert buttons |
+| 3 | Database schema changes require versioned migrations | ✅ 7 versioned migrations, all with `columnExists` guards |
+| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ All complex state correctly extracted to hooks (`useGoalCreation`, `useWorkoutKeyboard`, `useExerciseAnalytics`, `useMacroAnalytics`, `useHomeScreenData`) |
+| 5 | Canonical types live in `src/models/` | ⚠️ 6 cross-boundary types still in services (TD-009 expanded). Domain types correct in `models/`. |
+| 6 | State reset on lifecycle boundaries | ✅ All hooks and modals properly reset on identity/visibility change |
+| 7 | SafeAreaView edges must match tab bar visibility | ✅ All screens verified correct |
 
 ---
 
@@ -229,16 +270,18 @@ Areas to monitor as the app approaches later roadmap phases:
 |---------|--------------|--------------|
 | Navigation structure (3 tabs + modals) | Adequate for current features | Phase 5 (Settings) may need nested stacks or drawer |
 | SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
-| Service file boundaries | 8 services, `analyticsService` 873 lines, `calendarService` 848 lines | ML features (Phase 7), Widget framework (Phase 3) |
-| Hydration layer | Single mapping file | Every new model field = hydration update needed — fragile |
-| Unit hardcoding (`lbs`) | Analytics + calendar + **measurements gallery** (5 new instances) | Phase 5 (Settings) — kg/lbs toggle per TD-004 |
-| Chart label logic | Shared via `chartLabels.tsx` | ✅ Resolved (TD-002) |
-| Calendar component size | ✅ Resolved (TD-006) — 310 lines | — |
-| Measurement component sizes | ✅ Resolved (TD-012/013/014) — all under 430 lines | — |
+| Service file boundaries | 13 services, `analyticsService` 755 lines, `calendarService` 741 lines | ML features (Phase 7), Widget framework (Phase 3) |
+| Hydration layer | Single mapping file, 256 lines | Every new model field = hydration update needed — fragile |
+| Unit hardcoding (`lbs`) | **20 instances across 13 files** (TD-004 expanded) | Phase 5 (Settings) — kg/lbs toggle |
+| Chart label logic | ✅ Resolved (TD-002) — shared via `chartLabels.tsx` | — |
+| Calendar component size | ✅ Resolved (TD-006) — 325 lines | — |
+| Measurement component sizes | ✅ Resolved (TD-012/013/014/020) — all under 550 lines | — |
+| Goals component sizes | ✅ Resolved (TD-016/017/018/019) — all under 440 lines | — |
 | `formatISODate` duplication | 4 files with identical date formatting logic (TD-015) | Any timezone edge-case fix |
+| Type ownership | 6 cross-boundary types in services (TD-009 expanded) | Phase 5/6 — new consumers of these types |
 
 ---
 
 ## Last Updated
-- Date: 2026-03-23
-- Session Context: Resolved TD-012, TD-013, TD-014 — extracted 7 new files from 3 oversized measurement components. All files now under 600-line guardrail. TypeScript 0 errors, 212/212 tests pass. 6 latent issues remain (TD-003/004/005/009/011/015).
+- Date: 2026-03-24
+- Session Context: Comprehensive full-project Tech Debt Auditor scan (118 files). TD-020 found and immediately resolved (DetailChartView 624→547 lines via OverlayExercisePicker extraction). Expanded TD-004 to 20 lbs instances across 13 files. Expanded TD-009 to 6 cross-boundary types in services. 6 open latent issues, 0 active.

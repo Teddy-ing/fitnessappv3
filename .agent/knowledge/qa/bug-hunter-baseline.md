@@ -6,9 +6,9 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ## Summary
 
-- **Last full pass:** 2026-03-23 (measurements feature — Phases 1–4 + Relative Strength Overlay)
+- **Last full pass:** 2026-03-24 (comprehensive full-project scan — 65+ files)
 - **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
-- **Fixed since baseline:** 18
+- **Fixed since baseline:** 22
 
 ---
 
@@ -51,10 +51,45 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 | `commitValue` reads `focusedIndex` from closure | `MeasurementsScreen.tsx:728-755` | `focusedIndex` is read from the closure inside `commitValue`. Because `setFocusedIndex` updates are synchronous within the same render batch, and `commitValue` is always called in the same tick as the keyboard handler, the closure captures the correct value. |
 | `SparklineSVG` gradient `id` collision across multiple sparklines | `TrendsTab.tsx:99` | All sparklines use `id="sparkGrad"` for the gradient. In React Native SVG, each `<Svg>` element is an isolated SVG document, so IDs don't collide across components. Not a bug. |
 | `getFieldType` returns `'weight'` for all types | `MeasurementsScreen.tsx:780-785` | The comment says "Body Fat % → percentage, everything else → weight-like decimal" but both branches return `'weight'`. This is intentional — the keyboard layout for weight (decimal numbers) works for all measurement types including percentages. No bug. |
+| `GoalCelebrationOverlay` `handleDismiss` stale closure | `GoalCelebrationOverlay.tsx:55-62` | `handleDismiss` is defined as a plain function (not `useCallback`) and references `timerRef`, `slideAnim`, `opacityAnim`, and `dismiss`. All of these are refs or Zustand selectors (stable references), so no stale closure risk. The `dismiss` function from Zustand is stable across renders. |
+| `GoalCelebrationOverlay` auto-dismiss timer not cleared between queue items | `GoalCelebrationOverlay.tsx:55-62` | The `useEffect` cleanup function clears `timerRef.current` on unmount or when `currentGoal?.id` changes. Between queue items, the `dismiss()` call triggers a re-render with a new `currentGoal?.id`, which triggers cleanup → new effect. Safe. |
+| `computeExerciseVolume` includes non-working sets | `goalService.ts:317-336` | Volume query doesn't filter by `ws.type = 'working'`, unlike 1RM and max-reps. This is intentional — total session volume includes warmup and drop sets for volume-tracking goals. |
+| `resolveDisplayInfoBatch` N+1 for exercise goals | `GoalsScreen.tsx:140-159` | Each exercise goal calls `getExerciseById()` individually. With typical goal counts (1-10), this is acceptable. The exercise service has a module-level cache (PP-012 resolved), so these are in-memory lookups. |
+| `loadGoals` callback defined with empty deps | `GoalsScreen.tsx:119-134` | `loadGoals` is defined with `useCallback([], [])`. It's called from `useEffect` on mount and as `onCreated` callback. Since it doesn't read any state from the component, empty deps are correct. |
+| `GoalCreationModal` prefill `useEffect` missing `prefillData` in deps | `GoalCreationModal.tsx:73-81` | The `useEffect` watches `[visible]` but not `prefillData`. This is intentional — `prefillData` is set before `visible` is toggled to `true`, so the effect always sees the current value. Adding `prefillData` would cause double-fire when both change in the same render cycle. |
+| `contextGoal` stale in `Alert.alert` callback | `GoalsScreen.tsx:201-263` | `contextGoal` is captured in the `onPress` closure inside `Alert.alert`. Since `setContextGoal(null)` is called at line 263 *after* the switch, and the Alert callbacks fire asynchronously (user must tap), the captured `contextGoal` is still valid at the time the user taps. Not a bug. |
 
 ---
 
 ## Resolved
+
+#### BH-022 · `getProgressPercent` returns misleading percentage for loss goals — **RESOLVED 2026-03-23**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [GoalCard.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/goals/GoalCard.tsx#L50-L63), [GoalDetailModal.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/goals/GoalDetailModal.tsx#L41-L54)
+- **Root cause:** `(currentBest / targetValue) * 100` gave 109% clamped to 100% for a loss goal (e.g., 185/170). Misleading progress bar.
+- **Fix applied:** Added direction detection (`targetValue < startingValue`); loss goals now compute `((starting - current) / (starting - target)) * 100`.
+
+#### BH-021 · Stale closure in `selectExerciseMetric` — **RESOLVED 2026-03-23**
+- **Severity:** Medium
+- **Original status:** 🟡 Plausible
+- **File:** [useGoalCreation.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useGoalCreation.ts#L187-L204)
+- **Root cause:** `state.exercise?.id` read from outer closure after `setState` call in the same callback, risking a stale value.
+- **Fix applied:** Captured `exerciseId` from `prev` argument inside the `setState` updater function. Removed `state.exercise?.id` dependency.
+
+#### BH-020 · `updateWorkout` fire-and-forget doesn't celebrate completed goals — **RESOLVED 2026-03-23**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts#L258-L265)
+- **Root cause:** `updateWorkout` only logged completed goals to console, unlike `saveWorkout` and `logMeasurement` which called `celebrate()`.
+- **Fix applied:** Replaced `console.log` loop with `useGoalCelebrationStore.getState().celebrate(completed)`.
+
+#### BH-019 · `refreshAllGoalProgress` completion check wrong for loss goals — **RESOLVED 2026-03-23**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [goalService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/goalService.ts#L419-L428)
+- **Root cause:** `currentBest >= targetValue` was always used, but for loss goals (target < starting), `<=` should be used.
+- **Fix applied:** Added `isLossGoal` detection. Loss goals use `<=`, gain goals use `>=`.
 
 #### BH-013 · "View Comparison" button is a no-op — **RESOLVED 2026-03-23**
 - **Severity:** High
@@ -197,5 +232,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-03-23
-- Session Context: Removed BH-016 (deferred to TD-012, now resolved via component extraction).
+- Date: 2026-03-24
+- Session Context: Comprehensive full-project Bug Hunter scan covering 65+ files (all services, stores, screens, hooks, components, migrations, navigation, utilities). No new issues found. Codebase is clean.
