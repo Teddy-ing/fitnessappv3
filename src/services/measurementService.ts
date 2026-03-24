@@ -12,6 +12,7 @@
 
 import { getDatabase } from './database';
 import { MeasurementType, Measurement } from '../models/measurement';
+import { generateId } from '../utils/uuid';
 
 // ============================================================
 // Row types (typed DB results)
@@ -69,17 +70,7 @@ function mapMeasurementRow(row: MeasurementRow): Measurement {
     };
 }
 
-// ============================================================
-// UUID helper
-// ============================================================
 
-function generateId(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-}
 
 // ============================================================
 // Measurement Types (catalog)
@@ -269,12 +260,15 @@ export async function getLatestMeasurements(
             `SELECT m.measurement_type_id, m.value, m.recorded_at
              FROM measurements m
              INNER JOIN (
-                 SELECT measurement_type_id, MAX(recorded_at) AS max_date
+                 SELECT measurement_type_id,
+                        MAX(recorded_at) AS max_date,
+                        MAX(created_at) AS max_created
                  FROM measurements
                  WHERE measurement_type_id IN (${placeholders})
                  GROUP BY measurement_type_id
              ) latest ON m.measurement_type_id = latest.measurement_type_id
                      AND m.recorded_at = latest.max_date
+                      AND m.created_at = latest.max_created
              WHERE m.measurement_type_id IN (${placeholders})`,
             [...typeIds, ...typeIds],
         );
@@ -324,6 +318,56 @@ export async function getSparklineData(
     } catch (error) {
         console.error('[MeasurementService] Failed to get sparkline data:', error);
         return [];
+    }
+}
+
+/**
+ * Batch-fetch sparkline data for multiple measurement types in a single query.
+ * Returns a Map of typeId → { date, value }[] arrays.
+ *
+ * Replaces N separate getSparklineData() calls with one round-trip.
+ */
+export async function getSparklineDataBatch(
+    typeIds: string[],
+    days: number = 90,
+): Promise<Map<string, { date: string; value: number }[]>> {
+    const result = new Map<string, { date: string; value: number }[]>();
+    if (typeIds.length === 0) return result;
+
+    const db = await getDatabase();
+    if (!db) return result;
+
+    try {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        const cutoffStr = cutoff.toISOString().split('T')[0];
+
+        const placeholders = typeIds.map(() => '?').join(', ');
+        const rows = await db.getAllAsync<{ measurement_type_id: string; recorded_at: string; value: number }>(
+            `SELECT measurement_type_id, recorded_at, value
+             FROM measurements
+             WHERE measurement_type_id IN (${placeholders}) AND recorded_at >= ?
+             ORDER BY recorded_at ASC`,
+            [...typeIds, cutoffStr],
+        );
+
+        // Initialise empty arrays for all requested types
+        for (const id of typeIds) {
+            result.set(id, []);
+        }
+
+        // Partition rows into their type buckets
+        for (const row of rows) {
+            const arr = result.get(row.measurement_type_id);
+            if (arr) {
+                arr.push({ date: row.recorded_at, value: row.value });
+            }
+        }
+
+        return result;
+    } catch (error) {
+        console.error('[MeasurementService] Failed to get sparkline data batch:', error);
+        return result;
     }
 }
 

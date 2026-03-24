@@ -65,6 +65,8 @@ Focused review for logic bugs, runtime errors, and edge cases — the things tha
 > - **Timer and background state issues** — rest timer uses `endTime` timestamps; verify correctness across app background/foreground transitions.
 > - **Hydration bugs** — `hydration.ts` maps raw SQL rows to typed models. Check for epoch vs ISO date confusion, missing field mappings, and negative value clamping.
 >
+> **Do NOT flag component size violations** (>600 lines) — those are tracked by the Tech Debt Auditor workflow, not this one.
+>
 > For every issue found, provide the exact line/block, explain how it fails (with a concrete scenario a gym user would hit), and provide the fix.
 
 ---
@@ -95,5 +97,5 @@ The pass is COMPLETE when:
 ---
 
 ## Last Updated
-- Date: 2026-03-14
-- Session Context: Initial creation — tailored from generic Bug Hunter prompt
+- Date: 2026-03-23
+- Session Context: Added note to ignore component size violations — those belong to the Tech Debt Auditor workflow

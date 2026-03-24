@@ -104,6 +104,7 @@ export {
     getMeasurementHistory,
     getLatestMeasurements,
     getSparklineData,
+    getSparklineDataBatch,
     getMeasurementsForDate,
 } from './measurementService';
 export {

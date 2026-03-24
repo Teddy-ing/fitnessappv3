@@ -6,15 +6,15 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 ## Summary
 
-- **Last full pass:** 2026-03-17 (calendar feature post-completion)
-- **Open issues:** 5 (Active: 0, Latent: 5)
-- **Fixed since baseline:** 6
+- **Last full pass:** 2026-03-23 (measurements feature post-completion)
+- **Open issues:** 6 (Active: 0, Latent: 6)
+- **Fixed since baseline:** 9
 
 ---
 
 ## Open Issues — Active Debt
 
-No active debt. All items resolved or deferred to latent.
+No active debt. All items resolved.
 
 ---
 
@@ -30,7 +30,7 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Will break at:** ML features adding prediction queries, widget framework adding dashboard queries
 - **Recommended fix (when):** Before Phase 5, extract `exerciseAnalyticsService.ts` (micro-level queries: lines 504–858) from the current file. Keep `analyticsService.ts` for macro-level queries.
 
-### TD-004 · Hardcoded `" lbs"` unit across analytics UI + calendar modal
+### TD-004 · Hardcoded `" lbs"` unit across analytics UI + calendar modal + measurements gallery
 
 - **Category:** Scalability / internationalization
 - **Files:**
@@ -38,10 +38,15 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - [ExerciseAnalyticsScreen.tsx:387,391](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L387-L391) — `suffix=" lbs"` prop
   - [ExerciseAnalyticsScreen.tsx:337](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L337) — hardcoded `lbs` in tooltip
   - [ExerciseAnalyticsScreen.tsx:417](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L417) — `{row.weight} lbs` in table
-  - **[NEW]** [DailyWorkoutModal.tsx:68](file:///c:/Users/teddy/projects/workout-app/src/components/DailyWorkoutModal.tsx#L68) — `formatVolume` appends `' lbs'`
+  - [DailyWorkoutModal.tsx:68](file:///c:/Users/teddy/projects/workout-app/src/components/DailyWorkoutModal.tsx#L68) — `formatVolume` appends `' lbs'`
+  - **[NEW]** [GalleryTab.tsx:90](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L90) — `{photo.bodyweight} lbs` in grid badge
+  - **[NEW]** [GalleryTab.tsx:247](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L247) — `{currentPhoto.bodyweight} lbs` in viewer header
+  - **[NEW]** [GalleryTab.tsx:402,424](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L402) — `{left.bodyweight} lbs` / `{right.bodyweight} lbs` in compare view
+  - **[NEW]** [GalleryTab.tsx:439](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L439) — `{diff.toFixed(1)} lbs` in compare delta
 - **Why latent:** Settings phase (Phase 5) will need kg/lbs toggle. All these hardcoded strings will need updating.
 - **Will break at:** Settings feature — unit preference toggle
 - **Recommended fix (when):** When implementing Settings, create a `useUnitPreference()` hook that reads from user settings and returns formatted weight strings. Replace all hardcoded `lbs` with the hook's output.
+- **Note:** `MeasurementsScreen.tsx` and `TrendsTab.tsx` correctly read `weightUnit` from settings and use `unitImperial/unitMetric` from the type catalog — only `GalleryTab.tsx` hardcodes the unit.
 
 ### TD-005 · `ExerciseFilter` → muscle group mapping is hardcoded in UI
 
@@ -66,6 +71,17 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Why latent:** Contains 10 exported functions spanning 4 distinct domains: heatmap queries, streak/rest computation, PR backfill, journal search, and fatigue detection. This mirrors the `analyticsService.ts` pattern (TD-003). The service was built all at once as part of the calendar feature, so the growth was rapid.
 - **Will break at:** Widget framework (Phase 3) will likely add calendar-widget queries. Import/export (Phase 6) may need to write/read PR records.
 - **Recommended fix (when):** Before Phase 5, consider extracting `personalRecordsService.ts` (backfill + PR date queries) from `calendarService.ts`. Keep `calendarService.ts` for heatmap, streak, and workout date queries. Fatigue detection could go either way.
+
+### TD-015 · `formatISODate` helper duplicated across measurement files
+
+- **Category:** DRY violation
+- **Files:**
+  - [MeasurementsScreen.tsx:589-594](file:///c:/Users/teddy/projects/workout-app/src/screens/MeasurementsScreen.tsx#L589-L594) — `formatISODate()` + `getTodayStr()`
+  - [GalleryTab.tsx:562](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L562) — inline `${today.getFullYear()}-${...}` (same pattern, repeated at line 586)
+  - [TrendsTab.tsx:265](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/TrendsTab.tsx#L265) — inline `${d.getFullYear()}-${...}` pattern
+  - [mockDataService.ts:201](file:///c:/Users/teddy/projects/workout-app/src/services/mockDataService.ts#L201) — same inline pattern
+- **Why latent:** Four copies of the same date → ISO string formatting logic. Currently small and unlikely to contain bugs, but any timezone edge-case fix would need to be applied in 4 places.
+- **Recommended fix (when):** During the next refactor cycle, add `formatISODate(date: Date): string` to `src/utils/formatters.ts` (where `formatDuration` and `formatVolume` already live) and import from there. Low-risk, ~10-line change.
 
 ---
 
@@ -114,6 +130,34 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - `types.ts` — shared types (`MonthData`), constants, and pure helpers (~107 lines)
   - `index.ts` — barrel exports
 - **Result:** `CalendarScreen.tsx` reduced to ~310 lines (71% reduction). All extracted files well under 600 lines.
+
+### TD-012 · `MeasurementsScreen.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-23**
+
+- **Guardrail violated:** #1 (Component size limit)
+- **Original:** 854 lines (42% over limit)
+- **Fix applied:** Extracted to `src/components/measurements/`:
+  - `SegmentedControl.tsx` — generic pill tab selector (~88 lines)
+  - `TrackTab.tsx` — DateSelector, MetricInputRow, ManageMeasurementsModal, MeasurementField type (~350 lines)
+- **Result:** `MeasurementsScreen.tsx` reduced to 264 lines (69% reduction).
+
+### TD-013 · `TrendsTab.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-23**
+
+- **Guardrail violated:** #1 (Component size limit)
+- **Original:** 932 lines (55% over limit)
+- **Fix applied:** Extracted to `src/components/measurements/`:
+  - `SparklineRow.tsx` — SparklineSVG + SparklineRow + SparklineRowData type (~153 lines)
+  - `DetailChartView.tsx` — full chart view with overlay, exercise picker, summary rows (~430 lines)
+- **Result:** `TrendsTab.tsx` reduced to 167 lines (82% reduction).
+
+### TD-014 · `GalleryTab.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-23**
+
+- **Guardrail violated:** #1 (Component size limit)
+- **Original:** 847 lines (41% over limit)
+- **Fix applied:** Extracted to `src/components/measurements/`:
+  - `PhotoCell.tsx` — grid thumbnail with compare-mode overlay (~163 lines)
+  - `PhotoViewer.tsx` — full-screen modal with swiping (~226 lines)
+  - `CompareView.tsx` — side-by-side comparison modal (~178 lines)
+- **Result:** `GalleryTab.tsx` reduced to 302 lines (64% reduction).
 
 ### TD-002 · Duplicated chart label formatting logic across 3 files — **RESOLVED 2026-03-14**
 
@@ -165,15 +209,15 @@ These were identified and fixed before this baseline was created. Documented her
 
 These guardrails in `conventions.md` were created specifically to prevent tech debt recurrence. The Tech Debt Auditor should verify compliance with all of them:
 
-| # | Guardrail | Calendar Feature Status |
-|---|-----------|------------------------|
-| 1 | Component size limit (600 lines) | ✅ `CalendarScreen.tsx` at ~310 lines (TD-006 resolved) |
-| 2 | Avoid `any` types | ✅ No `any` usage in any calendar file |
-| 3 | Database schema changes require versioned migrations | ✅ v5 migration used for `personal_records` table |
-| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ CalendarScreen has 12 `useState` but they span multiple concerns (data, filters, UI) — no single concern exceeds 3 |
-| 5 | Canonical types live in `src/models/` | ⚠️ `CalendarDayData` and `JournalEntry` in service file (TD-009) |
-| 6 | State reset on lifecycle boundaries | ✅ `DailyWorkoutModal` uses effect cleanup with `cancelled` flag on `date` change |
-| 7 | SafeAreaView edges must match tab bar visibility | ✅ `CalendarScreen` uses `edges={['bottom']}` (tab bar hidden, stack header handles top) |
+| # | Guardrail | Measurements Feature Status |
+|---|-----------|----------------------------|
+| 1 | Component size limit (600 lines) | ✅ All files under limit post-extraction (TD-012/013/014 resolved) |
+| 2 | Avoid `any` types | ✅ No `any` usage in any measurement file |
+| 3 | Database schema changes require versioned migrations | ✅ v6 migration used for `measurement_types`, `measurements`, `progress_photos` tables |
+| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ `MeasurementsScreen` has 7 `useState` for Track tab but they span keyboard + data + UI — acceptable |
+| 5 | Canonical types live in `src/models/` | ✅ `MeasurementType`, `Measurement`, `ProgressPhoto` all in `src/models/measurement.ts` |
+| 6 | State reset on lifecycle boundaries | ✅ `DetailChartView` reloads on `type.id` change; `TrendsTab` reloads on mount |
+| 7 | SafeAreaView edges must match tab bar visibility | ✅ `MeasurementsScreen` uses `edges={['bottom']}` (tab bar hidden, stack header handles top) |
 
 ---
 
@@ -185,15 +229,16 @@ Areas to monitor as the app approaches later roadmap phases:
 |---------|--------------|--------------|
 | Navigation structure (3 tabs + modals) | Adequate for current features | Phase 5 (Settings) may need nested stacks or drawer |
 | SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
-| Service file boundaries | 6 services, `analyticsService` at 873 lines, **`calendarService` at 848 lines** | ML features (Phase 7), Widget framework (Phase 3) |
+| Service file boundaries | 8 services, `analyticsService` 873 lines, `calendarService` 848 lines | ML features (Phase 7), Widget framework (Phase 3) |
 | Hydration layer | Single mapping file | Every new model field = hydration update needed — fragile |
-| Unit hardcoding (`lbs`) | Analytics + calendar modal | Phase 5 (Settings) — kg/lbs toggle per TD-004 |
+| Unit hardcoding (`lbs`) | Analytics + calendar + **measurements gallery** (5 new instances) | Phase 5 (Settings) — kg/lbs toggle per TD-004 |
 | Chart label logic | Shared via `chartLabels.tsx` | ✅ Resolved (TD-002) |
 | Calendar component size | ✅ Resolved (TD-006) — 310 lines | — |
-| **ISO week helper duplication** | **Identical functions in 2 services** | **Any week-boundary bug fix** |
+| Measurement component sizes | ✅ Resolved (TD-012/013/014) — all under 430 lines | — |
+| `formatISODate` duplication | 4 files with identical date formatting logic (TD-015) | Any timezone edge-case fix |
 
 ---
 
 ## Last Updated
-- Date: 2026-03-17
-- Session Context: Tech Debt Auditor pass on calendar feature. All 4 active issues resolved (TD-006, TD-007, TD-008, TD-010). 5 latent issues remain (TD-003, TD-004, TD-005, TD-009, TD-011).
+- Date: 2026-03-23
+- Session Context: Resolved TD-012, TD-013, TD-014 — extracted 7 new files from 3 oversized measurement components. All files now under 600-line guardrail. TypeScript 0 errors, 212/212 tests pass. 6 latent issues remain (TD-003/004/005/009/011/015).

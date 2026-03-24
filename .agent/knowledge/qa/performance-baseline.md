@@ -6,10 +6,10 @@ description: Tracking document for performance regression findings from Performa
 
 ## Summary
 
-- **Last full pass:** 2026-03-17 (Calendar Feature QA pass)
+- **Last full pass:** 2026-03-23 (Measurements Feature QA pass)
 - **Open issues:** 0
 - **Fixed this session:** 6
-- **Negligible / Won't Fix:** 5
+- **Negligible / Won't Fix:** 7
 
 ---
 
@@ -19,7 +19,20 @@ None 🎉
 
 ---
 
-## Resolved (This Session: 2026-03-17)
+## Resolved (Session: 2026-03-23)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|-------------|
+| PP-023 | N+1 query | `measurementService.ts`, `TrendsTab.tsx` | New `getSparklineDataBatch()` single `IN(...)` query; `loadSparklines()` uses batch |
+| PP-024 | Render-path compute | `TrendsTab.tsx` | `useMemo` on `chartData`, `overlayChartData`, `hasAnyOverlay`, `maxValue` |
+| PP-025 | Inline arrow props | `GalleryTab.tsx` | `PhotoCell` wrapped in `React.memo`; receives stable `onGridPress`/`onDeletePress` callbacks |
+| PP-026 | Redundant loading | `TrendsTab.tsx` | Hoisted `getExercises()` above `if/else` + `Promise.all` with `getSettings()` |
+| PP-028 | Non-virtualized list | `TrendsTab.tsx` | Replaced `ScrollView` + `.map()` with `FlatList` in exercise picker modal |
+| PP-030 | Algorithmic inefficiency | `TrendsTab.tsx` | `Map<string, number>` for O(1) overlay date lookups (was O(n²) `.find()`) |
+
+---
+
+## Resolved (Session: 2026-03-17)
 
 | ID | Area | File | Fix Applied |
 |----|------|------|-------------|
@@ -62,6 +75,10 @@ None 🎉
 
 **PP-022** — `DailyWorkoutModal` sub-components (`WorkoutCard`, `ExerciseCard`, `SetRow`, `SummaryBadge`) not wrapped in `React.memo` — inside a modal with a few items, not a hot path. Would matter if a user logged 10+ exercises per workout.
 
+**PP-027** — `Dimensions.get('window')` at module level in `TrendsTab.tsx` / `GalleryTab.tsx` — same as PP-013, portrait-locked.
+
+**PP-029** — `MetricInputRow` list uses `.map()` — acceptable for ~10–12 items.
+
 ---
 
 ## Historical Performance Issues
@@ -75,24 +92,6 @@ None 🎉
 
 ---
 
-## Component Size Violations (Not Performance Issues)
-
-| File | Lines | Over By |
-|------|-------|---------|
-| `ExercisePicker.tsx` | 630 | 5% |
-| `CalendarScreen.tsx` | 1044 | **74%** |
-| `calendarService.ts` | 806 | N/A (service, guardrail doesn't apply) |
-| `DailyWorkoutModal.tsx` | 624 | 4% |
-
-*`AnalyticsScreen.tsx` resolved (902 → 148 lines) via extraction to `src/components/analytics/`.*
-
-**CalendarScreen.tsx** at 1044 lines is the most significant violation. ~230 lines are styles. The header, month block, and day cell are already extracted as sub-components, but the main `CalendarScreen` function (lines 528-808) manages 11 `useState` hooks, 8 callbacks, and 2 side effects. Recommended extraction:
-- `useCalendarData` hook (data loading, month management, scroll-to-load)
-- `CalendarHeader` to its own file
-- Move styles to a separate file or co-locate with extracted components
-
----
-
 ## Last Updated
-- Date: 2026-03-17
-- Session Context: Calendar Feature performance audit — 7 new issues found, 0 fixed (identification pass), 2 negligible
+- Date: 2026-03-23
+- Session Context: Measurements Feature performance audit — 8 issues found, 6 fixed, 2 negligible moved to won't-fix

@@ -9,7 +9,6 @@ Focused review for performance regressions — the things that make the app feel
 ## Prerequisites
 
 - Access to `.agent/knowledge/qa/performance-baseline.md`
-- Familiarity with `conventions.md` guardrail #1 (600-line component limit)
 - Diff or list of changed files for the feature under review
 - Ideally: a mid-range Android device or emulator for manual spot-checks
 
@@ -68,7 +67,7 @@ Focused review for performance regressions — the things that make the app feel
 > - **SQLite query efficiency** — N+1 query patterns (the project has fixed these before), missing indexes on frequently filtered columns (`exercise_muscle_groups`), large result sets not paginated.
 > - **Chart rendering cost** — `react-native-gifted-charts` with `labelComponent` custom renderers can be expensive. Flag any chart that recomputes data on every render instead of memoizing with `useMemo`.
 > - Memory leaks: un-cleared `setInterval`/`setTimeout` (rest timer), lingering event listeners, large arrays held in closure scope.
-> - **Component size** — if a component exceeds ~600 lines, flag it. Large components correlate with excessive re-renders due to co-located state. (Project guardrail.)
+> - **Do NOT flag component size violations** (>600 lines) — those are tracked by the Tech Debt Auditor workflow, not this one.
 > - UI thread blocking: synchronous SQLite calls on mount, heavy `JSON.parse()` in render path (exercise muscle groups are stored as JSON strings in DB rows).
 > - **Image / asset loading** — exercise icon placeholders; ensure no synchronous `require()` chains in list renders.
 >
@@ -85,7 +84,7 @@ Focused review for performance regressions — the things that make the app feel
 | SQLite queries | N+1 patterns, missing indexes, unpaginated large results |
 | Chart rendering | `useMemo` on data arrays, expensive `labelComponent` renderers |
 | Memory leaks | Uncleared intervals/timeouts, lingering listeners |
-| Component size | >600 lines = extraction candidate (guardrail #1) |
+| Component size | **Out of scope** — tracked by Tech Debt Auditor |
 | UI thread blocking | Sync SQLite on mount, `JSON.parse` in render path |
 | Asset loading | Sync `require()` chains in list renders |
 
@@ -102,5 +101,5 @@ The pass is COMPLETE when:
 ---
 
 ## Last Updated
-- Date: 2026-03-14
-- Session Context: Initial creation — tailored from generic Performance Profiler prompt
+- Date: 2026-03-23
+- Session Context: Scoped out component size violations — those belong to the Tech Debt Auditor workflow

@@ -16,6 +16,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { getDatabase } from './database';
 import { ProgressPhoto } from '../models/measurement';
+import { generateId } from '../utils/uuid';
 
 // ============================================================
 // Row types
@@ -45,17 +46,7 @@ function mapPhotoRow(row: ProgressPhotoRow): ProgressPhoto {
     };
 }
 
-// ============================================================
-// UUID helper
-// ============================================================
 
-function generateId(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-}
 
 // ============================================================
 // Constants

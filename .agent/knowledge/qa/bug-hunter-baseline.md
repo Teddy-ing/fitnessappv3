@@ -6,9 +6,9 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ## Summary
 
-- **Last full pass:** 2026-03-17 (calendar feature — Phases A–E)
+- **Last full pass:** 2026-03-23 (measurements feature — Phases 1–4 + Relative Strength Overlay)
 - **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
-- **Fixed since baseline:** 11
+- **Fixed since baseline:** 18
 
 ---
 
@@ -36,7 +36,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 | Concern | Reviewed Area | Why Not a Bug |
 |---------|--------------|---------------|
-| `SCREEN_WIDTH` stale on rotation | `ExerciseAnalyticsScreen.tsx:30-31`, `AnalyticsScreen.tsx:49-50` | Module-level `Dimensions.get()` would be stale on rotation, but this is a portrait-locked mobile fitness app — acceptable. |
+| `SCREEN_WIDTH` stale on rotation | `ExerciseAnalyticsScreen.tsx:30-31`, `AnalyticsScreen.tsx:49-50`, `TrendsTab.tsx:42`, `GalleryTab.tsx:41` | Module-level `Dimensions.get()` would be stale on rotation, but this is a portrait-locked mobile fitness app — acceptable. |
 | `lastMonth` mutable in `.map()` | `AnalyticsScreen.tsx:205`, `ExerciseAnalyticsScreen.tsx:115,244` | Looks like a stale closure, but `lastMonth` is a `let` variable in the *render scope* above the `.map()`, capturing correctly via closure. Data is sorted by date, so mutation during iteration produces correct month-header logic. |
 | Missing error handling in `ConsistencyCards` / `FatigueRatioBanner` | Both components | Service functions already return safe defaults on failure; components correctly handle null/zero states. Not a gap. |
 | `safeJsonParse` doesn't validate shape | `analyticsService.ts:444,534` | `safeJsonParse` returns `as T` without runtime validation, but the `MuscleContribution[]` data is written by the app itself (not user input) and validated at write time. Acceptable given data provenance. |
@@ -46,10 +46,57 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 | `loadOlderMonths` captures `months` in closure | `CalendarScreen.tsx:633-656` | The `months` dependency in `useCallback` is correct — it reads `months[0]` to determine the oldest loaded month. The `isLoadingOlderRef` guard prevents re-entrancy. |
 | `handleDiscardWorkout` stale closure on `activeWorkout` | `WorkoutScreen.tsx:214-224` | The `useEffect` dep array uses `[activeWorkout !== null]` (boolean coercion). This is intentional — the effect only needs to re-bind when transitioning between "has workout" and "no workout" states, not on every set update. |
 | `DailyWorkoutModal` filter matching logic (AND vs OR) | `CalendarScreen.tsx:163-166` | `matchesFilter` uses AND semantics: a day must match *all* active filters to avoid dimming. This is intentional — PRs + Notes means "show days with both PRs AND notes." |
+| `loadSparklines` fires only on mount (empty deps) | `TrendsTab.tsx:793-795` | `loadSparklines` is called via `useEffect([], [])`. The sparkline list doesn't auto-refresh when the user logs new data on the Track tab and switches to Trends. However, this is acceptable — the component remounts when switching tabs because it's conditionally rendered (`activeTab === 'trends'`), so the `useEffect` fires each time. |
+| `loadData` / `loadFields` defined with `useCallback` but called from `useEffect` without cleanup | `MeasurementsScreen.tsx:619-665` | The async calls fire without an abort signal. However, the result is only `setState` calls, which are safe on unmounted components (React suppresses). No data-corruption risk. |
+| `commitValue` reads `focusedIndex` from closure | `MeasurementsScreen.tsx:728-755` | `focusedIndex` is read from the closure inside `commitValue`. Because `setFocusedIndex` updates are synchronous within the same render batch, and `commitValue` is always called in the same tick as the keyboard handler, the closure captures the correct value. |
+| `SparklineSVG` gradient `id` collision across multiple sparklines | `TrendsTab.tsx:99` | All sparklines use `id="sparkGrad"` for the gradient. In React Native SVG, each `<Svg>` element is an isolated SVG document, so IDs don't collide across components. Not a bug. |
+| `getFieldType` returns `'weight'` for all types | `MeasurementsScreen.tsx:780-785` | The comment says "Body Fat % → percentage, everything else → weight-like decimal" but both branches return `'weight'`. This is intentional — the keyboard layout for weight (decimal numbers) works for all measurement types including percentages. No bug. |
 
 ---
 
 ## Resolved
+
+#### BH-013 · "View Comparison" button is a no-op — **RESOLVED 2026-03-23**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [GalleryTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L661-L666)
+- **Root cause:** `CompareView` auto-rendered when 2 photos selected, but the "View Comparison" button `onPress` was a stub.
+- **Fix applied:** Added `showCompare` state to gate the `CompareView` modal behind the button press. Button now sets `showCompare(true)`, and `onClose` resets all compare state.
+
+#### BH-014 · `getLatestMeasurements` returns arbitrary values when multiple entries exist on same date — **RESOLVED 2026-03-23**
+- **Severity:** Medium
+- **Original status:** 🟡 Plausible
+- **File:** [measurementService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/measurementService.ts#L257-L294)
+- **Root cause:** `INNER JOIN` on `recorded_at = max_date` could match multiple rows with no tiebreaker.
+- **Fix applied:** Added `MAX(created_at) AS max_created` to subquery and `AND m.created_at = latest.max_created` to join condition.
+
+#### BH-015 · Hardcoded "lbs" unit in overlay summary and tooltip — **RESOLVED 2026-03-23**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [TrendsTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/TrendsTab.tsx#L441-L510)
+- **Root cause:** Three hardcoded `lbs` string literals in the 1RM overlay tooltip, latest row, and change row.
+- **Fix applied:** Replaced all three with the dynamic `{unit}` variable, which correctly reflects the user's kg/lbs preference.
+
+#### BH-017 · `PhotoViewer` doesn't guard `currentIndex` against out-of-bounds after delete — **RESOLVED 2026-03-23**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [GalleryTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L186-L207)
+- **Root cause:** `currentIndex` was local state not clamped when `photos` array shrank after deletion.
+- **Fix applied:** Added `useEffect` watching `photos.length` to clamp `currentIndex` to `Math.min(currentIndex, photos.length - 1)`.
+
+#### BH-018 · Duplicated `generateId()` utility across measurement and photo services — **RESOLVED 2026-03-23**
+- **Severity:** Low
+- **Original status:** 🔴 Confirmed
+- **File:** [measurementService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/measurementService.ts), [photoService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/photoService.ts)
+- **Root cause:** Identical UUID v4 `generateId()` function copy-pasted into both files.
+- **Fix applied:** Extracted to shared `src/utils/uuid.ts`. Both services now import from there.
+
+#### BH-012 · Overlay `data2` length mismatch causes chart crash or misalignment — **RESOLVED 2026-03-23**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [TrendsTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/TrendsTab.tsx#L294-L311)
+- **Root cause:** `.filter(d => d.value > 0)` on `overlayChartData` shrunk `data2` relative to `data`, breaking gifted-charts' 1:1 index alignment.
+- **Fix applied:** Removed the `.filter()` call. Added `hasAnyOverlay` flag to gate overlay rendering. The interpolation pass already fills gaps with nearest-neighbor values.
 
 #### BH-001 · ISO-week mismatch between SQLite `%W` and JS `getISOWeekNumber()` — **RESOLVED 2026-03-14**
 - **Severity:** High
@@ -132,7 +179,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ## Accepted / Won't Fix
 
-*No accepted issues.*
+*No accepted / won't fix items.*
 
 ---
 
@@ -150,5 +197,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-03-17
-- Session Context: Calendar feature QA pass complete. All 5 issues (BH-007 through BH-011) resolved. Zero open issues.
+- Date: 2026-03-23
+- Session Context: Removed BH-016 (deferred to TD-012, now resolved via component extraction).

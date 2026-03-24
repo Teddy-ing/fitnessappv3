@@ -14,6 +14,7 @@ import {
     getMeasurementHistory,
     getLatestMeasurements,
     getSparklineData,
+    getSparklineDataBatch,
     getMeasurementsForDate,
 } from '../measurementService';
 
@@ -470,5 +471,64 @@ describe('getMeasurementsForDate', () => {
         const [sql, params] = mockGetAllAsync.mock.calls[0];
         expect(sql).toContain('recorded_at = ?');
         expect(params).toEqual(['2026-03-18']);
+    });
+});
+
+// ============================================================
+// getSparklineDataBatch
+// ============================================================
+
+describe('getSparklineDataBatch', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('returns empty map for empty type list', async () => {
+        const result = await getSparklineDataBatch([]);
+        expect(result.size).toBe(0);
+    });
+
+    it('returns empty map when DB is unavailable', async () => {
+        setMockDb(false);
+        const result = await getSparklineDataBatch(['bodyweight']);
+        expect(result.size).toBe(0);
+    });
+
+    it('batches multiple types into a single query and partitions results', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([
+            { measurement_type_id: 'bodyweight', recorded_at: '2026-01-01', value: 180 },
+            { measurement_type_id: 'bodyweight', recorded_at: '2026-02-01', value: 182 },
+            { measurement_type_id: 'waist', recorded_at: '2026-01-15', value: 32 },
+        ]);
+
+        const result = await getSparklineDataBatch(['bodyweight', 'waist'], 90);
+
+        // Should have been a single DB call
+        expect(mockGetAllAsync).toHaveBeenCalledTimes(1);
+
+        // Check query uses IN clause
+        const [sql] = mockGetAllAsync.mock.calls[0];
+        expect(sql).toContain('IN');
+
+        // Check partitioned results
+        expect(result.size).toBe(2);
+        const bw = result.get('bodyweight')!;
+        expect(bw).toHaveLength(2);
+        expect(bw[0]).toEqual({ date: '2026-01-01', value: 180 });
+        expect(bw[1]).toEqual({ date: '2026-02-01', value: 182 });
+
+        const waist = result.get('waist')!;
+        expect(waist).toHaveLength(1);
+        expect(waist[0]).toEqual({ date: '2026-01-15', value: 32 });
+    });
+
+    it('returns empty arrays for types with no data', async () => {
+        setMockDb(true);
+        mockGetAllAsync.mockResolvedValueOnce([]);
+
+        const result = await getSparklineDataBatch(['bodyweight', 'waist']);
+
+        expect(result.size).toBe(2);
+        expect(result.get('bodyweight')).toEqual([]);
+        expect(result.get('waist')).toEqual([]);
     });
 });
