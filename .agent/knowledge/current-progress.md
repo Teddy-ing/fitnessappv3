@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Phase 2 (Analytics) complete, moving to Profile & Widgets
-- **Status:** Core features + home screen visual refactor + full analytics implementation complete
-- **Next Milestone:** Profile Screen Refactor & Widget Framework
+- **Phase:** Post-MVP Development — Phase 2 (Analytics) complete, Measurements feature complete
+- **Status:** Core features + analytics + calendar + measurements all implemented
+- **Next Milestone:** Goals Feature / Profile Screen Refactor & Widget Framework
 
 ---
 
@@ -61,6 +61,7 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Phase 2: Analytics Functions** (Macro charts, muscle distribution pie chart, micro exercise charts, fatigue ratio, tooltips, all backed by 140 passing tests)
 - [x] **Exercise List 3-Layer Navigation** (Search bar + muscle group filter pills + dynamic list with icon placeholders, SQL LIKE filter on exercise_muscle_groups)
 - [x] **Phase 3: Calendar Feature** (Phases A–E complete: all spec items implemented — heatmap grid, modal, PR/notes/fatigue filters, journal view, edit workout button, 10 service functions, 39 calendar tests)
+- [x] **Measurements Feature** (Phases 1–4: DB schema + 15 seeded types, Track tab with keyboard, Trends tab with sparklines + detail charts, Gallery tab with photo grid/viewer/compare, Relative Strength overlay, 26 measurement tests)
 ---
 
 ## In Progress
@@ -126,6 +127,71 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-03-23: Measurements Feature — Complete (Phases 1–4)
+
+**Duration:** Multi-session
+**Focus:** Full measurements feature: body metrics tracking, trend visualization, progress photos, and relative strength overlay.
+
+**What was done:**
+
+- **Phase 1 — Foundation:**
+  - v6 DB migration: `measurement_types` (15 seeded), `measurements`, `progress_photos` tables
+  - Added `visible_measurements` and `relative_strength_exercise` to `user_settings`
+  - `measurementService.ts` — CRUD, queries (getLatest, getHistory, getSparklineData, getVisibleTypes)
+  - `photoService.ts` — File management (save, get, delete, getUri, getWithBodyweight)
+  - 26 unit tests for measurementService
+
+- **Phase 2 — Navigation + Track Tab:**
+  - Added `Measurements` route to `ProfileStackParamList`
+  - `MeasurementsScreen.tsx` — Main screen with custom `SegmentedControl` (Track/Trends/Gallery)
+  - Track tab: `DateSelector`, `MetricInputRow` with "last recorded [date]" labels, `WorkoutKeyboard` reuse
+  - `ManageMeasurementsModal` — Toggle which metrics to track
+
+- **Phase 3 — Trends Tab:**
+  - `TrendsTab.tsx` — Extracted component (~600 lines)
+  - `SparklineSVG` — Pure `react-native-svg` sparklines (trend-colored: green/red)
+  - `DetailChartView` — Full `react-native-gifted-charts` LineChart with range pills (1M/3M/6M/1Y/All), touch tooltips, Latest/Change summary
+
+- **Phase 4 — Gallery Tab:**
+  - `GalleryTab.tsx` — Extracted component (~560 lines)
+  - 3-column photo grid with date/weight badges
+  - Full-screen `PhotoViewer` (swipeable, delete confirmation)
+  - `CompareView` — Side-by-side split with ± weight delta
+  - `expo-image-picker` integration (camera + library)
+
+- **Relative Strength Overlay:**
+  - "Overlay 1RM" toggle on bodyweight detail chart only
+  - Blue 1RM line using `data2` prop, exercise selector modal
+  - Dual summary rows (bodyweight + 1RM Latest/Change)
+  - Legend + tooltip show both values
+  - Exercise preference persisted via `relativeStrengthExercise` setting
+
+- **Mock Data:** Added 7 measurement metrics to `generateMockData()` with realistic trends
+
+**Files created:**
+- `src/components/measurements/TrendsTab.tsx`
+- `src/components/measurements/GalleryTab.tsx`
+- `src/screens/MeasurementsScreen.tsx`
+- `src/models/measurement.ts`
+- `src/services/measurementService.ts`
+- `src/services/photoService.ts`
+- `src/services/__tests__/measurementService.test.ts`
+
+**Files modified:**
+- `src/navigation/AppNavigator.tsx` — Measurements route + screen registration
+- `src/screens/ProfileScreen.tsx` — Body Measurements button wired
+- `src/services/migrations.ts` — v6 migration
+- `src/services/preferencesService.ts` — visibleMeasurements + relativeStrengthExercise
+- `src/services/mockDataService.ts` — Mock measurement data generation
+- `src/services/index.ts`, `src/models/index.ts` — Barrel exports
+
+**Dependencies added:**
+- `expo-image-picker`
+
+**Verification:** TypeScript 0 errors, 208/208 tests passing
+
+---
 
 ### 2026-03-17: Calendar Feature — Phases D–E + Bug Fixes (Feature Complete)
 
@@ -551,8 +617,8 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Last Updated
-- Date: 2026-03-17
-- Session Context: Completed Phase C (Filter System) of the Calendar Feature
+- Date: 2026-03-23
+- Session Context: Completed Measurements feature (Phases 1–4 + Relative Strength Overlay)
 
 ### 2026-03-16: Calendar Feature Development (Phase 1)
 

@@ -47,6 +47,7 @@ interface MeasurementField {
     type: MeasurementType;
     currentValue: string;       // Display value (logged today or empty)
     lastValue: string | null;   // Last recorded value (placeholder)
+    lastDate: string | null;    // Date of last recorded value (YYYY-MM-DD)
     measurementId: string | null; // ID if already logged today (for update)
 }
 
@@ -222,8 +223,10 @@ function MetricInputRow({ field, isFocused, unitSystem, onPress }: MetricInputRo
         >
             <View style={rowStyles.left}>
                 <Text style={rowStyles.name}>{field.type.name}</Text>
-                {field.lastValue && !field.currentValue && (
-                    <Text style={rowStyles.lastDate}>last recorded</Text>
+                {field.lastValue && !field.currentValue && field.lastDate && (
+                    <Text style={rowStyles.lastDate}>
+                        last recorded {new Date(field.lastDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </Text>
                 )}
             </View>
             <View style={rowStyles.right}>
@@ -650,6 +653,9 @@ export default function MeasurementsScreen() {
                 currentValue: todayEntry ? todayEntry.value.toString() : '',
                 lastValue: lastData && lastData.recordedAt !== date
                     ? lastData.value.toString()
+                    : null,
+                lastDate: lastData && lastData.recordedAt !== date
+                    ? lastData.recordedAt
                     : null,
                 measurementId: todayEntry?.id ?? null,
             };

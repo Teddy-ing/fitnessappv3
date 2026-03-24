@@ -27,9 +27,13 @@ import {
     getSparklineData,
     getMeasurementHistory,
     getVisibleMeasurementTypes,
+    getEstimated1RM,
+    getExercises,
 } from '../../services';
-import { getSettings } from '../../services/preferencesService';
+import { getSettings, updateSettings } from '../../services/preferencesService';
 import type { MeasurementType } from '../../models';
+import type { Exercise } from '../../models/exercise';
+import type { ChartRange } from '../../models/analytics';
 
 // ============================================================
 // Constants
@@ -42,11 +46,11 @@ const CHART_WIDTH = SCREEN_WIDTH - spacing.md * 4 - 40;
 
 type RangeKey = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 const RANGE_LABELS: Record<RangeKey, string> = {
-    '1M': '1 Month',
-    '3M': '3 Months',
-    '6M': '6 Months',
-    '1Y': '1 Year',
-    'ALL': 'All Time',
+    '1M': '1M',
+    '3M': '3M',
+    '6M': '6M',
+    '1Y': '1Y',
+    'ALL': 'All',
 };
 const RANGE_DAYS: Record<RangeKey, number | null> = {
     '1M': 30,
@@ -199,11 +203,55 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
     const [data, setData] = useState<{ date: string; value: number }[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Relative strength overlay (bodyweight only)
+    const isBodyweight = type.id === 'bodyweight';
+    const [showOverlay, setShowOverlay] = useState(false);
+    const [overlayData, setOverlayData] = useState<{ date: string; value: number }[]>([]);
+    const [overlayExerciseId, setOverlayExerciseId] = useState<string | null>(null);
+    const [overlayExerciseName, setOverlayExerciseName] = useState('Bench Press');
+    const [showExercisePicker, setShowExercisePicker] = useState(false);
+    const [allExercises, setAllExercises] = useState<Exercise[]>([]);
+
     const unit = unitSystem === 'kg' ? type.unitMetric : type.unitImperial;
 
     useEffect(() => {
         loadData();
     }, [range, type.id]);
+
+    // Load saved exercise preference for overlay
+    useEffect(() => {
+        if (isBodyweight) {
+            (async () => {
+                const settings = await getSettings();
+                if (settings.relativeStrengthExercise) {
+                    setOverlayExerciseId(settings.relativeStrengthExercise);
+                    const exercises = await getExercises(false);
+                    setAllExercises(exercises);
+                    const ex = exercises.find(e => e.id === settings.relativeStrengthExercise);
+                    if (ex) setOverlayExerciseName(ex.name);
+                } else {
+                    // Default to first bench press found
+                    const exercises = await getExercises(false);
+                    setAllExercises(exercises);
+                    const bench = exercises.find(e => e.name.toLowerCase().includes('bench press'));
+                    if (bench) {
+                        setOverlayExerciseId(bench.id);
+                        setOverlayExerciseName(bench.name);
+                    } else if (exercises.length > 0) {
+                        setOverlayExerciseId(exercises[0].id);
+                        setOverlayExerciseName(exercises[0].name);
+                    }
+                }
+            })();
+        }
+    }, [isBodyweight]);
+
+    // Load overlay 1RM data when toggled on
+    useEffect(() => {
+        if (showOverlay && overlayExerciseId) {
+            loadOverlayData();
+        }
+    }, [showOverlay, overlayExerciseId, range]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -219,6 +267,20 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
         setLoading(false);
     }, [range, type.id]);
 
+    const loadOverlayData = useCallback(async () => {
+        if (!overlayExerciseId) return;
+        const chartRange = range as ChartRange;
+        const result = await getEstimated1RM(overlayExerciseId, chartRange);
+        setOverlayData(result.map(r => ({ date: r.date, value: r.value })));
+    }, [overlayExerciseId, range]);
+
+    const handleSelectExercise = async (exercise: Exercise) => {
+        setOverlayExerciseId(exercise.id);
+        setOverlayExerciseName(exercise.name);
+        setShowExercisePicker(false);
+        await updateSettings({ relativeStrengthExercise: exercise.id });
+    };
+
     const chartData = data.map((d, i) => {
         const dateObj = new Date(d.date + 'T12:00:00');
         const label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -229,9 +291,30 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
         };
     });
 
+    // Build overlay chart data aligned to same indices
+    const overlayChartData = showOverlay && overlayData.length > 0
+        ? data.map((d) => {
+            // Find closest 1RM data point to this date
+            const match = overlayData.find(o => o.date === d.date);
+            return { value: match ? match.value : 0 };
+        }).map((d, i, arr) => {
+            // Fill gaps with interpolation
+            if (d.value === 0) {
+                // Find nearest non-zero values
+                let prevVal = 0, nextVal = 0;
+                for (let j = i - 1; j >= 0; j--) { if (arr[j].value > 0) { prevVal = arr[j].value; break; } }
+                for (let j = i + 1; j < arr.length; j++) { if (arr[j].value > 0) { nextVal = arr[j].value; break; } }
+                return { value: prevVal || nextVal || 0 };
+            }
+            return d;
+        }).filter(d => d.value > 0)
+        : [];
+
     const maxValue = data.length > 0
         ? Math.max(...data.map((d) => d.value)) * 1.15
         : 100;
+
+    const overlayColor = '#3b82f6'; // Blue for 1RM line
 
     return (
         <View style={detailStyles.container}>
@@ -244,11 +327,7 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
             </View>
 
             {/* Range pills */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={detailStyles.pillRow}
-            >
+            <View style={detailStyles.pillRow}>
                 {(Object.keys(RANGE_LABELS) as RangeKey[]).map((r) => (
                     <TouchableOpacity
                         key={r}
@@ -261,7 +340,33 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
                         </Text>
                     </TouchableOpacity>
                 ))}
-            </ScrollView>
+            </View>
+
+            {/* Overlay toggle for bodyweight */}
+            {isBodyweight && (
+                <View style={detailStyles.overlayRow}>
+                    <TouchableOpacity
+                        style={[detailStyles.overlayToggle, showOverlay && detailStyles.overlayToggleActive]}
+                        onPress={() => setShowOverlay(prev => !prev)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[detailStyles.overlayDot, { backgroundColor: overlayColor }]} />
+                        <Text style={[detailStyles.overlayToggleText, showOverlay && detailStyles.overlayToggleTextActive]}>
+                            Overlay 1RM
+                        </Text>
+                    </TouchableOpacity>
+                    {showOverlay && (
+                        <TouchableOpacity
+                            onPress={() => setShowExercisePicker(true)}
+                            style={detailStyles.exercisePickerBtn}
+                        >
+                            <Text style={detailStyles.exercisePickerText} numberOfLines={1}>
+                                {overlayExerciseName} ▾
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            )}
 
             {/* Chart */}
             {loading ? (
@@ -276,6 +381,12 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
                 <View style={detailStyles.chartCard}>
                     <LineChart
                         data={chartData}
+                        {...(showOverlay && overlayChartData.length > 0 ? {
+                            data2: overlayChartData,
+                            color2: overlayColor,
+                            dataPointsColor2: overlayColor,
+                            dataPointsRadius2: overlayChartData.length > 20 ? 0 : 2,
+                        } : {})}
                         width={CHART_WIDTH}
                         height={200}
                         xAxisLabelsHeight={36}
@@ -315,7 +426,7 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
                             pointerColor: colors.accent.primary,
                             radius: 5,
                             pointerLabelWidth: 140,
-                            pointerLabelHeight: 30,
+                            pointerLabelHeight: showOverlay ? 50 : 30,
                             activatePointersOnLongPress: false,
                             autoAdjustPointerLabelPosition: true,
                             pointerLabelComponent: (items: { value?: number; fullLabel?: string; label?: string }[]) => {
@@ -325,11 +436,30 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
                                         <Text style={detailStyles.tooltipText}>
                                             {pointLabel}: {Math.round((items[0]?.value ?? 0) * 10) / 10} {unit}
                                         </Text>
+                                        {showOverlay && items[1] && items[1].value !== undefined && items[1].value > 0 && (
+                                            <Text style={[detailStyles.tooltipText, { color: overlayColor }]}>
+                                                1RM: {Math.round(items[1].value)} lbs
+                                            </Text>
+                                        )}
                                     </View>
                                 );
                             },
                         }}
                     />
+
+                    {/* Legend when overlay active */}
+                    {showOverlay && overlayChartData.length > 0 && (
+                        <View style={detailStyles.legendRow}>
+                            <View style={detailStyles.legendItem}>
+                                <View style={[detailStyles.legendDot, { backgroundColor: colors.accent.primary }]} />
+                                <Text style={detailStyles.legendText}>Bodyweight</Text>
+                            </View>
+                            <View style={detailStyles.legendItem}>
+                                <View style={[detailStyles.legendDot, { backgroundColor: overlayColor }]} />
+                                <Text style={detailStyles.legendText}>Est. 1RM ({overlayExerciseName})</Text>
+                            </View>
+                        </View>
+                    )}
 
                     {/* Summary row */}
                     <View style={detailStyles.summaryRow}>
@@ -356,6 +486,66 @@ function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
                                 })()}
                             </View>
                         )}
+                    </View>
+
+                    {/* 1RM summary when overlay active */}
+                    {showOverlay && overlayData.length >= 2 && (
+                        <View style={[detailStyles.summaryRow, { borderTopColor: overlayColor + '40' }]}>
+                            <View>
+                                <Text style={[detailStyles.summaryLabel, { color: overlayColor }]}>1RM Latest</Text>
+                                <Text style={[detailStyles.summaryValue, { color: overlayColor }]}>
+                                    {Math.round(overlayData[overlayData.length - 1]?.value ?? 0)} lbs
+                                </Text>
+                            </View>
+                            <View style={{ alignItems: 'flex-end' }}>
+                                <Text style={[detailStyles.summaryLabel, { color: overlayColor }]}>1RM Change</Text>
+                                {(() => {
+                                    const first = overlayData[0].value;
+                                    const last = overlayData[overlayData.length - 1].value;
+                                    const diff = last - first;
+                                    const sign = diff >= 0 ? '+' : '';
+                                    const changeColor = diff >= 0 ? colors.accent.success : colors.accent.error;
+                                    return (
+                                        <Text style={[detailStyles.summaryValue, { color: changeColor }]}>
+                                            {sign}{Math.round(diff)} lbs
+                                        </Text>
+                                    );
+                                })()}
+                            </View>
+                        </View>
+                    )}
+                </View>
+            )}
+
+            {/* Exercise picker modal */}
+            {showExercisePicker && (
+                <View style={detailStyles.pickerOverlay}>
+                    <View style={detailStyles.pickerModal}>
+                        <View style={detailStyles.pickerHeader}>
+                            <Text style={detailStyles.pickerTitle}>Select Exercise</Text>
+                            <TouchableOpacity onPress={() => setShowExercisePicker(false)}>
+                                <Text style={detailStyles.pickerDone}>Done</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={detailStyles.pickerList}>
+                            {allExercises.filter(e => e.trackWeight).map(ex => (
+                                <TouchableOpacity
+                                    key={ex.id}
+                                    style={[
+                                        detailStyles.pickerRow,
+                                        ex.id === overlayExerciseId && detailStyles.pickerRowActive,
+                                    ]}
+                                    onPress={() => handleSelectExercise(ex)}
+                                >
+                                    <Text style={[
+                                        detailStyles.pickerRowText,
+                                        ex.id === overlayExerciseId && detailStyles.pickerRowTextActive,
+                                    ]}>
+                                        {ex.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
                     </View>
                 </View>
             )}
@@ -387,14 +577,14 @@ const detailStyles = StyleSheet.create({
     },
     pillRow: {
         flexDirection: 'row',
-        gap: spacing.sm,
+        gap: spacing.xs,
         paddingHorizontal: spacing.lg,
-        paddingBottom: spacing.md,
+        paddingBottom: spacing.sm,
     },
     pill: {
         paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderRadius: borderRadius.full,
+        paddingVertical: spacing.xs + 2,
+        borderRadius: 14,
         backgroundColor: colors.background.secondary,
     },
     pillActive: {
@@ -404,6 +594,7 @@ const detailStyles = StyleSheet.create({
         fontSize: typography.size.xs,
         fontWeight: typography.weight.medium as '500',
         color: colors.text.secondary,
+        lineHeight: 16,
     },
     pillTextActive: {
         color: colors.text.primary,
@@ -465,6 +656,127 @@ const detailStyles = StyleSheet.create({
         color: colors.text.primary,
         fontSize: typography.size.lg,
         fontWeight: typography.weight.bold as '700',
+    },
+
+    // Overlay toggle
+    overlayRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: spacing.lg,
+        paddingBottom: spacing.sm,
+    },
+    overlayToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: borderRadius.full,
+        backgroundColor: colors.background.tertiary,
+    },
+    overlayToggleActive: {
+        backgroundColor: '#3b82f6' + '25',
+    },
+    overlayDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    overlayToggleText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.xs,
+        fontWeight: typography.weight.medium as '500',
+    },
+    overlayToggleTextActive: {
+        color: '#3b82f6',
+    },
+    exercisePickerBtn: {
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        backgroundColor: colors.background.tertiary,
+        borderRadius: borderRadius.md,
+        maxWidth: 160,
+    },
+    exercisePickerText: {
+        color: colors.accent.primary,
+        fontSize: typography.size.xs,
+        fontWeight: typography.weight.medium as '500',
+    },
+
+    // Legend
+    legendRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: spacing.lg,
+        marginTop: spacing.sm,
+    },
+    legendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+    },
+    legendDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    legendText: {
+        color: colors.text.secondary,
+        fontSize: 10,
+    },
+
+    // Exercise picker modal
+    pickerOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'flex-end',
+        zIndex: 100,
+    },
+    pickerModal: {
+        backgroundColor: colors.background.secondary,
+        borderTopLeftRadius: borderRadius.xl,
+        borderTopRightRadius: borderRadius.xl,
+        maxHeight: '60%',
+    },
+    pickerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
+    },
+    pickerTitle: {
+        color: colors.text.primary,
+        fontSize: typography.size.lg,
+        fontWeight: typography.weight.semibold as '600',
+    },
+    pickerDone: {
+        color: colors.accent.primary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.semibold as '600',
+    },
+    pickerList: {
+        paddingBottom: spacing.xl,
+    },
+    pickerRow: {
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
+    },
+    pickerRowActive: {
+        backgroundColor: colors.accent.primary + '15',
+    },
+    pickerRowText: {
+        color: colors.text.primary,
+        fontSize: typography.size.md,
+    },
+    pickerRowTextActive: {
+        color: colors.accent.primary,
+        fontWeight: typography.weight.semibold as '600',
     },
 });
 
