@@ -17,3 +17,4 @@ export * from './user';
 export * from './split';
 export * from './analytics';
 export * from './measurement';
+export * from './goal';

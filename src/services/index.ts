@@ -114,3 +114,15 @@ export {
     getPhotoWithBodyweight,
     getPhotoUri,
 } from './photoService';
+export {
+    createGoal,
+    getActiveGoals,
+    getCompletedGoals,
+    updateGoal,
+    deleteGoal,
+    markGoalCompleted,
+    abandonGoal,
+    computeCurrentBest,
+    refreshAllGoalProgress,
+    getCurrentBestForTarget,
+} from './goalService';

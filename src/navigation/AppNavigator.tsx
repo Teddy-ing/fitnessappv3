@@ -31,6 +31,7 @@ import AnalyticsScreen from '../screens/AnalyticsScreen';
 import ExerciseAnalyticsScreen from '../screens/ExerciseAnalyticsScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import MeasurementsScreen from '../screens/MeasurementsScreen';
+import GoalsScreen from '../screens/GoalsScreen';
 
 // Wrap each screen in its own error boundary so one tab crashing
 // doesn't take down the other tabs
@@ -55,6 +56,7 @@ export type ProfileStackParamList = {
     ExerciseAnalytics: { exerciseId: string; exerciseName: string };
     Calendar: undefined;
     Measurements: undefined;
+    Goals: undefined;
 };
 
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
@@ -82,6 +84,11 @@ const CalendarScreenWithBoundary = () => (
 const MeasurementsScreenWithBoundary = () => (
     <ErrorBoundary fallback="screen" label="MeasurementsScreen">
         <MeasurementsScreen />
+    </ErrorBoundary>
+);
+const GoalsScreenWithBoundary = () => (
+    <ErrorBoundary fallback="screen" label="GoalsScreen">
+        <GoalsScreen />
     </ErrorBoundary>
 );
 
@@ -136,6 +143,13 @@ function ProfileStackNavigator() {
                     component={MeasurementsScreenWithBoundary}
                     options={{
                         title: 'Measurements',
+                    }}
+                />
+                <ProfileStack.Screen
+                    name="Goals"
+                    component={GoalsScreenWithBoundary}
+                    options={{
+                        title: 'Goals',
                     }}
                 />
             </ProfileStack.Navigator>

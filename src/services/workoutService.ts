@@ -6,6 +6,8 @@
  */
 
 import { getDatabase } from './database';
+import { refreshAllGoalProgress } from './goalService';
+import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import {
     Workout,
     WorkoutExercise,
@@ -119,6 +121,15 @@ export async function saveWorkout(workout: Workout): Promise<void> {
             }
         });
         console.log('[WorkoutService] Workout saved successfully:', workout.id);
+
+        // Fire-and-forget: refresh goal progress after successful save
+        refreshAllGoalProgress()
+            .then((completed) => {
+                if (completed.length > 0) {
+                    useGoalCelebrationStore.getState().celebrate(completed);
+                }
+            })
+            .catch((err) => console.warn('[WorkoutService] Goal refresh failed:', err));
     } catch (error) {
         console.error('[WorkoutService] Failed to save workout:', error);
         throw error;
@@ -242,6 +253,15 @@ export async function updateWorkout(workout: Workout): Promise<void> {
         });
 
         console.log('[WorkoutService] Workout updated successfully:', workout.id);
+
+        // Fire-and-forget: refresh goal progress after successful update
+        refreshAllGoalProgress()
+            .then((completed) => {
+                for (const goal of completed) {
+                    console.log(`[WorkoutService] Goal completed: ${goal.label ?? goal.id}`);
+                }
+            })
+            .catch((err) => console.warn('[WorkoutService] Goal refresh failed:', err));
     } catch (error) {
         console.error('[WorkoutService] Failed to update workout:', error);
         throw error;

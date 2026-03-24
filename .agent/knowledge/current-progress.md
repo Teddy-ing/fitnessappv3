@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Phase 2 (Analytics) complete, Measurements feature complete
-- **Status:** Core features + analytics + calendar + measurements all implemented
-- **Next Milestone:** Goals Feature / Profile Screen Refactor & Widget Framework
+- **Phase:** Post-MVP Development — Goals feature complete
+- **Status:** Core features + analytics + calendar + measurements + goals all implemented
+- **Next Milestone:** QA pass on Goals feature (tech-debt audit, bug hunter, performance)
 
 ---
 
@@ -62,11 +62,15 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Exercise List 3-Layer Navigation** (Search bar + muscle group filter pills + dynamic list with icon placeholders, SQL LIKE filter on exercise_muscle_groups)
 - [x] **Phase 3: Calendar Feature** (Phases A–E complete: all spec items implemented — heatmap grid, modal, PR/notes/fatigue filters, journal view, edit workout button, 10 service functions, 39 calendar tests)
 - [x] **Measurements Feature** (Phases 1–4: DB schema + 15 seeded types, Track tab with keyboard, Trends tab with sparklines + detail charts, Gallery tab with photo grid/viewer/compare, Relative Strength overlay, 26 measurement tests)
+- [x] **Goals Feature — Foundation + Screen Shell** (Phases 1–2: v7 migration + goals table, Goal model + goalService with CRUD/progress/completion, GoalsScreen with SegmentedControl/FAB/empty state, 34 goal tests)
+- [x] **Goals Feature — Cards + Creation Flow** (Phases 3–4: GoalCard with deadline projection, CompletedGoalCard, context menu, multi-step creation wizard with ExercisePicker reuse)
+- [x] **Goals Feature — Auto-Progress + Celebration** (Phase 5: refreshAllGoalProgress hooked into saveWorkout/updateWorkout/logMeasurement, Zustand-based celebration toast overlay)
+- [x] **Goals Feature — Polish** (Phase 6: GoalDetailModal with progress circle/stats grid/timeline/projection, deadline warning badges)
 ---
 
 ## In Progress
 
-- [ ] **Phase 3/4: Profile Screen Scoping & Refactor** (Integrating analytics into the Profile view)
+- [ ] QA pass on Goals feature
 
 ---
 

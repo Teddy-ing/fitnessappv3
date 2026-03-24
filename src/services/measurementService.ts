@@ -11,6 +11,8 @@
  */
 
 import { getDatabase } from './database';
+import { refreshAllGoalProgress } from './goalService';
+import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import { MeasurementType, Measurement } from '../models/measurement';
 import { generateId } from '../utils/uuid';
 
@@ -154,7 +156,7 @@ export async function logMeasurement(
             [id, typeId, value, date, note ?? null, now],
         );
 
-        return {
+        const measurement: Measurement = {
             id,
             measurementTypeId: typeId,
             value,
@@ -162,6 +164,17 @@ export async function logMeasurement(
             note: note ?? null,
             createdAt: now,
         };
+
+        // Fire-and-forget: refresh goal progress after logging
+        refreshAllGoalProgress()
+            .then((completed) => {
+                if (completed.length > 0) {
+                    useGoalCelebrationStore.getState().celebrate(completed);
+                }
+            })
+            .catch((err) => console.warn('[MeasurementService] Goal refresh failed:', err));
+
+        return measurement;
     } catch (error) {
         console.error('[MeasurementService] Failed to log measurement:', error);
         return null;

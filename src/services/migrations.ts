@@ -489,6 +489,38 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v7: Goals tracking system
+    // ----------------------------------------------------------
+    {
+        version: 7,
+        name: 'goals_table',
+        up: async (db) => {
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS goals (
+                    id TEXT PRIMARY KEY,
+                    goal_type TEXT NOT NULL,
+                    exercise_id TEXT,
+                    measurement_type_id TEXT,
+                    target_value REAL NOT NULL,
+                    starting_value REAL,
+                    current_best REAL,
+                    label TEXT,
+                    deadline TEXT,
+                    status TEXT NOT NULL DEFAULT 'active',
+                    completed_at TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+            `);
+
+            await db.execAsync(`
+                CREATE INDEX IF NOT EXISTS idx_goals_status ON goals(status);
+                CREATE INDEX IF NOT EXISTS idx_goals_exercise_id ON goals(exercise_id);
+            `);
+        },
+    },
 ];
 
 // ============================================================

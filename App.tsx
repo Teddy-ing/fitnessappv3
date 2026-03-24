@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator } from './src/navigation';
 import { requestNotificationPermissions, clearAllNotifications, seedPremadeSplits } from './src/services';
 import { ErrorBoundary } from './src/components';
+import GoalCelebrationOverlay from './src/components/goals/GoalCelebrationOverlay';
 
 export default function App() {
   const appState = useRef(AppState.currentState);
@@ -47,6 +48,7 @@ export default function App() {
         <StatusBar style="light" />
         <ErrorBoundary fallback="screen" label="App">
           <AppNavigator />
+          <GoalCelebrationOverlay />
         </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>

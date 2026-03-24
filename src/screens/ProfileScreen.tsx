@@ -130,6 +130,15 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                         <Text style={styles.menuArrow}>›</Text>
                     </TouchableOpacity>
 
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('Goals')}
+                    >
+                        <Text style={styles.menuIcon}>🎯</Text>
+                        <Text style={styles.menuText}>Goals</Text>
+                        <Text style={styles.menuArrow}>›</Text>
+                    </TouchableOpacity>
+
                     <TouchableOpacity style={styles.menuItem}>
                         <Text style={styles.menuIcon}>🏆</Text>
                         <Text style={styles.menuText}>Personal Records</Text>
