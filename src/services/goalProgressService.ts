@@ -58,7 +58,9 @@ async function computeExercise1RM(exerciseId: string): Promise<number | null> {
         `SELECT MAX(ws.weight * (1.0 + ws.reps / 30.0)) AS best
          FROM workout_sets ws
          JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+         JOIN workouts w ON w.id = we.workout_id
          WHERE we.exercise_id = ?
+           AND w.status = 'completed'
            AND ws.type = 'working'
            AND ws.weight IS NOT NULL
            AND ws.reps IS NOT NULL`,
@@ -81,7 +83,9 @@ async function computeExerciseVolume(exerciseId: string): Promise<number | null>
              SELECT SUM(ws.weight * ws.reps) AS session_volume
              FROM workout_sets ws
              JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+             JOIN workouts w ON w.id = we.workout_id
              WHERE we.exercise_id = ?
+               AND w.status = 'completed'
                AND ws.weight IS NOT NULL
                AND ws.reps IS NOT NULL
              GROUP BY we.workout_id
@@ -103,7 +107,9 @@ async function computeExerciseMaxReps(exerciseId: string): Promise<number | null
         `SELECT MAX(ws.reps) AS best
          FROM workout_sets ws
          JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+         JOIN workouts w ON w.id = we.workout_id
          WHERE we.exercise_id = ?
+           AND w.status = 'completed'
            AND ws.type = 'working'
            AND ws.reps IS NOT NULL`,
         [exerciseId],
@@ -189,7 +195,9 @@ export async function refreshAllGoalProgress(): Promise<Goal[]> {
                         MAX(ws.weight * (1.0 + ws.reps / 30.0)) AS best
                  FROM workout_sets ws
                  JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                 JOIN workouts w ON w.id = we.workout_id
                  WHERE we.exercise_id IN (${placeholders})
+                   AND w.status = 'completed'
                    AND ws.type = 'working'
                    AND ws.weight IS NOT NULL
                    AND ws.reps IS NOT NULL
@@ -214,7 +222,9 @@ export async function refreshAllGoalProgress(): Promise<Goal[]> {
                             SUM(ws.weight * ws.reps) AS session_volume
                      FROM workout_sets ws
                      JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                     JOIN workouts w ON w.id = we.workout_id
                      WHERE we.exercise_id IN (${placeholders})
+                       AND w.status = 'completed'
                        AND ws.weight IS NOT NULL
                        AND ws.reps IS NOT NULL
                      GROUP BY we.workout_id, we.exercise_id
@@ -238,7 +248,9 @@ export async function refreshAllGoalProgress(): Promise<Goal[]> {
                         MAX(ws.reps) AS best
                  FROM workout_sets ws
                  JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                 JOIN workouts w ON w.id = we.workout_id
                  WHERE we.exercise_id IN (${placeholders})
+                   AND w.status = 'completed'
                    AND ws.type = 'working'
                    AND ws.reps IS NOT NULL
                  GROUP BY we.exercise_id`,

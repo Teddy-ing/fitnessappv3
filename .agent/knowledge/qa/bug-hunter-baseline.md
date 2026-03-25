@@ -8,7 +8,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 65+ files)
 - **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
-- **Fixed since baseline:** 22
+- **Fixed since baseline:** 24
 
 ---
 
@@ -62,6 +62,20 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ---
 
 ## Resolved
+
+#### BH-024 · Fire-and-forget `refreshAllGoalProgress()` + service→store coupling — **RESOLVED 2026-03-24**
+- **Severity:** High
+- **Original status:** 🟡 Plausible
+- **File:** [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts), [measurementService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/measurementService.ts)
+- **Root cause:** Fire-and-forget `.then().catch()` pattern left uncovered rejection path; services imported `useGoalCelebrationStore` violating guardrail #9.
+- **Fix applied:** `saveWorkout`/`updateWorkout` now return `Goal[]`; `logMeasurement` returns `{ measurement, completedGoals }`. All three services properly `await refreshAllGoalProgress()`. Celebration logic moved to callers (`WorkoutScreen.tsx`, `MeasurementsScreen.tsx`). Store import removed from both services.
+
+#### BH-023 · `goalProgressService` 1RM/reps queries include abandoned workouts — **RESOLVED 2026-03-24**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [goalProgressService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/goalProgressService.ts)
+- **Root cause:** 6 SQL queries (3 single-goal compute + 3 batch) had no `JOIN workouts` and no `w.status = 'completed'` filter. Abandoned workouts inflated goal progress.
+- **Fix applied:** Added `JOIN workouts w ON w.id = we.workout_id` and `AND w.status = 'completed'` to all 6 queries: `computeExercise1RM()`, `computeExerciseVolume()`, `computeExerciseMaxReps()`, and their batch equivalents in `refreshAllGoalProgress()`.
 
 #### BH-022 · `getProgressPercent` returns misleading percentage for loss goals — **RESOLVED 2026-03-23**
 - **Severity:** Low
@@ -233,4 +247,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-24
-- Session Context: Comprehensive full-project Bug Hunter scan covering 65+ files (all services, stores, screens, hooks, components, migrations, navigation, utilities). No new issues found. Codebase is clean.
+- Session Context: Resolved BH-023 (added status filter to 6 goalProgressService SQL queries) and BH-024 (decoupled service→store pattern, moved celebration to callers, properly awaited refresh).

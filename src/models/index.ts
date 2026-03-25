@@ -18,3 +18,4 @@ export * from './split';
 export * from './analytics';
 export * from './measurement';
 export * from './goal';
+export * from './preferences';

@@ -128,3 +128,7 @@ export {
     refreshAllGoalProgress,
     getCurrentBestForTarget,
 } from './goalProgressService';
+export {
+    exportAllData,
+    importAllData,
+} from './dataTransferService';

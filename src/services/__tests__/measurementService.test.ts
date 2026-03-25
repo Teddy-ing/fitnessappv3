@@ -35,6 +35,11 @@ jest.mock('../database', () => ({
     getDatabase: jest.fn(async () => mockDb),
 }));
 
+// Mock goalProgressService to prevent actual refresh during tests
+jest.mock('../goalProgressService', () => ({
+    refreshAllGoalProgress: jest.fn(async () => []),
+}));
+
 // ============================================================
 // Test helpers
 // ============================================================
@@ -180,12 +185,13 @@ describe('logMeasurement', () => {
         const result = await logMeasurement('bodyweight', 183.5, '2026-03-18', 'Morning weigh-in');
 
         expect(result).not.toBeNull();
-        expect(result!.measurementTypeId).toBe('bodyweight');
-        expect(result!.value).toBe(183.5);
-        expect(result!.recordedAt).toBe('2026-03-18');
-        expect(result!.note).toBe('Morning weigh-in');
-        expect(result!.id).toBeTruthy();
-        expect(result!.createdAt).toBeTruthy();
+        expect(result!.measurement.measurementTypeId).toBe('bodyweight');
+        expect(result!.measurement.value).toBe(183.5);
+        expect(result!.measurement.recordedAt).toBe('2026-03-18');
+        expect(result!.measurement.note).toBe('Morning weigh-in');
+        expect(result!.measurement.id).toBeTruthy();
+        expect(result!.measurement.createdAt).toBeTruthy();
+        expect(result!.completedGoals).toEqual([]);
 
         expect(mockRunAsync).toHaveBeenCalledTimes(1);
         const [sql] = mockRunAsync.mock.calls[0];
@@ -199,7 +205,7 @@ describe('logMeasurement', () => {
         const result = await logMeasurement('waist', 32, '2026-03-18');
 
         expect(result).not.toBeNull();
-        expect(result!.note).toBeNull();
+        expect(result!.measurement.note).toBeNull();
     });
 
     it('returns null on DB error', async () => {

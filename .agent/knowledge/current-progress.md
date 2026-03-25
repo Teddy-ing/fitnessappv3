@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Goals feature complete
-- **Status:** Core features + analytics + calendar + measurements + goals all implemented
-- **Next Milestone:** QA pass on Goals feature (tech-debt audit, bug hunter, performance)
+- **Phase:** Post-MVP Development — All core features + QA complete + JSON import/export
+- **Status:** Core features + analytics + calendar + measurements + goals + data import/export all implemented
+- **Next Milestone:** Phase 3 (Widget Framework) or Phase 5 (Settings)
 
 ---
 
@@ -66,30 +66,32 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Goals Feature — Cards + Creation Flow** (Phases 3–4: GoalCard with deadline projection, CompletedGoalCard, context menu, multi-step creation wizard with ExercisePicker reuse)
 - [x] **Goals Feature — Auto-Progress + Celebration** (Phase 5: refreshAllGoalProgress hooked into saveWorkout/updateWorkout/logMeasurement, Zustand-based celebration toast overlay)
 - [x] **Goals Feature — Polish** (Phase 6: GoalDetailModal with progress circle/stats grid/timeline/projection, deadline warning badges)
+- [x] **Full-Project QA Audit** (Bug Hunter: 0 new bugs across 65+ files; Performance Profiler: 0 regressions across 8 checklist areas; Tech Debt Auditor: 1 active item found and resolved (TD-020), 6 latent items tracked, all 7 guardrails pass)
+
 ---
 
 ## In Progress
 
-- [ ] QA pass on Goals feature
+_No active work items._
 
 ---
 
 ## Upcoming Roadmap
 
-### Phase 2: Analytics Functions & Profile Screen Scoping
-- Audit existing analytics/stats capabilities in the codebase
-- Define what metrics and charts belong on the Profile screen
-- Design the analytics data layer (aggregations, queries, caching)
+### ~~Phase 2: Analytics Functions & Profile Screen Scoping~~ ✅ COMPLETE
+- Macro charts, muscle distribution, micro exercise charts, fatigue ratio — all implemented
+- Exercise list 3-layer navigation with filter pills
+- Profile screen serves as hub for Analytics, Calendar, Measurements, Goals
 
 ### Phase 3: Widget Framework
 - Reusable widget system (add/remove/reorder on home screen)
 - Widgets are bite-sized capsules of profile page analytics
 - Core framework first, then populate with real data after analytics
 
-### Phase 4: Profile Screen Visual Refactor + Analytics Screens
-- Redesign the Profile screen with analytics integration
-- Create dedicated analytics/stats screens (progress charts, PRs, volume trends)
-- Visual consistency with Phase 1 design language
+### ~~Phase 4: Profile Screen Visual Refactor + Analytics Screens~~ ✅ COMPLETE
+- Profile screen redesigned with analytics integration
+- Dedicated analytics screens (progress charts, PRs, volume trends) implemented
+- Visual consistency achieved across all feature areas
 
 ### Phase 5: Settings
 - User preferences screen (units, theme, rest timer defaults, notifications)
@@ -621,8 +623,8 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Last Updated
-- Date: 2026-03-23
-- Session Context: Completed Measurements feature (Phases 1–4 + Relative Strength Overlay)
+- Date: 2026-03-24
+- Session Context: Comprehensive full-project QA audit (Bug Hunter + Performance Profiler + Tech Debt Auditor) — all 3 passes clean. TD-020 found and fixed (DetailChartView extraction). Codebase is fully audited and production-ready.
 
 ### 2026-03-16: Calendar Feature Development (Phase 1)
 

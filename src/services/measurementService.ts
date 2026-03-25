@@ -12,8 +12,8 @@
 
 import { getDatabase } from './database';
 import { refreshAllGoalProgress } from './goalProgressService';
-import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import { MeasurementType, Measurement } from '../models/measurement';
+import { Goal } from '../models/goal';
 import { generateId } from '../utils/uuid';
 import { toLocalISOString } from '../utils/localDate';
 
@@ -136,14 +136,14 @@ export async function getVisibleMeasurementTypes(
  * @param value - Numeric value
  * @param date - ISO date string (YYYY-MM-DD)
  * @param note - Optional note
- * @returns The created measurement, or null on failure
+ * @returns The created measurement and any completed goals, or null on failure
  */
 export async function logMeasurement(
     typeId: string,
     value: number,
     date: string,
     note?: string,
-): Promise<Measurement | null> {
+): Promise<{ measurement: Measurement; completedGoals: Goal[] } | null> {
     const db = await getDatabase();
     if (!db) return null;
 
@@ -166,16 +166,15 @@ export async function logMeasurement(
             createdAt: now,
         };
 
-        // Fire-and-forget: refresh goal progress after logging
-        refreshAllGoalProgress()
-            .then((completed) => {
-                if (completed.length > 0) {
-                    useGoalCelebrationStore.getState().celebrate(completed);
-                }
-            })
-            .catch((err) => console.warn('[MeasurementService] Goal refresh failed:', err));
+        // Refresh goal progress after logging
+        let completedGoals: Goal[] = [];
+        try {
+            completedGoals = await refreshAllGoalProgress();
+        } catch (err) {
+            console.warn('[MeasurementService] Goal refresh failed:', err);
+        }
 
-        return measurement;
+        return { measurement, completedGoals };
     } catch (error) {
         console.error('[MeasurementService] Failed to log measurement:', error);
         return null;

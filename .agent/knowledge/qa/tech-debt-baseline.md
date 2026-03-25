@@ -7,20 +7,54 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Open issues:** 6 (Active: 0, Latent: 6)
+- **Open issues:** 10 (Active: 2, Latent: 8)
 - **Fixed since baseline:** 14
 
 ---
 
 ## Open Issues — Active Debt
 
-_No active debt items._
+### TD-021 · No in-progress workout persistence — data loss on app kill
+
+- **Category:** Data safety / user trust
+- **Files:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts), [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx)
+- **What:** The entire active workout lives exclusively in Zustand's in-memory store. There is zero persistence of the workout-in-progress. If the app crashes, the OS kills the process, or the user accidentally swipe-closes the app, the entire workout is lost.
+- **Why active:** This is the single most likely source of 1-star reviews. Every competitor (including Fitnotes) persists in-progress workouts to disk.
+- **Impact:** User spends 30–60 minutes logging sets → app crash → entire workout is gone.
+- **Recommended fix:** Write the active workout to SQLite (or AsyncStorage) on every mutation, reload on app cold-start. Consider debouncing writes to avoid excessive I/O.
+
+### TD-022 · `clearAllData()` does not clear all tables
+
+- **Category:** Data integrity / maintenance
+- **File:** [database.ts:89-107](file:///c:/Users/teddy/projects/workout-app/src/services/database.ts#L89-L107)
+- **What:** `clearAllData()` explicitly lists 8 tables to delete from, but the schema has 13+ tables (including `personal_records`, `measurements`, `measurement_types`, `progress_photos`, `goals`, `exercises`). Tables added in migrations v5–v7 are never cleaned.
+- **Why active:** The data transfer import feature (`dataTransferService.ts`) may expect a clean slate. Dev/testing flows using `clearAllData()` leave orphaned PRs, measurements, photos, and goals. Violates conventions guardrail #11.
+- **Recommended fix:** Add `DELETE FROM` lines for all missing tables, with comments referencing the migration version. Consider auto-generating the list from schema introspection.
 
 ---
 
 ## Open Issues — Latent Debt
 
 Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatbot).
+
+### TD-023 · `updateWorkout()` uses delete-then-reinsert instead of UPDATE
+
+- **Category:** Data integrity / anti-pattern
+- **File:** [workoutService.ts:144-253](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts#L144-L253)
+- **What:** `updateWorkout()` deletes the workout + all exercises + all sets, then re-inserts them. The comment on line 153 (`// No CASCADE on FK`) acknowledges the FK issue but proceeds anyway. Any table with an FK reference to `workouts(id)` that doesn't cascade (e.g., `personal_records.workout_id`) will silently orphan data.
+- **Why latent:** Currently only `personal_records` references `workouts`, and the backfill system can recover. But as new child tables are added (e.g., workout tags, media attachments), each one must be manually tracked in the delete chain.
+- **Recommended fix:** Use SQL `UPDATE` on the parent row. For children (exercises/sets), delete-then-reinsert is acceptable if the parent stays. Violates conventions guardrail #12.
+
+### TD-024 · Epley 1RM, volume, and status filter formulas duplicated across 3 services
+
+- **Category:** DRY violation / drift risk
+- **Files:**
+  - `analyticsService.ts` — 1RM (line 585), volume (line 671), status filter throughout
+  - `calendarService.ts` — volume in fatigue detection (line 772)
+  - `goalProgressService.ts` — 1RM (line 58), volume (line 81), max reps (line 103), **missing status filter** (BH-023)
+- **What:** The Epley formula `weight * (1.0 + reps / 30.0)`, volume formula `SUM(weight * reps)`, and status filter `w.status = 'completed'` are copy-pasted across three services. The goalProgressService copy has already drifted (missing the status filter — see BH-023).
+- **Why latent:** If the Epley formula is ever updated (e.g., to Brzycki), or if a new status is added, all three files must be updated in lockstep.
+- **Recommended fix:** Create shared SQL fragment helpers or centralize computation in one service. Violates conventions guardrail #10.
 
 ### TD-003 · `analyticsService.ts` is a monolith (873 lines) heading toward bloat
 
@@ -80,16 +114,11 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Will break at:** Widget framework (Phase 3) will likely add calendar-widget queries. Import/export (Phase 6) may need to write/read PR records.
 - **Recommended fix (when):** Before Phase 5, consider extracting `personalRecordsService.ts` (backfill + PR date queries) from `calendarService.ts`. Keep `calendarService.ts` for heatmap, streak, and workout date queries. Fatigue detection could go either way.
 
-### TD-015 · `formatISODate` helper duplicated across measurement files
+### ~~TD-015~~ · `formatISODate` helper duplicated — **RESOLVED 2026-03-24**
 
 - **Category:** DRY violation
-- **Files:**
-  - [MeasurementsScreen.tsx:589-594](file:///c:/Users/teddy/projects/workout-app/src/screens/MeasurementsScreen.tsx#L589-L594) — `formatISODate()` + `getTodayStr()`
-  - [GalleryTab.tsx:562](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L562) — inline `${today.getFullYear()}-${...}` (same pattern, repeated at line 586)
-  - [TrendsTab.tsx:265](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/TrendsTab.tsx#L265) — inline `${d.getFullYear()}-${...}` pattern
-  - [mockDataService.ts:201](file:///c:/Users/teddy/projects/workout-app/src/services/mockDataService.ts#L201) — same inline pattern
-- **Why latent:** Four copies of the same date → ISO string formatting logic. Currently small and unlikely to contain bugs, but any timezone edge-case fix would need to be applied in 4 places.
-- **Recommended fix (when):** During the next refactor cycle, add `formatISODate(date: Date): string` to `src/utils/formatters.ts` (where `formatDuration` and `formatVolume` already live) and import from there. Low-risk, ~10-line change.
+- **Fix applied:** Added `formatISODate(d: Date): string` to `src/utils/formatters.ts`. Replaced all 4 duplication sites (`TrackTab.tsx`, `GalleryTab.tsx`, `DetailChartView.tsx`, `mockDataService.ts`) with imports. Also moved `UserSettings` type from `preferencesService.ts` to `src/models/preferences.ts` (partial TD-009 scope).
+- **Result:** Single source of truth for ISO date formatting. `UserSettings` now lives in models layer.
 
 
 
@@ -259,6 +288,11 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 | 5 | Canonical types live in `src/models/` | ⚠️ 6 cross-boundary types still in services (TD-009 expanded). Domain types correct in `models/`. |
 | 6 | State reset on lifecycle boundaries | ✅ All hooks and modals properly reset on identity/visibility change |
 | 7 | SafeAreaView edges must match tab bar visibility | ✅ All screens verified correct |
+| 8 | Batch `IN (...)` queries chunked at 500 | ❌ No existing queries are chunked (PP-037). |
+| 9 | Services must not reach into stores | ✅ `workoutService.ts` and `measurementService.ts` decoupled (BH-024 resolved). |
+| 10 | Shared SQL formulas in one canonical location | ❌ 1RM, volume, status filter duplicated across 3 services (TD-024). |
+| 11 | New tables registered in `clearAllData()` | ❌ 5+ tables missing from `clearAllData()` (TD-022). |
+| 12 | `updateX()` must use UPDATE, not delete-reinsert | ❌ `updateWorkout()` uses delete-reinsert pattern (TD-023). |
 
 ---
 
@@ -268,11 +302,15 @@ Areas to monitor as the app approaches later roadmap phases:
 
 | Concern | Current State | Will Break At |
 |---------|--------------|--------------|
+| **In-progress workout persistence** | **Not persisted** (TD-021) | **Now — any app crash loses user data** |
+| **SQLite 999-param limit** | **No chunking anywhere** (PP-037) | **~1000 workouts (< 3 years daily use)** |
 | Navigation structure (3 tabs + modals) | Adequate for current features | Phase 5 (Settings) may need nested stacks or drawer |
 | SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
 | Service file boundaries | 13 services, `analyticsService` 755 lines, `calendarService` 741 lines | ML features (Phase 7), Widget framework (Phase 3) |
 | Hydration layer | Single mapping file, 256 lines | Every new model field = hydration update needed — fragile |
 | Unit hardcoding (`lbs`) | **20 instances across 13 files** (TD-004 expanded) | Phase 5 (Settings) — kg/lbs toggle |
+| SQL formula duplication | **3 services with drifted copies** (TD-024) | Any formula change or new service |
+| Service→store coupling | ✅ Resolved — `workoutService`/`measurementService` decoupled (BH-024) | — |
 | Chart label logic | ✅ Resolved (TD-002) — shared via `chartLabels.tsx` | — |
 | Calendar component size | ✅ Resolved (TD-006) — 325 lines | — |
 | Measurement component sizes | ✅ Resolved (TD-012/013/014/020) — all under 550 lines | — |
@@ -284,4 +322,4 @@ Areas to monitor as the app approaches later roadmap phases:
 
 ## Last Updated
 - Date: 2026-03-24
-- Session Context: Comprehensive full-project Tech Debt Auditor scan (118 files). TD-020 found and immediately resolved (DetailChartView 624→547 lines via OverlayExercisePicker extraction). Expanded TD-004 to 20 lbs instances across 13 files. Expanded TD-009 to 6 cross-boundary types in services. 6 open latent issues, 0 active.
+- Session Context: Staff engineer code audit added TD-021 (in-progress workout persistence), TD-022 (clearAllData missing tables), TD-023 (delete-then-reinsert pattern), TD-024 (duplicated SQL formulas). Updated convention guardrails cross-reference (8–12) and scalability watch list. Now 10 open issues (2 active, 8 latent).

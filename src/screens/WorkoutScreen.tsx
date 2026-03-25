@@ -37,6 +37,7 @@ import {
     Template,
 } from '../services';
 import { Workout } from '../models/workout';
+import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import WorkoutHomeView from './WorkoutHomeView';
 import { navigateToTab } from '../navigation/navigationRef';
 
@@ -160,15 +161,21 @@ export default function WorkoutScreen() {
                             startedAt: savedStartedAt ?? workout.startedAt,
                         };
                         console.log('[WorkoutScreen] Updating edited workout...');
-                        await updateWorkout(editedWorkout);
+                        const completedGoals = await updateWorkout(editedWorkout);
                         console.log('[WorkoutScreen] Workout updated!');
+                        if (completedGoals.length > 0) {
+                            useGoalCelebrationStore.getState().celebrate(completedGoals);
+                        }
                         // Navigate back to the Profile tab (Calendar)
                         navigateToTab('Profile');
                     } else {
                         // Normal mode: save + template prompt
                         console.log('[WorkoutScreen] Saving workout...');
-                        await saveWorkout(workout);
+                        const completedGoals = await saveWorkout(workout);
                         console.log('[WorkoutScreen] Workout saved!');
+                        if (completedGoals.length > 0) {
+                            useGoalCelebrationStore.getState().celebrate(completedGoals);
+                        }
 
                         await markWorkoutCompletedToday();
                         await loadData();

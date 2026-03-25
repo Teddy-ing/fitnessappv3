@@ -27,6 +27,7 @@ import { getSettings, updateSettings } from '../../services/preferencesService';
 import type { MeasurementType } from '../../models';
 import type { Exercise } from '../../models/exercise';
 import type { ChartRange } from '../../models/analytics';
+import { formatISODate } from '../../utils/formatters';
 import OverlayExercisePicker from './OverlayExercisePicker';
 
 // ============================================================
@@ -125,7 +126,7 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
         if (days !== null) {
             const d = new Date();
             d.setDate(d.getDate() - days);
-            startDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            startDate = formatISODate(d);
         }
         const history = await getMeasurementHistory(type.id, startDate);
         setData(history.map((m) => ({ date: m.recordedAt, value: m.value })));

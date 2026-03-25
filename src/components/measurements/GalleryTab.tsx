@@ -22,6 +22,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 
 import { colors, spacing, borderRadius, typography } from '../../theme';
+import { formatISODate } from '../../utils/formatters';
 import {
     saveProgressPhoto,
     getProgressPhotos,
@@ -78,7 +79,7 @@ export default function GalleryTab() {
 
         const asset = result.assets[0];
         const today = new Date();
-        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const dateStr = formatISODate(today);
 
         const saved = await saveProgressPhoto(asset.uri, dateStr);
         if (saved) {
@@ -102,7 +103,7 @@ export default function GalleryTab() {
 
         const asset = result.assets[0];
         const today = new Date();
-        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const dateStr = formatISODate(today);
 
         const saved = await saveProgressPhoto(asset.uri, dateStr);
         if (saved) {

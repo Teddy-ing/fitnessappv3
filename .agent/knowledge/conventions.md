@@ -51,7 +51,44 @@ These rules are enforced to prevent the specific categories of tech debt that ha
    - **Tab bar visible** → Use plain `<View>` (tab bar handles bottom inset)
    - **Tab bar hidden + stack header** → Use `<SafeAreaView edges={['bottom']}>` (header handles top)
    - **Tab bar hidden + no header** → Use `<SafeAreaView edges={['top', 'bottom']}>`
-   - Never use `edges={[]}` or omit bottom when the tab bar is hidden — this causes content to clip behind the system navigation bar.
+    - Never use `edges={[]}` or omit bottom when the tab bar is hidden — this causes content to clip behind the system navigation bar.
+
+8. **Batch `IN (...)` queries must be chunked at 500 IDs**
+   SQLite has a compile-time limit of 999 bound parameters (`SQLITE_MAX_VARIABLE_NUMBER`). Any query that builds `WHERE x IN (?,?,?...)` with a dynamic list must chunk IDs into batches of 500 and merge results. A user with ~3 years of daily workouts will exceed 999 IDs.
+   
+   *Pattern:*
+   ```typescript
+   const BATCH_SIZE = 500;
+   const allResults = [];
+   for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+       const batch = ids.slice(i, i + BATCH_SIZE);
+       const placeholders = batch.map(() => '?').join(',');
+       const rows = await db.getAllAsync(`... IN (${placeholders})`, batch);
+       allResults.push(...rows);
+   }
+   ```
+
+9. **Services must not reach into stores**
+   Service files (`src/services/`) must never import from `src/stores/` or call `useXStore.getState()`. Services return data; the caller (screen, hook, or store action) decides what to do with it. This keeps services testable and prevents invisible coupling.
+   
+   *Bad:* `workoutService.ts` calling `useGoalCelebrationStore.getState().celebrate(completed)` after save.
+   *Good:* `saveWorkout()` returns a result, and the caller in `WorkoutScreen.tsx` triggers the celebration.
+
+10. **Shared SQL formulas live in one canonical location**
+    Any SQL formula or filter used in more than one service must be defined once and imported. Duplicated formulas drift silently — one copy gets a bugfix, the others don't.
+    
+    Currently duplicated:
+    - Epley 1RM: `weight * (1.0 + reps / 30.0)` — in `analyticsService`, `calendarService`, `goalProgressService`
+    - Volume: `SUM(weight * reps)` — same three files
+    - Status filter: `w.status = 'completed'` — missing in `goalProgressService` but present elsewhere
+    
+    *Approach:* Create string-builder helpers or constants in a shared `src/services/sqlFragments.ts`, or centralize the computation in one service that others call.
+
+11. **New tables must be registered in `clearAllData()`**
+    Every migration that creates a new table must also add a corresponding `DELETE FROM <table>` line in `database.ts → clearAllData()`. Without this, "clear all data" leaves orphaned rows that corrupt imports and dev testing. Add a comment in `clearAllData()` referencing the migration version for each table.
+
+12. **`updateX()` must use UPDATE, not delete-then-reinsert**
+    Update functions must use SQL `UPDATE` statements on the existing rows. The pattern of deleting a parent + all children and re-inserting them is fragile: any table with a foreign key reference that isn't `ON DELETE CASCADE` will silently orphan data. If a complex update is truly needed (e.g., replacing all child rows), use `DELETE` only on the children being replaced, and `UPDATE` the parent row in-place.
 
 ### Git Practices
 - Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
@@ -127,5 +164,5 @@ src/
 ---
 
 ## Last Updated
-- Date: 2026-03-23
-- Session Context: Strengthened guardrail #1 — agents must NOT extract mid-build for line count; extraction happens exclusively via post-completion tech-debt auditor workflow
+- Date: 2026-03-24
+- Session Context: Added guardrails 8–12 from staff engineer code audit — batch IN() chunking, service-store decoupling, shared SQL formulas, clearAllData coverage, and UPDATE-not-delete patterns

@@ -19,3 +19,11 @@ export function formatVolume(volume: number | null, fallback: string = '—'): s
     if (!volume || volume <= 0) return fallback;
     return volume.toLocaleString() + ' lbs';
 }
+
+/** Format a Date to ISO date string (YYYY-MM-DD), timezone-safe. */
+export function formatISODate(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}

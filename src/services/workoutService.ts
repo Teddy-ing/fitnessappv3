@@ -7,7 +7,6 @@
 
 import { getDatabase } from './database';
 import { refreshAllGoalProgress } from './goalProgressService';
-import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import { toLocalISOString } from '../utils/localDate';
 import {
     Workout,
@@ -25,15 +24,17 @@ import {
     SetRow,
     WorkoutRow,
 } from './hydration';
+import { Goal } from '../models/goal';
 
 /**
- * Save a completed workout to the database
+ * Save a completed workout to the database.
+ * Returns any goals that were completed as a result of this workout.
  */
-export async function saveWorkout(workout: Workout): Promise<void> {
+export async function saveWorkout(workout: Workout): Promise<Goal[]> {
     const db = await getDatabase();
     if (!db) {
         console.log('[WorkoutService] Database not available - workout not saved (Expo Go mode)');
-        return;
+        return [];
     }
 
     try {
@@ -123,14 +124,14 @@ export async function saveWorkout(workout: Workout): Promise<void> {
         });
         console.log('[WorkoutService] Workout saved successfully:', workout.id);
 
-        // Fire-and-forget: refresh goal progress after successful save
-        refreshAllGoalProgress()
-            .then((completed) => {
-                if (completed.length > 0) {
-                    useGoalCelebrationStore.getState().celebrate(completed);
-                }
-            })
-            .catch((err) => console.warn('[WorkoutService] Goal refresh failed:', err));
+        // Refresh goal progress and return any newly completed goals
+        try {
+            const completedGoals = await refreshAllGoalProgress();
+            return completedGoals;
+        } catch (err) {
+            console.warn('[WorkoutService] Goal refresh failed:', err);
+            return [];
+        }
     } catch (error) {
         console.error('[WorkoutService] Failed to save workout:', error);
         throw error;
@@ -140,12 +141,13 @@ export async function saveWorkout(workout: Workout): Promise<void> {
 /**
  * Update an existing workout (delete old data, then re-insert).
  * Used when editing a historical workout from the calendar.
+ * Returns any goals that were completed as a result of this update.
  */
-export async function updateWorkout(workout: Workout): Promise<void> {
+export async function updateWorkout(workout: Workout): Promise<Goal[]> {
     const db = await getDatabase();
     if (!db) {
         console.log('[WorkoutService] Database not available - workout not updated (Expo Go mode)');
-        return;
+        return [];
     }
 
     try {
@@ -255,14 +257,14 @@ export async function updateWorkout(workout: Workout): Promise<void> {
 
         console.log('[WorkoutService] Workout updated successfully:', workout.id);
 
-        // Fire-and-forget: refresh goal progress after successful update
-        refreshAllGoalProgress()
-            .then((completed) => {
-                if (completed.length > 0) {
-                    useGoalCelebrationStore.getState().celebrate(completed);
-                }
-            })
-            .catch((err) => console.warn('[WorkoutService] Goal refresh failed:', err));
+        // Refresh goal progress and return any newly completed goals
+        try {
+            const completedGoals = await refreshAllGoalProgress();
+            return completedGoals;
+        } catch (err) {
+            console.warn('[WorkoutService] Goal refresh failed:', err);
+            return [];
+        }
     } catch (error) {
         console.error('[WorkoutService] Failed to update workout:', error);
         throw error;

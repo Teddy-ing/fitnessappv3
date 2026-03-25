@@ -35,6 +35,7 @@ import {
     getMeasurementsForDate,
 } from '../services';
 import { getSettings, updateSettings } from '../services/preferencesService';
+import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import type { MeasurementType } from '../models';
 
 import SegmentedControl from '../components/measurements/SegmentedControl';
@@ -199,10 +200,14 @@ export default function MeasurementsScreen() {
             // Create new
             const result = await logMeasurement(field.type.id, numValue, date);
             if (result) {
+                // Trigger goal celebration if any goals were completed
+                if (result.completedGoals.length > 0) {
+                    useGoalCelebrationStore.getState().celebrate(result.completedGoals);
+                }
                 // Update the field's measurementId for subsequent edits
                 setFields((prev) =>
                     prev.map((f, i) =>
-                        i === focusedIndex ? { ...f, measurementId: result.id } : f,
+                        i === focusedIndex ? { ...f, measurementId: result.measurement.id } : f,
                     ),
                 );
             }

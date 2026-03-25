@@ -10,30 +10,14 @@
 
 import { getDatabase } from './database';
 import { safeJsonParse } from './hydration';
+import { UserSettings } from '../models/preferences';
+
+// Re-export for barrel consumers
+export type { UserSettings };
 
 // ============================================================
-// Types
+// Types (internal)
 // ============================================================
-
-/** Row shape matching the user_settings table columns */
-export interface UserSettings {
-    activeSplitId: string | null;
-    currentTemplateIndex: number;
-    lastWorkoutDate: string | null;
-    weightUnit: string;
-    distanceUnit: string;
-    theme: string;
-    defaultRestTime: number;
-    autoStartRestTimer: boolean;
-    restTimerVibration: boolean;
-    defaultSetsPerExercise: number;
-    hasCompletedOnboarding: boolean;
-    calendarStartDay: string;
-    calendarHeatmapMetric: string;
-    prBackfillComplete: boolean;
-    visibleMeasurements: string[];
-    relativeStrengthExercise: string | null;
-}
 
 /** Raw row from the user_settings table (snake_case, integers for booleans) */
 interface UserSettingsRow {

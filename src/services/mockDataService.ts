@@ -9,6 +9,7 @@ import { saveWorkout } from './workoutService';
 import { getExercises } from './exerciseService';
 import { createWorkout, createWorkoutExercise, createSet } from '../models/workout';
 import { Exercise } from '../models/exercise';
+import { formatISODate } from '../utils/formatters';
 
 /**
  * Generates and saves approximately 3 months of realistic workout data
@@ -198,7 +199,7 @@ export async function generateMockData(months: number = 3): Promise<void> {
             if (Math.random() < 0.15) continue;
 
             const measureDate = new Date(now.getTime() - daysAgo * MS_PER_DAY);
-            const dateStr = `${measureDate.getFullYear()}-${String(measureDate.getMonth() + 1).padStart(2, '0')}-${String(measureDate.getDate()).padStart(2, '0')}`;
+            const dateStr = formatISODate(measureDate);
 
             // Linear interpolation + noise
             const progress = 1 - (daysAgo / daysToGenerate);

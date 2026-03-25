@@ -10,7 +10,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'rea
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
-import { clearAllData, generateMockData } from '../services';
+import { clearAllData, generateMockData, exportAllData, importAllData } from '../services';
 import { ProfileStackParamList } from '../navigation/AppNavigator';
 
 type ProfileScreenProps = {
@@ -19,6 +19,8 @@ type ProfileScreenProps = {
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     const [isGenerating, setIsGenerating] = React.useState(false);
+    const [isExporting, setIsExporting] = React.useState(false);
+    const [isImporting, setIsImporting] = React.useState(false);
 
     const handleClearAllData = () => {
         Alert.alert(
@@ -65,6 +67,52 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                     }
                 },
             ]
+        );
+    };
+
+    const handleExportData = async () => {
+        try {
+            setIsExporting(true);
+            await exportAllData();
+        } catch (error) {
+            console.error('Export failed:', error);
+            Alert.alert('Export Failed', String(error instanceof Error ? error.message : error));
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleImportData = () => {
+        Alert.alert(
+            'Import Data',
+            'This will REPLACE all your current data with the imported backup. Your existing workouts, templates, and measurements will be deleted.\n\nThis cannot be undone!',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Choose File',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setIsImporting(true);
+                            const success = await importAllData();
+                            if (success) {
+                                Alert.alert(
+                                    'Import Complete',
+                                    'Your data has been restored. Restart the app to see all changes.',
+                                );
+                            }
+                        } catch (error) {
+                            console.error('Import failed:', error);
+                            Alert.alert(
+                                'Import Failed',
+                                String(error instanceof Error ? error.message : error),
+                            );
+                        } finally {
+                            setIsImporting(false);
+                        }
+                    },
+                },
+            ],
         );
     };
 
@@ -149,15 +197,23 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Data Management</Text>
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuIcon}>📤</Text>
-                        <Text style={styles.menuText}>Export Data</Text>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={handleExportData}
+                        disabled={isExporting || isImporting}
+                    >
+                        <Text style={styles.menuIcon}>{isExporting ? '⏳' : '📤'}</Text>
+                        <Text style={styles.menuText}>{isExporting ? 'Exporting...' : 'Export Data'}</Text>
                         <Text style={styles.menuArrow}>›</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuIcon}>📥</Text>
-                        <Text style={styles.menuText}>Import Data</Text>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={handleImportData}
+                        disabled={isExporting || isImporting}
+                    >
+                        <Text style={styles.menuIcon}>{isImporting ? '⏳' : '📥'}</Text>
+                        <Text style={styles.menuText}>{isImporting ? 'Importing...' : 'Import Data'}</Text>
                         <Text style={styles.menuArrow}>›</Text>
                     </TouchableOpacity>
 
