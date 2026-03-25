@@ -1,120 +1,64 @@
 /**
  * Profile Screen
  * 
- * User profile, statistics, measurements, and settings.
+ * User profile hub with customizable widgets, a 2×2 data dashboard grid,
+ * and access to settings.
  * All data stored locally - no account required.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useIsFocused } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
-import { clearAllData, generateMockData, exportAllData, importAllData } from '../services';
 import { ProfileStackParamList } from '../navigation/AppNavigator';
+import { WidgetConfig, DEFAULT_WIDGETS } from '../models/widget';
+import { getSettings } from '../services';
+import WidgetGrid from '../components/widgets/WidgetGrid';
+import WidgetEditorModal from '../components/widgets/WidgetEditorModal';
 
 type ProfileScreenProps = {
     navigation: NativeStackNavigationProp<ProfileStackParamList, 'ProfileHome'>;
 };
 
+// Dashboard grid items
+const DASHBOARD_ITEMS: {
+    key: string;
+    label: string;
+    icon: keyof typeof MaterialIcons.glyphMap;
+    route: keyof ProfileStackParamList;
+    color: string;
+}[] = [
+    { key: 'statistics', label: 'Statistics', icon: 'bar-chart', route: 'Analytics', color: '#a855f7' },
+    { key: 'calendar', label: 'Calendar', icon: 'calendar-today', route: 'Calendar', color: '#3b82f6' },
+    { key: 'measurements', label: 'Measurements', icon: 'straighten', route: 'Measurements', color: '#22c55e' },
+    { key: 'goals', label: 'Goals', icon: 'flag', route: 'Goals', color: '#f59e0b' },
+];
+
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
-    const [isGenerating, setIsGenerating] = React.useState(false);
-    const [isExporting, setIsExporting] = React.useState(false);
-    const [isImporting, setIsImporting] = React.useState(false);
+    const isFocused = useIsFocused();
+    const [widgets, setWidgets] = useState<WidgetConfig[]>(DEFAULT_WIDGETS);
+    const [editorVisible, setEditorVisible] = useState(false);
 
-    const handleClearAllData = () => {
-        Alert.alert(
-            'Clear All Data',
-            'This will delete all workouts, templates, and exercises. This cannot be undone!',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Clear Everything',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await clearAllData();
-                            Alert.alert('Done', 'All data has been cleared. Restart the app to see changes.');
-                        } catch (error) {
-                            console.error('Error clearing data:', error);
-                            Alert.alert('Error', 'Failed to clear data');
-                        }
-                    }
-                },
-            ]
-        );
-    };
-
-    const handleGenerateMockData = () => {
-        Alert.alert(
-            'Generate Mock Data',
-            'This will generate 3 months of realistic workout history. This may take a few seconds. Proceed?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Generate',
-                    onPress: async () => {
-                        try {
-                            setIsGenerating(true);
-                            await generateMockData(3);
-                            Alert.alert('Done', 'Mock data generated successfully. Reload the app to see the updated data throughout the app.');
-                        } catch (error) {
-                            console.error('Error generating mock data:', error);
-                            Alert.alert('Error', 'Failed to generate mock data. Check console for details.');
-                        } finally {
-                            setIsGenerating(false);
-                        }
-                    }
-                },
-            ]
-        );
-    };
-
-    const handleExportData = async () => {
+    // Load widget config on focus
+    const loadConfig = useCallback(async () => {
         try {
-            setIsExporting(true);
-            await exportAllData();
+            const settings = await getSettings();
+            if (settings.widgetConfig && settings.widgetConfig.length >= 0) {
+                setWidgets(settings.widgetConfig);
+            }
         } catch (error) {
-            console.error('Export failed:', error);
-            Alert.alert('Export Failed', String(error instanceof Error ? error.message : error));
-        } finally {
-            setIsExporting(false);
+            console.error('[ProfileScreen] Failed to load widget config:', error);
         }
-    };
+    }, []);
 
-    const handleImportData = () => {
-        Alert.alert(
-            'Import Data',
-            'This will REPLACE all your current data with the imported backup. Your existing workouts, templates, and measurements will be deleted.\n\nThis cannot be undone!',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Choose File',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            setIsImporting(true);
-                            const success = await importAllData();
-                            if (success) {
-                                Alert.alert(
-                                    'Import Complete',
-                                    'Your data has been restored. Restart the app to see all changes.',
-                                );
-                            }
-                        } catch (error) {
-                            console.error('Import failed:', error);
-                            Alert.alert(
-                                'Import Failed',
-                                String(error instanceof Error ? error.message : error),
-                            );
-                        } finally {
-                            setIsImporting(false);
-                        }
-                    },
-                },
-            ],
-        );
-    };
+    useEffect(() => {
+        if (isFocused) {
+            loadConfig();
+        }
+    }, [isFocused, loadConfig]);
 
     return (
         <View style={styles.container}>
@@ -124,6 +68,15 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             >
                 {/* Profile header */}
                 <View style={styles.profileHeader}>
+                    {/* Settings gear — top right */}
+                    <TouchableOpacity
+                        style={styles.settingsGear}
+                        onPress={() => navigation.navigate('Settings')}
+                        activeOpacity={0.7}
+                    >
+                        <MaterialIcons name="settings" size={24} color={colors.text.secondary} />
+                    </TouchableOpacity>
+
                     <View style={styles.avatar}>
                         <Text style={styles.avatarText}>👤</Text>
                     </View>
@@ -131,146 +84,51 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                     <Text style={styles.subtitle}>All data stored locally on your device</Text>
                 </View>
 
-                {/* Stats overview */}
-                <View style={styles.statsGrid}>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>0</Text>
-                        <Text style={styles.statLabel}>Workouts</Text>
+                {/* Widget Grid */}
+                <WidgetGrid
+                    widgets={widgets}
+                    onEditPress={() => setEditorVisible(true)}
+                />
+
+                {/* Your Data — 2×2 Dashboard Grid */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>YOUR DATA</Text>
+                    <View style={styles.dashboardGrid}>
+                        {DASHBOARD_ITEMS.map((item) => (
+                            <TouchableOpacity
+                                key={item.key}
+                                style={styles.dashboardCell}
+                                onPress={() => navigation.navigate(item.route as never)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.dashboardCard}>
+                                    <View style={[styles.dashboardIcon, { backgroundColor: `${item.color}20` }]}>
+                                        <MaterialIcons name={item.icon} size={24} color={item.color} />
+                                    </View>
+                                    <Text style={styles.dashboardLabel}>{item.label}</Text>
+                                    <MaterialIcons
+                                        name="chevron-right"
+                                        size={16}
+                                        color={colors.text.disabled}
+                                        style={styles.dashboardChevron}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                        ))}
                     </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>0</Text>
-                        <Text style={styles.statLabel}>This Week</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>0</Text>
-                        <Text style={styles.statLabel}>Day Streak</Text>
-                    </View>
                 </View>
 
-                {/* Menu sections */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Your Data</Text>
-
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => navigation.navigate('Analytics')}
-                    >
-                        <Text style={styles.menuIcon}>📊</Text>
-                        <Text style={styles.menuText}>Statistics</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => navigation.navigate('Calendar')}
-                    >
-                        <Text style={styles.menuIcon}>📅</Text>
-                        <Text style={styles.menuText}>Workout Calendar</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => navigation.navigate('Measurements')}
-                    >
-                        <Text style={styles.menuIcon}>📏</Text>
-                        <Text style={styles.menuText}>Body Measurements</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => navigation.navigate('Goals')}
-                    >
-                        <Text style={styles.menuIcon}>🎯</Text>
-                        <Text style={styles.menuText}>Goals</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuIcon}>🏆</Text>
-                        <Text style={styles.menuText}>Personal Records</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Data Management</Text>
-
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={handleExportData}
-                        disabled={isExporting || isImporting}
-                    >
-                        <Text style={styles.menuIcon}>{isExporting ? '⏳' : '📤'}</Text>
-                        <Text style={styles.menuText}>{isExporting ? 'Exporting...' : 'Export Data'}</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={handleImportData}
-                        disabled={isExporting || isImporting}
-                    >
-                        <Text style={styles.menuIcon}>{isImporting ? '⏳' : '📥'}</Text>
-                        <Text style={styles.menuText}>{isImporting ? 'Importing...' : 'Import Data'}</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuIcon}>☁️</Text>
-                        <Text style={styles.menuText}>Cloud Backup</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>App</Text>
-
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuIcon}>⚙️</Text>
-                        <Text style={styles.menuText}>Settings</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuIcon}>❤️</Text>
-                        <Text style={styles.menuText}>Support the App</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuIcon}>ℹ️</Text>
-                        <Text style={styles.menuText}>About</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Dev tools - for testing */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🛠️ DEV TOOLS</Text>
-
-                    <TouchableOpacity
-                        style={[styles.menuItem, styles.dangerItem]}
-                        onPress={handleClearAllData}
-                        disabled={isGenerating}
-                    >
-                        <Text style={styles.menuIcon}>🗑️</Text>
-                        <Text style={[styles.menuText, styles.dangerText]}>Clear All Data</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={handleGenerateMockData}
-                        disabled={isGenerating}
-                    >
-                        <Text style={styles.menuIcon}>{isGenerating ? '⏳' : '🧪'}</Text>
-                        <Text style={styles.menuText}>{isGenerating ? 'Generating...' : 'Generate Mock Data (3 Months)'}</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-                </View>
+                {/* Bottom spacer */}
+                <View style={{ height: spacing.xxl }} />
             </ScrollView>
+
+            {/* Widget Editor Modal */}
+            <WidgetEditorModal
+                visible={editorVisible}
+                onClose={() => setEditorVisible(false)}
+                widgets={widgets}
+                onWidgetsChange={setWidgets}
+            />
         </View>
     );
 }
@@ -292,6 +150,13 @@ const styles = StyleSheet.create({
     profileHeader: {
         alignItems: 'center',
         paddingVertical: spacing.xl,
+        position: 'relative',
+    },
+    settingsGear: {
+        position: 'absolute',
+        top: spacing.xl,
+        right: 0,
+        padding: spacing.xs,
     },
     avatar: {
         width: 80,
@@ -316,72 +181,53 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
     },
 
-    // Stats grid
-    statsGrid: {
-        flexDirection: 'row',
-        marginBottom: spacing.lg,
-    },
-    statCard: {
-        flex: 1,
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.lg,
-        padding: spacing.md,
-        alignItems: 'center',
-        marginHorizontal: spacing.xs,
-    },
-    statValue: {
-        fontSize: typography.size.xxl,
-        fontWeight: typography.weight.bold,
-        color: colors.accent.primary,
-    },
-    statLabel: {
-        fontSize: typography.size.sm,
-        color: colors.text.secondary,
-        marginTop: spacing.xs,
-    },
-
-    // Sections
+    // Section
     section: {
-        marginTop: spacing.lg,
+        marginTop: spacing.sm,
     },
     sectionTitle: {
-        fontSize: typography.size.sm,
-        fontWeight: typography.weight.semibold,
+        fontSize: 10,
+        fontWeight: typography.weight.bold,
         color: colors.text.secondary,
         letterSpacing: 1,
         marginBottom: spacing.sm,
         marginLeft: spacing.xs,
     },
 
-    // Menu items
-    menuItem: {
+    // Dashboard Grid (2×2)
+    dashboardGrid: {
         flexDirection: 'row',
-        alignItems: 'center',
+        flexWrap: 'wrap',
+        marginHorizontal: -spacing.xs,
+    },
+    dashboardCell: {
+        width: '50%',
+        paddingHorizontal: spacing.xs,
+        marginBottom: spacing.sm,
+    },
+    dashboardCard: {
         backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.md,
+        borderRadius: borderRadius.lg,
+        borderWidth: 1,
+        borderColor: colors.glass.borderLight,
         padding: spacing.md,
-        marginBottom: spacing.xs,
     },
-    menuIcon: {
-        fontSize: 20,
-        marginRight: spacing.md,
+    dashboardIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.sm,
     },
-    menuText: {
-        flex: 1,
-        fontSize: typography.size.md,
+    dashboardLabel: {
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.semibold,
         color: colors.text.primary,
     },
-    menuArrow: {
-        fontSize: typography.size.xl,
-        color: colors.text.secondary,
-    },
-
-    // Danger styles
-    dangerItem: {
-        borderWidth: 1,
-        borderColor: colors.accent.error,
-    },
-    dangerText: {
-        color: colors.accent.error,
+    dashboardChevron: {
+        position: 'absolute',
+        top: spacing.md,
+        right: spacing.md,
     },
 });

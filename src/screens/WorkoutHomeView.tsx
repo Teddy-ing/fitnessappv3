@@ -5,12 +5,11 @@
  * Owns its own modal visibility state for SplitsScreen, TemplatesScreen,
  * and TemplatePickerModal.
  *
- * Layout (matching mockup):
- * 1. Header with settings gear (non-functional)
+ * Layout:
+ * 1. Header with settings gear
  * 2. Weekly day tracker
  * 3. Current split card with START WORKOUT button
- * 4. Widgets section (Body Weight + Latest PR placeholders)
- * 5. Browse templates / Start empty workout links
+ * 4. Browse templates / Start empty workout links
  */
 
 import React, { useState } from 'react';
@@ -52,6 +51,7 @@ interface WorkoutHomeViewProps {
     onSplitSelected: (split: Split | null) => void;
     onTemplateIndexChanged: (index: number) => void;
     onDataRefresh: () => void;
+    onSettingsPress: () => void;
 }
 
 export default function WorkoutHomeView({
@@ -67,6 +67,7 @@ export default function WorkoutHomeView({
     onSplitSelected,
     onTemplateIndexChanged,
     onDataRefresh,
+    onSettingsPress,
 }: WorkoutHomeViewProps) {
     // Modal visibility — owned locally, not passed from parent
     const [showSplitsModal, setShowSplitsModal] = useState(false);
@@ -81,7 +82,7 @@ export default function WorkoutHomeView({
             {/* Header with settings gear */}
             <View style={styles.header}>
                 <View style={styles.headerSpacer} />
-                <TouchableOpacity style={styles.settingsButton} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.settingsButton} activeOpacity={0.7} onPress={onSettingsPress}>
                     <MaterialIcons name="settings" size={24} color={colors.text.secondary} />
                 </TouchableOpacity>
             </View>
@@ -205,37 +206,7 @@ export default function WorkoutHomeView({
                     </TouchableOpacity>
                 </View>
 
-                {/* Widgets Section */}
-                <View style={styles.widgetsSection}>
-                    <View style={styles.widgetsSectionHeader}>
-                        <Text style={styles.widgetsSectionTitle}>Widgets</Text>
-                        <TouchableOpacity activeOpacity={0.7}>
-                            <MaterialIcons name="edit" size={20} color={colors.accent.primary} />
-                        </TouchableOpacity>
-                    </View>
 
-                    <View style={styles.widgetsRow}>
-                        {/* Body Weight Placeholder */}
-                        <View style={[styles.widgetCard, styles.widgetCardLeft]}>
-                            <View style={styles.widgetCardHeader}>
-                                <MaterialIcons name="monitor-weight" size={14} color={colors.text.secondary} />
-                                <Text style={styles.widgetCardLabel}>BODY WEIGHT</Text>
-                            </View>
-                            <Text style={styles.widgetCardValue}>--</Text>
-                            <Text style={styles.widgetCardUnit}>lbs</Text>
-                        </View>
-
-                        {/* Latest PR Placeholder */}
-                        <View style={[styles.widgetCard, styles.widgetCardRight]}>
-                            <View style={styles.widgetCardHeader}>
-                                <MaterialIcons name="emoji-events" size={14} color={colors.text.secondary} />
-                                <Text style={styles.widgetCardLabel}>LATEST PR</Text>
-                            </View>
-                            <Text style={styles.widgetCardValue}>--</Text>
-                            <Text style={styles.widgetCardUnit}>lb</Text>
-                        </View>
-                    </View>
-                </View>
 
                 {/* Footer Links */}
                 <View style={styles.footerLinks}>
@@ -430,60 +401,7 @@ const styles = StyleSheet.create({
         letterSpacing: 1.5,
     },
 
-    // Widgets Section
-    widgetsSection: {
-        marginTop: spacing.xl,
-    },
-    widgetsSectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing.md,
-    },
-    widgetsSectionTitle: {
-        fontSize: typography.size.lg,
-        fontWeight: typography.weight.bold,
-        color: colors.text.primary,
-    },
-    widgetsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    widgetCard: {
-        flex: 1,
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.lg,
-        padding: spacing.md,
-        borderWidth: 1,
-        borderColor: colors.glass.borderLight,
-    },
-    widgetCardLeft: {
-        marginRight: spacing.sm,
-    },
-    widgetCardRight: {
-        marginLeft: spacing.sm,
-    },
-    widgetCardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: spacing.sm,
-    },
-    widgetCardLabel: {
-        fontSize: 10,
-        fontWeight: typography.weight.bold,
-        color: colors.text.secondary,
-        letterSpacing: 0.5,
-        marginLeft: spacing.xs,
-    },
-    widgetCardValue: {
-        fontSize: typography.size.xxxl,
-        fontWeight: typography.weight.bold,
-        color: colors.text.primary,
-    },
-    widgetCardUnit: {
-        fontSize: typography.size.sm,
-        color: colors.text.secondary,
-    },
+
 
     // Footer Links
     footerLinks: {

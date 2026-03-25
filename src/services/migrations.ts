@@ -521,6 +521,34 @@ const MIGRATIONS: Migration[] = [
             `);
         },
     },
+
+    // ----------------------------------------------------------
+    // v8: Widget system — config column on user_settings
+    // ----------------------------------------------------------
+    {
+        version: 8,
+        name: 'widget_config_column',
+        up: async (db) => {
+            const hasCol = await columnExists(db, 'user_settings', 'widget_config');
+            if (!hasCol) {
+                // Default: Streak Badge (square) + Weekly Wrap-Up (square) + Bodyweight Sparkline (rectangle)
+                const defaultWidgets = JSON.stringify([
+                    { id: 'default-streak', type: 'streak_badge', size: 'square' },
+                    { id: 'default-weekly', type: 'weekly_wrapup', size: 'square' },
+                    { id: 'default-bodyweight', type: 'bodyweight_sparkline', size: 'rectangle' },
+                ]);
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN widget_config TEXT DEFAULT '${defaultWidgets}';`,
+                );
+
+                // Seed existing row with defaults
+                await db.runAsync(
+                    `UPDATE user_settings SET widget_config = ? WHERE id = 1 AND widget_config IS NULL`,
+                    [defaultWidgets],
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

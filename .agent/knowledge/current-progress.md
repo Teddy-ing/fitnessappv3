@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — All core features + QA complete + JSON import/export
-- **Status:** Core features + analytics + calendar + measurements + goals + data import/export all implemented
-- **Next Milestone:** Phase 3 (Widget Framework) or Phase 5 (Settings)
+- **Phase:** Post-MVP Development — Phase 3A (Widget Framework) complete
+- **Status:** Core features + analytics + calendar + measurements + goals + data import/export + widget system all implemented
+- **Next Milestone:** Phase 3B (Additional Widgets: Goal Progress, Muscle Pie, Pinned Exercise) or Phase 5 (Settings polish)
 
 ---
 

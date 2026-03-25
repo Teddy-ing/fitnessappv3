@@ -5,6 +5,8 @@
  * Matches the typed user_settings table (single-row store, id = 1).
  */
 
+import { WidgetConfig } from './widget';
+
 /** Row shape matching the user_settings table columns */
 export interface UserSettings {
     activeSplitId: string | null;
@@ -23,4 +25,5 @@ export interface UserSettings {
     prBackfillComplete: boolean;
     visibleMeasurements: string[];
     relativeStrengthExercise: string | null;
+    widgetConfig: WidgetConfig[];
 }

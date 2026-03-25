@@ -11,6 +11,7 @@
 import { getDatabase } from './database';
 import { safeJsonParse } from './hydration';
 import { UserSettings } from '../models/preferences';
+import { WidgetConfig, DEFAULT_WIDGETS } from '../models/widget';
 
 // Re-export for barrel consumers
 export type { UserSettings };
@@ -38,6 +39,7 @@ interface UserSettingsRow {
     pr_backfill_complete: number;
     visible_measurements: string | null;
     relative_strength_exercise: string | null;
+    widget_config: string | null;
 }
 
 /** Default settings — used if the row doesn't exist yet */
@@ -60,6 +62,7 @@ const DEFAULTS: UserSettings = {
     prBackfillComplete: false,
     visibleMeasurements: DEFAULT_VISIBLE_MEASUREMENTS,
     relativeStrengthExercise: null,
+    widgetConfig: DEFAULT_WIDGETS,
 };
 
 // ============================================================
@@ -100,6 +103,10 @@ export async function getSettings(): Promise<UserSettings> {
             DEFAULT_VISIBLE_MEASUREMENTS,
         ),
         relativeStrengthExercise: row.relative_strength_exercise ?? null,
+        widgetConfig: safeJsonParse<WidgetConfig[]>(
+            row.widget_config,
+            DEFAULT_WIDGETS,
+        ),
     };
 }
 
@@ -139,6 +146,7 @@ export async function updateSettings(
         prBackfillComplete: 'pr_backfill_complete',
         visibleMeasurements: 'visible_measurements',
         relativeStrengthExercise: 'relative_strength_exercise',
+        widgetConfig: 'widget_config',
     };
 
     const setClauses: string[] = [];
