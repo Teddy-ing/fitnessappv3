@@ -7,21 +7,12 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Open issues:** 10 (Active: 2, Latent: 8)
-- **Fixed since baseline:** 14
+- **Open issues:** 9 (Active: 1, Latent: 8)
+- **Fixed since baseline:** 15
 
 ---
 
 ## Open Issues — Active Debt
-
-### TD-021 · No in-progress workout persistence — data loss on app kill
-
-- **Category:** Data safety / user trust
-- **Files:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts), [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx)
-- **What:** The entire active workout lives exclusively in Zustand's in-memory store. There is zero persistence of the workout-in-progress. If the app crashes, the OS kills the process, or the user accidentally swipe-closes the app, the entire workout is lost.
-- **Why active:** This is the single most likely source of 1-star reviews. Every competitor (including Fitnotes) persists in-progress workouts to disk.
-- **Impact:** User spends 30–60 minutes logging sets → app crash → entire workout is gone.
-- **Recommended fix:** Write the active workout to SQLite (or AsyncStorage) on every mutation, reload on app cold-start. Consider debouncing writes to avoid excessive I/O.
 
 ### TD-022 · `clearAllData()` does not clear all tables
 
@@ -229,6 +220,13 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - `CompareView.tsx` — side-by-side comparison modal (~178 lines)
 - **Result:** `GalleryTab.tsx` reduced to 302 lines (64% reduction).
 
+### TD-021 · No in-progress workout persistence — **RESOLVED 2026-03-24**
+
+- **Category:** Data safety / user trust
+- **Original:** Active workout lived exclusively in Zustand's in-memory store. App crash/kill = entire workout lost.
+- **Fix applied:** Created `workoutPersistence.ts` using `expo-file-system` (new File/Paths API). Every store mutation triggers a debounced (1s) JSON snapshot to disk. `restoreWorkout()` called on cold start from `App.tsx`. Dates serialized via JSON replacer/reviver. `finishWorkout`/`discardWorkout` clear the persisted file.
+- **Result:** In-progress workouts survive app kills, crashes, and force-stops.
+
 ### TD-002 · Duplicated chart label formatting logic across 3 files — **RESOLVED 2026-03-14**
 
 - **Category:** DRY violation / anti-pattern
@@ -302,8 +300,8 @@ Areas to monitor as the app approaches later roadmap phases:
 
 | Concern | Current State | Will Break At |
 |---------|--------------|--------------|
-| **In-progress workout persistence** | **Not persisted** (TD-021) | **Now — any app crash loses user data** |
-| **SQLite 999-param limit** | **No chunking anywhere** (PP-037) | **~1000 workouts (< 3 years daily use)** |
+| **In-progress workout persistence** | ✅ Persisted via `workoutPersistence.ts` (TD-021 resolved) | N/A |
+| **SQLite 999-param limit** | ✅ All IN() queries chunked via `batchGetAll()` (PP-037 resolved) | N/A |
 | Navigation structure (3 tabs + modals) | Adequate for current features | Phase 5 (Settings) may need nested stacks or drawer |
 | SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
 | Service file boundaries | 13 services, `analyticsService` 755 lines, `calendarService` 741 lines | ML features (Phase 7), Widget framework (Phase 3) |

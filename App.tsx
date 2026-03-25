@@ -14,14 +14,16 @@ import { AppNavigator } from './src/navigation';
 import { requestNotificationPermissions, clearAllNotifications, seedPremadeSplits } from './src/services';
 import { ErrorBoundary } from './src/components';
 import GoalCelebrationOverlay from './src/components/goals/GoalCelebrationOverlay';
+import { useWorkoutStore } from './src/stores/workoutStore';
 
 export default function App() {
   const appState = useRef(AppState.currentState);
 
-  // Request notification permissions and seed premade splits on app start
+  // Request notification permissions, seed premade splits, and restore in-progress workout on app start
   useEffect(() => {
     requestNotificationPermissions();
     seedPremadeSplits();
+    useWorkoutStore.getState().restoreWorkout();
   }, []);
 
   // Clear notifications when app comes to foreground

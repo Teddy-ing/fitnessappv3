@@ -19,6 +19,11 @@ import {
     createSet
 } from '../models/workout';
 import { Exercise } from '../models/exercise';
+import {
+    persistWorkoutState,
+    loadPersistedWorkout,
+    clearPersistedWorkout,
+} from './workoutPersistence';
 
 /** Signal emitted when a set is completed, watched by RestTimer */
 export interface CompletedSetSignal {
@@ -46,6 +51,7 @@ interface WorkoutState {
     loadWorkoutForEditing: (workout: Workout) => void;
     finishWorkout: () => Promise<Workout | null>;
     discardWorkout: () => void;
+    restoreWorkout: () => Promise<void>;
 
     // Actions - Exercise management
     addExercise: (exercise: Exercise) => void;
@@ -144,6 +150,9 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             originalStartedAt: null,
         });
 
+        // Clear persisted state (fire-and-forget, non-critical)
+        clearPersistedWorkout();
+
         return completedWorkout;
     },
 
@@ -156,6 +165,28 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             originalCompletedAt: null,
             originalStartedAt: null,
         });
+
+        // Clear persisted state (fire-and-forget, non-critical)
+        clearPersistedWorkout();
+    },
+
+    restoreWorkout: async () => {
+        try {
+            const persisted = await loadPersistedWorkout();
+            if (persisted && persisted.activeWorkout) {
+                set({
+                    activeWorkout: persisted.activeWorkout as Workout,
+                    isEditMode: persisted.isEditMode,
+                    originalDuration: persisted.originalDuration,
+                    originalCompletedAt: persisted.originalCompletedAt,
+                    originalStartedAt: persisted.originalStartedAt,
+                    lastCompletedSet: null,
+                });
+                console.log('[WorkoutStore] Restored in-progress workout from disk');
+            }
+        } catch (err) {
+            console.warn('[WorkoutStore] Failed to restore workout:', err);
+        }
     },
 
     // ========================================
@@ -415,3 +446,18 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
 export default useWorkoutStore;
 
+// ============================================================
+// Persistence subscriber (TD-021)
+// Debounced write to disk on every state change that touches
+// activeWorkout or edit-mode fields.
+// ============================================================
+
+useWorkoutStore.subscribe((state) => {
+    persistWorkoutState({
+        activeWorkout: state.activeWorkout,
+        isEditMode: state.isEditMode,
+        originalDuration: state.originalDuration,
+        originalCompletedAt: state.originalCompletedAt,
+        originalStartedAt: state.originalStartedAt,
+    });
+});

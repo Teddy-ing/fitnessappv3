@@ -10,6 +10,13 @@
  *   - Verify immutability: original objects are NOT mutated
  */
 
+// Mock persistence layer (expo-file-system unavailable in Jest)
+jest.mock('../workoutPersistence', () => ({
+    persistWorkoutState: jest.fn(),
+    loadPersistedWorkout: jest.fn().mockResolvedValue(null),
+    clearPersistedWorkout: jest.fn(),
+}));
+
 import { useWorkoutStore } from '../workoutStore';
 import { Exercise } from '../../models/exercise';
 
