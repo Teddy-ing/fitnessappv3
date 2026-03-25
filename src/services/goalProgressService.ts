@@ -12,6 +12,7 @@
 
 import { getDatabase } from './database';
 import { Goal, GoalType } from '../models/goal';
+import { MAX_EPLEY_1RM, SESSION_VOLUME } from '../utils/sqlFragments';
 import { getActiveGoals, markGoalCompleted } from './goalService';
 import { batchGetAll } from '../utils/batchQuery';
 
@@ -56,7 +57,7 @@ async function computeExercise1RM(exerciseId: string): Promise<number | null> {
     if (!db) return null;
 
     const row = await db.getFirstAsync<{ best: number | null }>(
-        `SELECT MAX(ws.weight * (1.0 + ws.reps / 30.0)) AS best
+        `SELECT ${MAX_EPLEY_1RM} AS best
          FROM workout_sets ws
          JOIN workout_exercises we ON ws.workout_exercise_id = we.id
          JOIN workouts w ON w.id = we.workout_id
@@ -81,7 +82,7 @@ async function computeExerciseVolume(exerciseId: string): Promise<number | null>
     const row = await db.getFirstAsync<{ best: number | null }>(
         `SELECT MAX(session_volume) AS best
          FROM (
-             SELECT SUM(ws.weight * ws.reps) AS session_volume
+             SELECT ${SESSION_VOLUME} AS session_volume
              FROM workout_sets ws
              JOIN workout_exercises we ON ws.workout_exercise_id = we.id
              JOIN workouts w ON w.id = we.workout_id
@@ -195,7 +196,7 @@ export async function refreshAllGoalProgress(): Promise<Goal[]> {
                 ids,
                 (placeholders, batch) => [
                     `SELECT we.exercise_id,
-                            MAX(ws.weight * (1.0 + ws.reps / 30.0)) AS best
+                            ${MAX_EPLEY_1RM} AS best
                      FROM workout_sets ws
                      JOIN workout_exercises we ON ws.workout_exercise_id = we.id
                      JOIN workouts w ON w.id = we.workout_id
@@ -225,7 +226,7 @@ export async function refreshAllGoalProgress(): Promise<Goal[]> {
                     `SELECT exercise_id, MAX(session_volume) AS best
                      FROM (
                          SELECT we.exercise_id,
-                                SUM(ws.weight * ws.reps) AS session_volume
+                                ${SESSION_VOLUME} AS session_volume
                          FROM workout_sets ws
                          JOIN workout_exercises we ON ws.workout_exercise_id = we.id
                          JOIN workouts w ON w.id = we.workout_id

@@ -12,6 +12,7 @@
 
 import { getDatabase } from './database';
 import { safeJsonParse } from './hydration';
+import { MAX_EPLEY_1RM, SESSION_VOLUME, SESSION_VOLUME_COALESCE } from '../utils/sqlFragments';
 import {
     MetricType,
     TimeBucket,
@@ -409,7 +410,7 @@ export async function getMuscleDistribution(
         switch (metric) {
             case 'volume':
                 // Volume per exercise = SUM(weight * reps) from sets
-                metricExpr = 'COALESCE(SUM(ws.weight * ws.reps), 0)';
+                metricExpr = `${SESSION_VOLUME_COALESCE}`;
                 joinSets = true;
                 break;
             case 'sets':
@@ -582,7 +583,7 @@ export async function getEstimated1RM(
         const sql = `
             SELECT
                 DATE(w.completed_at) AS workout_date,
-                MAX(ws.weight * (1.0 + ws.reps / 30.0)) AS value
+                ${MAX_EPLEY_1RM} AS value
             FROM workout_sets ws
             JOIN workout_exercises we ON ws.workout_exercise_id = we.id
             JOIN workouts w ON w.id = we.workout_id
@@ -668,7 +669,7 @@ export async function getExerciseVolume(
         const sql = `
             SELECT
                 DATE(w.completed_at) AS workout_date,
-                SUM(ws.weight * ws.reps) AS value
+                ${SESSION_VOLUME} AS value
             FROM workout_sets ws
             JOIN workout_exercises we ON ws.workout_exercise_id = we.id
             JOIN workouts w ON w.id = we.workout_id

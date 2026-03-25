@@ -7,8 +7,8 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Open issues:** 7 (Active: 0, Latent: 7)
-- **Fixed since baseline:** 17
+- **Open issues:** 6 (Active: 0, Latent: 6)
+- **Fixed since baseline:** 18
 
 ---
 
@@ -21,17 +21,6 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Open Issues — Latent Debt
 
 Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatbot).
-
-### TD-024 · Epley 1RM, volume, and status filter formulas duplicated across 3 services
-
-- **Category:** DRY violation / drift risk
-- **Files:**
-  - `analyticsService.ts` — 1RM (line 585), volume (line 671), status filter throughout
-  - `calendarService.ts` — volume in fatigue detection (line 772)
-  - `goalProgressService.ts` — 1RM (line 58), volume (line 81), max reps (line 103), **missing status filter** (BH-023)
-- **What:** The Epley formula `weight * (1.0 + reps / 30.0)`, volume formula `SUM(weight * reps)`, and status filter `w.status = 'completed'` are copy-pasted across three services. The goalProgressService copy has already drifted (missing the status filter — see BH-023).
-- **Why latent:** If the Epley formula is ever updated (e.g., to Brzycki), or if a new status is added, all three files must be updated in lockstep.
-- **Recommended fix:** Create shared SQL fragment helpers or centralize computation in one service. Violates conventions guardrail #10.
 
 ### TD-003 · `analyticsService.ts` is a monolith (873 lines) heading toward bloat
 
@@ -236,6 +225,13 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Fix applied:** Replaced DELETE+INSERT of the parent `workouts` row with a proper `UPDATE ... SET ... WHERE id = ?`. Children (exercises/sets) still use delete-reinsert since their IDs are ephemeral and no external tables reference them.
 - **Result:** `personal_records` FK references preserved across workout edits. Future child tables are automatically safe.
 
+### TD-024 · Epley 1RM, volume, and status filter formulas duplicated — **RESOLVED 2026-03-24**
+
+- **Category:** DRY violation / drift risk
+- **Original:** Epley 1RM formula (`weight * (1.0 + reps / 30.0)`) and volume formula (`SUM(weight * reps)`) copy-pasted across `analyticsService.ts`, `calendarService.ts`, and `goalProgressService.ts`. Risk of drift on formula updates.
+- **Fix applied:** Created `src/utils/sqlFragments.ts` with canonical constants (`EPLEY_1RM`, `MAX_EPLEY_1RM`, `SET_VOLUME`, `SESSION_VOLUME`, `SESSION_VOLUME_COALESCE`). Replaced 8 inline formula instances across all 3 services.
+- **Result:** Formulas defined once. Future formula changes (e.g., Epley → Brzycki) require editing a single file.
+
 ---
 
 ## Accepted / Won't Fix
@@ -288,7 +284,7 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 | 7 | SafeAreaView edges must match tab bar visibility | ✅ All screens verified correct |
 | 8 | Batch `IN (...)` queries chunked at 500 | ✅ All IN() queries use shared `batchGetAll()` utility (PP-037 resolved). |
 | 9 | Services must not reach into stores | ✅ `workoutService.ts` and `measurementService.ts` decoupled (BH-024 resolved). |
-| 10 | Shared SQL formulas in one canonical location | ❌ 1RM, volume, status filter duplicated across 3 services (TD-024). |
+| 10 | Shared SQL formulas in one canonical location | ✅ All formulas consolidated in `sqlFragments.ts` (TD-024 resolved). |
 | 11 | New tables registered in `clearAllData()` | ✅ All 15 user-data tables cleared in FK-safe order (TD-022 resolved). |
 | 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ `updateWorkout()` now UPDATEs parent row in place (TD-023 resolved). |
 

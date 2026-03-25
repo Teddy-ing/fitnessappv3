@@ -23,6 +23,7 @@ import {
 } from './hydration';
 import { Workout } from '../models/workout';
 import { batchGetAll } from '../utils/batchQuery';
+import { SESSION_VOLUME } from '../utils/sqlFragments';
 
 // ============================================================
 // Row types (typed DB results)
@@ -776,7 +777,7 @@ export async function getFatigueDates(
             SELECT
                 we.exercise_id,
                 DATE(w.completed_at) AS workout_date,
-                SUM(ws.weight * ws.reps) AS session_volume
+                ${SESSION_VOLUME} AS session_volume
             FROM workout_sets ws
             JOIN workout_exercises we ON ws.workout_exercise_id = we.id
             JOIN workouts w ON w.id = we.workout_id
