@@ -288,7 +288,7 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 | 5 | Canonical types live in `src/models/` | ⚠️ 6 cross-boundary types still in services (TD-009 expanded). Domain types correct in `models/`. |
 | 6 | State reset on lifecycle boundaries | ✅ All hooks and modals properly reset on identity/visibility change |
 | 7 | SafeAreaView edges must match tab bar visibility | ✅ All screens verified correct |
-| 8 | Batch `IN (...)` queries chunked at 500 | ❌ No existing queries are chunked (PP-037). |
+| 8 | Batch `IN (...)` queries chunked at 500 | ✅ All IN() queries use shared `batchGetAll()` utility (PP-037 resolved). |
 | 9 | Services must not reach into stores | ✅ `workoutService.ts` and `measurementService.ts` decoupled (BH-024 resolved). |
 | 10 | Shared SQL formulas in one canonical location | ❌ 1RM, volume, status filter duplicated across 3 services (TD-024). |
 | 11 | New tables registered in `clearAllData()` | ❌ 5+ tables missing from `clearAllData()` (TD-022). |

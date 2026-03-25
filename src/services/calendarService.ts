@@ -22,6 +22,7 @@ import {
     SetRow,
 } from './hydration';
 import { Workout } from '../models/workout';
+import { batchGetAll } from '../utils/batchQuery';
 
 // ============================================================
 // Row types (typed DB results)
@@ -254,26 +255,27 @@ export async function getWorkoutDetail(
             [workoutId],
         );
 
-        // Fetch all sets for this workout's exercises in one query
+        // Fetch all sets for this workout's exercises in one query (PP-037: chunked)
         const exerciseIds = exerciseRows.map((e) => e.id);
         const setsByExerciseId = new Map<string, SetRow[]>();
 
-        if (exerciseIds.length > 0) {
-            const placeholders = exerciseIds.map(() => '?').join(',');
-            const setRows = await db.getAllAsync<SetRowWithParent>(
+        const setRows = await batchGetAll<SetRowWithParent>(
+            db,
+            exerciseIds,
+            (placeholders, batch) => [
                 `SELECT * FROM workout_sets
                  WHERE workout_exercise_id IN (${placeholders})
                  ORDER BY order_index ASC`,
-                exerciseIds,
-            );
+                batch,
+            ],
+        );
 
-            for (const setRow of setRows) {
-                const key = setRow.workout_exercise_id;
-                if (!setsByExerciseId.has(key)) {
-                    setsByExerciseId.set(key, []);
-                }
-                setsByExerciseId.get(key)!.push(setRow);
+        for (const setRow of setRows) {
+            const key = setRow.workout_exercise_id;
+            if (!setsByExerciseId.has(key)) {
+                setsByExerciseId.set(key, []);
             }
+            setsByExerciseId.get(key)!.push(setRow);
         }
 
         return mapWorkoutRow(workoutRow, exerciseRows, setsByExerciseId);
@@ -307,37 +309,41 @@ export async function getWorkoutsForDate(
 
         if (workoutRows.length === 0) return [];
 
-        // Batch load all exercises for these workouts
+        // Batch load all exercises for these workouts (PP-037: chunked)
         const workoutIds = workoutRows.map((w) => w.id);
-        const wPlaceholders = workoutIds.map(() => '?').join(',');
 
-        const exerciseRows = await db.getAllAsync<ExerciseRow & { workout_id: string }>(
-            `SELECT * FROM workout_exercises
-             WHERE workout_id IN (${wPlaceholders})
-             ORDER BY workout_id, order_index ASC`,
+        const exerciseRows = await batchGetAll<ExerciseRow & { workout_id: string }>(
+            db,
             workoutIds,
+            (placeholders, batch) => [
+                `SELECT * FROM workout_exercises
+                 WHERE workout_id IN (${placeholders})
+                 ORDER BY workout_id, order_index ASC`,
+                batch,
+            ],
         );
 
-        // Batch load all sets for these exercises
+        // Batch load all sets for these exercises (PP-037: chunked)
         const exerciseIds = exerciseRows.map((e) => e.id);
         const setsByExerciseId = new Map<string, SetRow[]>();
 
-        if (exerciseIds.length > 0) {
-            const ePlaceholders = exerciseIds.map(() => '?').join(',');
-            const setRows = await db.getAllAsync<SetRowWithParent>(
+        const setRows = await batchGetAll<SetRowWithParent>(
+            db,
+            exerciseIds,
+            (placeholders, batch) => [
                 `SELECT * FROM workout_sets
-                 WHERE workout_exercise_id IN (${ePlaceholders})
+                 WHERE workout_exercise_id IN (${placeholders})
                  ORDER BY workout_exercise_id, order_index ASC`,
-                exerciseIds,
-            );
+                batch,
+            ],
+        );
 
-            for (const setRow of setRows) {
-                const key = setRow.workout_exercise_id;
-                if (!setsByExerciseId.has(key)) {
-                    setsByExerciseId.set(key, []);
-                }
-                setsByExerciseId.get(key)!.push(setRow);
+        for (const setRow of setRows) {
+            const key = setRow.workout_exercise_id;
+            if (!setsByExerciseId.has(key)) {
+                setsByExerciseId.set(key, []);
             }
+            setsByExerciseId.get(key)!.push(setRow);
         }
 
         // Group exercises by workout ID
@@ -665,33 +671,34 @@ export async function searchNotes(query?: string): Promise<JournalEntry[]> {
             date: string;
         }>(sql, params);
 
-        // Batch-load exercise-level notes for all matched workouts (PP-016 fix)
+        // Batch-load exercise-level notes for all matched workouts (PP-016/PP-037 fix)
         const workoutIds = workoutRows.map((r) => r.workout_id);
         const notesByWorkout = new Map<string, Array<{ name: string; note: string }>>();
 
-        if (workoutIds.length > 0) {
-            const placeholders = workoutIds.map(() => '?').join(',');
-            const exerciseNoteRows = await db.getAllAsync<{
-                workout_id: string;
-                exercise_name: string;
-                note: string;
-            }>(
+        const exerciseNoteRows = await batchGetAll<{
+            workout_id: string;
+            exercise_name: string;
+            note: string;
+        }>(
+            db,
+            workoutIds,
+            (placeholders, batch) => [
                 `SELECT workout_id, exercise_name, note FROM workout_exercises
                  WHERE workout_id IN (${placeholders})
                    AND note IS NOT NULL AND note != ''
                  ORDER BY workout_id, order_index ASC`,
-                workoutIds,
-            );
+                batch,
+            ],
+        );
 
-            for (const row of exerciseNoteRows) {
-                if (!notesByWorkout.has(row.workout_id)) {
-                    notesByWorkout.set(row.workout_id, []);
-                }
-                notesByWorkout.get(row.workout_id)!.push({
-                    name: row.exercise_name,
-                    note: row.note,
-                });
+        for (const row of exerciseNoteRows) {
+            if (!notesByWorkout.has(row.workout_id)) {
+                notesByWorkout.set(row.workout_id, []);
             }
+            notesByWorkout.get(row.workout_id)!.push({
+                name: row.exercise_name,
+                note: row.note,
+            });
         }
 
         // Build entries with pre-loaded exercise notes

@@ -17,6 +17,7 @@ import {
 } from '../models/workout';
 import { Exercise } from '../models/exercise';
 import { mapExerciseRow, ExerciseRow } from './hydration';
+import { batchGetAll } from '../utils/batchQuery';
 
 /** Row shape returned by SELECT * FROM templates */
 interface TemplateRow {
@@ -129,7 +130,8 @@ export async function createTemplateFromWorkout(
 }
 
 /**
- * Get all templates
+ * Get all templates with batch-loaded exercises (PP-036 fix).
+ * Uses 2 DB queries total instead of N+1.
  */
 export async function getTemplates(): Promise<Template[]> {
     const db = await getDatabase();
@@ -139,14 +141,56 @@ export async function getTemplates(): Promise<Template[]> {
         `SELECT * FROM templates ORDER BY last_used_at DESC NULLS LAST, created_at DESC`
     );
 
-    const templates: Template[] = [];
+    if (templateRows.length === 0) return [];
 
-    for (const row of templateRows) {
-        const template = await hydrateTemplate(row);
-        templates.push(template);
+    // Batch-load ALL template exercises in one query
+    const templateIds = templateRows.map(t => t.id);
+    const exerciseRows = await batchGetAll<ExerciseRow & { template_id: string }>(
+        db,
+        templateIds,
+        (placeholders, batch) => [
+            `SELECT * FROM template_exercises
+             WHERE template_id IN (${placeholders})
+             ORDER BY template_id, order_index`,
+            batch,
+        ],
+    );
+
+    // Group exercises by template ID
+    const exercisesByTemplate = new Map<string, (ExerciseRow & { template_id: string })[]>();
+    for (const exRow of exerciseRows) {
+        const arr = exercisesByTemplate.get(exRow.template_id);
+        if (arr) {
+            arr.push(exRow);
+        } else {
+            exercisesByTemplate.set(exRow.template_id, [exRow]);
+        }
     }
 
-    return templates;
+    // Hydrate templates using grouped exercises
+    return templateRows.map(row => {
+        const exRows = exercisesByTemplate.get(row.id) || [];
+        const exercises: TemplateExercise[] = exRows.map(exRow => ({
+            id: exRow.id,
+            exercise: mapExerciseRow(exRow),
+            orderIndex: exRow.order_index,
+            defaultSets: exRow.default_sets ?? 3,
+            note: exRow.note ?? null,
+        }));
+
+        return {
+            id: row.id,
+            name: row.name,
+            description: row.description,
+            exerciseCount: exercises.length,
+            exercises,
+            lastUsedAt: row.last_used_at ? new Date(row.last_used_at) : null,
+            useCount: row.use_count,
+            isFavorite: row.is_favorite === 1,
+            createdAt: new Date(row.created_at),
+            updatedAt: new Date(row.updated_at),
+        };
+    });
 }
 
 /**
@@ -177,28 +221,46 @@ export async function deleteTemplate(id: string): Promise<void> {
 }
 
 /**
- * Find a template that matches the workout's exercises (by exercise IDs, order-independent)
- * Used to avoid prompting to save a template when exercises are identical
+ * Find a template that matches the workout's exercises (by exercise IDs, order-independent).
+ * Used to avoid prompting to save a template when exercises are identical.
+ *
+ * PP-036 fix: Uses a lightweight SQL query instead of hydrating all templates.
+ * Groups exercise_id per template and compares sorted ID lists in JS.
  */
 export async function findMatchingTemplate(workout: Workout): Promise<Template | null> {
-    const templates = await getTemplates();
-    if (templates.length === 0) return null;
+    const db = await getDatabase();
+    if (!db) return null;
 
     // Get exercise IDs from workout (sorted for comparison)
     const workoutExerciseIds = workout.main.exercises
         .map(we => we.exerciseId)
         .sort();
 
-    // Find a template with exactly the same exercises
-    for (const template of templates) {
-        const templateExerciseIds = template.exercises
-            .map(te => te.exercise.id)
-            .sort();
+    if (workoutExerciseIds.length === 0) return null;
 
-        // Check if same length and same IDs
-        if (workoutExerciseIds.length === templateExerciseIds.length &&
-            workoutExerciseIds.every((id, idx) => id === templateExerciseIds[idx])) {
-            return template;
+    // Lightweight query: get template_id + exercise_id pairs (no full hydration)
+    const rows = await db.getAllAsync<{ template_id: string; exercise_id: string }>(
+        `SELECT template_id, exercise_id FROM template_exercises ORDER BY template_id`,
+    );
+
+    // Group exercise IDs by template
+    const exercisesByTemplate = new Map<string, string[]>();
+    for (const row of rows) {
+        const arr = exercisesByTemplate.get(row.template_id);
+        if (arr) {
+            arr.push(row.exercise_id);
+        } else {
+            exercisesByTemplate.set(row.template_id, [row.exercise_id]);
+        }
+    }
+
+    // Find a match
+    for (const [templateId, exerciseIds] of exercisesByTemplate) {
+        const sorted = exerciseIds.sort();
+        if (sorted.length === workoutExerciseIds.length &&
+            sorted.every((id, idx) => id === workoutExerciseIds[idx])) {
+            // Found a match — hydrate only this one template
+            return getTemplateById(templateId);
         }
     }
 

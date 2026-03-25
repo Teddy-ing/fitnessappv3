@@ -24,6 +24,7 @@ import {
     SetRow,
     WorkoutRow,
 } from './hydration';
+import { batchGetAll } from '../utils/batchQuery';
 import { Goal } from '../models/goal';
 
 /**
@@ -291,30 +292,33 @@ export async function getWorkouts(limit: number = 20, offset: number = 0): Promi
 
     // Get workout IDs for batch query
     const workoutIds = workoutRows.map(w => w.id);
-    const placeholders = workoutIds.map(() => '?').join(',');
 
-    // Batch load all exercises for these workouts
-    const exerciseRows = await db.getAllAsync<ExerciseRow & { workout_id: string }>(
-        `SELECT * FROM workout_exercises 
-         WHERE workout_id IN (${placeholders}) 
-         ORDER BY workout_id, order_index`,
-        workoutIds
+    // Batch load all exercises for these workouts (PP-037: chunked)
+    const exerciseRows = await batchGetAll<ExerciseRow & { workout_id: string }>(
+        db,
+        workoutIds,
+        (placeholders, batch) => [
+            `SELECT * FROM workout_exercises 
+             WHERE workout_id IN (${placeholders}) 
+             ORDER BY workout_id, order_index`,
+            batch,
+        ],
     );
 
     // Get exercise IDs for batch query
     const exerciseIds = exerciseRows.map(e => e.id);
 
-    // Batch load all sets for these exercises
-    let setRows: (SetRow & { workout_exercise_id: string })[] = [];
-    if (exerciseIds.length > 0) {
-        const setPlaceholders = exerciseIds.map(() => '?').join(',');
-        setRows = await db.getAllAsync<SetRow & { workout_exercise_id: string }>(
+    // Batch load all sets for these exercises (PP-037: chunked)
+    const setRows = await batchGetAll<SetRow & { workout_exercise_id: string }>(
+        db,
+        exerciseIds,
+        (placeholders, batch) => [
             `SELECT * FROM workout_sets 
-             WHERE workout_exercise_id IN (${setPlaceholders}) 
+             WHERE workout_exercise_id IN (${placeholders}) 
              ORDER BY workout_exercise_id, order_index`,
-            exerciseIds
-        );
-    }
+            batch,
+        ],
+    );
 
     // Group sets by exercise ID
     const setsByExercise = new Map<string, SetRow[]>();
@@ -362,26 +366,27 @@ export async function getWorkoutById(id: string): Promise<Workout | null> {
         [row.id]
     );
 
-    // Fetch sets for all exercises in one query
+    // Fetch sets for all exercises in one query (PP-037: chunked)
     const exerciseIds = exerciseRows.map(e => e.id);
     const setsByExercise = new Map<string, SetRow[]>();
 
-    if (exerciseIds.length > 0) {
-        const placeholders = exerciseIds.map(() => '?').join(',');
-        const setRows = await db.getAllAsync<SetRow & { workout_exercise_id: string }>(
+    const setRows = await batchGetAll<SetRow & { workout_exercise_id: string }>(
+        db,
+        exerciseIds,
+        (placeholders, batch) => [
             `SELECT * FROM workout_sets 
              WHERE workout_exercise_id IN (${placeholders}) 
              ORDER BY workout_exercise_id, order_index`,
-            exerciseIds
-        );
+            batch,
+        ],
+    );
 
-        for (const set of setRows) {
-            const exId = set.workout_exercise_id;
-            if (!setsByExercise.has(exId)) {
-                setsByExercise.set(exId, []);
-            }
-            setsByExercise.get(exId)!.push(set);
+    for (const set of setRows) {
+        const exId = set.workout_exercise_id;
+        if (!setsByExercise.has(exId)) {
+            setsByExercise.set(exId, []);
         }
+        setsByExercise.get(exId)!.push(set);
     }
 
     return mapWorkoutRow(row, exerciseRows, setsByExercise);

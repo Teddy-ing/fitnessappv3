@@ -13,6 +13,7 @@
 import { getDatabase } from './database';
 import { Goal, GoalType } from '../models/goal';
 import { getActiveGoals, markGoalCompleted } from './goalService';
+import { batchGetAll } from '../utils/batchQuery';
 
 // ============================================================
 // Single-Goal Progress Computation
@@ -186,23 +187,26 @@ export async function refreshAllGoalProgress(): Promise<Goal[]> {
         // Map: goalId → currentBest
         const bestValues = new Map<string, number>();
 
-        // Batch: exercise 1RM goals
+        // Batch: exercise 1RM goals (PP-037: chunked)
         if (exerciseGoals1RM.length > 0) {
             const ids = exerciseGoals1RM.map((g) => g.exerciseId!);
-            const placeholders = ids.map(() => '?').join(',');
-            const rows = await db.getAllAsync<{ exercise_id: string; best: number | null }>(
-                `SELECT we.exercise_id,
-                        MAX(ws.weight * (1.0 + ws.reps / 30.0)) AS best
-                 FROM workout_sets ws
-                 JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                 JOIN workouts w ON w.id = we.workout_id
-                 WHERE we.exercise_id IN (${placeholders})
-                   AND w.status = 'completed'
-                   AND ws.type = 'working'
-                   AND ws.weight IS NOT NULL
-                   AND ws.reps IS NOT NULL
-                 GROUP BY we.exercise_id`,
+            const rows = await batchGetAll<{ exercise_id: string; best: number | null }>(
+                db,
                 ids,
+                (placeholders, batch) => [
+                    `SELECT we.exercise_id,
+                            MAX(ws.weight * (1.0 + ws.reps / 30.0)) AS best
+                     FROM workout_sets ws
+                     JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                     JOIN workouts w ON w.id = we.workout_id
+                     WHERE we.exercise_id IN (${placeholders})
+                       AND w.status = 'completed'
+                       AND ws.type = 'working'
+                       AND ws.weight IS NOT NULL
+                       AND ws.reps IS NOT NULL
+                     GROUP BY we.exercise_id`,
+                    batch,
+                ],
             );
             const resultMap = new Map(rows.map((r) => [r.exercise_id, r.best]));
             for (const goal of exerciseGoals1RM) {
@@ -211,26 +215,29 @@ export async function refreshAllGoalProgress(): Promise<Goal[]> {
             }
         }
 
-        // Batch: exercise volume goals
+        // Batch: exercise volume goals (PP-037: chunked)
         if (exerciseGoalsVolume.length > 0) {
             const ids = exerciseGoalsVolume.map((g) => g.exerciseId!);
-            const placeholders = ids.map(() => '?').join(',');
-            const rows = await db.getAllAsync<{ exercise_id: string; best: number | null }>(
-                `SELECT exercise_id, MAX(session_volume) AS best
-                 FROM (
-                     SELECT we.exercise_id,
-                            SUM(ws.weight * ws.reps) AS session_volume
-                     FROM workout_sets ws
-                     JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                     JOIN workouts w ON w.id = we.workout_id
-                     WHERE we.exercise_id IN (${placeholders})
-                       AND w.status = 'completed'
-                       AND ws.weight IS NOT NULL
-                       AND ws.reps IS NOT NULL
-                     GROUP BY we.workout_id, we.exercise_id
-                 )
-                 GROUP BY exercise_id`,
+            const rows = await batchGetAll<{ exercise_id: string; best: number | null }>(
+                db,
                 ids,
+                (placeholders, batch) => [
+                    `SELECT exercise_id, MAX(session_volume) AS best
+                     FROM (
+                         SELECT we.exercise_id,
+                                SUM(ws.weight * ws.reps) AS session_volume
+                         FROM workout_sets ws
+                         JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                         JOIN workouts w ON w.id = we.workout_id
+                         WHERE we.exercise_id IN (${placeholders})
+                           AND w.status = 'completed'
+                           AND ws.weight IS NOT NULL
+                           AND ws.reps IS NOT NULL
+                         GROUP BY we.workout_id, we.exercise_id
+                     )
+                     GROUP BY exercise_id`,
+                    batch,
+                ],
             );
             const resultMap = new Map(rows.map((r) => [r.exercise_id, r.best]));
             for (const goal of exerciseGoalsVolume) {
@@ -239,22 +246,25 @@ export async function refreshAllGoalProgress(): Promise<Goal[]> {
             }
         }
 
-        // Batch: exercise max reps goals
+        // Batch: exercise max reps goals (PP-037: chunked)
         if (exerciseGoalsReps.length > 0) {
             const ids = exerciseGoalsReps.map((g) => g.exerciseId!);
-            const placeholders = ids.map(() => '?').join(',');
-            const rows = await db.getAllAsync<{ exercise_id: string; best: number | null }>(
-                `SELECT we.exercise_id,
-                        MAX(ws.reps) AS best
-                 FROM workout_sets ws
-                 JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                 JOIN workouts w ON w.id = we.workout_id
-                 WHERE we.exercise_id IN (${placeholders})
-                   AND w.status = 'completed'
-                   AND ws.type = 'working'
-                   AND ws.reps IS NOT NULL
-                 GROUP BY we.exercise_id`,
+            const rows = await batchGetAll<{ exercise_id: string; best: number | null }>(
+                db,
                 ids,
+                (placeholders, batch) => [
+                    `SELECT we.exercise_id,
+                            MAX(ws.reps) AS best
+                     FROM workout_sets ws
+                     JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                     JOIN workouts w ON w.id = we.workout_id
+                     WHERE we.exercise_id IN (${placeholders})
+                       AND w.status = 'completed'
+                       AND ws.type = 'working'
+                       AND ws.reps IS NOT NULL
+                     GROUP BY we.exercise_id`,
+                    batch,
+                ],
             );
             const resultMap = new Map(rows.map((r) => [r.exercise_id, r.best]));
             for (const goal of exerciseGoalsReps) {

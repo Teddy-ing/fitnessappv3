@@ -7,33 +7,24 @@ description: Tracking document for performance regression findings from Performa
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 65+ files)
-- **Open issues:** 2
-- **Fixed this session:** 0
+- **Open issues:** 0
+- **Fixed this session:** 2
 - **Negligible / Won't Fix:** 9
 
 ---
 
 ## Open Issues
 
-### PP-036 · N+1 query pattern in `getTemplates()` + `findMatchingTemplate()` hot path
-- **Category:** N+1 query / sequential await
-- **File:** [templateService.ts:144-149](file:///c:/Users/teddy/projects/workout-app/src/services/templateService.ts#L144-L149)
-- **What:** `getTemplates()` loads all templates, then loops with `await hydrateTemplate(row)` — each call fires a separate `SELECT` for template exercises. With 20 templates, that's 21 DB round trips. `hydrateTemplate()` also re-enters `getDatabase()` on every call.
-- **Hot path:** `findMatchingTemplate()` (line 183) calls `getTemplates()` with full hydration on **every workout save** just to compare exercise ID lists. This could be a single SQL query.
-- **Impact:** Save-time latency grows linearly with template count.
-- **Fix:** Batch-load template exercises with `IN (...)` query (same pattern as `workoutService.getWorkouts()`). For `findMatchingTemplate()`, write a dedicated SQL query that compares exercise IDs without hydrating full template objects.
-
-### PP-037 · Unbounded `IN (...)` clauses will crash at SQLite 999-parameter limit
-- **Category:** Scalability / crash
-- **Files:**
-  - [workoutService.ts:292-300](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts#L292-L300) — `getWorkouts()` exercise/set batch
-  - [calendarService.ts:326](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L326) — `getWorkoutsForDate()` set batch
-  - [goalProgressService.ts:186-197](file:///c:/Users/teddy/projects/workout-app/src/services/goalProgressService.ts#L186-L197) — batch 1RM/volume/reps
-- **What:** All batch `IN (?,?,?...)` queries build one placeholder per ID with no upper bound. SQLite's `SQLITE_MAX_VARIABLE_NUMBER` defaults to 999. A user with 1000+ workouts (< 3 years of daily training) will crash the query.
-- **Impact:** Hard crash for long-term users.
-- **Fix:** Chunk IDs into batches of 500, merge results. See conventions guardrail #8.
+*No open performance issues.*
 
 ---
+
+## Resolved (Session: 2026-03-24 — Staff Engineer Audit)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|-------------|
+| PP-036 | N+1 query / sequential await | `templateService.ts` | Rewrote `getTemplates()` to batch-load all template exercises in 2 queries (vs N+1). Rewrote `findMatchingTemplate()` to use lightweight SQL query for exercise IDs, hydrating only the match. |
+| PP-037 | Scalability / crash | `workoutService.ts`, `calendarService.ts`, `goalProgressService.ts` | Created shared `batchGetAll()` utility in `src/utils/batchQuery.ts` (500-item chunks). Applied to all 10 IN() query sites across 3 services + templateService. Prevents SQLite 999-param crash. |
 
 ## Resolved (Session: 2026-03-24 — Goals Feature)
 
