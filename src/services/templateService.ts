@@ -16,8 +16,12 @@ import {
     createSet
 } from '../models/workout';
 import { Exercise } from '../models/exercise';
+import { Template, TemplateExercise } from '../models/template';
 import { mapExerciseRow, ExerciseRow } from './hydration';
 import { batchGetAll } from '../utils/batchQuery';
+
+// Re-export for barrel consumers
+export type { Template, TemplateExercise };
 
 /** Row shape returned by SELECT * FROM templates */
 interface TemplateRow {
@@ -31,29 +35,7 @@ interface TemplateRow {
     updated_at: string;
 }
 
-/**
- * Template type for the UI
- */
-export interface Template {
-    id: string;
-    name: string;
-    description: string | null;
-    exerciseCount: number;
-    exercises: TemplateExercise[];
-    lastUsedAt: Date | null;
-    useCount: number;
-    isFavorite: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-}
 
-export interface TemplateExercise {
-    id: string;
-    exercise: Exercise;
-    orderIndex: number;
-    defaultSets: number;
-    note: string | null;
-}
 
 /**
  * Create a template from a completed workout

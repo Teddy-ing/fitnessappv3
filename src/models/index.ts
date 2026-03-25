@@ -19,3 +19,4 @@ export * from './analytics';
 export * from './measurement';
 export * from './goal';
 export * from './preferences';
+export * from './calendar';

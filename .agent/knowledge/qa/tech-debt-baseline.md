@@ -7,8 +7,8 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Open issues:** 6 (Active: 0, Latent: 6)
-- **Fixed since baseline:** 18
+- **Open issues:** 5 (Active: 0, Latent: 5)
+- **Fixed since baseline:** 19
 
 ---
 
@@ -59,18 +59,11 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Why latent:** Current exercise set is stable. But import/export feature (Phase 6) could introduce exercises with muscle groups not in this mapping.
 - **Recommended fix (when):** When implementing import, derive filter pills dynamically from `SELECT DISTINCT muscle FROM ...` or from the exercise model's muscle group enum.
 
-### TD-009 · Cross-boundary types defined in service files instead of `src/models/`
+### ~~TD-009~~ · Cross-boundary types defined in service files instead of `src/models/` — **RESOLVED 2026-03-25**
 
 - **Category:** Type ownership / guardrail #5 deviation
-- **Files:**
-  - [calendarService.ts:31,607](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L31) — `CalendarDayData`, `JournalEntry`, `PRSetIds`
-  - [templateService.ts:36,49](file:///c:/Users/teddy/projects/workout-app/src/services/templateService.ts#L36) — `Template`, `TemplateExercise`
-  - [splitService.ts:283](file:///c:/Users/teddy/projects/workout-app/src/services/splitService.ts#L283) — `SplitInfo`
-  - [preferencesService.ts:19](file:///c:/Users/teddy/projects/workout-app/src/services/preferencesService.ts#L19) — `UserSettings`
-- **What:** Multiple service files export types that are imported by UI components. Guardrail #5 says canonical types live in `src/models/`. These are cross-boundary types used by 2+ consumers each.
-- **Why latent:** Currently functional via barrel re-exports. Will become problematic when widgets, import/export, or settings features need these same types from different entry points.
-- **Recommended fix (when):** Before Phase 5, create `src/models/template.ts`, `src/models/calendar.ts`, `src/models/preferences.ts` and move the cross-boundary interfaces there. Services import from models.
-- **Note:** `hydration.ts` row types (`SetRow`, `ExerciseRow`, `WorkoutRow`) are internal DB mapping types — acceptable to keep in the hydration file.
+- **Fix applied:** Moved `Template`/`TemplateExercise` to `src/models/template.ts` (replaced unused design-time types), created `src/models/calendar.ts` for `CalendarDayData`/`JournalEntry`/`PRSetIds`. Services import from models and re-export for barrel consumers. `UserSettings` was moved earlier (TD-015).
+- **Result:** All cross-boundary types now live in `src/models/`. Guardrail #5 fully satisfied.
 
 ### TD-011 · `calendarService.ts` is 848 lines and growing toward monolith territory
 
@@ -279,7 +272,7 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 | 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted) and `SaveTemplateModal` Alert buttons |
 | 3 | Database schema changes require versioned migrations | ✅ 7 versioned migrations, all with `columnExists` guards |
 | 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ All complex state correctly extracted to hooks (`useGoalCreation`, `useWorkoutKeyboard`, `useExerciseAnalytics`, `useMacroAnalytics`, `useHomeScreenData`) |
-| 5 | Canonical types live in `src/models/` | ⚠️ 6 cross-boundary types still in services (TD-009 expanded). Domain types correct in `models/`. |
+| 5 | Canonical types live in `src/models/` | ✅ All cross-boundary types in `src/models/` (TD-009 resolved). `SplitInfo` remains in `splitService.ts` (internal only, no cross-boundary consumers). |
 | 6 | State reset on lifecycle boundaries | ✅ All hooks and modals properly reset on identity/visibility change |
 | 7 | SafeAreaView edges must match tab bar visibility | ✅ All screens verified correct |
 | 8 | Batch `IN (...)` queries chunked at 500 | ✅ All IN() queries use shared `batchGetAll()` utility (PP-037 resolved). |
@@ -310,10 +303,10 @@ Areas to monitor as the app approaches later roadmap phases:
 | Measurement component sizes | ✅ Resolved (TD-012/013/014/020) — all under 550 lines | — |
 | Goals component sizes | ✅ Resolved (TD-016/017/018/019) — all under 440 lines | — |
 | `formatISODate` duplication | 4 files with identical date formatting logic (TD-015) | Any timezone edge-case fix |
-| Type ownership | 6 cross-boundary types in services (TD-009 expanded) | Phase 5/6 — new consumers of these types |
+| Type ownership | ✅ Resolved (TD-009) — all cross-boundary types in `src/models/` | — |
 
 ---
 
 ## Last Updated
-- Date: 2026-03-24
-- Session Context: Staff engineer code audit added TD-021 (in-progress workout persistence), TD-022 (clearAllData missing tables), TD-023 (delete-then-reinsert pattern), TD-024 (duplicated SQL formulas). Updated convention guardrails cross-reference (8–12) and scalability watch list. Now 10 open issues (2 active, 8 latent).
+- Date: 2026-03-25
+- Session Context: Resolved TD-009 — moved cross-boundary types (Template, TemplateExercise, CalendarDayData, JournalEntry, PRSetIds) from service files to `src/models/`. Replaced unused design-time Template types with runtime ones. Created `src/models/calendar.ts`.

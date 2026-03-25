@@ -24,26 +24,16 @@ import {
 import { Workout } from '../models/workout';
 import { batchGetAll } from '../utils/batchQuery';
 import { SESSION_VOLUME } from '../utils/sqlFragments';
+import { CalendarDayData, JournalEntry, PRSetIds } from '../models/calendar';
+
+// Re-export for barrel consumers
+export type { CalendarDayData, JournalEntry, PRSetIds };
 
 // ============================================================
 // Row types (typed DB results)
 // ============================================================
 
-/** Aggregated day-level data for the calendar heatmap */
-export interface CalendarDayData {
-    /** ISO date string (YYYY-MM-DD) */
-    date: string;
-    /** Number of completed workouts on this day */
-    workoutCount: number;
-    /** Sum of total_volume across all workouts on this day */
-    totalVolume: number;
-    /** Sum of total_sets across all workouts on this day */
-    totalSets: number;
-    /** Sum of total_duration (seconds) across all workouts on this day */
-    totalDuration: number;
-    /** List of workout IDs on this day (for detail drill-down) */
-    workoutIds: string[];
-}
+
 
 /** Raw row returned by the month summary query */
 interface CalendarDayRow {
@@ -70,8 +60,7 @@ interface RestDayCountRow {
     rest_count: number;
 }
 
-/** Set of workout_set IDs that are personal records */
-export type PRSetIds = Set<string>;
+
 
 // ============================================================
 // ISO Week helpers — imported from shared utility
@@ -610,15 +599,7 @@ export async function backfillPersonalRecords(): Promise<void> {
 // searchNotes (Journal View)
 // ============================================================
 
-/** A single journal entry (workout-level + exercise notes) */
-export interface JournalEntry {
-    date: string;          // ISO date
-    workoutId: string;
-    workoutName: string;
-    workoutNote: string | null;
-    duration: number | null;
-    exerciseNotes: Array<{ name: string; note: string }>;
-}
+
 
 /**
  * Search across workout and exercise notes.
