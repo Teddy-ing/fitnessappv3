@@ -7,20 +7,14 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Open issues:** 9 (Active: 1, Latent: 8)
-- **Fixed since baseline:** 15
+- **Open issues:** 8 (Active: 0, Latent: 8)
+- **Fixed since baseline:** 16
 
 ---
 
 ## Open Issues — Active Debt
 
-### TD-022 · `clearAllData()` does not clear all tables
-
-- **Category:** Data integrity / maintenance
-- **File:** [database.ts:89-107](file:///c:/Users/teddy/projects/workout-app/src/services/database.ts#L89-L107)
-- **What:** `clearAllData()` explicitly lists 8 tables to delete from, but the schema has 13+ tables (including `personal_records`, `measurements`, `measurement_types`, `progress_photos`, `goals`, `exercises`). Tables added in migrations v5–v7 are never cleaned.
-- **Why active:** The data transfer import feature (`dataTransferService.ts`) may expect a clean slate. Dev/testing flows using `clearAllData()` leave orphaned PRs, measurements, photos, and goals. Violates conventions guardrail #11.
-- **Recommended fix:** Add `DELETE FROM` lines for all missing tables, with comments referencing the migration version. Consider auto-generating the list from schema introspection.
+*No active debt issues.*
 
 ---
 
@@ -227,6 +221,13 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Fix applied:** Created `workoutPersistence.ts` using `expo-file-system` (new File/Paths API). Every store mutation triggers a debounced (1s) JSON snapshot to disk. `restoreWorkout()` called on cold start from `App.tsx`. Dates serialized via JSON replacer/reviver. `finishWorkout`/`discardWorkout` clear the persisted file.
 - **Result:** In-progress workouts survive app kills, crashes, and force-stops.
 
+### TD-022 · `clearAllData()` does not clear all tables — **RESOLVED 2026-03-24**
+
+- **Category:** Data integrity / maintenance
+- **Original:** `clearAllData()` only deleted from 9 tables, but schema has 16 tables (including `personal_records`, `measurements`, `progress_photos`, `goals`, `exercises`, `user_preferences`). Tables from migrations v2–v7 were never cleaned.
+- **Fix applied:** Added DELETE FROM for all 6 missing user-data tables in FK-safe order. `measurement_types` deliberately not cleared (migration-seeded reference data). Also clears persisted in-progress workout file (TD-021 artifact).
+- **Result:** `clearAllData()` now covers all 15 user-data tables. Guardrail #11 satisfied.
+
 ### TD-002 · Duplicated chart label formatting logic across 3 files — **RESOLVED 2026-03-14**
 
 - **Category:** DRY violation / anti-pattern
@@ -289,7 +290,7 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 | 8 | Batch `IN (...)` queries chunked at 500 | ✅ All IN() queries use shared `batchGetAll()` utility (PP-037 resolved). |
 | 9 | Services must not reach into stores | ✅ `workoutService.ts` and `measurementService.ts` decoupled (BH-024 resolved). |
 | 10 | Shared SQL formulas in one canonical location | ❌ 1RM, volume, status filter duplicated across 3 services (TD-024). |
-| 11 | New tables registered in `clearAllData()` | ❌ 5+ tables missing from `clearAllData()` (TD-022). |
+| 11 | New tables registered in `clearAllData()` | ✅ All 15 user-data tables cleared in FK-safe order (TD-022 resolved). |
 | 12 | `updateX()` must use UPDATE, not delete-reinsert | ❌ `updateWorkout()` uses delete-reinsert pattern (TD-023). |
 
 ---

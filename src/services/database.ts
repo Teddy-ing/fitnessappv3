@@ -84,24 +84,55 @@ export async function closeDatabase(): Promise<void> {
 }
 
 /**
- * Clear all data (for development/testing)
+ * Clear all user data (for development/testing/import).
+ *
+ * Deletes from ALL user-data tables in FK-safe order (children first).
+ * Does NOT delete from `measurement_types` (migration-seeded reference data).
+ * Also clears the persisted in-progress workout file (TD-021).
+ *
+ * TD-022: Updated to cover all tables introduced through v7 migrations.
  */
 export async function clearAllData(): Promise<void> {
     const database = await getDatabase();
     if (!database) return;
 
     try {
+        // Children → parents order to respect FK constraints
+        // v7 — Goals
+        await database.execAsync(`DELETE FROM goals;`);
+        // v5 — Measurements & Photos
+        await database.execAsync(`DELETE FROM progress_photos;`);
+        await database.execAsync(`DELETE FROM measurements;`);
+        // Note: measurement_types is seed data from migration v5 — not cleared.
+        // v4 — Personal Records
+        await database.execAsync(`DELETE FROM personal_records;`);
+        // v1 — Workout data (sets → exercises → workouts)
         await database.execAsync(`DELETE FROM workout_sets;`);
         await database.execAsync(`DELETE FROM workout_exercises;`);
         await database.execAsync(`DELETE FROM workouts;`);
+        // v1 — Templates
         await database.execAsync(`DELETE FROM template_exercises;`);
         await database.execAsync(`DELETE FROM templates;`);
+        // v1 — Splits
         await database.execAsync(`DELETE FROM splits_templates;`);
         await database.execAsync(`DELETE FROM splits_schedule;`);
         await database.execAsync(`DELETE FROM splits;`);
+        // v2 — Exercises (custom)
+        await database.execAsync(`DELETE FROM exercises;`);
+        // v2 — Legacy preferences (superseded by user_settings in v3)
+        await database.execAsync(`DELETE FROM user_preferences;`);
+        // v3 — Settings
         await database.execAsync(`DELETE FROM user_settings;`);
         // Re-seed the single settings row with defaults
         await database.execAsync(`INSERT OR IGNORE INTO user_settings (id) VALUES (1);`);
+
+        // Clear persisted in-progress workout file (TD-021)
+        try {
+            const { clearPersistedWorkout } = await import('../stores/workoutPersistence');
+            clearPersistedWorkout();
+        } catch {
+            // Persistence module may not be available in all contexts
+        }
     } catch (error) {
         console.error('[DB] Error clearing data:', error);
     }
