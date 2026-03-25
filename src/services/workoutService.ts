@@ -153,36 +153,17 @@ export async function updateWorkout(workout: Workout): Promise<Goal[]> {
 
     try {
         await db.withTransactionAsync(async () => {
-            // Delete old child rows first (no CASCADE on FK)
-            // 1. Delete sets for all exercises in this workout
+            // TD-023 fix: UPDATE the parent workouts row in place.
+            // This preserves FK references from personal_records and any
+            // future child tables that reference workouts(id).
             await db.runAsync(
-                `DELETE FROM workout_sets WHERE workout_exercise_id IN (
-                    SELECT id FROM workout_exercises WHERE workout_id = ?
-                )`,
-                [workout.id],
-            );
-
-            // 2. Delete exercises
-            await db.runAsync(
-                `DELETE FROM workout_exercises WHERE workout_id = ?`,
-                [workout.id],
-            );
-
-            // 3. Delete the workout row itself
-            await db.runAsync(
-                `DELETE FROM workouts WHERE id = ?`,
-                [workout.id],
-            );
-
-            // 4. Re-insert workout
-            await db.runAsync(
-                `INSERT INTO workouts (
-                    id, name, status, started_at, completed_at, total_duration,
-                    total_volume, total_sets, muscle_groups_worked, location,
-                    note, template_id, day_of_week, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `UPDATE workouts SET
+                    name = ?, status = ?, started_at = ?, completed_at = ?,
+                    total_duration = ?, total_volume = ?, total_sets = ?,
+                    muscle_groups_worked = ?, location = ?, note = ?,
+                    template_id = ?, day_of_week = ?, updated_at = ?
+                 WHERE id = ?`,
                 [
-                    workout.id,
                     workout.name,
                     workout.status,
                     toLocalISOString(workout.startedAt),
@@ -195,12 +176,26 @@ export async function updateWorkout(workout: Workout): Promise<Goal[]> {
                     workout.note,
                     workout.templateId,
                     workout.dayOfWeek,
-                    toLocalISOString(workout.createdAt),
                     toLocalISOString(workout.updatedAt),
+                    workout.id,
                 ],
             );
 
-            // 5. Re-insert exercises and sets
+            // Delete-reinsert children (exercises/sets).
+            // This is acceptable because exercise/set IDs are ephemeral
+            // and no external tables reference them via FK.
+            await db.runAsync(
+                `DELETE FROM workout_sets WHERE workout_exercise_id IN (
+                    SELECT id FROM workout_exercises WHERE workout_id = ?
+                )`,
+                [workout.id],
+            );
+            await db.runAsync(
+                `DELETE FROM workout_exercises WHERE workout_id = ?`,
+                [workout.id],
+            );
+
+            // Re-insert exercises and sets
             for (const exercise of workout.main.exercises) {
                 await db.runAsync(
                     `INSERT INTO workout_exercises (

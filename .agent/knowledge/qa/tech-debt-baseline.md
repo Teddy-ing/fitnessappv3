@@ -7,8 +7,8 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Open issues:** 8 (Active: 0, Latent: 8)
-- **Fixed since baseline:** 16
+- **Open issues:** 7 (Active: 0, Latent: 7)
+- **Fixed since baseline:** 17
 
 ---
 
@@ -21,14 +21,6 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Open Issues — Latent Debt
 
 Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatbot).
-
-### TD-023 · `updateWorkout()` uses delete-then-reinsert instead of UPDATE
-
-- **Category:** Data integrity / anti-pattern
-- **File:** [workoutService.ts:144-253](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts#L144-L253)
-- **What:** `updateWorkout()` deletes the workout + all exercises + all sets, then re-inserts them. The comment on line 153 (`// No CASCADE on FK`) acknowledges the FK issue but proceeds anyway. Any table with an FK reference to `workouts(id)` that doesn't cascade (e.g., `personal_records.workout_id`) will silently orphan data.
-- **Why latent:** Currently only `personal_records` references `workouts`, and the backfill system can recover. But as new child tables are added (e.g., workout tags, media attachments), each one must be manually tracked in the delete chain.
-- **Recommended fix:** Use SQL `UPDATE` on the parent row. For children (exercises/sets), delete-then-reinsert is acceptable if the parent stays. Violates conventions guardrail #12.
 
 ### TD-024 · Epley 1RM, volume, and status filter formulas duplicated across 3 services
 
@@ -237,6 +229,13 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
   - `BAR_CHART_MARGINS` / `LINE_CHART_MARGINS` — preset configs for each chart type
 - **Result:** ~75 lines of duplicated code eliminated. All 3 call sites reduced to 2-line invocations. Future chart types just import a preset.
 
+### TD-023 · `updateWorkout()` uses delete-then-reinsert — **RESOLVED 2026-03-24**
+
+- **Category:** Data integrity / anti-pattern
+- **Original:** `updateWorkout()` deleted the workout row + all exercises + all sets, then re-inserted everything. Any FK referencing `workouts(id)` (e.g., `personal_records.workout_id`) would silently orphan data.
+- **Fix applied:** Replaced DELETE+INSERT of the parent `workouts` row with a proper `UPDATE ... SET ... WHERE id = ?`. Children (exercises/sets) still use delete-reinsert since their IDs are ephemeral and no external tables reference them.
+- **Result:** `personal_records` FK references preserved across workout edits. Future child tables are automatically safe.
+
 ---
 
 ## Accepted / Won't Fix
@@ -291,7 +290,7 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 | 9 | Services must not reach into stores | ✅ `workoutService.ts` and `measurementService.ts` decoupled (BH-024 resolved). |
 | 10 | Shared SQL formulas in one canonical location | ❌ 1RM, volume, status filter duplicated across 3 services (TD-024). |
 | 11 | New tables registered in `clearAllData()` | ✅ All 15 user-data tables cleared in FK-safe order (TD-022 resolved). |
-| 12 | `updateX()` must use UPDATE, not delete-reinsert | ❌ `updateWorkout()` uses delete-reinsert pattern (TD-023). |
+| 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ `updateWorkout()` now UPDATEs parent row in place (TD-023 resolved). |
 
 ---
 
