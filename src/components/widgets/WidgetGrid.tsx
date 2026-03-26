@@ -20,17 +20,28 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import { WidgetConfig } from '../../models/widget';
+import { Goal } from '../../models/goal';
+import { MuscleDistributionPoint, FatigueRatioResult, ExerciseTimeSeriesPoint } from '../../models/analytics';
 import { ProfileStackParamList } from '../../navigation/AppNavigator';
 import {
     getWorkoutStreak,
     getAggregatedMetric,
     getSparklineData,
+    getActiveGoals,
+    getMuscleDistribution,
+    getFatigueRatio,
+    getEstimated1RM,
+    getExerciseVolume,
 } from '../../services';
 
 import WidgetCard from './WidgetCard';
 import StreakBadgeWidget from './StreakBadgeWidget';
 import WeeklyWrapUpWidget, { WeeklyData } from './WeeklyWrapUpWidget';
 import BodyweightSparklineWidget, { SparklinePoint } from './BodyweightSparklineWidget';
+import GoalProgressWidget from './GoalProgressWidget';
+import MuscleBalanceWidget from './MuscleBalanceWidget';
+import WorkloadReadinessWidget from './WorkloadReadinessWidget';
+import PinnedExerciseWidget from './PinnedExerciseWidget';
 
 // ============================================================
 // Types
@@ -45,29 +56,61 @@ interface WidgetData {
     streak: number;
     weeklyData: WeeklyData;
     bodyweightData: SparklinePoint[];
+    topGoal: Goal | null;
+    muscleDistribution: MuscleDistributionPoint[];
+    fatigueRatio: FatigueRatioResult;
+    pinnedExerciseData: Map<string, ExerciseTimeSeriesPoint[]>;
 }
 
 // ============================================================
 // Data fetching
 // ============================================================
 
-async function fetchWidgetData(): Promise<WidgetData> {
+async function fetchWidgetData(widgets: WidgetConfig[]): Promise<WidgetData> {
+    // Identify which pinned exercises need data
+    const pinnedWidgets = widgets.filter((w) => w.type === 'pinned_exercise' && w.exerciseId);
+
     // Fetch all widget data in parallel for speed
-    const [streak, volumeData, setsData, repsData, durationData, bodyweightData] =
-        await Promise.all([
-            getWorkoutStreak(),
-            getAggregatedMetric('volume', 'per_week', '1M'),
-            getAggregatedMetric('sets', 'per_week', '1M'),
-            getAggregatedMetric('reps', 'per_week', '1M'),
-            getAggregatedMetric('duration', 'per_week', '1M'),
-            getSparklineData('bodyweight', 30),
-        ]);
+    const [
+        streak,
+        volumeData,
+        setsData,
+        repsData,
+        durationData,
+        bodyweightData,
+        activeGoals,
+        muscleDistribution,
+        fatigueRatio,
+        ...pinnedResults
+    ] = await Promise.all([
+        getWorkoutStreak(),
+        getAggregatedMetric('volume', 'per_week', '1M'),
+        getAggregatedMetric('sets', 'per_week', '1M'),
+        getAggregatedMetric('reps', 'per_week', '1M'),
+        getAggregatedMetric('duration', 'per_week', '1M'),
+        getSparklineData('bodyweight', 30),
+        getActiveGoals(),
+        getMuscleDistribution('volume', '3M'),
+        getFatigueRatio(),
+        // Fetch data for each pinned exercise widget
+        ...pinnedWidgets.map((w) =>
+            w.metric === 'volume'
+                ? getExerciseVolume(w.exerciseId!, '3M')
+                : getEstimated1RM(w.exerciseId!, '3M'),
+        ),
+    ]);
 
     // Weekly data: take the last (current) data point from each metric
     const lastVolume = volumeData.length > 0 ? volumeData[volumeData.length - 1].value : 0;
     const lastSets = setsData.length > 0 ? setsData[setsData.length - 1].value : 0;
     const lastReps = repsData.length > 0 ? repsData[repsData.length - 1].value : 0;
     const lastDuration = durationData.length > 0 ? durationData[durationData.length - 1].value : 0;
+
+    // Build pinned exercise data map
+    const pinnedExerciseData = new Map<string, ExerciseTimeSeriesPoint[]>();
+    pinnedWidgets.forEach((w, i) => {
+        pinnedExerciseData.set(w.id, pinnedResults[i] as ExerciseTimeSeriesPoint[]);
+    });
 
     return {
         streak,
@@ -78,6 +121,10 @@ async function fetchWidgetData(): Promise<WidgetData> {
             duration: lastDuration,
         },
         bodyweightData,
+        topGoal: activeGoals.length > 0 ? activeGoals[0] : null,
+        muscleDistribution,
+        fatigueRatio,
+        pinnedExerciseData,
     };
 }
 
@@ -91,19 +138,23 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
         streak: 0,
         weeklyData: { volume: 0, sets: 0, reps: 0, duration: 0 },
         bodyweightData: [],
+        topGoal: null,
+        muscleDistribution: [],
+        fatigueRatio: { acute: 0, chronic: 0, ratio: 0, status: 'normal' },
+        pinnedExerciseData: new Map(),
     });
     const [isLoading, setIsLoading] = useState(true);
 
     const loadData = useCallback(async () => {
         try {
-            const result = await fetchWidgetData();
+            const result = await fetchWidgetData(widgets);
             setData(result);
         } catch (error) {
             console.error('[WidgetGrid] Failed to fetch widget data:', error);
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [widgets]);
 
     useEffect(() => {
         loadData();
@@ -151,6 +202,20 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
                     return <WeeklyWrapUpWidget data={data.weeklyData} />;
                 case 'bodyweight_sparkline':
                     return <BodyweightSparklineWidget data={data.bodyweightData} />;
+                case 'goal_progress':
+                    return <GoalProgressWidget goal={data.topGoal} />;
+                case 'muscle_pie':
+                    return <MuscleBalanceWidget data={data.muscleDistribution} />;
+                case 'workload_readiness':
+                    return <WorkloadReadinessWidget data={data.fatigueRatio} />;
+                case 'pinned_exercise':
+                    return (
+                        <PinnedExerciseWidget
+                            exerciseName={config.exerciseName ?? 'Exercise'}
+                            metric={config.metric ?? '1rm'}
+                            data={data.pinnedExerciseData.get(config.id) ?? []}
+                        />
+                    );
                 default:
                     return (
                         <View style={styles.comingSoon}>
@@ -164,16 +229,20 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
 
     // Get tap handler for a widget type
     const getWidgetPressHandler = useCallback(
-        (type: string) => {
-            switch (type) {
+        (config: WidgetConfig) => {
+            switch (config.type) {
                 case 'streak_badge':
                     return () => navigation.navigate('Calendar');
                 case 'weekly_wrapup':
+                case 'muscle_pie':
+                case 'workload_readiness':
                     return () => navigation.navigate('Analytics');
                 case 'bodyweight_sparkline':
                     return () => navigation.navigate('Measurements');
                 case 'goal_progress':
                     return () => navigation.navigate('Goals');
+                case 'pinned_exercise':
+                    return () => navigation.navigate('Analytics');
                 default:
                     return undefined;
             }
@@ -220,7 +289,7 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
                         <WidgetCard
                             key={widget.id}
                             size={widget.size}
-                            onPress={getWidgetPressHandler(widget.type)}
+                            onPress={getWidgetPressHandler(widget)}
                             style={
                                 widget.size === 'square'
                                     ? row.length === 2

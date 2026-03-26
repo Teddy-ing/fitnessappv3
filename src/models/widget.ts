@@ -89,7 +89,7 @@ export const WIDGET_CATALOG: WidgetCatalogEntry[] = [
         defaultSize: 'square',
         icon: 'flag',
         allowMultiple: false,
-        available: false,
+        available: true,
     },
     {
         type: 'muscle_pie',
@@ -98,7 +98,7 @@ export const WIDGET_CATALOG: WidgetCatalogEntry[] = [
         defaultSize: 'square',
         icon: 'pie-chart',
         allowMultiple: false,
-        available: false,
+        available: true,
     },
     {
         type: 'pinned_exercise',
@@ -107,7 +107,7 @@ export const WIDGET_CATALOG: WidgetCatalogEntry[] = [
         defaultSize: 'rectangle',
         icon: 'show-chart',
         allowMultiple: true,
-        available: false,
+        available: true,
     },
     {
         type: 'workload_readiness',
@@ -116,7 +116,7 @@ export const WIDGET_CATALOG: WidgetCatalogEntry[] = [
         defaultSize: 'square',
         icon: 'speed',
         allowMultiple: false,
-        available: false,
+        available: true,
     },
 ];
 
