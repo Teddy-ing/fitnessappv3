@@ -23,7 +23,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import { PerformedExercise } from '../../models/analytics';
-import { getPerformedExercises } from '../../services/analyticsService';
+import { getPerformedExercises } from '../../services/exerciseAnalyticsService';
 import type { ProfileStackParamList } from '../../navigation/AppNavigator';
 
 // ============================================================

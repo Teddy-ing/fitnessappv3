@@ -27,3 +27,10 @@ export function formatISODate(d: Date): string {
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
+
+/** Format volume compactly for widget contexts: "12k", "1.5k", "450". No unit suffix. */
+export function formatCompactVolume(v: number): string {
+    if (v >= 10000) return `${(v / 1000).toFixed(0)}k`;
+    if (v >= 1000) return `${(v / 1000).toFixed(1)}k`;
+    return Math.round(v).toString();
+}

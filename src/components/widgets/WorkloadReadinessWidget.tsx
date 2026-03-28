@@ -17,6 +17,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
 import { FatigueRatioResult } from '../../models/analytics';
+import { formatCompactVolume } from '../../utils/formatters';
 
 interface WorkloadReadinessWidgetProps {
     data: FatigueRatioResult;
@@ -79,14 +80,14 @@ export default function WorkloadReadinessWidget({ data }: WorkloadReadinessWidge
                 <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>This week</Text>
                     <Text style={styles.detailValue}>
-                        {formatVolume(data.acute)}
+                        {formatCompactVolume(data.acute)}
                     </Text>
                 </View>
                 <View style={styles.detailDivider} />
                 <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>Avg/week</Text>
                     <Text style={styles.detailValue}>
-                        {formatVolume(data.chronic)}
+                        {formatCompactVolume(data.chronic)}
                     </Text>
                 </View>
             </View>
@@ -94,11 +95,7 @@ export default function WorkloadReadinessWidget({ data }: WorkloadReadinessWidge
     );
 }
 
-function formatVolume(v: number): string {
-    if (v >= 10000) return `${(v / 1000).toFixed(0)}k`;
-    if (v >= 1000) return `${(v / 1000).toFixed(1)}k`;
-    return Math.round(v).toString();
-}
+
 
 const styles = StyleSheet.create({
     container: {

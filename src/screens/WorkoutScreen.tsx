@@ -280,13 +280,9 @@ export default function WorkoutScreen() {
                 onTemplateIndexChanged={handleChangeTemplateIndex}
                 onDataRefresh={loadData}
                 onSettingsPress={() => {
-                    navigateToTab('Profile');
-                    // Small delay so the Profile tab mounts before we navigate into its stack
-                    setTimeout(() => {
-                        if (navigationRef.isReady()) {
-                            (navigationRef as any).navigate('Profile', { screen: 'Settings' });
-                        }
-                    }, 100);
+                    if (navigationRef.isReady()) {
+                        (navigationRef as any).navigate('Profile', { screen: 'Settings', initial: false });
+                    }
                 }}
             />
         );

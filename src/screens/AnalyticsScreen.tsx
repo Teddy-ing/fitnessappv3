@@ -10,6 +10,8 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -23,6 +25,7 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import MacroAnalyticsView from '../components/analytics/MacroAnalyticsView';
 import BreakdownView from '../components/analytics/BreakdownView';
 import ExerciseListView from '../components/analytics/ExerciseListView';
+import type { ProfileStackParamList } from '../navigation/AppNavigator';
 
 // ============================================================
 // Types
@@ -71,7 +74,10 @@ function TabControl({
 // ============================================================
 
 export default function AnalyticsScreen() {
-    const [activeTab, setActiveTab] = useState<AnalyticsTab>('workouts');
+    const route = useRoute<RouteProp<ProfileStackParamList, 'Analytics'>>();
+    const [activeTab, setActiveTab] = useState<AnalyticsTab>(
+        route.params?.initialTab ?? 'workouts',
+    );
 
     const tabHeader = useMemo(() => (
         <TabControl activeTab={activeTab} onTabChange={setActiveTab} />

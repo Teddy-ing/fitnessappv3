@@ -6,10 +6,10 @@ description: Tracking document for performance regression findings from Performa
 
 ## Summary
 
-- **Last full pass:** 2026-03-24 (comprehensive full-project scan — 65+ files)
+- **Last full pass:** 2026-03-28 (widget system + bug fix pass — 23 files)
 - **Open issues:** 0
-- **Fixed this session:** 2
-- **Negligible / Won't Fix:** 9
+- **Fixed this session:** 0
+- **Negligible / Won't Fix:** 13
 
 ---
 
@@ -98,6 +98,14 @@ description: Tracking document for performance regression findings from Performa
 
 **PP-035** — `Dimensions.get('window')` at module level in `GoalCelebrationOverlay.tsx` — same as PP-013/PP-027, portrait-locked.
 
+**PP-038** — `WidgetGrid` `getWidgetPressHandler(widget)` returns fresh arrow function inside `.map()` loop. Max 6 widgets / ~4 rows — cost of re-rendering `TouchableOpacity` wrappers is trivially small.
+
+**PP-039** — `WidgetEditorModal.getWidgetLabel()` / `getWidgetIcon()` use `WIDGET_CATALOG.find()` (linear search). 6 widgets × 7 catalog entries = 42 iterations max. Not measurable.
+
+**PP-040** — `BodyweightSparklineWidget` / `PinnedExerciseWidget` compute `Math.min/max(...values)` outside `useMemo`. Max 30 data points. Sub-microsecond.
+
+**PP-041** — `Dimensions.get('window')` at module level in `WidgetEditorModal.tsx` — same as PP-013/PP-027/PP-035, portrait-locked.
+
 ---
 
 ## Historical Performance Issues
@@ -112,5 +120,5 @@ description: Tracking document for performance regression findings from Performa
 ---
 
 ## Last Updated
-- Date: 2026-03-24
-- Session Context: Staff engineer code audit added PP-036 (template N+1 + findMatchingTemplate hot path) and PP-037 (unbounded IN() clause hitting SQLite 999-param limit).
+- Date: 2026-03-28
+- Session Context: Performance Profiler pass on widget system (Phase 3A+3B) + bug fix & QOL pass. 23 files reviewed. 0 regressions, 4 negligible findings (PP-038–PP-041).

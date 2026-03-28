@@ -7,8 +7,9 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Open issues:** 5 (Active: 0, Latent: 5)
-- **Fixed since baseline:** 19
+- **Last scoped pass:** 2026-03-28 (widget system + bug fix pass — 22 files)
+- **Open issues:** 3 (Active: 0, Latent: 3)
+- **Fixed since baseline:** 25
 
 ---
 
@@ -22,13 +23,6 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatbot).
 
-### TD-003 · `analyticsService.ts` is a monolith (873 lines) heading toward bloat
-
-- **Category:** Service boundary concern
-- **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts) — 873 lines
-- **Why latent:** Contains macro analytics (aggregations, consistency, muscle distribution) AND micro analytics (per-exercise time series, best-for-reps, fatigue ratio). Currently well-organized with section headers, but the ML phase (Phase 7) and widget framework (Phase 3) will add more query functions here. At current growth rate it will exceed 1200 lines by Phase 5.
-- **Will break at:** ML features adding prediction queries, widget framework adding dashboard queries
-- **Recommended fix (when):** Before Phase 5, extract `exerciseAnalyticsService.ts` (micro-level queries: lines 504–858) from the current file. Keep `analyticsService.ts` for macro-level queries.
 
 ### TD-004 · Hardcoded `" lbs"` unit across analytics UI + calendar modal + measurements gallery + goals
 
@@ -59,25 +53,16 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **Why latent:** Current exercise set is stable. But import/export feature (Phase 6) could introduce exercises with muscle groups not in this mapping.
 - **Recommended fix (when):** When implementing import, derive filter pills dynamically from `SELECT DISTINCT muscle FROM ...` or from the exercise model's muscle group enum.
 
-### ~~TD-009~~ · Cross-boundary types defined in service files instead of `src/models/` — **RESOLVED 2026-03-25**
 
-- **Category:** Type ownership / guardrail #5 deviation
-- **Fix applied:** Moved `Template`/`TemplateExercise` to `src/models/template.ts` (replaced unused design-time types), created `src/models/calendar.ts` for `CalendarDayData`/`JournalEntry`/`PRSetIds`. Services import from models and re-export for barrel consumers. `UserSettings` was moved earlier (TD-015).
-- **Result:** All cross-boundary types now live in `src/models/`. Guardrail #5 fully satisfied.
 
-### TD-011 · `calendarService.ts` is 848 lines and growing toward monolith territory
+
+### ~~TD-011~~ · `calendarService.ts` monolith — **RESOLVED 2026-03-28**
 
 - **Category:** Service boundary concern
-- **File:** [calendarService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts) — 848 lines
-- **Why latent:** Contains 10 exported functions spanning 4 distinct domains: heatmap queries, streak/rest computation, PR backfill, journal search, and fatigue detection. This mirrors the `analyticsService.ts` pattern (TD-003). The service was built all at once as part of the calendar feature, so the growth was rapid.
-- **Will break at:** Widget framework (Phase 3) will likely add calendar-widget queries. Import/export (Phase 6) may need to write/read PR records.
-- **Recommended fix (when):** Before Phase 5, consider extracting `personalRecordsService.ts` (backfill + PR date queries) from `calendarService.ts`. Keep `calendarService.ts` for heatmap, streak, and workout date queries. Fatigue detection could go either way.
+- **Fix applied:** Extracted `personalRecordsService.ts` (327 lines) with 4 functions (`getPersonalRecordDates`, `backfillPersonalRecords`, `getFatigueDates`, `getPRSetIdsForDate`). Updated barrel exports and test file imports.
+- **Result:** `calendarService.ts` reduced from 844 to 542 lines (calendar/heatmap/journal). `personalRecordsService.ts` at 327 lines (PRs/fatigue).
 
-### ~~TD-015~~ · `formatISODate` helper duplicated — **RESOLVED 2026-03-24**
 
-- **Category:** DRY violation
-- **Fix applied:** Added `formatISODate(d: Date): string` to `src/utils/formatters.ts`. Replaced all 4 duplication sites (`TrackTab.tsx`, `GalleryTab.tsx`, `DetailChartView.tsx`, `mockDataService.ts`) with imports. Also moved `UserSettings` type from `preferencesService.ts` to `src/models/preferences.ts` (partial TD-009 scope).
-- **Result:** Single source of truth for ISO date formatting. `UserSettings` now lives in models layer.
 
 
 
@@ -85,7 +70,51 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 
 ## Resolved
 
-### TD-020 · `DetailChartView.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-24**
+### ~~TD-003~~ · `analyticsService.ts` is a monolith — **RESOLVED 2026-03-28**
+
+- **Category:** Service boundary concern
+- **Fix applied:** Extracted `exerciseAnalyticsService.ts` (421 lines) with 7 per-exercise queries (`getPerformedExercises`, `getEstimated1RM`, `getMaxWeight`, `getExerciseVolume`, `getMaxReps`, `getBestWeightForReps`, `getFatigueRatio`). Updated barrel exports, 3 direct import sites, and test file.
+- **Result:** `analyticsService.ts` reduced from 851 to 462 lines (macro only). `exerciseAnalyticsService.ts` at 421 lines (micro/exercise).
+
+### ~~TD-026~~ · `WeightTrendIntent` type defined in component, not `src/models/` — **RESOLVED 2026-03-28**
+
+- **Category:** Type ownership / guardrail #5 deviation
+- **Fix applied:** Moved `WeightTrendIntent` to `src/models/widget.ts`. Updated 4 import sites (`WidgetGrid.tsx`, `BodyweightSparklineWidget.tsx`, `SparklineRow.tsx`, `TrendsTab.tsx`). `WidgetGrid.tsx` re-exports for backward compatibility.
+- **Result:** All consumers import from models layer. No more `measurements → widgets` cross-boundary coupling.
+
+### ~~TD-027~~ · Bodyweight goal intent derivation logic duplicated in 2 files — **RESOLVED 2026-03-28**
+
+- **Category:** DRY violation
+- **Fix applied:** Created `src/utils/goalHelpers.ts` with `deriveBodyweightIntent(activeGoals: Goal[]): WeightTrendIntent`. Both `WidgetGrid.tsx` and `TrendsTab.tsx` now call this shared helper.
+- **Result:** Single source of truth for bodyweight intent derivation. Adding "maintain" state only requires one change.
+
+### ~~TD-028~~ · `formatVolume` duplicated in `WorkloadReadinessWidget.tsx` — **RESOLVED 2026-03-28**
+
+- **Category:** DRY violation
+- **Fix applied:** Added `formatCompactVolume(v: number): string` to `src/utils/formatters.ts` (compact format: "12k", "1.5k", "450"). `WorkloadReadinessWidget.tsx` now imports it instead of defining a local copy.
+- **Result:** Single source of truth for compact volume formatting.
+
+### ~~TD-009~~ · Cross-boundary types defined in service files instead of `src/models/` — **RESOLVED 2026-03-25**
+
+- **Category:** Type ownership / guardrail #5 deviation
+- **Fix applied:** Moved `Template`/`TemplateExercise` to `src/models/template.ts` (replaced unused design-time types), created `src/models/calendar.ts` for `CalendarDayData`/`JournalEntry`/`PRSetIds`. Services import from models and re-export for barrel consumers. `UserSettings` was moved earlier (TD-015).
+- **Result:** All cross-boundary types now live in `src/models/`. Guardrail #5 fully satisfied.
+
+
+### ~~TD-015~~ · `formatISODate` helper duplicated — **RESOLVED 2026-03-24**
+
+- **Category:** DRY violation
+- **Fix applied:** Added `formatISODate(d: Date): string` to `src/utils/formatters.ts`. Replaced all 4 duplication sites (`TrackTab.tsx`, `GalleryTab.tsx`, `DetailChartView.tsx`, `mockDataService.ts`) with imports. Also moved `UserSettings` type from `preferencesService.ts` to `src/models/preferences.ts` (partial TD-009 scope).
+- **Result:** Single source of truth for ISO date formatting. `UserSettings` now lives in models layer.
+
+### ~~TD-025~~ · `WidgetEditorModal.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-28**
+
+- **Guardrail violated:** #1 (Component size limit)
+- **Original:** 666 lines
+- **Fix applied:** Extracted `ExercisePickerView.tsx` (225 lines) — exercise picker with metric toggle, search, and list. State management (exercises list, search text, metric selection) moved to the new component.
+- **Result:** `WidgetEditorModal.tsx` reduced to 511 lines. `ExercisePickerView.tsx` at 225 lines.
+
+### ~~TD-020~~ · `DetailChartView.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-03-24**
 
 - **Guardrail violated:** #1 (Component size limit)
 - **Original:** 624 lines
@@ -268,17 +297,17 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 
 | # | Guardrail | Full-Project Status |
 |---|-----------|----------------------------|
-| 1 | Component size limit (600 lines) | ✅ All components under 600 lines (TD-020 resolved). Services `analyticsService.ts` 755, `calendarService.ts` 741 tracked as latent (TD-003/011). |
-| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted) and `SaveTemplateModal` Alert buttons |
-| 3 | Database schema changes require versioned migrations | ✅ 7 versioned migrations, all with `columnExists` guards |
+| 1 | Component size limit (600 lines) | ✅ All components under 600 lines (TD-025 resolved). Services `analyticsService.ts` 755, `calendarService.ts` 741 tracked as latent (TD-003/011). |
+| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted), `SaveTemplateModal` Alert buttons, and navigation ref casts (React Navigation limitation) |
+| 3 | Database schema changes require versioned migrations | ✅ 8 versioned migrations, all with `columnExists` guards |
 | 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ All complex state correctly extracted to hooks (`useGoalCreation`, `useWorkoutKeyboard`, `useExerciseAnalytics`, `useMacroAnalytics`, `useHomeScreenData`) |
-| 5 | Canonical types live in `src/models/` | ✅ All cross-boundary types in `src/models/` (TD-009 resolved). `SplitInfo` remains in `splitService.ts` (internal only, no cross-boundary consumers). |
+| 5 | Canonical types live in `src/models/` | ✅ `WeightTrendIntent` moved to models (TD-026 resolved). `SparklinePoint` in `BodyweightSparklineWidget.tsx` (TD-029 latent). `SplitInfo` remains in `splitService.ts` (internal). |
 | 6 | State reset on lifecycle boundaries | ✅ All hooks and modals properly reset on identity/visibility change |
 | 7 | SafeAreaView edges must match tab bar visibility | ✅ All screens verified correct |
 | 8 | Batch `IN (...)` queries chunked at 500 | ✅ All IN() queries use shared `batchGetAll()` utility (PP-037 resolved). |
 | 9 | Services must not reach into stores | ✅ `workoutService.ts` and `measurementService.ts` decoupled (BH-024 resolved). |
-| 10 | Shared SQL formulas in one canonical location | ✅ All formulas consolidated in `sqlFragments.ts` (TD-024 resolved). |
-| 11 | New tables registered in `clearAllData()` | ✅ All 15 user-data tables cleared in FK-safe order (TD-022 resolved). |
+| 10 | Shared SQL formulas in one canonical location | ✅ SQL formulas in `sqlFragments.ts`. JS formatters in `formatters.ts` including `formatCompactVolume` (TD-028 resolved). |
+| 11 | New tables registered in `clearAllData()` | ✅ All 15 user-data tables cleared in FK-safe order (TD-022 resolved). v8 adds only a column, no new table. |
 | 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ `updateWorkout()` now UPDATEs parent row in place (TD-023 resolved). |
 
 ---
@@ -291,12 +320,15 @@ Areas to monitor as the app approaches later roadmap phases:
 |---------|--------------|--------------|
 | **In-progress workout persistence** | ✅ Persisted via `workoutPersistence.ts` (TD-021 resolved) | N/A |
 | **SQLite 999-param limit** | ✅ All IN() queries chunked via `batchGetAll()` (PP-037 resolved) | N/A |
-| Navigation structure (3 tabs + modals) | Adequate for current features | Phase 5 (Settings) may need nested stacks or drawer |
+| Navigation structure (3 tabs + modals) | Adequate for current features. Swipe navigation added. | Phase 5 (Settings) may need nested stacks or drawer |
 | SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
-| Service file boundaries | 13 services, `analyticsService` 755 lines, `calendarService` 741 lines | ML features (Phase 7), Widget framework (Phase 3) |
+| Service file boundaries | ✅ 15 services, all under 600 lines. `analyticsService` 462 + `exerciseAnalyticsService` 421 (TD-003). `calendarService` 542 + `personalRecordsService` 327 (TD-011). | ML features (Phase 7) |
 | Hydration layer | Single mapping file, 256 lines | Every new model field = hydration update needed — fragile |
-| Unit hardcoding (`lbs`) | **20 instances across 13 files** (TD-004 expanded) | Phase 5 (Settings) — kg/lbs toggle |
-| SQL formula duplication | **3 services with drifted copies** (TD-024) | Any formula change or new service |
+| Unit hardcoding (`lbs`) | **20+ instances across 15+ files** (TD-004 expanded) — widgets add 2 more (`BodyweightSparklineWidget`, `PinnedExerciseWidget`) | Phase 5 (Settings) — kg/lbs toggle |
+| SQL formula duplication | ✅ Resolved (TD-024) — `sqlFragments.ts` | — |
+| JS formatter duplication | ✅ Resolved (TD-028) — `formatCompactVolume` in `formatters.ts` | — |
+| Widget system type ownership | ✅ `WeightTrendIntent` in models (TD-026 resolved). `SparklinePoint` remains in widget (TD-029 latent). | Widget refactors |
+| Bodyweight intent derivation | ✅ Resolved (TD-027) — shared `deriveBodyweightIntent` in `goalHelpers.ts` | — |
 | Service→store coupling | ✅ Resolved — `workoutService`/`measurementService` decoupled (BH-024) | — |
 | Chart label logic | ✅ Resolved (TD-002) — shared via `chartLabels.tsx` | — |
 | Calendar component size | ✅ Resolved (TD-006) — 325 lines | — |
@@ -308,5 +340,5 @@ Areas to monitor as the app approaches later roadmap phases:
 ---
 
 ## Last Updated
-- Date: 2026-03-25
-- Session Context: Resolved TD-009 — moved cross-boundary types (Template, TemplateExercise, CalendarDayData, JournalEntry, PRSetIds) from service files to `src/models/`. Replaced unused design-time Template types with runtime ones. Created `src/models/calendar.ts`.
+- Date: 2026-03-28
+- Session Context: Resolved TD-003/011/025/026/027/028. Split both analytics + calendar monoliths. All services under 600-line guardrail. 0 active debt, 3 latent remain.

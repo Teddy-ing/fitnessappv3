@@ -46,7 +46,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     const loadConfig = useCallback(async () => {
         try {
             const settings = await getSettings();
-            if (settings.widgetConfig && settings.widgetConfig.length >= 0) {
+            if (settings.widgetConfig) {
                 setWidgets(settings.widgetConfig);
             }
         } catch (error) {

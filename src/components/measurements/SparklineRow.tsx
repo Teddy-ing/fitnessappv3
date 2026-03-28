@@ -18,6 +18,7 @@ import Svg, { Polyline, Defs, LinearGradient as SvgGradient, Stop } from 'react-
 
 import { colors, spacing, typography } from '../../theme';
 import type { MeasurementType } from '../../models';
+import type { WeightTrendIntent } from '../../models/widget';
 
 // ============================================================
 // Constants
@@ -97,14 +98,25 @@ export interface SparklineRowData {
 interface SparklineRowProps {
     row: SparklineRowData;
     onPress: () => void;
+    /** Controls whether up/down trend is colored green/red or neutral grey */
+    trendIntent?: WeightTrendIntent;
 }
 
-export default function SparklineRow({ row, onPress }: SparklineRowProps) {
-    const trendColor = row.dataPoints.length >= 2
-        ? row.dataPoints[row.dataPoints.length - 1] >= row.dataPoints[0]
-            ? colors.accent.success
-            : colors.accent.error
-        : colors.accent.primary;
+export default function SparklineRow({ row, onPress, trendIntent = 'neutral' }: SparklineRowProps) {
+    let trendColor = colors.accent.primary; // Default: neutral purple
+
+    if (row.dataPoints.length >= 2) {
+        const isUp = row.dataPoints[row.dataPoints.length - 1] >= row.dataPoints[0];
+
+        if (trendIntent === 'neutral') {
+            trendColor = colors.text.secondary; // Grey — no judgment
+        } else {
+            // bulk: up = good (green), down = bad (red)
+            // cut:  up = bad (red),   down = good (green)
+            const isGood = trendIntent === 'bulk' ? isUp : !isUp;
+            trendColor = isGood ? colors.accent.success : colors.accent.error;
+        }
+    }
 
     return (
         <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>

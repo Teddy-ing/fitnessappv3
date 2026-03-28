@@ -6,8 +6,8 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Phase 3A+3B (Widget Framework) complete
-- **Status:** Core features + analytics + calendar + measurements + goals + data import/export + full widget system (7 widget types) all implemented
+- **Phase:** Post-MVP Development — Phase 3A+3B (Widget Framework) complete + Bug Fix & QOL Pass + Tech Debt Remediation
+- **Status:** Core features + analytics + calendar + measurements + goals + data import/export + full widget system (7 widget types) all implemented. Bug fix pass + QOL improvements + service monolith refactoring done.
 - **Next Milestone:** Polish, testing, or new feature direction
 
 ---
@@ -67,6 +67,12 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Goals Feature — Auto-Progress + Celebration** (Phase 5: refreshAllGoalProgress hooked into saveWorkout/updateWorkout/logMeasurement, Zustand-based celebration toast overlay)
 - [x] **Goals Feature — Polish** (Phase 6: GoalDetailModal with progress circle/stats grid/timeline/projection, deadline warning badges)
 - [x] **Full-Project QA Audit** (Bug Hunter: 0 new bugs across 65+ files; Performance Profiler: 0 regressions across 8 checklist areas; Tech Debt Auditor: 1 active item found and resolved (TD-020), 6 latent items tracked, all 7 guardrails pass)
+- [x] **Profile & Settings Restructure** (Moved admin features to new SettingsScreen, replaced static stats on ProfileScreen with widget placeholders, cleaned WorkoutHomeView)
+- [x] **Widget System — Phase 3A** (Widget data model + v8 migration, WidgetGrid flexbox layout, 3 MVP widgets: Streak Badge, Weekly Wrap-Up, Bodyweight Sparkline, WidgetEditorModal with add/remove/reorder, ProfileScreen overhaul with 2×2 dashboard grid)
+- [x] **Widget System — Phase 3B** (4 advanced widgets: Goal Progress SVG ring, Muscle Balance bar chart, Workload/Readiness ACWR ratio, Pinned Exercise line chart, exercise picker with search + metric toggle in editor, all 7 catalog entries live)
+- [x] **Bug Fix & QOL Pass** (Settings navigation fix, GoalsScreen/WidgetEditorModal safe area clipping, swipe-to-navigate between tabs, keyboard unit labels, bodyweight trend intent coloring, widget deep-linking)
+- [x] **Tech Debt Remediation — Widget System** (TD-025: extracted ExercisePickerView from WidgetEditorModal 666→511 lines; TD-026: moved WeightTrendIntent to models; TD-027: shared deriveBodyweightIntent helper; TD-028: shared formatCompactVolume formatter)
+- [x] **Tech Debt Remediation — Service Monoliths** (TD-003: split analyticsService 851→462+421 lines into macro + exerciseAnalyticsService; TD-011: split calendarService 844→542+327 lines into calendar + personalRecordsService)
 
 ---
 
@@ -83,10 +89,12 @@ _No active work items._
 - Exercise list 3-layer navigation with filter pills
 - Profile screen serves as hub for Analytics, Calendar, Measurements, Goals
 
-### Phase 3: Widget Framework
-- Reusable widget system (add/remove/reorder on home screen)
-- Widgets are bite-sized capsules of profile page analytics
-- Core framework first, then populate with real data after analytics
+### ~~Phase 3: Widget Framework~~ ✅ COMPLETE
+- Reusable widget system with all 7 widget types implemented
+- Widgets: Streak Badge, Weekly Wrap-Up, Bodyweight Sparkline, Goal Progress, Muscle Balance, Workload/Readiness, Pinned Exercise
+- WidgetEditorModal with add/remove/reorder + exercise picker for pinned exercise
+- ProfileScreen overhauled with WidgetGrid + 2×2 dashboard grid
+- v8 migration for `widget_config` JSON column on `user_settings`
 
 ### ~~Phase 4: Profile Screen Visual Refactor + Analytics Screens~~ ✅ COMPLETE
 - Profile screen redesigned with analytics integration
@@ -128,11 +136,168 @@ _No active work items._
 - [ ] On-device ML approach (TensorFlow Lite vs custom simple stats)
 - [ ] Which AI provider for paid tier (cost optimization)
 - [ ] App name (to be decided later)
-- [ ] Widget framework choice (React Native widget libraries vs native modules)
+- [x] ~~Widget framework choice~~ → **Custom modular system: WidgetConfig model + WidgetGrid flexbox layout + per-widget components (no third-party widget library needed)**
 
 ---
 
 ## Session Log
+
+### 2026-03-28: Tech Debt Remediation — Widget System + Service Monoliths
+
+**Duration:** Single session
+**Focus:** Resolving 6 tech debt items across widget system type/DRY issues and two oversized service monoliths.
+
+**What was done:**
+
+- **TD-025 — WidgetEditorModal size guardrail:**
+  - Extracted inline exercise picker logic into `ExercisePickerView.tsx` (225 lines)
+  - `WidgetEditorModal.tsx` reduced from 666 → 511 lines (under 600-line guardrail)
+
+- **TD-026 — WeightTrendIntent type ownership:**
+  - Moved `WeightTrendIntent` type from `WidgetGrid.tsx` to canonical `src/models/widget.ts`
+  - Updated 4 consumer files
+
+- **TD-027 — DRY: bodyweight intent derivation:**
+  - Extracted duplicated logic into `src/utils/goalHelpers.ts` (`deriveBodyweightIntent`)
+  - Replaced inline copies in `WidgetGrid.tsx` and `TrendsTab.tsx`
+
+- **TD-028 — DRY: compact volume formatting:**
+  - Added `formatCompactVolume` to `src/utils/formatters.ts`
+  - Replaced local drift-prone implementation in `WorkloadReadinessWidget.tsx`
+
+- **TD-003 — analyticsService monolith split:**
+  - Created `exerciseAnalyticsService.ts` (421 lines) with 7 per-exercise queries
+  - `analyticsService.ts` reduced from 851 → 462 lines (macro analytics only)
+  - Updated barrel exports, 3 direct import sites, test file
+
+- **TD-011 — calendarService monolith split:**
+  - Created `personalRecordsService.ts` (327 lines) with 4 PR/fatigue functions
+  - `calendarService.ts` reduced from 844 → 542 lines (calendar/heatmap/journal only)
+  - Updated barrel exports, test file
+
+**Files created:**
+- `src/components/widgets/ExercisePickerView.tsx` — Extracted exercise picker sub-component
+- `src/utils/goalHelpers.ts` — Shared bodyweight intent derivation helper
+- `src/services/exerciseAnalyticsService.ts` — Per-exercise analytics queries
+- `src/services/personalRecordsService.ts` — PR tracking, backfill, and fatigue detection
+
+**Files modified:**
+- `src/components/widgets/WidgetEditorModal.tsx` — Extracted ExercisePickerView
+- `src/models/widget.ts` — Added WeightTrendIntent type
+- `src/utils/formatters.ts` — Added formatCompactVolume
+- `src/components/widgets/WidgetGrid.tsx` — Imported shared types/helpers
+- `src/components/measurements/TrendsTab.tsx` — Imported shared helpers
+- `src/components/measurements/SparklineRow.tsx` — Updated import
+- `src/components/widgets/BodyweightSparklineWidget.tsx` — Updated import
+- `src/components/widgets/WorkloadReadinessWidget.tsx` — Use formatCompactVolume
+- `src/services/analyticsService.ts` — Removed extracted functions + unused imports
+- `src/services/calendarService.ts` — Removed extracted functions + unused imports
+- `src/services/index.ts` — Split barrel exports across new services
+- `src/hooks/useExerciseAnalytics.ts` — Updated import path
+- `src/components/analytics/ExerciseListView.tsx` — Updated import path
+- `src/components/FatigueRatioBanner.tsx` — Updated import path
+- `src/services/__tests__/analyticsService.test.ts` — Split imports
+- `src/services/__tests__/calendarService.test.ts` — Split imports
+- `.agent/knowledge/qa/tech-debt-baseline.md` — 6 items resolved, 0 active / 3 latent remain
+
+**Verification:** TypeScript 0 errors. All services under 600-line guardrail.
+
+---
+
+### 2026-03-27/28: Bug Fix & QOL Pass
+
+**Duration:** Multi-session
+**Focus:** Targeted bug fixes and quality-of-life improvements across the app.
+
+**What was done:**
+
+- **Settings Navigation Fix:**
+  - Replaced two-step `navigateToTab` + `setTimeout` with atomic `navigationRef.navigate('Profile', { screen: 'Settings', initial: false })`
+  - `initial: false` ensures back button returns to the originating tab instead of ProfileHome
+
+- **Safe Area Clipping Fixes:**
+  - `GoalsScreen` — Replaced `SafeAreaView edges={['bottom']}` with `useSafeAreaInsets()` for dynamic FAB bottom offset and FlatList padding
+  - `WidgetEditorModal` — Added `useSafeAreaInsets()` bottom padding to the sheet container + switched from percentage-based to `Dimensions.get('window').height`-based sizing for reliable Android behavior
+
+- **Swipe-to-Navigate Between Tabs:**
+  - Created `SwipeableTabScreen` wrapper using `Gesture.Fling()` (react-native-gesture-handler) + `react-native-reanimated` slide animation
+  - Tab order: Assistant ↔ Workout ↔ Profile. Swiping during active workout is disabled
+  - Profile sub-screens (Analytics, Calendar, etc.) don't have swipe — only ProfileHome
+  - Uses `runOnJS` for proper worklet-to-JS-thread navigation
+
+- **Measurement Keyboard Unit Labels:**
+  - Added optional `unitLabel` prop to `WorkoutKeyboard` that overrides the default field-type-based label
+  - `MeasurementsScreen` now passes `field.type.unitImperial` (lbs, %, in) to the keyboard
+
+- **Bodyweight Trend Intent Coloring:**
+  - Added `WeightTrendIntent` type (`'bulk' | 'cut' | 'neutral'`) exported from `WidgetGrid`
+  - Derived from active bodyweight measurement goal: `targetValue > startingValue` = bulk, else cut
+  - `BodyweightSparklineWidget` — Delta badge is grey (neutral), green (on track), or red (off track)
+  - `SparklineRow` — Sparkline color follows the same intent logic for bodyweight rows
+  - Non-bodyweight measurement rows default to neutral (no opinion)
+
+- **Widget Deep-Linking:**
+  - Added optional params to `ProfileStackParamList`: `Analytics.initialTab`, `Measurements.initialTab` + `autoSelectTypeId`
+  - `AnalyticsScreen` reads `initialTab` param to auto-open Breakdown tab
+  - `MeasurementsScreen` reads `initialTab` + `autoSelectTypeId` to auto-open Trends tab with specific metric
+  - `TrendsTab` accepts `autoSelectTypeId` prop to auto-open detail chart
+  - Updated `WidgetGrid.getWidgetPressHandler`:
+    - Pinned Exercise → `ExerciseAnalytics` with `exerciseId`/`exerciseName`
+    - Bodyweight Sparkline → Measurements Trends with bodyweight auto-selected
+    - Muscle Pie → Analytics Breakdown tab
+
+**Files created:**
+- `src/components/SwipeableTabScreen.tsx` — Fling-to-navigate wrapper with slide animation
+
+**Files modified:**
+- `src/navigation/AppNavigator.tsx` — Swipe wrappers, ProfileStackParamList params
+- `src/screens/GoalsScreen.tsx` — Safe area insets for FAB and lists
+- `src/screens/MeasurementsScreen.tsx` — Route params + keyboard unit label
+- `src/screens/AnalyticsScreen.tsx` — Route params for initial tab
+- `src/screens/WorkoutScreen.tsx` — Atomic settings navigation
+- `src/components/WorkoutKeyboard.tsx` — Optional `unitLabel` prop
+- `src/components/widgets/WidgetEditorModal.tsx` — Safe area + Dimensions sizing
+- `src/components/widgets/WidgetGrid.tsx` — WeightTrendIntent, deep-link handlers
+- `src/components/widgets/BodyweightSparklineWidget.tsx` — Intent-based delta coloring
+- `src/components/measurements/SparklineRow.tsx` — Intent-based trend coloring
+- `src/components/measurements/TrendsTab.tsx` — Goal intent + autoSelectTypeId
+
+**Verification:** TypeScript 0 errors
+
+---
+
+### 2026-03-25/26: Widget System — Complete (Phases 3A + 3B)
+
+**Duration:** Multi-session
+**Focus:** Full modular widget system for the Profile screen dashboard.
+
+**What was done:**
+
+- **Phase 3A — Foundation + MVP Widgets:**
+  - `src/models/widget.ts` — `WidgetConfig`, `WidgetType`, `WidgetSize`, `WIDGET_CATALOG`, `DEFAULT_WIDGETS`
+  - v8 migration: `widget_config` JSON column on `user_settings` with default layout
+  - Updated `preferencesService.ts` — read/write/serialize `widgetConfig`
+  - `WidgetCard.tsx` — shared card wrapper with square/rectangle sizing
+  - `WidgetGrid.tsx` — flexbox grid orchestrator with data fetching and row layout logic
+  - 3 MVP widgets: `StreakBadgeWidget` (🔥 week streak), `WeeklyWrapUpWidget` (2×2 volume/sets/reps/time), `BodyweightSparklineWidget` (30-day trend line)
+  - `WidgetEditorModal.tsx` — add/remove/reorder with catalog picker (max 6 widgets)
+  - `ProfileScreen.tsx` overhaul — WidgetGrid replaces placeholder cards, "Your Data" converted to 2×2 tappable dashboard grid
+
+- **Phase 3B — Advanced Widgets:**
+  - `GoalProgressWidget` — SVG circular progress ring for top active goal
+  - `MuscleBalanceWidget` — horizontal bar chart of top 5 muscle groups with percentages
+  - `WorkloadReadinessWidget` — ACWR ratio with color-coded status badge (Light/Optimal/High)
+  - `PinnedExerciseWidget` — line chart for specific exercise 1RM or volume trend
+  - Exercise picker flow in editor: metric toggle (1RM/Volume) + searchable exercise list
+  - All 7 widget catalog entries set to `available: true`
+
+- **Bug fix:** Bottom sheet modal `minHeight` for Android visibility
+
+**Files created:** 11 new files (`widget.ts`, 7 widget components, `WidgetGrid.tsx`, `WidgetCard.tsx`, `WidgetEditorModal.tsx`)
+**Files modified:** `preferences.ts`, `preferencesService.ts`, `migrations.ts`, `ProfileScreen.tsx`, `models/index.ts`, `components/index.ts`
+**Tests:** 246/246 passing, TypeScript 0 errors
+
+---
 
 ### 2026-03-23: Measurements Feature — Complete (Phases 1–4)
 
@@ -623,8 +788,8 @@ _No active work items._
 ---
 
 ## Last Updated
-- Date: 2026-03-24
-- Session Context: Comprehensive full-project QA audit (Bug Hunter + Performance Profiler + Tech Debt Auditor) — all 3 passes clean. TD-020 found and fixed (DetailChartView extraction). Codebase is fully audited and production-ready.
+- Date: 2026-03-28
+- Session Context: Tech debt remediation — resolved TD-003/011/025/026/027/028. Split analyticsService (851→462+421) and calendarService (844→542+327) monoliths. All 15 services under 600-line guardrail. 0 active / 3 latent debt remain.
 
 ### 2026-03-16: Calendar Feature Development (Phase 1)
 

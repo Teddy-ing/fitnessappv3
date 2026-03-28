@@ -10,6 +10,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { colors, spacing, typography } from '../../theme';
+import type { WeightTrendIntent } from '../../models/widget';
 
 export interface SparklinePoint {
     date: string;
@@ -19,11 +20,30 @@ export interface SparklinePoint {
 interface BodyweightSparklineWidgetProps {
     data: SparklinePoint[];
     unit?: string;
+    /** Determines how delta coloring works: bulk=up is good, cut=down is good, neutral=grey */
+    trendIntent?: WeightTrendIntent;
+}
+
+// Helper: determine delta badge background style based on trend intent
+function getDeltaBadgeStyle(isPositive: boolean, intent: WeightTrendIntent) {
+    if (intent === 'neutral') return styles.deltaBadgeNeutral;
+    // Bulk: weight up = good, weight down = bad
+    // Cut:  weight up = bad,  weight down = good
+    const isGood = intent === 'bulk' ? isPositive : !isPositive;
+    return isGood ? styles.deltaBadgeGood : styles.deltaBadgeBad;
+}
+
+// Helper: determine delta text color style based on trend intent
+function getDeltaTextStyle(isPositive: boolean, intent: WeightTrendIntent) {
+    if (intent === 'neutral') return styles.deltaTextNeutral;
+    const isGood = intent === 'bulk' ? isPositive : !isPositive;
+    return isGood ? styles.deltaTextGood : styles.deltaTextBad;
 }
 
 export default function BodyweightSparklineWidget({
     data,
     unit = 'lbs',
+    trendIntent = 'neutral',
 }: BodyweightSparklineWidgetProps) {
     const chartData = useMemo(() => {
         return data.map((p) => ({ value: p.value }));
@@ -66,8 +86,8 @@ export default function BodyweightSparklineWidget({
             <View style={styles.header}>
                 <Text style={styles.title}>BODYWEIGHT</Text>
                 {delta !== null && (
-                    <View style={[styles.deltaBadge, isPositive ? styles.deltaBadgeUp : styles.deltaBadgeDown]}>
-                        <Text style={[styles.deltaText, isPositive ? styles.deltaTextUp : styles.deltaTextDown]}>
+                    <View style={[styles.deltaBadge, getDeltaBadgeStyle(isPositive, trendIntent)]}>
+                        <Text style={[styles.deltaText, getDeltaTextStyle(isPositive, trendIntent)]}>
                             {isPositive ? '+' : ''}{delta.toFixed(1)} {unit}
                         </Text>
                     </View>
@@ -141,21 +161,28 @@ const styles = StyleSheet.create({
         paddingVertical: 2,
         borderRadius: 10,
     },
-    deltaBadgeUp: {
+    // Delta badge background colors
+    deltaBadgeGood: {
+        backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    },
+    deltaBadgeBad: {
         backgroundColor: 'rgba(239, 68, 68, 0.15)',
     },
-    deltaBadgeDown: {
-        backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    deltaBadgeNeutral: {
+        backgroundColor: 'rgba(156, 163, 175, 0.15)',
     },
     deltaText: {
         fontSize: typography.size.xs,
         fontWeight: typography.weight.semibold,
     },
-    deltaTextUp: {
+    deltaTextGood: {
+        color: '#22c55e',
+    },
+    deltaTextBad: {
         color: '#ef4444',
     },
-    deltaTextDown: {
-        color: '#22c55e',
+    deltaTextNeutral: {
+        color: colors.text.secondary,
     },
     chartContainer: {
         marginHorizontal: -spacing.xs,

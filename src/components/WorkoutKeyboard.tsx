@@ -34,6 +34,8 @@ interface WorkoutKeyboardProps {
     currentValue: string;
     fieldType: KeyboardFieldType;
     fieldLabel: string;
+    /** Override the default unit label (e.g. '%', 'in' instead of 'lbs') */
+    unitLabel?: string;
     onKeyPress: (key: string) => void;
     onBackspace: () => void;
     onClear: () => void;
@@ -47,6 +49,7 @@ export default function WorkoutKeyboard({
     currentValue,
     fieldType,
     fieldLabel,
+    unitLabel: unitLabelOverride,
     onKeyPress,
     onBackspace,
     onClear,
@@ -100,8 +103,9 @@ export default function WorkoutKeyboard({
         return null;
     }
 
-    // Get unit label
+    // Get unit label — use override if provided, otherwise derive from field type
     const getUnitLabel = () => {
+        if (unitLabelOverride !== undefined) return unitLabelOverride;
         switch (fieldType) {
             case 'weight': return 'lbs';
             case 'reps': return 'reps';

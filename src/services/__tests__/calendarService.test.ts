@@ -11,12 +11,14 @@ import {
     getRestDaysThisWeek,
     getWorkoutDetail,
     getWorkoutsForDate,
-    getPersonalRecordDates,
     getNoteDates,
-    backfillPersonalRecords,
     searchNotes,
-    getFatigueDates,
 } from '../calendarService';
+import {
+    getPersonalRecordDates,
+    backfillPersonalRecords,
+    getFatigueDates,
+} from '../personalRecordsService';
 
 // ============================================================
 // Mock database

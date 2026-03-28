@@ -70,6 +70,8 @@ export {
     getAggregatedMetric,
     getConsistencyStats,
     getMuscleDistribution,
+} from './analyticsService';
+export {
     getPerformedExercises,
     getEstimated1RM,
     getMaxWeight,
@@ -77,7 +79,7 @@ export {
     getMaxReps,
     getBestWeightForReps,
     getFatigueRatio,
-} from './analyticsService';
+} from './exerciseAnalyticsService';
 export { generateMockData } from './mockDataService';
 export {
     getWorkoutsForMonth,
@@ -85,16 +87,18 @@ export {
     getRestDaysThisWeek,
     getWorkoutDetail,
     getWorkoutsForDate,
-    getPersonalRecordDates,
     getNoteDates,
-    backfillPersonalRecords,
     searchNotes,
-    getFatigueDates,
-    getPRSetIdsForDate,
     type CalendarDayData,
     type JournalEntry,
-    type PRSetIds,
 } from './calendarService';
+export {
+    getPersonalRecordDates,
+    backfillPersonalRecords,
+    getFatigueDates,
+    getPRSetIdsForDate,
+    type PRSetIds,
+} from './personalRecordsService';
 export {
     getMeasurementTypes,
     getVisibleMeasurementTypes,

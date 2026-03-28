@@ -23,6 +23,8 @@ import {
     Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 
 import { colors } from '../theme';
 import { WorkoutKeyboard } from '../components';
@@ -42,6 +44,7 @@ import SegmentedControl from '../components/measurements/SegmentedControl';
 import TrackTab, { MeasurementField, getTodayStr } from '../components/measurements/TrackTab';
 import TrendsTab from '../components/measurements/TrendsTab';
 import GalleryTab from '../components/measurements/GalleryTab';
+import type { ProfileStackParamList } from '../navigation/AppNavigator';
 
 // ============================================================
 // Constants
@@ -60,7 +63,10 @@ const TABS: { id: TabId; label: string }[] = [
 // ============================================================
 
 export default function MeasurementsScreen() {
-    const [activeTab, setActiveTab] = useState<TabId>('track');
+    const route = useRoute<RouteProp<ProfileStackParamList, 'Measurements'>>();
+    const [activeTab, setActiveTab] = useState<TabId>(
+        route.params?.initialTab ?? 'track',
+    );
 
     // Track tab state
     const [date, setDate] = useState(getTodayStr);
@@ -238,10 +244,14 @@ export default function MeasurementsScreen() {
     // --------------------------------------------------------
 
     const getFieldType = () => {
-        if (focusedIndex === null || !fields[focusedIndex]) return 'weight' as const;
+        // All measurement fields are decimal-capable (weight, body fat %, etc.)
+        return 'weight' as const;
+    };
+
+    const getFieldUnit = () => {
+        if (focusedIndex === null || !fields[focusedIndex]) return 'lbs';
         const field = fields[focusedIndex];
-        // Body Fat % → percentage, everything else → weight-like decimal
-        return field.type.unitImperial === '%' ? 'weight' as const : 'weight' as const;
+        return field.type.unitImperial || 'lbs';
     };
 
     const getFieldLabel = () => {
@@ -281,7 +291,7 @@ export default function MeasurementsScreen() {
                         onToggleVisibility={handleToggleVisibility}
                     />
                 )}
-                {activeTab === 'trends' && <TrendsTab />}
+                {activeTab === 'trends' && <TrendsTab autoSelectTypeId={route.params?.autoSelectTypeId} />}
                 {activeTab === 'gallery' && <GalleryTab />}
             </View>
 
@@ -291,6 +301,7 @@ export default function MeasurementsScreen() {
                 currentValue={keyboardValue}
                 fieldType={getFieldType()}
                 fieldLabel={getFieldLabel()}
+                unitLabel={getFieldUnit()}
                 onKeyPress={handleKeyPress}
                 onBackspace={handleBackspace}
                 onClear={handleClear}

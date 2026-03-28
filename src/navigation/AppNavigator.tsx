@@ -21,7 +21,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme';
 import { useWorkoutStore } from '../stores';
 import { ErrorBoundary } from '../components';
-import { navigationRef } from './navigationRef';
+import { navigationRef, navigateToTab } from './navigationRef';
+import SwipeableTabScreen from '../components/SwipeableTabScreen';
 
 // Screen imports
 import WorkoutScreen from '../screens/WorkoutScreen';
@@ -34,17 +35,40 @@ import MeasurementsScreen from '../screens/MeasurementsScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
-// Wrap each screen in its own error boundary so one tab crashing
-// doesn't take down the other tabs
-const WorkoutScreenWithBoundary = () => (
-    <ErrorBoundary fallback="screen" label="WorkoutScreen">
-        <WorkoutScreen />
-    </ErrorBoundary>
-);
+// Wrap each screen in its own error boundary + swipe navigation
+// Tab order: Assistant (left) → Workout (center) → Profile (right)
+const WorkoutScreenWithBoundary = () => {
+    // Disable swipe navigation during an active workout
+    const hasActiveWorkout = useWorkoutStore(s => !!s.activeWorkout);
+    return (
+        <SwipeableTabScreen
+            onSwipeRight={hasActiveWorkout ? undefined : () => navigateToTab('Assistant')}
+            onSwipeLeft={hasActiveWorkout ? undefined : () => navigateToTab('Profile')}
+        >
+            <ErrorBoundary fallback="screen" label="WorkoutScreen">
+                <WorkoutScreen />
+            </ErrorBoundary>
+        </SwipeableTabScreen>
+    );
+};
 const AssistantScreenWithBoundary = () => (
-    <ErrorBoundary fallback="screen" label="AssistantScreen">
-        <AssistantScreen />
-    </ErrorBoundary>
+    <SwipeableTabScreen
+        onSwipeLeft={() => navigateToTab('Workout')}
+    >
+        <ErrorBoundary fallback="screen" label="AssistantScreen">
+            <AssistantScreen />
+        </ErrorBoundary>
+    </SwipeableTabScreen>
+);
+
+// Profile uses a stack navigator — only enable swipe on the home screen
+// Sub-screens (Analytics, Calendar, etc.) should not swipe to change tabs
+const ProfileSwipeWrapper = ({ children }: { children: React.ReactNode }) => (
+    <SwipeableTabScreen
+        onSwipeRight={() => navigateToTab('Workout')}
+    >
+        {children}
+    </SwipeableTabScreen>
 );
 
 // ============================================================
@@ -53,10 +77,10 @@ const AssistantScreenWithBoundary = () => (
 
 export type ProfileStackParamList = {
     ProfileHome: undefined;
-    Analytics: undefined;
+    Analytics: { initialTab?: 'workouts' | 'breakdown' | 'exercises' } | undefined;
     ExerciseAnalytics: { exerciseId: string; exerciseName: string };
     Calendar: undefined;
-    Measurements: undefined;
+    Measurements: { initialTab?: 'track' | 'trends' | 'gallery'; autoSelectTypeId?: string } | undefined;
     Goals: undefined;
     Settings: undefined;
 };
@@ -99,6 +123,12 @@ const SettingsScreenWithBoundary = () => (
     </ErrorBoundary>
 );
 
+const ProfileHomeWithSwipe = ({ navigation }: { navigation: any }) => (
+    <ProfileSwipeWrapper>
+        <ProfileScreen navigation={navigation} />
+    </ProfileSwipeWrapper>
+);
+
 function ProfileStackNavigator() {
     return (
         <ErrorBoundary fallback="screen" label="ProfileStack">
@@ -120,7 +150,7 @@ function ProfileStackNavigator() {
             >
                 <ProfileStack.Screen
                     name="ProfileHome"
-                    component={ProfileScreen}
+                    component={ProfileHomeWithSwipe}
                     options={{ headerShown: false }}
                 />
                 <ProfileStack.Screen

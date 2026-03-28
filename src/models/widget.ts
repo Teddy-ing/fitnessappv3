@@ -38,6 +38,13 @@ export interface WidgetConfig {
     metric?: string;
 }
 
+/** Weight trend intent derived from the user's active bodyweight goal.
+ *  - 'bulk': target > starting → weight up is good
+ *  - 'cut': target < starting → weight down is good
+ *  - 'neutral': no bodyweight goal → grey, no judgment
+ */
+export type WeightTrendIntent = 'bulk' | 'cut' | 'neutral';
+
 // ============================================================
 // Widget catalog (metadata for editor picker)
 // ============================================================

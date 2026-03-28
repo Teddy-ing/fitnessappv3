@@ -19,7 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, typography, borderRadius } from '../../theme';
-import { WidgetConfig } from '../../models/widget';
+import { WidgetConfig, WeightTrendIntent } from '../../models/widget';
 import { Goal } from '../../models/goal';
 import { MuscleDistributionPoint, FatigueRatioResult, ExerciseTimeSeriesPoint } from '../../models/analytics';
 import { ProfileStackParamList } from '../../navigation/AppNavigator';
@@ -33,6 +33,7 @@ import {
     getEstimated1RM,
     getExerciseVolume,
 } from '../../services';
+import { deriveBodyweightIntent } from '../../utils/goalHelpers';
 
 import WidgetCard from './WidgetCard';
 import StreakBadgeWidget from './StreakBadgeWidget';
@@ -52,10 +53,14 @@ interface WidgetGridProps {
     onEditPress: () => void;
 }
 
+// Re-export for consumers that haven't migrated to importing from models
+export type { WeightTrendIntent } from '../../models/widget';
+
 interface WidgetData {
     streak: number;
     weeklyData: WeeklyData;
     bodyweightData: SparklinePoint[];
+    bodyweightIntent: WeightTrendIntent;
     topGoal: Goal | null;
     muscleDistribution: MuscleDistributionPoint[];
     fatigueRatio: FatigueRatioResult;
@@ -112,6 +117,9 @@ async function fetchWidgetData(widgets: WidgetConfig[]): Promise<WidgetData> {
         pinnedExerciseData.set(w.id, pinnedResults[i] as ExerciseTimeSeriesPoint[]);
     });
 
+    // Derive bodyweight goal intent (TD-027: shared helper)
+    const bodyweightIntent = deriveBodyweightIntent(activeGoals);
+
     return {
         streak,
         weeklyData: {
@@ -121,6 +129,7 @@ async function fetchWidgetData(widgets: WidgetConfig[]): Promise<WidgetData> {
             duration: lastDuration,
         },
         bodyweightData,
+        bodyweightIntent,
         topGoal: activeGoals.length > 0 ? activeGoals[0] : null,
         muscleDistribution,
         fatigueRatio,
@@ -138,6 +147,7 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
         streak: 0,
         weeklyData: { volume: 0, sets: 0, reps: 0, duration: 0 },
         bodyweightData: [],
+        bodyweightIntent: 'neutral',
         topGoal: null,
         muscleDistribution: [],
         fatigueRatio: { acute: 0, chronic: 0, ratio: 0, status: 'normal' },
@@ -201,7 +211,7 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
                 case 'weekly_wrapup':
                     return <WeeklyWrapUpWidget data={data.weeklyData} />;
                 case 'bodyweight_sparkline':
-                    return <BodyweightSparklineWidget data={data.bodyweightData} />;
+                    return <BodyweightSparklineWidget data={data.bodyweightData} trendIntent={data.bodyweightIntent} />;
                 case 'goal_progress':
                     return <GoalProgressWidget goal={data.topGoal} />;
                 case 'muscle_pie':
@@ -227,22 +237,32 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
         [data],
     );
 
-    // Get tap handler for a widget type
+    // Get tap handler for a widget type — deep-link to specific content
     const getWidgetPressHandler = useCallback(
         (config: WidgetConfig) => {
             switch (config.type) {
                 case 'streak_badge':
                     return () => navigation.navigate('Calendar');
                 case 'weekly_wrapup':
-                case 'muscle_pie':
                 case 'workload_readiness':
                     return () => navigation.navigate('Analytics');
+                case 'muscle_pie':
+                    return () => navigation.navigate('Analytics', { initialTab: 'breakdown' });
                 case 'bodyweight_sparkline':
-                    return () => navigation.navigate('Measurements');
+                    return () => navigation.navigate('Measurements', {
+                        initialTab: 'trends',
+                        autoSelectTypeId: 'bodyweight',
+                    });
                 case 'goal_progress':
                     return () => navigation.navigate('Goals');
                 case 'pinned_exercise':
-                    return () => navigation.navigate('Analytics');
+                    if (config.exerciseId && config.exerciseName) {
+                        return () => navigation.navigate('ExerciseAnalytics', {
+                            exerciseId: config.exerciseId!,
+                            exerciseName: config.exerciseName!,
+                        });
+                    }
+                    return () => navigation.navigate('Analytics', { initialTab: 'exercises' });
                 default:
                     return undefined;
             }

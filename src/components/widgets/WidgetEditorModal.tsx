@@ -14,14 +14,15 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
+    Dimensions,
     Text,
     StyleSheet,
     Modal,
     TouchableOpacity,
     ScrollView,
     Alert,
-    TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Crypto from 'expo-crypto';
 
@@ -32,8 +33,9 @@ import {
     WIDGET_CATALOG,
     MAX_WIDGETS,
 } from '../../models/widget';
-import { updateSettings, getPerformedExercises } from '../../services';
+import { updateSettings } from '../../services';
 import { PerformedExercise } from '../../models/analytics';
+import ExercisePickerView from './ExercisePickerView';
 
 // ============================================================
 // Types
@@ -56,18 +58,17 @@ export default function WidgetEditorModal({
     widgets,
     onWidgetsChange,
 }: WidgetEditorModalProps) {
+    const insets = useSafeAreaInsets();
     const [showCatalog, setShowCatalog] = useState(false);
     const [showExercisePicker, setShowExercisePicker] = useState(false);
-    const [exercises, setExercises] = useState<PerformedExercise[]>([]);
-    const [exerciseSearch, setExerciseSearch] = useState('');
-    const [selectedMetric, setSelectedMetric] = useState<'1rm' | 'volume'>('1rm');
 
-    // Load performed exercises when picker opens
+    // BH-030 fix: Reset internal state when modal is hidden externally
     useEffect(() => {
-        if (showExercisePicker) {
-            getPerformedExercises('ALL').then(setExercises).catch(() => setExercises([]));
+        if (!visible) {
+            setShowCatalog(false);
+            setShowExercisePicker(false);
         }
-    }, [showExercisePicker]);
+    }, [visible]);
 
     // Get catalog entries that can still be added
     const availableEntries = WIDGET_CATALOG.filter((entry) => {
@@ -146,8 +147,8 @@ export default function WidgetEditorModal({
         [widgets, saveConfig],
     );
 
-    const handleAddPinnedExercise = useCallback(
-        (exercise: PerformedExercise) => {
+    const handleExerciseSelected = useCallback(
+        (exercise: PerformedExercise, metric: '1rm' | 'volume') => {
             if (widgets.length >= MAX_WIDGETS) {
                 Alert.alert('Limit Reached', `You can have a maximum of ${MAX_WIDGETS} widgets.`);
                 return;
@@ -159,22 +160,20 @@ export default function WidgetEditorModal({
                 size: 'rectangle',
                 exerciseId: exercise.exerciseId,
                 exerciseName: exercise.exerciseName,
-                metric: selectedMetric,
+                metric,
             };
 
             const updated = [...widgets, newWidget];
             saveConfig(updated);
             setShowExercisePicker(false);
             setShowCatalog(false);
-            setExerciseSearch('');
         },
-        [widgets, saveConfig, selectedMetric],
+        [widgets, saveConfig],
     );
 
     const handleClose = useCallback(() => {
         setShowCatalog(false);
         setShowExercisePicker(false);
-        setExerciseSearch('');
         onClose();
     }, [onClose]);
 
@@ -199,7 +198,7 @@ export default function WidgetEditorModal({
             onRequestClose={handleClose}
         >
             <View style={styles.overlay}>
-                <View style={styles.sheet}>
+                <View style={[styles.sheet, { paddingBottom: insets.bottom }]}>
                     {/* Header */}
                     <View style={styles.header}>
                         <Text style={styles.headerTitle}>
@@ -216,86 +215,17 @@ export default function WidgetEditorModal({
 
                     <ScrollView
                         style={styles.scrollView}
-                        contentContainerStyle={styles.scrollContent}
+                        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.xxl + insets.bottom }]}
                         showsVerticalScrollIndicator={false}
                     >
                         {showExercisePicker ? (
                             // -------- Exercise Picker View --------
-                            <>
-                                {/* Metric toggle */}
-                                <View style={styles.metricToggle}>
-                                    <TouchableOpacity
-                                        style={[styles.metricButton, selectedMetric === '1rm' && styles.metricButtonActive]}
-                                        onPress={() => setSelectedMetric('1rm')}
-                                    >
-                                        <Text style={[styles.metricButtonText, selectedMetric === '1rm' && styles.metricButtonTextActive]}>
-                                            Est. 1RM
-                                        </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.metricButton, selectedMetric === 'volume' && styles.metricButtonActive]}
-                                        onPress={() => setSelectedMetric('volume')}
-                                    >
-                                        <Text style={[styles.metricButtonText, selectedMetric === 'volume' && styles.metricButtonTextActive]}>
-                                            Volume
-                                        </Text>
-                                    </TouchableOpacity>
-                                </View>
-
-                                {/* Search */}
-                                <View style={styles.searchContainer}>
-                                    <MaterialIcons name="search" size={18} color={colors.text.disabled} />
-                                    <TextInput
-                                        style={styles.searchInput}
-                                        placeholder="Search exercises..."
-                                        placeholderTextColor={colors.text.disabled}
-                                        value={exerciseSearch}
-                                        onChangeText={setExerciseSearch}
-                                        autoCapitalize="none"
-                                    />
-                                    {exerciseSearch.length > 0 && (
-                                        <TouchableOpacity onPress={() => setExerciseSearch('')}>
-                                            <MaterialIcons name="close" size={16} color={colors.text.disabled} />
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-
-                                {/* Exercise list */}
-                                {exercises
-                                    .filter((e) =>
-                                        exerciseSearch.length === 0 ||
-                                        e.exerciseName.toLowerCase().includes(exerciseSearch.toLowerCase()),
-                                    )
-                                    .slice(0, 20)
-                                    .map((exercise) => (
-                                        <TouchableOpacity
-                                            key={exercise.exerciseId}
-                                            style={styles.exerciseItem}
-                                            onPress={() => handleAddPinnedExercise(exercise)}
-                                            activeOpacity={0.7}
-                                        >
-                                            <View style={styles.exerciseInfo}>
-                                                <Text style={styles.exerciseName}>{exercise.exerciseName}</Text>
-                                                {exercise.primaryMuscle && (
-                                                    <Text style={styles.exerciseMuscle}>{exercise.primaryMuscle}</Text>
-                                                )}
-                                            </View>
-                                            <Text style={styles.exerciseSessions}>{exercise.totalSessions} sessions</Text>
-                                        </TouchableOpacity>
-                                    ))}
-
-                                <TouchableOpacity
-                                    style={styles.backButton}
-                                    onPress={() => {
-                                        setShowExercisePicker(false);
-                                        setExerciseSearch('');
-                                    }}
-                                    activeOpacity={0.7}
-                                >
-                                    <MaterialIcons name="arrow-back" size={18} color={colors.text.secondary} />
-                                    <Text style={styles.backButtonText}>Back to catalog</Text>
-                                </TouchableOpacity>
-                            </>
+                            <ExercisePickerView
+                                onSelect={handleExerciseSelected}
+                                onBack={() => {
+                                    setShowExercisePicker(false);
+                                }}
+                            />
                         ) : showCatalog ? (
                             // -------- Catalog View --------
                             <>
@@ -426,7 +356,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background.primary,
         borderTopLeftRadius: borderRadius['2xl'],
         borderTopRightRadius: borderRadius['2xl'],
-        maxHeight: '75%',
+        minHeight: Dimensions.get('window').height * 0.8,
+        maxHeight: Dimensions.get('window').height * 0.85,
     },
     header: {
         flexDirection: 'row',
@@ -562,7 +493,7 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.medium,
     },
 
-    // Back button
+    // Back button (used by catalog view)
     backButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -574,79 +505,6 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         color: colors.text.secondary,
         marginLeft: spacing.xs,
-    },
-
-    // Exercise picker — metric toggle
-    metricToggle: {
-        flexDirection: 'row',
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.md,
-        marginBottom: spacing.md,
-        padding: 3,
-    },
-    metricButton: {
-        flex: 1,
-        paddingVertical: spacing.sm,
-        alignItems: 'center',
-        borderRadius: borderRadius.sm,
-    },
-    metricButtonActive: {
-        backgroundColor: colors.accent.primary,
-    },
-    metricButtonText: {
-        fontSize: typography.size.sm,
-        fontWeight: typography.weight.medium,
-        color: colors.text.secondary,
-    },
-    metricButtonTextActive: {
-        color: '#fff',
-    },
-
-    // Exercise picker — search
-    searchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.md,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        marginBottom: spacing.md,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: typography.size.sm,
-        color: colors.text.primary,
-        marginLeft: spacing.sm,
-        paddingVertical: 0,
-    },
-
-    // Exercise picker — list items
-    exerciseItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.md,
-        padding: spacing.md,
-        marginBottom: spacing.xs,
-    },
-    exerciseInfo: {
-        flex: 1,
-        marginRight: spacing.sm,
-    },
-    exerciseName: {
-        fontSize: typography.size.md,
-        fontWeight: typography.weight.medium,
-        color: colors.text.primary,
-    },
-    exerciseMuscle: {
-        fontSize: typography.size.xs,
-        color: colors.text.secondary,
-        marginTop: 2,
-    },
-    exerciseSessions: {
-        fontSize: typography.size.xs,
-        color: colors.text.disabled,
     },
 });
 

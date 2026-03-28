@@ -24,7 +24,7 @@ import {
     Alert,
     Text,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -75,6 +75,7 @@ const METRIC_LABELS: Record<GoalType, string> = {
 // ============================================================
 
 export default function GoalsScreen() {
+    const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState<TabId>('active');
     const [activeGoals, setActiveGoals] = useState<Goal[]>([]);
     const [completedGoals, setCompletedGoals] = useState<Goal[]>([]);
@@ -286,7 +287,7 @@ export default function GoalsScreen() {
     // --------------------------------------------------------
 
     return (
-        <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.container}>
             <SegmentedControl
                 tabs={TABS}
                 activeTab={activeTab}
@@ -305,7 +306,7 @@ export default function GoalsScreen() {
                             data={activeGoals}
                             keyExtractor={(item) => item.id}
                             renderItem={renderActiveGoal}
-                            contentContainerStyle={styles.listContent}
+                            contentContainerStyle={[styles.listContent, { paddingBottom: 80 + insets.bottom }]}
                             showsVerticalScrollIndicator={false}
                         />
                     )
@@ -324,7 +325,7 @@ export default function GoalsScreen() {
                             data={completedGoals}
                             keyExtractor={(item) => item.id}
                             renderItem={renderCompletedGoal}
-                            contentContainerStyle={styles.listContent}
+                            contentContainerStyle={[styles.listContent, { paddingBottom: 80 + insets.bottom }]}
                             showsVerticalScrollIndicator={false}
                         />
                     )
@@ -341,7 +342,7 @@ export default function GoalsScreen() {
 
             {/* FAB — opens creation flow */}
             <TouchableOpacity
-                style={styles.fab}
+                style={[styles.fab, { bottom: 24 + insets.bottom }]}
                 activeOpacity={0.85}
                 onPress={() => setShowCreation(true)}
             >
@@ -371,7 +372,7 @@ export default function GoalsScreen() {
                 displayInfo={detailGoal ? displayInfoMap.get(detailGoal.id) ?? defaultInfo : null}
                 onClose={() => setDetailGoal(null)}
             />
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -389,7 +390,6 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: spacing.md,
-        paddingBottom: 80, // Space for FAB
     },
 
     // Trophy empty state (kept inline — only 5 lines of JSX)
@@ -419,7 +419,6 @@ const styles = StyleSheet.create({
     // FAB
     fab: {
         position: 'absolute',
-        bottom: 24,
         right: 24,
         width: 56,
         height: 56,

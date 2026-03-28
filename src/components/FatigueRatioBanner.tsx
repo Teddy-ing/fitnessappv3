@@ -10,7 +10,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
-import { getFatigueRatio } from '../services/analyticsService';
+import { getFatigueRatio } from '../services/exerciseAnalyticsService';
 import { FatigueRatioResult, FatigueStatus } from '../models/analytics';
 
 // Status display config

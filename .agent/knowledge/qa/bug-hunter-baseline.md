@@ -6,9 +6,9 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ## Summary
 
-- **Last full pass:** 2026-03-24 (comprehensive full-project scan — 65+ files)
+- **Last full pass:** 2026-03-28 (Widget System + Bug Fix & QOL pass — 21 files)
 - **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
-- **Fixed since baseline:** 24
+- **Fixed since baseline:** 29
 
 ---
 
@@ -58,10 +58,49 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 | `loadGoals` callback defined with empty deps | `GoalsScreen.tsx:119-134` | `loadGoals` is defined with `useCallback([], [])`. It's called from `useEffect` on mount and as `onCreated` callback. Since it doesn't read any state from the component, empty deps are correct. |
 | `GoalCreationModal` prefill `useEffect` missing `prefillData` in deps | `GoalCreationModal.tsx:73-81` | The `useEffect` watches `[visible]` but not `prefillData`. This is intentional — `prefillData` is set before `visible` is toggled to `true`, so the effect always sees the current value. Adding `prefillData` would cause double-fire when both change in the same render cycle. |
 | `contextGoal` stale in `Alert.alert` callback | `GoalsScreen.tsx:201-263` | `contextGoal` is captured in the `onPress` closure inside `Alert.alert`. Since `setContextGoal(null)` is called at line 263 *after* the switch, and the Alert callbacks fire asynchronously (user must tap), the captured `contextGoal` is still valid at the time the user taps. Not a bug. |
+| `WidgetGrid` `useCallback([widgets])` for `loadData` | `WidgetGrid.tsx:167-176` | `widgets` array reference changes on add/remove/reorder. Data refreshes happen on mount via `isFocused` in parent. Acceptable. |
+| `PinnedExerciseWidget` always assumes positive = good (green) | `PinnedExerciseWidget.tsx:75` | For exercise metrics (1RM, volume), increasing is always desirable. No "cut" analogue for bench press. Correct behavior. |
+| `BodyweightSparklineWidget` hardcodes `unit = 'lbs'` default | `BodyweightSparklineWidget.tsx:46` | Fallback default; parent should pass correct unit. Minor UX issue for kg users, not a runtime bug. |
+| `SwipeableTabScreen` fling gesture during vertical scroll | `SwipeableTabScreen.tsx:67-96` | `Gesture.Fling()` requires fast directional swipe; `Gesture.Race()` means first gesture wins. Standard RNGH pattern — no conflict with vertical scrolls. |
 
 ---
 
 ## Resolved
+
+#### BH-030 · `WidgetEditorModal` internal state not reset on external visibility toggle — **RESOLVED 2026-03-28**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [WidgetEditorModal.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/widgets/WidgetEditorModal.tsx)
+- **Root cause:** Internal state (`showCatalog`, `showExercisePicker`, `exerciseSearch`) persisted when `visible` was toggled externally without `handleClose`.
+- **Fix applied:** Added `useEffect` that resets internal state when `visible` transitions to `false`.
+
+#### BH-029 · `ProfileScreen.loadConfig` uses always-true `>= 0` length check — **RESOLVED 2026-03-28**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [ProfileScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ProfileScreen.tsx)
+- **Root cause:** `settings.widgetConfig.length >= 0` always true for any array. Misleading guard.
+- **Fix applied:** Simplified to `if (settings.widgetConfig)` — clearer intent.
+
+#### BH-027 · `SwipeableTabScreen` `useEffect` missing shared values in deps — **RESOLVED 2026-03-28**
+- **Severity:** Low
+- **Original status:** 🔴 Confirmed
+- **File:** [SwipeableTabScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SwipeableTabScreen.tsx)
+- **Root cause:** `useEffect` referenced `translateX` and `opacity` but only had `[isFocused]` in deps.
+- **Fix applied:** Added `translateX` and `opacity` to the dependency array.
+
+#### BH-026 · `TrendsTab.loadSparklines` stale `autoSelectTypeId` — **RESOLVED 2026-03-28**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [TrendsTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/TrendsTab.tsx)
+- **Root cause:** `loadSparklines` memoized with empty deps; `autoSelectTypeId` captured from first render.
+- **Fix applied:** Added `autoSelectTypeId` to `useCallback` dependency array.
+
+#### BH-025 · `GoalProgressWidget` progress calculation wrong for regression — **RESOLVED 2026-03-28**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [GoalProgressWidget.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/widgets/GoalProgressWidget.tsx)
+- **Root cause:** `Math.abs(current - starting)` erased direction, showing false progress when user regressed past starting value.
+- **Fix applied:** Replaced with directional formula `(current - starting) / (target - starting)` clamped to [0, 1]. Works for both gain and loss goals.
 
 #### BH-024 · Fire-and-forget `refreshAllGoalProgress()` + service→store coupling — **RESOLVED 2026-03-24**
 - **Severity:** High
@@ -246,5 +285,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-03-24
-- Session Context: Resolved BH-023 (added status filter to 6 goalProgressService SQL queries) and BH-024 (decoupled service→store pattern, moved celebration to callers, properly awaited refresh).
+- Date: 2026-03-28
+- Session Context: Fixed BH-025 (GoalProgressWidget directional formula), BH-026 (TrendsTab stale deps), BH-027 (SwipeableTabScreen deps), BH-029 (ProfileScreen guard), BH-030 (WidgetEditorModal reset). BH-028 (WidgetGrid fetch optimization) deferred as perf-only.

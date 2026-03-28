@@ -14,7 +14,7 @@ import {
     getExerciseVolume,
     getMaxReps,
     getBestWeightForReps,
-} from '../services/analyticsService';
+} from '../services/exerciseAnalyticsService';
 import {
     ChartRange,
     ExerciseTimeSeriesPoint,

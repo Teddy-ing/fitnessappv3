@@ -10,6 +10,8 @@ import {
     getDateRangeStart,
     getConsistencyStats,
     getMuscleDistribution,
+} from '../analyticsService';
+import {
     getPerformedExercises,
     getEstimated1RM,
     getMaxWeight,
@@ -17,7 +19,7 @@ import {
     getMaxReps,
     getBestWeightForReps,
     getFatigueRatio,
-} from '../analyticsService';
+} from '../exerciseAnalyticsService';
 
 // ============================================================
 // Mock database

@@ -23,9 +23,12 @@ import { colors, spacing, typography } from '../../theme';
 import {
     getSparklineDataBatch,
     getVisibleMeasurementTypes,
+    getActiveGoals,
 } from '../../services';
 import { getSettings } from '../../services/preferencesService';
 import type { MeasurementType } from '../../models';
+import type { WeightTrendIntent } from '../../models/widget';
+import { deriveBodyweightIntent } from '../../utils/goalHelpers';
 
 import SparklineRow, { SparklineRowData } from './SparklineRow';
 import DetailChartView from './DetailChartView';
@@ -34,11 +37,17 @@ import DetailChartView from './DetailChartView';
 // Main TrendsTab
 // ============================================================
 
-export default function TrendsTab() {
+interface TrendsTabProps {
+    /** If provided, auto-open the detail chart for this measurement type */
+    autoSelectTypeId?: string;
+}
+
+export default function TrendsTab({ autoSelectTypeId }: TrendsTabProps) {
     const [sparklineRows, setSparklineRows] = useState<SparklineRowData[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedType, setSelectedType] = useState<MeasurementType | null>(null);
     const [unitSystem, setUnitSystem] = useState('lbs');
+    const [bwIntent, setBwIntent] = useState<WeightTrendIntent>('neutral');
 
     useEffect(() => {
         loadSparklines();
@@ -49,7 +58,14 @@ export default function TrendsTab() {
         const settings = await getSettings();
         setUnitSystem(settings.weightUnit);
 
-        const types = await getVisibleMeasurementTypes(settings.visibleMeasurements);
+        const [types, activeGoals] = await Promise.all([
+            getVisibleMeasurementTypes(settings.visibleMeasurements),
+            getActiveGoals(),
+        ]);
+
+        // Derive bodyweight goal intent (TD-027: shared helper)
+        const intent = deriveBodyweightIntent(activeGoals);
+        setBwIntent(intent);
 
         // PP-023: Single batch query instead of N separate calls
         const sparkMap = await getSparklineDataBatch(
@@ -69,8 +85,17 @@ export default function TrendsTab() {
         });
 
         setSparklineRows(rows);
+
+        // Auto-select a measurement type if requested via deep link
+        if (autoSelectTypeId) {
+            const match = types.find((t) => t.id === autoSelectTypeId);
+            if (match) {
+                setSelectedType(match);
+            }
+        }
+
         setLoading(false);
-    }, []);
+    }, [autoSelectTypeId]);
 
     // Detail view for a selected metric
     if (selectedType) {
@@ -114,6 +139,7 @@ export default function TrendsTab() {
                 <SparklineRow
                     key={row.type.id}
                     row={row}
+                    trendIntent={row.type.id === 'bodyweight' ? bwIntent : 'neutral'}
                     onPress={() => setSelectedType(row.type)}
                 />
             ))}

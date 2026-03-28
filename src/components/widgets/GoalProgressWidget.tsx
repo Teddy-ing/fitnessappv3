@@ -36,13 +36,15 @@ export default function GoalProgressWidget({ goal }: GoalProgressWidgetProps) {
     }
 
     // Calculate progress (0 to 1)
+    // BH-025 fix: directional formula — handles both gain and loss goals,
+    // and correctly returns 0 when user regresses past starting value.
     const current = goal.currentBest ?? goal.startingValue ?? 0;
     const starting = goal.startingValue ?? 0;
     const target = goal.targetValue;
-    const totalRange = Math.abs(target - starting);
-    const progress = totalRange > 0
-        ? Math.min(Math.max(Math.abs(current - starting) / totalRange, 0), 1)
+    const rawProgress = (target - starting) !== 0
+        ? (current - starting) / (target - starting)
         : 0;
+    const progress = Math.min(Math.max(rawProgress, 0), 1);
     const progressPercent = Math.round(progress * 100);
 
     const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
