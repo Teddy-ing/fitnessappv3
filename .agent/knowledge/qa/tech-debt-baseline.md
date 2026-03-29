@@ -8,8 +8,8 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
 - **Last scoped pass:** 2026-03-28 (widget system + bug fix pass — 22 files)
-- **Open issues:** 3 (Active: 0, Latent: 3)
-- **Fixed since baseline:** 25
+- **Open issues:** 1 (Active: 0, Latent: 1)
+- **Fixed since baseline:** 27
 
 ---
 
@@ -24,43 +24,11 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatbot).
 
 
-### TD-004 · Hardcoded `" lbs"` unit across analytics UI + calendar modal + measurements gallery + goals
-
-- **Category:** Scalability / internationalization
-- **Files (20 instances across 13 files):**
-  - [MacroAnalyticsView.tsx:75](file:///c:/Users/teddy/projects/workout-app/src/components/analytics/MacroAnalyticsView.tsx#L75) — `getYAxisSuffix` returns `' lbs'`
-  - [ExerciseAnalyticsScreen.tsx:288,338,342,368](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L288) — `suffix=" lbs"` props + tooltip + table
-  - [formatters.ts:20](file:///c:/Users/teddy/projects/workout-app/src/utils/formatters.ts#L20) — `formatVolume` appends `' lbs'`
-  - [PhotoCell.tsx:77](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/PhotoCell.tsx#L77) — `{photo.bodyweight} lbs`
-  - [PhotoViewer.tsx:108](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/PhotoViewer.tsx#L108) — `{currentPhoto.bodyweight} lbs`
-  - [CompareView.tsx:68,90,105](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/CompareView.tsx#L68) — `{left/right.bodyweight} lbs` + delta
-  - [GoalsScreen.tsx:174](file:///c:/Users/teddy/projects/workout-app/src/screens/GoalsScreen.tsx#L174) — `unit: 'lbs'` in `resolveGoalDisplayInfo`
-  - [GoalCreationModal.tsx:70](file:///c:/Users/teddy/projects/workout-app/src/components/goals/GoalCreationModal.tsx#L70) — `useState('lbs')` default
-  - [GoalEmptyState.tsx:28](file:///c:/Users/teddy/projects/workout-app/src/components/goals/GoalEmptyState.tsx#L28) — `'Bench 135 lbs'` chip label
-  - [WorkoutHomeView.tsx:225](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutHomeView.tsx#L225) — `lbs` in workout widget
-  - [WorkoutKeyboard.tsx:106](file:///c:/Users/teddy/projects/workout-app/src/components/WorkoutKeyboard.tsx#L106) — `case 'weight': return 'lbs'`
-  - [SetRow.tsx:46](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx#L46) — `weightUnit = 'lbs'` default prop
-- **Why latent:** Settings phase (Phase 5) will need kg/lbs toggle. All these hardcoded strings will need updating.
-- **Will break at:** Settings feature — unit preference toggle
-- **Recommended fix (when):** When implementing Settings, create a `useUnitPreference()` hook that reads from user settings and returns formatted weight strings. Replace all hardcoded `lbs` with the hook's output.
-- **Note:** `MeasurementsScreen.tsx` and `TrendsTab.tsx` correctly read `weightUnit` from settings — these are the only two files currently doing it right.
-
-### TD-005 · `ExerciseFilter` → muscle group mapping is hardcoded in UI
-
-- **Category:** Tight coupling
-- **File:** [AnalyticsScreen.tsx:385-415](file:///c:/Users/teddy/projects/workout-app/src/screens/AnalyticsScreen.tsx#L385-L415)
-- **What:** `ExerciseFilter` type and `getMuscleGroupsForFilter()` hardcode the mapping from filter pill labels to DB muscle group values. If new muscle groups are added to exercises or the taxonomy changes, this mapping must be manually updated.
-- **Why latent:** Current exercise set is stable. But import/export feature (Phase 6) could introduce exercises with muscle groups not in this mapping.
-- **Recommended fix (when):** When implementing import, derive filter pills dynamically from `SELECT DISTINCT muscle FROM ...` or from the exercise model's muscle group enum.
 
 
 
 
-### ~~TD-011~~ · `calendarService.ts` monolith — **RESOLVED 2026-03-28**
 
-- **Category:** Service boundary concern
-- **Fix applied:** Extracted `personalRecordsService.ts` (327 lines) with 4 functions (`getPersonalRecordDates`, `backfillPersonalRecords`, `getFatigueDates`, `getPRSetIdsForDate`). Updated barrel exports and test file imports.
-- **Result:** `calendarService.ts` reduced from 844 to 542 lines (calendar/heatmap/journal). `personalRecordsService.ts` at 327 lines (PRs/fatigue).
 
 
 
@@ -69,6 +37,25 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 ---
 
 ## Resolved
+
+### ~~TD-005~~ · `ExerciseFilter` → muscle group mapping hardcoded in UI — **RESOLVED 2026-03-29**
+
+- Created centralized `src/models/muscleGroups.ts` with typed exports: `MUSCLE_LABELS`, `INDIVIDUAL_MUSCLE_FILTERS`, `COMPOSITE_FILTER_PILLS`, `ALL_MUSCLE_GROUPS`.
+- Replaced 4 local duplications: `ExerciseListView` (type + switch + array), `ExercisePicker` (10-item array), `MuscleDistributionChart` (18-entry labels), `AddExerciseScreen` (14-entry array).
+- All consumers now import from a single source of truth typed against `MuscleGroup`.
+
+### ~~TD-004~~ · Hardcoded `" lbs"` unit across UI — **RESOLVED 2026-03-29**
+
+- Created `useWeightUnit` hook (`src/hooks/useWeightUnit.ts`) with module-level cache.
+- Provides `useWeightUnit()` (hook) and `getWeightUnitSync()` (sync accessor) to read `weightUnit` from `user_settings`.
+- Updated 13 files: `MacroAnalyticsView`, `ExerciseAnalyticsScreen`, `formatters`, `PhotoCell`, `PhotoViewer`, `CompareView`, `GoalsScreen`, `GoalCreationModal`, `GoalEmptyState`, `WorkoutKeyboard`, `SetRow`, `BodyweightSparklineWidget`, `PinnedExerciseWidget`, `MeasurementsScreen`, `TrendsTab`.
+- All UI-facing weight unit strings now read from settings; only DB defaults and type definitions retain literal `'lbs'`.
+
+### ~~TD-011~~ · `calendarService.ts` monolith — **RESOLVED 2026-03-28**
+
+- **Category:** Service boundary concern
+- **Fix applied:** Extracted `personalRecordsService.ts` (327 lines) with 4 functions (`getPersonalRecordDates`, `backfillPersonalRecords`, `getFatigueDates`, `getPRSetIdsForDate`). Updated barrel exports and test file imports.
+- **Result:** `calendarService.ts` reduced from 844 to 542 lines (calendar/heatmap/journal). `personalRecordsService.ts` at 327 lines (PRs/fatigue).
 
 ### ~~TD-003~~ · `analyticsService.ts` is a monolith — **RESOLVED 2026-03-28**
 
@@ -324,7 +311,7 @@ Areas to monitor as the app approaches later roadmap phases:
 | SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
 | Service file boundaries | ✅ 15 services, all under 600 lines. `analyticsService` 462 + `exerciseAnalyticsService` 421 (TD-003). `calendarService` 542 + `personalRecordsService` 327 (TD-011). | ML features (Phase 7) |
 | Hydration layer | Single mapping file, 256 lines | Every new model field = hydration update needed — fragile |
-| Unit hardcoding (`lbs`) | **20+ instances across 15+ files** (TD-004 expanded) — widgets add 2 more (`BodyweightSparklineWidget`, `PinnedExerciseWidget`) | Phase 5 (Settings) — kg/lbs toggle |
+| Unit hardcoding (`lbs`) | ✅ Resolved (TD-004) — `useWeightUnit` hook + `getWeightUnitSync` accessor | — |
 | SQL formula duplication | ✅ Resolved (TD-024) — `sqlFragments.ts` | — |
 | JS formatter duplication | ✅ Resolved (TD-028) — `formatCompactVolume` in `formatters.ts` | — |
 | Widget system type ownership | ✅ `WeightTrendIntent` in models (TD-026 resolved). `SparklinePoint` remains in widget (TD-029 latent). | Widget refactors |
@@ -340,5 +327,5 @@ Areas to monitor as the app approaches later roadmap phases:
 ---
 
 ## Last Updated
-- Date: 2026-03-28
-- Session Context: Resolved TD-003/011/025/026/027/028. Split both analytics + calendar monoliths. All services under 600-line guardrail. 0 active debt, 3 latent remain.
+- Date: 2026-03-29
+- Session Context: Resolved TD-004 and TD-005. Created `useWeightUnit` hook (TD-004), centralized `muscleGroups.ts` taxonomy (TD-005). 0 active debt, 1 latent remain (TD-029).

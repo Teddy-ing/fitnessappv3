@@ -21,3 +21,4 @@ export * from './goal';
 export * from './preferences';
 export * from './calendar';
 export * from './widget';
+export * from './muscleGroups';

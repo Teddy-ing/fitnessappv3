@@ -19,6 +19,7 @@ import {
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import { getPhotoUri } from '../../services';
 import type { ProgressPhoto } from '../../models';
+import { useWeightUnit } from '../../hooks/useWeightUnit';
 
 // ============================================================
 // Constants
@@ -36,6 +37,7 @@ interface CompareViewProps {
 }
 
 export default function CompareView({ photos, onClose }: CompareViewProps) {
+    const weightUnit = useWeightUnit();
     const [left, right] = photos;
     const halfWidth = SCREEN_WIDTH / 2 - 1;
 
@@ -65,7 +67,7 @@ export default function CompareView({ photos, onClose }: CompareViewProps) {
                                 })}
                             </Text>
                             {left.bodyweight && (
-                                <Text style={styles.splitWeight}>{left.bodyweight} lbs</Text>
+                                <Text style={styles.splitWeight}>{left.bodyweight} {weightUnit}</Text>
                             )}
                         </View>
                     </View>
@@ -87,7 +89,7 @@ export default function CompareView({ photos, onClose }: CompareViewProps) {
                                 })}
                             </Text>
                             {right.bodyweight && (
-                                <Text style={styles.splitWeight}>{right.bodyweight} lbs</Text>
+                                <Text style={styles.splitWeight}>{right.bodyweight} {weightUnit}</Text>
                             )}
                         </View>
                     </View>
@@ -102,7 +104,7 @@ export default function CompareView({ photos, onClose }: CompareViewProps) {
                             const changeColor = diff >= 0 ? colors.accent.success : colors.accent.error;
                             return (
                                 <Text style={[styles.deltaText, { color: changeColor }]}>
-                                    {sign}{diff.toFixed(1)} lbs
+                                    {sign}{diff.toFixed(1)} {weightUnit}
                                 </Text>
                             );
                         })()}

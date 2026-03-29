@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Exercise, MuscleGroup, ExerciseCategory } from '../models/exercise';
+import { INDIVIDUAL_MUSCLE_FILTERS } from '../models/muscleGroups';
 import { getExercises, toggleExerciseFavorite, toggleExerciseHidden } from '../services';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import AddExerciseScreen from '../screens/AddExerciseScreen';
@@ -51,18 +52,7 @@ const CATEGORY_TABS: { key: CategoryTab; label: string; icon: string }[] = [
     { key: 'stretch', label: 'Stretch', icon: '🧘' },
 ];
 
-const MUSCLE_FILTERS: { key: MuscleGroup; label: string }[] = [
-    { key: 'chest', label: 'Chest' },
-    { key: 'back', label: 'Back' },
-    { key: 'shoulders', label: 'Shoulders' },
-    { key: 'biceps', label: 'Biceps' },
-    { key: 'triceps', label: 'Triceps' },
-    { key: 'quads', label: 'Quads' },
-    { key: 'hamstrings', label: 'Hamstrings' },
-    { key: 'glutes', label: 'Glutes' },
-    { key: 'core', label: 'Core' },
-    { key: 'calves', label: 'Calves' },
-];
+
 
 export default function ExercisePicker({
     visible,
@@ -333,7 +323,7 @@ export default function ExercisePicker({
                             data={[
                                 { key: 'all', label: 'All' },
                                 { key: 'favorites', label: '★ Favorites' },
-                                ...MUSCLE_FILTERS,
+                                ...INDIVIDUAL_MUSCLE_FILTERS,
                                 { key: 'hidden', label: '👁 Hidden' },
                             ]}
                             keyExtractor={(item) => item.key}

@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { createCustomExercise, updateCustomExercise, deleteExercise } from '../services';
 import { Exercise, ExerciseCategory, MuscleGroup, Equipment } from '../models/exercise';
+import { ALL_MUSCLE_GROUPS } from '../models/muscleGroups';
 
 interface AddExerciseScreenProps {
     visible: boolean;
@@ -38,22 +39,7 @@ const CATEGORIES: { value: ExerciseCategory; label: string }[] = [
     { value: 'isometric', label: 'Isometric' },
 ];
 
-const MUSCLE_GROUPS: { value: MuscleGroup; label: string }[] = [
-    { value: 'chest', label: 'Chest' },
-    { value: 'back', label: 'Back' },
-    { value: 'shoulders', label: 'Shoulders' },
-    { value: 'biceps', label: 'Biceps' },
-    { value: 'triceps', label: 'Triceps' },
-    { value: 'forearms', label: 'Forearms' },
-    { value: 'core', label: 'Core' },
-    { value: 'quads', label: 'Quads' },
-    { value: 'hamstrings', label: 'Hamstrings' },
-    { value: 'glutes', label: 'Glutes' },
-    { value: 'calves', label: 'Calves' },
-    { value: 'traps', label: 'Traps' },
-    { value: 'lats', label: 'Lats' },
-    { value: 'full_body', label: 'Full Body' },
-];
+
 
 const EQUIPMENT: { value: Equipment; label: string }[] = [
     { value: 'barbell', label: 'Barbell' },
@@ -234,7 +220,7 @@ export default function AddExerciseScreen({ visible, onClose, onSave, editingExe
                     {/* Muscle Groups */}
                     <Text style={styles.label}>Muscle Groups</Text>
                     <View style={styles.chipContainer}>
-                        {MUSCLE_GROUPS.map(muscle => (
+                        {ALL_MUSCLE_GROUPS.map(muscle => (
                             <TouchableOpacity
                                 key={muscle.value}
                                 style={[styles.chip, selectedMuscles.includes(muscle.value) && styles.chipSelected]}

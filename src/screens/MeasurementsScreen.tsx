@@ -37,6 +37,7 @@ import {
     getMeasurementsForDate,
 } from '../services';
 import { getSettings, updateSettings } from '../services/preferencesService';
+import { getWeightUnitSync } from '../hooks/useWeightUnit';
 import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import type { MeasurementType } from '../models';
 
@@ -75,7 +76,7 @@ export default function MeasurementsScreen() {
     const [fields, setFields] = useState<MeasurementField[]>([]);
     const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
     const [keyboardValue, setKeyboardValue] = useState('');
-    const [unitSystem, setUnitSystem] = useState('lbs');
+    const [unitSystem, setUnitSystem] = useState(getWeightUnitSync());
 
     // Load settings + types on mount
     useEffect(() => {
@@ -249,9 +250,9 @@ export default function MeasurementsScreen() {
     };
 
     const getFieldUnit = () => {
-        if (focusedIndex === null || !fields[focusedIndex]) return 'lbs';
+        if (focusedIndex === null || !fields[focusedIndex]) return unitSystem;
         const field = fields[focusedIndex];
-        return field.type.unitImperial || 'lbs';
+        return field.type.unitImperial || unitSystem;
     };
 
     const getFieldLabel = () => {

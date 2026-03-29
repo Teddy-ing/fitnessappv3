@@ -23,6 +23,7 @@ import FatigueRatioBanner from '../FatigueRatioBanner';
 import MetricSelector from './MetricSelector';
 import PillRow from './PillRow';
 import { createLabelProcessor, BAR_CHART_MARGINS } from '../../utils/chartLabels';
+import { useWeightUnit } from '../../hooks/useWeightUnit';
 
 import {
     MetricType,
@@ -69,10 +70,10 @@ function formatMetricValue(value: number, metric: MetricType): string {
 }
 
 /** Y-axis label suffix for the metric */
-function getYAxisSuffix(metric: MetricType): string {
+function getYAxisSuffix(metric: MetricType, weightUnit: string): string {
     switch (metric) {
         case 'volume':
-            return ' lbs';
+            return ` ${weightUnit}`;
         case 'duration':
             return '';
         default:
@@ -85,6 +86,7 @@ function getYAxisSuffix(metric: MetricType): string {
 // ============================================================
 
 export default function MacroAnalyticsView() {
+    const weightUnit = useWeightUnit();
     const {
         metric,
         timeBucket,
@@ -212,7 +214,7 @@ export default function MacroAnalyticsView() {
                                     ]}>
                                         <Text style={styles.tooltipText}>
                                             {item.fullLabel || item.label}: {formatMetricValue(item.value, metric)}
-                                            {getYAxisSuffix(metric)}
+                                            {getYAxisSuffix(metric, weightUnit)}
                                         </Text>
                                     </View>
                                 );
@@ -227,7 +229,7 @@ export default function MacroAnalyticsView() {
                                     data.reduce((sum, d) => sum + d.value, 0),
                                     metric,
                                 )}
-                                {getYAxisSuffix(metric)}
+                                {getYAxisSuffix(metric, weightUnit)}
                             </Text>
                         </View>
                     </View>

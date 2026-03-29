@@ -15,9 +15,9 @@ export function formatDuration(seconds: number | null, fallback: string = '—')
 }
 
 /** Format volume → "12,500 lbs". Returns fallback for null/zero. */
-export function formatVolume(volume: number | null, fallback: string = '—'): string {
+export function formatVolume(volume: number | null, fallback: string = '—', unit?: string): string {
     if (!volume || volume <= 0) return fallback;
-    return volume.toLocaleString() + ' lbs';
+    return volume.toLocaleString() + ' ' + (unit ?? 'lbs');
 }
 
 /** Format a Date to ISO date string (YYYY-MM-DD), timezone-safe. */

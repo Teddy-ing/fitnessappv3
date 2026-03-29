@@ -21,6 +21,7 @@ import {
 import { colors, spacing, typography } from '../../theme';
 import { getPhotoUri } from '../../services';
 import type { ProgressPhoto } from '../../models';
+import { useWeightUnit } from '../../hooks/useWeightUnit';
 
 // ============================================================
 // Constants
@@ -41,6 +42,7 @@ interface PhotoViewerProps {
 }
 
 export default function PhotoViewer({ visible, photos, initialIndex, onClose, onDelete }: PhotoViewerProps) {
+    const weightUnit = useWeightUnit();
     const flatListRef = useRef<FlatList>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
@@ -105,7 +107,7 @@ export default function PhotoViewer({ visible, photos, initialIndex, onClose, on
                                 </Text>
                                 {currentPhoto.bodyweight && (
                                     <Text style={styles.headerWeight}>
-                                        {currentPhoto.bodyweight} lbs
+                                        {currentPhoto.bodyweight} {weightUnit}
                                     </Text>
                                 )}
                             </>

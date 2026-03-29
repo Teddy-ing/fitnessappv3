@@ -11,6 +11,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { colors, spacing, typography } from '../../theme';
 import type { WeightTrendIntent } from '../../models/widget';
+import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 
 export interface SparklinePoint {
     date: string;
@@ -42,7 +43,7 @@ function getDeltaTextStyle(isPositive: boolean, intent: WeightTrendIntent) {
 
 export default function BodyweightSparklineWidget({
     data,
-    unit = 'lbs',
+    unit = getWeightUnitSync(),
     trendIntent = 'neutral',
 }: BodyweightSparklineWidgetProps) {
     const chartData = useMemo(() => {

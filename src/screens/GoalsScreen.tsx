@@ -49,6 +49,7 @@ import GoalDetailModal from '../components/goals/GoalDetailModal';
 import GoalContextMenu from '../components/goals/GoalContextMenu';
 import GoalEmptyState from '../components/goals/GoalEmptyState';
 import type { PrefillParams } from '../hooks/useGoalCreation';
+import { useWeightUnit } from '../hooks/useWeightUnit';
 
 // ============================================================
 // Types
@@ -81,6 +82,7 @@ export default function GoalsScreen() {
     const [completedGoals, setCompletedGoals] = useState<Goal[]>([]);
     const [displayInfoMap, setDisplayInfoMap] = useState<Map<string, GoalDisplayInfo>>(new Map());
     const [isLoading, setIsLoading] = useState(true);
+    const weightUnit = useWeightUnit();
 
     // Context menu state
     const [contextGoal, setContextGoal] = useState<Goal | null>(null);
@@ -140,7 +142,7 @@ export default function GoalsScreen() {
 
         // Resolve each goal's display info (no more per-goal DB calls)
         for (const goal of goals) {
-            const info = resolveGoalDisplayInfo(goal, measurementTypes, exerciseMap);
+            const info = resolveGoalDisplayInfo(goal, measurementTypes, exerciseMap, weightUnit);
             map.set(goal.id, info);
         }
 
@@ -151,6 +153,7 @@ export default function GoalsScreen() {
         goal: Goal,
         measurementTypes: MeasurementType[],
         exerciseMap: Map<string, Exercise>,
+        unit: string,
     ): GoalDisplayInfo => {
         const metricLabel = METRIC_LABELS[goal.goalType];
 
@@ -172,7 +175,7 @@ export default function GoalsScreen() {
             return {
                 name: exercise?.name ?? 'Exercise',
                 metricLabel,
-                unit: goal.goalType === 'exercise_reps' ? 'reps' : 'lbs',
+                unit: goal.goalType === 'exercise_reps' ? 'reps' : unit,
             };
         }
 

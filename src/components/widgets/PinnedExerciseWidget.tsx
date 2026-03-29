@@ -12,6 +12,7 @@ import { LineChart } from 'react-native-gifted-charts';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
 import { ExerciseTimeSeriesPoint } from '../../models/analytics';
+import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 
 interface PinnedExerciseWidgetProps {
     exerciseName: string;
@@ -24,7 +25,7 @@ export default function PinnedExerciseWidget({
     exerciseName,
     metric,
     data,
-    unit = 'lbs',
+    unit = getWeightUnitSync(),
 }: PinnedExerciseWidgetProps) {
     const chartData = useMemo(() => {
         return data.map((p) => ({ value: p.value }));

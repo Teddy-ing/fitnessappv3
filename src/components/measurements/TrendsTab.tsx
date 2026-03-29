@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 
 import { colors, spacing, typography } from '../../theme';
+import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 import {
     getSparklineDataBatch,
     getVisibleMeasurementTypes,
@@ -46,7 +47,7 @@ export default function TrendsTab({ autoSelectTypeId }: TrendsTabProps) {
     const [sparklineRows, setSparklineRows] = useState<SparklineRowData[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedType, setSelectedType] = useState<MeasurementType | null>(null);
-    const [unitSystem, setUnitSystem] = useState('lbs');
+    const [unitSystem, setUnitSystem] = useState(getWeightUnitSync());
     const [bwIntent, setBwIntent] = useState<WeightTrendIntent>('neutral');
 
     useEffect(() => {

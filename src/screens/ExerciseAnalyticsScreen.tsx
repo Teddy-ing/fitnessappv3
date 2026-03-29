@@ -26,6 +26,7 @@ import { useExerciseAnalytics } from '../hooks/useExerciseAnalytics';
 import { ChartRange, CHART_RANGE_LABELS, ExerciseTimeSeriesPoint } from '../models/analytics';
 import type { ProfileStackParamList } from '../navigation/AppNavigator';
 import { createLabelProcessor, BAR_CHART_MARGINS, LINE_CHART_MARGINS } from '../utils/chartLabels';
+import { useWeightUnit } from '../hooks/useWeightUnit';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ExerciseAnalytics'>;
 
@@ -210,7 +211,7 @@ function TimeSeriesLineChart({
 }
 
 /** Bar chart for volume data */
-function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
+function VolumeBarChart({ data, weightUnit }: { data: ExerciseTimeSeriesPoint[]; weightUnit: string }) {
     if (data.length === 0) {
         return (
             <View style={[styles.chartCard, styles.emptyChart]}>
@@ -285,7 +286,7 @@ function VolumeBarChart({ data }: { data: ExerciseTimeSeriesPoint[] }) {
                             <Text style={styles.tooltipText}>
                                 {item.fullLabel || item.label}: {item.value >= 1000
                                     ? `${(item.value / 1000).toFixed(1)}k`
-                                    : Math.round(item.value)} lbs
+                                    : Math.round(item.value)} ${weightUnit}
                             </Text>
                         </View>
                     );
@@ -311,6 +312,7 @@ export default function ExerciseAnalyticsScreen({ route }: Props) {
         bestForReps,
         loading,
     } = useExerciseAnalytics(exerciseId);
+    const weightUnit = useWeightUnit();
 
     if (loading) {
         return (
@@ -335,15 +337,15 @@ export default function ExerciseAnalyticsScreen({ route }: Props) {
 
                 {/* Chart 1: Estimated 1RM */}
                 <SectionHeader title="Estimated 1RM" />
-                <TimeSeriesLineChart data={est1rm} color={colors.accent.primary} suffix=" lbs" />
+                <TimeSeriesLineChart data={est1rm} color={colors.accent.primary} suffix={` ${weightUnit}`} />
 
                 {/* Chart 2: Max Weight */}
                 <SectionHeader title="Max Weight" />
-                <TimeSeriesLineChart data={maxWeight} color="#3b82f6" suffix=" lbs" />
+                <TimeSeriesLineChart data={maxWeight} color="#3b82f6" suffix={` ${weightUnit}`} />
 
                 {/* Chart 3: Volume per Session */}
                 <SectionHeader title="Session Volume" />
-                <VolumeBarChart data={volume} />
+                <VolumeBarChart data={volume} weightUnit={weightUnit} />
 
                 {/* Chart 4: Max Reps */}
                 <SectionHeader title="Max Reps" />
@@ -365,7 +367,7 @@ export default function ExerciseAnalyticsScreen({ route }: Props) {
                                 <View key={row.reps} style={styles.tableRow}>
                                     <Text style={styles.tableCell}>{row.reps}</Text>
                                     <Text style={[styles.tableCell, styles.tableCellBold]}>
-                                        {row.weight} lbs
+                                        {row.weight} {weightUnit}
                                     </Text>
                                     <Text style={[styles.tableCell, styles.tableDateCell]}>
                                         {new Date(row.date).toLocaleDateString('en-US', {

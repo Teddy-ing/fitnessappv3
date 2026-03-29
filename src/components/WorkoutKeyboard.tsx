@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useWeightUnit } from '../hooks/useWeightUnit';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const KEYBOARD_HEIGHT = 340; // Total height including padding
@@ -57,6 +58,7 @@ export default function WorkoutKeyboard({
     onNext,
     onHide,
 }: WorkoutKeyboardProps) {
+    const weightUnit = useWeightUnit();
     const insets = useSafeAreaInsets();
     const bottomInset = Math.max(insets.bottom, 0);
     const totalHeight = KEYBOARD_HEIGHT + bottomInset;
@@ -107,7 +109,7 @@ export default function WorkoutKeyboard({
     const getUnitLabel = () => {
         if (unitLabelOverride !== undefined) return unitLabelOverride;
         switch (fieldType) {
-            case 'weight': return 'lbs';
+            case 'weight': return weightUnit;
             case 'reps': return 'reps';
             case 'duration': return 'sec';
             default: return '';

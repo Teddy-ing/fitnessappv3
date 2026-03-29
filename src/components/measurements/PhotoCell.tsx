@@ -19,6 +19,7 @@ import {
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import { getPhotoUri } from '../../services';
 import type { ProgressPhoto } from '../../models';
+import { useWeightUnit } from '../../hooks/useWeightUnit';
 
 // ============================================================
 // Constants
@@ -46,6 +47,7 @@ interface PhotoCellProps {
 const PhotoCell = React.memo(function PhotoCell({
     photo, index, onGridPress, onDeletePress, isCompareMode, isSelected,
 }: PhotoCellProps) {
+    const weightUnit = useWeightUnit();
     const uri = getPhotoUri(photo.filePath);
     const dateLabel = new Date(photo.recordedAt + 'T12:00:00').toLocaleDateString('en-US', {
         month: 'short',
@@ -74,7 +76,7 @@ const PhotoCell = React.memo(function PhotoCell({
             <View style={styles.badge}>
                 <Text style={styles.badgeDate}>{dateLabel}</Text>
                 {photo.bodyweight && (
-                    <Text style={styles.badgeWeight}>{photo.bodyweight} lbs</Text>
+                    <Text style={styles.badgeWeight}>{photo.bodyweight} {weightUnit}</Text>
                 )}
             </View>
             {isCompareMode && (

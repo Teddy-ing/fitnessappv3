@@ -15,33 +15,14 @@ import { PieChart } from 'react-native-gifted-charts';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { getMuscleDistribution } from '../services/analyticsService';
 import { MetricType, ChartRange, MuscleDistributionPoint } from '../models/analytics';
+import { MUSCLE_LABELS } from '../models/muscleGroups';
 
 interface MuscleDistributionChartProps {
     metric: MetricType;
     range: ChartRange;
 }
 
-/** Pretty-print muscle group names */
-const MUSCLE_LABELS: Record<string, string> = {
-    chest: 'Chest',
-    back: 'Back',
-    shoulders: 'Shoulders',
-    biceps: 'Biceps',
-    triceps: 'Triceps',
-    forearms: 'Forearms',
-    core: 'Core',
-    quads: 'Quads',
-    hamstrings: 'Hamstrings',
-    glutes: 'Glutes',
-    calves: 'Calves',
-    traps: 'Traps',
-    lats: 'Lats',
-    neck: 'Neck',
-    hip_flexors: 'Hip Flexors',
-    adductors: 'Adductors',
-    abductors: 'Abductors',
-    full_body: 'Full Body',
-};
+
 
 /** Accent colors for pie slices (rotating palette) */
 const SLICE_COLORS = [
@@ -119,7 +100,7 @@ export default function MuscleDistributionChart({
             {/* Legend */}
             <View style={styles.legend}>
                 {data.map((point, index) => {
-                    const label = MUSCLE_LABELS[point.muscleGroup] ?? point.muscleGroup;
+                    const label = MUSCLE_LABELS[point.muscleGroup as keyof typeof MUSCLE_LABELS] ?? point.muscleGroup;
                     const pct = total > 0 ? Math.round((point.value / total) * 100) : 0;
                     const sliceColor = SLICE_COLORS[index % SLICE_COLORS.length];
 

@@ -23,45 +23,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import { PerformedExercise } from '../../models/analytics';
+import { COMPOSITE_FILTER_PILLS, CompositeFilterPill } from '../../models/muscleGroups';
 import { getPerformedExercises } from '../../services/exerciseAnalyticsService';
 import type { ProfileStackParamList } from '../../navigation/AppNavigator';
-
-// ============================================================
-// Filter types and helpers
-// ============================================================
-
-/** Filter pill definition */
-type ExerciseFilter = 'recent' | 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core';
-
-const EXERCISE_FILTERS: { key: ExerciseFilter; label: string }[] = [
-    { key: 'recent', label: 'Recent' },
-    { key: 'chest', label: 'Chest' },
-    { key: 'back', label: 'Back' },
-    { key: 'legs', label: 'Legs' },
-    { key: 'shoulders', label: 'Shoulders' },
-    { key: 'arms', label: 'Arms' },
-    { key: 'core', label: 'Core' },
-];
-
-/** Map composite filter pills to actual MuscleGroup values stored in DB */
-function getMuscleGroupsForFilter(filter: ExerciseFilter): string[] | undefined {
-    switch (filter) {
-        case 'recent':
-            return undefined;
-        case 'chest':
-            return ['chest'];
-        case 'back':
-            return ['back', 'lats', 'traps'];
-        case 'legs':
-            return ['quads', 'hamstrings', 'glutes', 'calves'];
-        case 'shoulders':
-            return ['shoulders'];
-        case 'arms':
-            return ['biceps', 'triceps', 'forearms'];
-        case 'core':
-            return ['core'];
-    }
-}
 
 // ============================================================
 // Component
@@ -71,7 +35,7 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
     const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
     const [exercises, setExercises] = useState<PerformedExercise[]>([]);
     const [search, setSearch] = useState('');
-    const [activeFilter, setActiveFilter] = useState<ExerciseFilter>('recent');
+    const [activeFilter, setActiveFilter] = useState<string>('recent');
     const [loading, setLoading] = useState(true);
 
     // Re-fetch when the filter pill changes
@@ -79,8 +43,8 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
         let cancelled = false;
         setLoading(true);
 
-        const muscleGroups = getMuscleGroupsForFilter(activeFilter);
-        getPerformedExercises('ALL', muscleGroups).then((result) => {
+        const activePill = COMPOSITE_FILTER_PILLS.find((p) => p.key === activeFilter);
+        getPerformedExercises('ALL', activePill?.muscleGroups).then((result) => {
             if (!cancelled) {
                 setExercises(result);
                 setLoading(false);
@@ -149,7 +113,7 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
         ? 'No matching exercises'
         : activeFilter === 'recent'
             ? 'No exercises performed yet'
-            : `No ${EXERCISE_FILTERS.find((f) => f.key === activeFilter)?.label ?? ''} exercises found`;
+            : `No ${COMPOSITE_FILTER_PILLS.find((f) => f.key === activeFilter)?.label ?? ''} exercises found`;
 
     // Search bar + filter pills become the FlatList header
     const listHeader = useMemo(() => (
@@ -179,7 +143,7 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.filterPillRow}
             >
-                {EXERCISE_FILTERS.map((f) => (
+                {COMPOSITE_FILTER_PILLS.map((f) => (
                     <TouchableOpacity
                         key={f.key}
                         style={[

@@ -18,6 +18,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import type { PrefillParams } from '../../hooks/useGoalCreation';
+import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 
 // ============================================================
 // Quick-add chip definitions
@@ -25,7 +26,7 @@ import type { PrefillParams } from '../../hooks/useGoalCreation';
 
 const QUICK_ADD_CHIPS: { label: string; emoji: string; prefill: PrefillParams }[] = [
     {
-        label: 'Bench 135 lbs',
+        label: `Bench 135 ${getWeightUnitSync()}`,
         emoji: '🏋️',
         prefill: { category: 'exercise', exerciseMetric: 'exercise_1rm', targetValue: '135' },
     },

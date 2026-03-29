@@ -73,6 +73,8 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Bug Fix & QOL Pass** (Settings navigation fix, GoalsScreen/WidgetEditorModal safe area clipping, swipe-to-navigate between tabs, keyboard unit labels, bodyweight trend intent coloring, widget deep-linking)
 - [x] **Tech Debt Remediation — Widget System** (TD-025: extracted ExercisePickerView from WidgetEditorModal 666→511 lines; TD-026: moved WeightTrendIntent to models; TD-027: shared deriveBodyweightIntent helper; TD-028: shared formatCompactVolume formatter)
 - [x] **Tech Debt Remediation — Service Monoliths** (TD-003: split analyticsService 851→462+421 lines into macro + exerciseAnalyticsService; TD-011: split calendarService 844→542+327 lines into calendar + personalRecordsService)
+- [x] **Tech Debt Remediation — Hardcoded Units** (TD-004: created `useWeightUnit` hook with module-level cache, replaced 20+ hardcoded `'lbs'` strings across 13+ files with dynamic settings-based unit)
+- [x] **Tech Debt Remediation — Muscle Group Taxonomy** (TD-005: created centralized `muscleGroups.ts` with `MUSCLE_LABELS`, `COMPOSITE_FILTER_PILLS`, `INDIVIDUAL_MUSCLE_FILTERS`, `ALL_MUSCLE_GROUPS`; replaced 4 duplicated mappings across `ExerciseListView`, `ExercisePicker`, `MuscleDistributionChart`, `AddExerciseScreen`)
 
 ---
 

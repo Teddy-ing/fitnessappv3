@@ -12,6 +12,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Alert } 
 import { Swipeable } from 'react-native-gesture-handler';
 import { WorkoutSet, SetType } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { getWeightUnitSync } from '../hooks/useWeightUnit';
 
 // PP-005 fix: Props use store-shaped action signatures so the parent can pass
 // stable references (from getState()) instead of inline arrow closures.
@@ -24,7 +25,7 @@ interface SetRowProps {
     trackWeight: boolean;
     trackReps: boolean;
     trackTime: boolean;
-    weightUnit?: 'lbs' | 'kg';
+    weightUnit?: string;
     showSwipeHint?: boolean;
     isWeightFocused?: boolean;
     isRepsFocused?: boolean;
@@ -43,7 +44,7 @@ function SetRowInner({
     trackWeight,
     trackReps,
     trackTime,
-    weightUnit = 'lbs',
+    weightUnit = getWeightUnitSync(),
     showSwipeHint = false,
     isWeightFocused = false,
     isRepsFocused = false,

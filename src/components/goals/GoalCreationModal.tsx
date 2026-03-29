@@ -29,6 +29,7 @@ import { useGoalCreation, type PrefillParams, type CreationStep } from '../../ho
 import { getMeasurementTypes } from '../../services/measurementService';
 import { getSettings } from '../../services/preferencesService';
 import type { MeasurementType } from '../../models/measurement';
+import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 import ExercisePicker from '../ExercisePicker';
 import {
     TypeStep,
@@ -67,7 +68,7 @@ export default function GoalCreationModal({
 
     const [measurementTypes, setMeasurementTypes] = useState<MeasurementType[]>([]);
     const [exercisePickerVisible, setExercisePickerVisible] = useState(false);
-    const [unitSystem, setUnitSystem] = useState('lbs');
+    const [unitSystem, setUnitSystem] = useState(getWeightUnitSync());
 
     // Load measurement types and settings when modal opens
     useEffect(() => {
