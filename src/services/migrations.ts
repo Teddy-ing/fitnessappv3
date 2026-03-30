@@ -549,6 +549,22 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v9: Show RPE column toggle
+    // ----------------------------------------------------------
+    {
+        version: 9,
+        name: 'show_rpe_column',
+        up: async (db) => {
+            const hasCol = await columnExists(db, 'user_settings', 'show_rpe');
+            if (!hasCol) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN show_rpe INTEGER DEFAULT 0;`,
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

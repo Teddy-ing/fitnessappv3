@@ -7,7 +7,10 @@ export {
     getWorkoutById,
     deleteWorkout,
     getWorkoutCount,
-    getWorkoutDatesThisWeek
+    getWorkoutDatesThisWeek,
+    getPreviousSetsForExercise,
+    getPreviousSetsForExercises,
+    type PreviousSetData,
 } from './workoutService';
 export {
     createTemplateFromWorkout,

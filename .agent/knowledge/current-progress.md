@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Phase 3A+3B (Widget Framework) complete + Bug Fix & QOL Pass + Tech Debt Remediation
-- **Status:** Core features + analytics + calendar + measurements + goals + data import/export + full widget system (7 widget types) all implemented. Bug fix pass + QOL improvements + service monolith refactoring done.
-- **Next Milestone:** Polish, testing, or new feature direction
+- **Phase:** Post-MVP Development — Workout Logging Redesign complete (all 4 phases)
+- **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign (table layout, interactions, collapse, RPE, plate calculator) all implemented.
+- **Next Milestone:** Settings screen implementation, or further polish/testing
 
 ---
 
@@ -75,12 +75,15 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Tech Debt Remediation — Service Monoliths** (TD-003: split analyticsService 851→462+421 lines into macro + exerciseAnalyticsService; TD-011: split calendarService 844→542+327 lines into calendar + personalRecordsService)
 - [x] **Tech Debt Remediation — Hardcoded Units** (TD-004: created `useWeightUnit` hook with module-level cache, replaced 20+ hardcoded `'lbs'` strings across 13+ files with dynamic settings-based unit)
 - [x] **Tech Debt Remediation — Muscle Group Taxonomy** (TD-005: created centralized `muscleGroups.ts` with `MUSCLE_LABELS`, `COMPOSITE_FILTER_PILLS`, `INDIVIDUAL_MUSCLE_FILTERS`, `ALL_MUSCLE_GROUPS`; replaced 4 duplicated mappings across `ExerciseListView`, `ExercisePicker`, `MuscleDistributionChart`, `AddExerciseScreen`)
+- [x] **Workout Logging Redesign — Phase 1** (Table layout + visual cleanup: stripped removals R-01/R-04/R-05/R-06, strict 40px table rows, Previous column with service query, opacity-based active set highlighting with pulsing checkbox, muted warmup styling)
 
 ---
 
 ## In Progress
 
-_No active work items._
+- [ ] **Workout Logging Redesign — Phase 2** (Interactions + Menu: `...` ellipsis menu, set type popover, exercise-level notes)
+- [ ] **Workout Logging Redesign — Phase 3** (Auto-collapsing cards, superset visuals, workout notes, swipe hint)
+- [ ] **Workout Logging Redesign — Phase 4** (RPE column, plate calculator)
 
 ---
 
@@ -143,6 +146,56 @@ _No active work items._
 ---
 
 ## Session Log
+
+### 2026-03-29: Workout Logging Redesign — Phase 1 (Table Layout + Visual Cleanup)
+
+**Duration:** Single session
+**Focus:** Foundation redesign of exercise cards — stripping visual clutter, implementing data-dense table layout, adding Previous column, active set highlighting.
+
+**What was done:**
+
+- **Removals (R-01, R-04, R-05, R-06):**
+  - Stripped colored row backgrounds for warmup/drop/failure/amrap sets
+  - Stripped colored set number badges (yellow warmup, blue drop, red failure, green amrap)
+  - Removed blocky dark-gray input rectangles — replaced with borderless inline text
+  - Removed superset button from card action row (moves to `...` menu in Phase 2)
+  - Removed progress bar from bottom of each card
+  - Kept `+ Add Set` button at bottom per user decision
+
+- **Strict Table Layout (§3.1):**
+  - Fixed column widths: SET 40px | PREVIOUS 72px | WEIGHT flex:1 | REPS flex:1 | ✓ 44px
+  - 40px row height with 1px separator lines between rows
+  - Inputs are now borderless centered text, focused state shows subtle purple border
+  - Checkbox reduced from 36×36 to 32×32
+
+- **Previous Column (§4.1):**
+  - New `getPreviousSetsForExercise()` query in workoutService — finds most recent completed workout for the exercise, returns all sets
+  - New `getPreviousSetsForExercises()` batch variant for template starts
+  - `previousSets: Map<string, PreviousSetData[]>` added to workoutStore (runtime only)
+  - Fetched asynchronously on `addExercise()`, `loadWorkoutForEditing()`, and template starts
+  - Displayed as `135×8` in muted text, or `—` when no prior data
+
+- **Active Set Highlighting (§3.4):**
+  - Completed sets: entire row at 50% opacity
+  - Active set (first uncompleted): bright white text, bold weight, pulsing purple checkbox
+  - Future sets: default styling
+  - Pulsing animation: `Animated.loop` on checkbox opacity, 2s period, 0.5→1.0 range
+
+- **Warmup Styling (§3.3):**
+  - Muted gray badge (same `colors.background.tertiary` as normal sets)
+  - 70% text opacity — warmups recede visually, no bright yellow/orange
+
+**Files modified:**
+- `src/services/workoutService.ts` — Added PreviousSetData type + 2 query functions
+- `src/services/index.ts` — Added new exports
+- `src/stores/workoutStore.ts` — Added previousSets Map, async fetch on addExercise/edit/template
+- `src/components/ExerciseCard.tsx` — Rewritten: table header, previousSets pass-through, activeSetIndex, removals
+- `src/components/SetRow.tsx` — Rewritten: 40px rows, inline inputs, Previous column, pulsing animation, opacity system
+- `src/screens/WorkoutScreen.tsx` — Subscribed to previousSets, pass to ExerciseCard, template start fetch
+
+**Verification:** TypeScript 0 errors, 233/233 tests passing
+
+---
 
 ### 2026-03-28: Tech Debt Remediation — Widget System + Service Monoliths
 
@@ -790,8 +843,8 @@ _No active work items._
 ---
 
 ## Last Updated
-- Date: 2026-03-28
-- Session Context: Tech debt remediation — resolved TD-003/011/025/026/027/028. Split analyticsService (851→462+421) and calendarService (844→542+327) monoliths. All 15 services under 600-line guardrail. 0 active / 3 latent debt remain.
+- Date: 2026-03-29
+- Session Context: Workout Logging Redesign Phase 1 — table layout, previous column, active set highlighting, warmup styling
 
 ### 2026-03-16: Calendar Feature Development (Phase 1)
 

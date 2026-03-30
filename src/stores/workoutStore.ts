@@ -24,6 +24,11 @@ import {
     loadPersistedWorkout,
     clearPersistedWorkout,
 } from './workoutPersistence';
+import {
+    getPreviousSetsForExercise,
+    getPreviousSetsForExercises,
+    type PreviousSetData,
+} from '../services/workoutService';
 
 /** Signal emitted when a set is completed, watched by RestTimer */
 export interface CompletedSetSignal {
@@ -38,6 +43,12 @@ interface WorkoutState {
 
     // Signal for timer auto-start (set by completeSet, consumed by RestTimer)
     lastCompletedSet: CompletedSetSignal | null;
+
+    // Previous session data per exercise (runtime only, not persisted)
+    previousSets: Map<string, PreviousSetData[]>;
+
+    // Auto-collapse state per exercise (runtime only, not persisted)
+    collapsedExercises: Set<string>;
 
     // Edit mode: true when editing a historical workout from the calendar
     isEditMode: boolean;
@@ -65,11 +76,22 @@ interface WorkoutState {
     updateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
     completeSet: (exerciseId: string, setId: string) => void;
 
+    // Actions - Phase 2: Menu actions
+    updateExerciseNote: (exerciseId: string, note: string | null) => void;
+    addWarmupSets: (exerciseId: string, count?: number) => void;
+    replaceExercise: (exerciseId: string, newExercise: Exercise) => void;
+
+    // Actions - Phase 3: Collapse + Notes
+    toggleCollapse: (exerciseId: string) => void;
+    updateWorkoutNote: (note: string | null) => void;
+
 }
 
 export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     activeWorkout: null,
     lastCompletedSet: null,
+    previousSets: new Map(),
+    collapsedExercises: new Set(),
     isEditMode: false,
     originalDuration: null,
     originalCompletedAt: null,
@@ -82,7 +104,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
     startWorkout: (name?: string) => {
         const workout = createWorkout(name);
-        set({ activeWorkout: workout, isEditMode: false, originalDuration: null, originalCompletedAt: null, originalStartedAt: null });
+        set({ activeWorkout: workout, previousSets: new Map(), collapsedExercises: new Set(), isEditMode: false, originalDuration: null, originalCompletedAt: null, originalStartedAt: null });
     },
 
     loadWorkoutForEditing: (workout: Workout) => {
@@ -98,11 +120,23 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
                 updatedAt: new Date(),
             },
             lastCompletedSet: null,
+            previousSets: new Map(),
+            collapsedExercises: new Set(),
             isEditMode: true,
             originalDuration: workout.totalDuration ?? null,
             originalCompletedAt: workout.completedAt ?? null,
             originalStartedAt: workout.startedAt ?? null,
         });
+
+        // Fetch previous sets for all exercises in the loaded workout
+        const exerciseIds = workout.main.exercises.map(e => e.exerciseId);
+        if (exerciseIds.length > 0) {
+            getPreviousSetsForExercises(exerciseIds).then(prevMap => {
+                set({ previousSets: prevMap });
+            }).catch(err => {
+                console.warn('[WorkoutStore] Failed to load previous sets for edit:', err);
+            });
+        }
     },
 
     finishWorkout: async () => {
@@ -144,6 +178,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         set({
             activeWorkout: null,
             lastCompletedSet: null,
+            previousSets: new Map(),
+            collapsedExercises: new Set(),
             isEditMode: false,
             originalDuration: null,
             originalCompletedAt: null,
@@ -160,6 +196,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         set({
             activeWorkout: null,
             lastCompletedSet: null,
+            previousSets: new Map(),
+            collapsedExercises: new Set(),
             isEditMode: false,
             originalDuration: null,
             originalCompletedAt: null,
@@ -211,6 +249,16 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
                 },
                 updatedAt: new Date(),
             },
+        });
+
+        // Async: fetch previous sets for this exercise (non-blocking)
+        getPreviousSetsForExercise(exercise.id).then(prevSets => {
+            const { previousSets } = get();
+            const updated = new Map(previousSets);
+            updated.set(exercise.id, prevSets);
+            set({ previousSets: updated });
+        }).catch(err => {
+            console.warn('[WorkoutStore] Failed to load previous sets:', err);
         });
     },
 
@@ -440,6 +488,133 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             ...(wasCompleted ? {
                 lastCompletedSet: { exerciseId, setId, timestamp: Date.now() },
             } : {}),
+        });
+
+        // Auto-collapse: if all sets in this exercise are now completed, collapse
+        if (wasCompleted) {
+            const updatedExercise = exercises.find(ex => ex.id === exerciseId);
+            if (updatedExercise && updatedExercise.sets.every(s => s.status === 'completed')) {
+                const { collapsedExercises } = get();
+                const updated = new Set(collapsedExercises);
+                updated.add(exerciseId);
+                set({ collapsedExercises: updated });
+            }
+        }
+    },
+
+    // ========================================
+    // Phase 2: Menu actions
+    // ========================================
+
+    updateExerciseNote: (exerciseId: string, note: string | null) => {
+        const { activeWorkout } = get();
+        if (!activeWorkout) return;
+
+        const exercises = activeWorkout.main.exercises.map(ex => {
+            if (ex.id === exerciseId) {
+                return { ...ex, note: note && note.trim() ? note.trim() : null };
+            }
+            return ex;
+        });
+
+        set({
+            activeWorkout: {
+                ...activeWorkout,
+                main: { ...activeWorkout.main, exercises },
+                updatedAt: new Date(),
+            },
+        });
+    },
+
+    addWarmupSets: (exerciseId: string, count: number = 2) => {
+        const { activeWorkout } = get();
+        if (!activeWorkout) return;
+
+        const exercises = activeWorkout.main.exercises.map(ex => {
+            if (ex.id === exerciseId) {
+                // Create N warmup sets
+                const warmupSets: WorkoutSet[] = Array.from({ length: count }, (_, i) =>
+                    createSet(i, 'warmup')
+                );
+                // Reindex: warmups first, then existing sets
+                const allSets = [...warmupSets, ...ex.sets].map((s, idx) => ({
+                    ...s,
+                    orderIndex: idx,
+                }));
+                return { ...ex, sets: allSets };
+            }
+            return ex;
+        });
+
+        set({
+            activeWorkout: {
+                ...activeWorkout,
+                main: { ...activeWorkout.main, exercises },
+                updatedAt: new Date(),
+            },
+        });
+    },
+
+    replaceExercise: (exerciseId: string, newExercise: Exercise) => {
+        const { activeWorkout } = get();
+        if (!activeWorkout) return;
+
+        const exercises = activeWorkout.main.exercises.map(ex => {
+            if (ex.id === exerciseId) {
+                // Keep set structure, swap exercise definition
+                return {
+                    ...ex,
+                    exerciseId: newExercise.id,
+                    exercise: newExercise,
+                };
+            }
+            return ex;
+        });
+
+        set({
+            activeWorkout: {
+                ...activeWorkout,
+                main: { ...activeWorkout.main, exercises },
+                updatedAt: new Date(),
+            },
+        });
+
+        // Fetch previous sets for the new exercise
+        getPreviousSetsForExercise(newExercise.id).then(prevSets => {
+            const { previousSets } = get();
+            const updated = new Map(previousSets);
+            updated.set(newExercise.id, prevSets);
+            set({ previousSets: updated });
+        }).catch(err => {
+            console.warn('[WorkoutStore] Failed to load previous sets for replaced exercise:', err);
+        });
+    },
+
+    // ========================================
+    // Phase 3: Collapse + Notes
+    // ========================================
+
+    toggleCollapse: (exerciseId: string) => {
+        const { collapsedExercises } = get();
+        const updated = new Set(collapsedExercises);
+        if (updated.has(exerciseId)) {
+            updated.delete(exerciseId);
+        } else {
+            updated.add(exerciseId);
+        }
+        set({ collapsedExercises: updated });
+    },
+
+    updateWorkoutNote: (note: string | null) => {
+        const { activeWorkout } = get();
+        if (!activeWorkout) return;
+
+        set({
+            activeWorkout: {
+                ...activeWorkout,
+                note: note && note.trim() ? note.trim() : null,
+                updatedAt: new Date(),
+            },
         });
     },
 }));

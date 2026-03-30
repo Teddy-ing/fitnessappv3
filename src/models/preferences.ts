@@ -26,4 +26,5 @@ export interface UserSettings {
     visibleMeasurements: string[];
     relativeStrengthExercise: string | null;
     widgetConfig: WidgetConfig[];
+    showRpe: boolean;
 }

@@ -40,6 +40,7 @@ interface UserSettingsRow {
     visible_measurements: string | null;
     relative_strength_exercise: string | null;
     widget_config: string | null;
+    show_rpe: number;
 }
 
 /** Default settings — used if the row doesn't exist yet */
@@ -63,6 +64,7 @@ const DEFAULTS: UserSettings = {
     visibleMeasurements: DEFAULT_VISIBLE_MEASUREMENTS,
     relativeStrengthExercise: null,
     widgetConfig: DEFAULT_WIDGETS,
+    showRpe: false,
 };
 
 // ============================================================
@@ -107,6 +109,7 @@ export async function getSettings(): Promise<UserSettings> {
             row.widget_config,
             DEFAULT_WIDGETS,
         ),
+        showRpe: row.show_rpe === 1,
     };
 }
 
@@ -147,6 +150,7 @@ export async function updateSettings(
         visibleMeasurements: 'visible_measurements',
         relativeStrengthExercise: 'relative_strength_exercise',
         widgetConfig: 'widget_config',
+        showRpe: 'show_rpe',
     };
 
     const setClauses: string[] = [];

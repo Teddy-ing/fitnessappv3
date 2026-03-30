@@ -19,10 +19,15 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
+    TextInput,
     Alert,
     BackHandler,
+    LayoutAnimation,
+    Platform,
+    UIManager,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { File, Paths } from 'expo-file-system';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
@@ -34,6 +39,8 @@ import {
     findMatchingTemplate,
     startWorkoutFromTemplate,
     markWorkoutCompletedToday,
+    getPreviousSetsForExercises,
+    getSettings,
     Template,
 } from '../services';
 import { Workout } from '../models/workout';
@@ -41,11 +48,16 @@ import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import WorkoutHomeView from './WorkoutHomeView';
 import { navigateToTab, navigationRef } from '../navigation/navigationRef';
 
+// Swipe hint persistence key
+const SWIPE_HINT_FILE = new File(Paths.document, '.swipe_hint_seen');
+
 export default function WorkoutScreen() {
     // PP-001 fix: Fine-grained selector — only re-render when activeWorkout changes.
     // Actions are stable references; access via getState() to avoid subscribing to them.
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
     const isEditMode = useWorkoutStore(s => s.isEditMode);
+    const previousSets = useWorkoutStore(s => s.previousSets);
+    const collapsedExercises = useWorkoutStore(s => s.collapsedExercises);
     const originalDuration = useWorkoutStore(s => s.originalDuration);
     const originalCompletedAt = useWorkoutStore(s => s.originalCompletedAt);
     const originalStartedAt = useWorkoutStore(s => s.originalStartedAt);
@@ -60,6 +72,11 @@ export default function WorkoutScreen() {
         updateSet,
         completeSet,
         toggleSuperset,
+        updateExerciseNote,
+        addWarmupSets,
+        replaceExercise,
+        toggleCollapse,
+        updateWorkoutNote,
     } = useWorkoutStore.getState();
 
     // Home screen data - extracted to useHomeScreenData hook
@@ -78,6 +95,32 @@ export default function WorkoutScreen() {
 
     // Exercise picker visibility — local UI state (not in Zustand store)
     const [isExercisePickerOpen, setExercisePickerOpen] = useState(false);
+
+    // Replace exercise flow — tracks which exercise is being replaced
+    const [replaceExerciseId, setReplaceExerciseId] = useState<string | null>(null);
+
+    // Workout-level note state
+    const [showWorkoutNote, setShowWorkoutNote] = useState(false);
+    const [workoutNoteInput, setWorkoutNoteInput] = useState('');
+
+    // Swipe-hint onboarding: show on first workout ever
+    const [showSwipeHint, setShowSwipeHint] = useState(false);
+
+    // RPE column visibility (loaded from settings)
+    const [showRpe, setShowRpe] = useState(false);
+
+    useEffect(() => {
+        // Swipe hint check
+        if (SWIPE_HINT_FILE.exists) {
+            setShowSwipeHint(false);
+        } else {
+            setShowSwipeHint(true);
+            SWIPE_HINT_FILE.write('1');
+        }
+
+        // Load RPE setting
+        getSettings().then(s => setShowRpe(s.showRpe)).catch(() => {});
+    }, []);
 
     // Live timer - extracted to useElapsedTimer hook
     const { elapsedTime } = useElapsedTimer(activeWorkout?.startedAt ?? null);
@@ -115,7 +158,16 @@ export default function WorkoutScreen() {
         try {
             const workout = await startWorkoutFromTemplate(template.id);
             if (workout) {
-                useWorkoutStore.setState({ activeWorkout: workout });
+                useWorkoutStore.setState({ activeWorkout: workout, previousSets: new Map() });
+                // Fetch previous sets for all exercises in the template (non-blocking)
+                const exerciseIds = workout.main.exercises.map(e => e.exerciseId);
+                if (exerciseIds.length > 0) {
+                    getPreviousSetsForExercises(exerciseIds).then(prevMap => {
+                        useWorkoutStore.setState({ previousSets: prevMap });
+                    }).catch(err => {
+                        console.warn('[WorkoutScreen] Failed to load previous sets:', err);
+                    });
+                }
             }
         } catch (error) {
             console.error('Error starting from template:', error);
@@ -299,9 +351,23 @@ export default function WorkoutScreen() {
                     <Text style={styles.workoutTitle}>
                         {isEditMode ? `Editing: ${activeWorkout.name}` : activeWorkout.name}
                     </Text>
-                    <TouchableOpacity onPress={handleFinishWorkout}>
-                        <Text style={styles.finishButton}>{isEditMode ? 'Save' : 'Finish'}</Text>
-                    </TouchableOpacity>
+                    <View style={styles.headerRight}>
+                        <TouchableOpacity
+                            style={styles.noteIconButton}
+                            onPress={() => {
+                                setWorkoutNoteInput(activeWorkout.note ?? '');
+                                setShowWorkoutNote(!showWorkoutNote);
+                            }}
+                        >
+                            <Text style={[
+                                styles.noteIcon,
+                                activeWorkout.note && styles.noteIconActive,
+                            ]}>📝</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleFinishWorkout}>
+                            <Text style={styles.finishButton}>{isEditMode ? 'Save' : 'Finish'}</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Stats row */}
@@ -338,6 +404,51 @@ export default function WorkoutScreen() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.exercisesList}
             >
+                {/* Workout-level note input */}
+                {showWorkoutNote && (
+                    <View style={styles.workoutNoteContainer}>
+                        <TextInput
+                            style={styles.workoutNoteInput}
+                            value={workoutNoteInput}
+                            onChangeText={setWorkoutNoteInput}
+                            placeholder="Workout notes..."
+                            placeholderTextColor={colors.text.disabled}
+                            multiline
+                            autoFocus
+                            maxLength={500}
+                        />
+                        <View style={styles.workoutNoteActions}>
+                            <TouchableOpacity
+                                onPress={() => setShowWorkoutNote(false)}
+                                style={styles.workoutNoteActionButton}
+                            >
+                                <Text style={styles.workoutNoteCancel}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    updateWorkoutNote(workoutNoteInput.trim() || null);
+                                    setShowWorkoutNote(false);
+                                }}
+                                style={styles.workoutNoteActionButton}
+                            >
+                                <Text style={styles.workoutNoteSave}>Save</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                {/* Workout note display (when not editing) */}
+                {!showWorkoutNote && activeWorkout.note && (
+                    <TouchableOpacity
+                        onPress={() => {
+                            setWorkoutNoteInput(activeWorkout.note ?? '');
+                            setShowWorkoutNote(true);
+                        }}
+                    >
+                        <Text style={styles.workoutNoteDisplay}>{activeWorkout.note}</Text>
+                    </TouchableOpacity>
+                )}
+
                 {activeWorkout.main.exercises.length === 0 ? (
                     <View style={styles.emptyExercises}>
                         <Text style={styles.emptyExercisesText}>
@@ -348,10 +459,96 @@ export default function WorkoutScreen() {
                     activeWorkout.main.exercises.map((workoutExercise, index) => {
                         const exercises = activeWorkout.main.exercises;
                         const nextExercise = exercises[index + 1];
+                        const prevExercise = index > 0 ? exercises[index - 1] : null;
                         const isInSuperset = Boolean(workoutExercise.supersetGroupId);
+                        const isFirstInSuperset = isInSuperset && (!prevExercise || prevExercise.supersetGroupId !== workoutExercise.supersetGroupId);
                         const isLastInSuperset = isInSuperset && (!nextExercise || nextExercise.supersetGroupId !== workoutExercise.supersetGroupId);
                         const canSuperset = index < exercises.length - 1;
                         const exId = workoutExercise.id;
+                        const isCollapsed = collapsedExercises.has(exId);
+
+                        const card = (
+                            <ExerciseCard
+                                key={exId}
+                                workoutExercise={workoutExercise}
+                                focusState={focusState}
+                                isInSuperset={isInSuperset}
+                                isLastInSuperset={isLastInSuperset}
+                                canSuperset={canSuperset}
+                                exerciseId={exId}
+                                isCollapsed={isCollapsed}
+                                showSwipeHint={showSwipeHint && index === 0}
+                                showRpe={showRpe}
+                                previousSets={previousSets.get(workoutExercise.exerciseId)}
+                                onUpdateSet={updateSet}
+                                onCompleteSet={completeSet}
+                                onAddSet={addSet}
+                                onRemoveSet={removeSet}
+                                onRemoveExercise={removeExercise}
+                                onToggleSuperset={toggleSuperset}
+                                onFocusField={handleFocusField}
+                                onUpdateNote={updateExerciseNote}
+                                onAddWarmupSets={addWarmupSets}
+                                onReplaceExercise={(exId) => setReplaceExerciseId(exId)}
+                                onToggleCollapse={toggleCollapse}
+                            />
+                        );
+
+                        // Visual superset bracketing: wrap first exercise in superset group
+                        if (isFirstInSuperset) {
+                            // Gather all exercises in this superset group
+                            const supersetCards = [card];
+                            let j = index + 1;
+                            while (j < exercises.length && exercises[j].supersetGroupId === workoutExercise.supersetGroupId) {
+                                const ssEx = exercises[j];
+                                const ssNext = exercises[j + 1];
+                                const ssIsLast = !ssNext || ssNext.supersetGroupId !== ssEx.supersetGroupId;
+                                const ssCollapsed = collapsedExercises.has(ssEx.id);
+                                supersetCards.push(
+                                    <ExerciseCard
+                                        key={ssEx.id}
+                                        workoutExercise={ssEx}
+                                        focusState={focusState}
+                                        isInSuperset={true}
+                                        isLastInSuperset={ssIsLast}
+                                        canSuperset={j < exercises.length - 1}
+                                        exerciseId={ssEx.id}
+                                        isCollapsed={ssCollapsed}
+                                        showRpe={showRpe}
+                                        previousSets={previousSets.get(ssEx.exerciseId)}
+                                        onUpdateSet={updateSet}
+                                        onCompleteSet={completeSet}
+                                        onAddSet={addSet}
+                                        onRemoveSet={removeSet}
+                                        onRemoveExercise={removeExercise}
+                                        onToggleSuperset={toggleSuperset}
+                                        onFocusField={handleFocusField}
+                                        onUpdateNote={updateExerciseNote}
+                                        onAddWarmupSets={addWarmupSets}
+                                        onReplaceExercise={(exId) => setReplaceExerciseId(exId)}
+                                        onToggleCollapse={toggleCollapse}
+                                    />
+                                );
+                                j++;
+                            }
+
+                            return (
+                                <View key={`superset-${workoutExercise.supersetGroupId}`} style={styles.supersetContainer}>
+                                    <View style={styles.supersetLine} />
+                                    <View style={styles.supersetBadge}>
+                                        <Text style={styles.supersetBadgeText}>SUPERSET</Text>
+                                    </View>
+                                    <View style={styles.supersetCards}>
+                                        {supersetCards}
+                                    </View>
+                                </View>
+                            );
+                        }
+
+                        // Skip exercises already rendered as part of a superset group
+                        if (isInSuperset && !isFirstInSuperset) {
+                            return null;
+                        }
 
                         return (
                             <ErrorBoundary
@@ -359,21 +556,7 @@ export default function WorkoutScreen() {
                                 fallback="card"
                                 label={workoutExercise.exercise.name}
                             >
-                                <ExerciseCard
-                                    workoutExercise={workoutExercise}
-                                    focusState={focusState}
-                                    isInSuperset={isInSuperset}
-                                    isLastInSuperset={isLastInSuperset}
-                                    canSuperset={canSuperset}
-                                    exerciseId={exId}
-                                    onUpdateSet={updateSet}
-                                    onCompleteSet={completeSet}
-                                    onAddSet={addSet}
-                                    onRemoveSet={removeSet}
-                                    onRemoveExercise={removeExercise}
-                                    onToggleSuperset={toggleSuperset}
-                                    onFocusField={handleFocusField}
-                                />
+                                {card}
                             </ErrorBoundary>
                         );
                     })
@@ -405,13 +588,25 @@ export default function WorkoutScreen() {
                 onHide={handleHideKeyboard}
             />
 
-            {/* Exercise picker modal */}
+            {/* Exercise picker modal — adding new exercise */}
             <ExercisePicker
                 visible={isExercisePickerOpen}
                 onClose={() => setExercisePickerOpen(false)}
                 onSelect={(exercise) => {
                     addExercise(exercise);
                     setExercisePickerOpen(false);
+                }}
+            />
+
+            {/* Exercise picker modal — replacing an exercise */}
+            <ExercisePicker
+                visible={replaceExerciseId !== null}
+                onClose={() => setReplaceExerciseId(null)}
+                onSelect={(exercise) => {
+                    if (replaceExerciseId) {
+                        replaceExercise(replaceExerciseId, exercise);
+                    }
+                    setReplaceExerciseId(null);
                 }}
             />
 
@@ -452,6 +647,24 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: spacing.md,
     },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+    },
+    noteIconButton: {
+        width: 32,
+        height: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    noteIcon: {
+        fontSize: typography.size.md,
+        opacity: 0.5,
+    },
+    noteIconActive: {
+        opacity: 1,
+    },
     discardButton: {
         color: colors.accent.error,
         fontSize: typography.size.md,
@@ -487,10 +700,56 @@ const styles = StyleSheet.create({
         marginTop: spacing.xs,
     },
 
+    // Workout-level note
+    workoutNoteContainer: {
+        backgroundColor: colors.background.secondary,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        marginBottom: spacing.md,
+        borderWidth: 1,
+        borderColor: colors.accent.primary,
+    },
+    workoutNoteInput: {
+        color: colors.text.primary,
+        fontSize: typography.size.sm,
+        minHeight: 48,
+        maxHeight: 120,
+        textAlignVertical: 'top',
+    },
+    workoutNoteActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: spacing.sm,
+        gap: spacing.md,
+    },
+    workoutNoteActionButton: {
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.sm,
+    },
+    workoutNoteCancel: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.medium,
+    },
+    workoutNoteSave: {
+        color: colors.accent.primary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.semibold,
+    },
+    workoutNoteDisplay: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+        fontStyle: 'italic',
+        backgroundColor: colors.background.secondary,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        marginBottom: spacing.md,
+    },
+
     // Exercises list
     exercisesList: {
         padding: spacing.md,
-        paddingBottom: 120, // Extra padding for rest timer
+        paddingBottom: 120,
     },
     emptyExercises: {
         alignItems: 'center',
@@ -500,6 +759,39 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         fontSize: typography.size.md,
         textAlign: 'center',
+    },
+
+    // Visual superset container
+    supersetContainer: {
+        marginBottom: spacing.md,
+        position: 'relative',
+    },
+    supersetLine: {
+        position: 'absolute',
+        left: 0,
+        top: 24,
+        bottom: spacing.md,
+        width: 3,
+        backgroundColor: colors.accent.primary,
+        borderRadius: 2,
+    },
+    supersetBadge: {
+        backgroundColor: colors.accent.primary,
+        paddingHorizontal: spacing.md,
+        paddingVertical: 2,
+        borderRadius: borderRadius.sm,
+        alignSelf: 'flex-start',
+        marginLeft: spacing.sm,
+        marginBottom: spacing.xs,
+    },
+    supersetBadgeText: {
+        color: colors.text.primary,
+        fontSize: typography.size.xs,
+        fontWeight: typography.weight.bold,
+        letterSpacing: 1,
+    },
+    supersetCards: {
+        paddingLeft: spacing.sm,
     },
 
     // Add exercise button

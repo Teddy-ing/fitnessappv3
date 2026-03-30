@@ -1,17 +1,33 @@
 /**
  * ExerciseCard Component
  * 
- * A card displaying an exercise with all its sets.
- * Design inspired by Hevy's card-based layout.
+ * A card displaying an exercise with all its sets in a tight table layout.
+ * Phase 3: Auto-collapsing cards, LayoutAnimation transitions.
  */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    TextInput,
+    StyleSheet,
+    LayoutAnimation,
+    Platform,
+    UIManager,
+} from 'react-native';
 import { WorkoutExercise, WorkoutSet } from '../models/workout';
+import { PreviousSetData } from '../services/workoutService';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import SetRow from './SetRow';
 import ActiveRestLine from './ActiveRestLine';
+import ExerciseMenu from './ExerciseMenu';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 // Focus state type for keyboard coordination
 export interface FocusState {
@@ -20,16 +36,17 @@ export interface FocusState {
     field: 'weight' | 'reps';
 }
 
-// PP-006 fix: Props now accept store-shaped action signatures + exerciseId.
-// This lets the parent pass stable references (e.g. from getState()), avoiding
-// inline arrow closures that defeat React.memo.
 interface ExerciseCardProps {
     workoutExercise: WorkoutExercise;
     exerciseId: string;
     focusState?: FocusState | null;
-    isInSuperset?: boolean;           // Is this exercise part of a superset?
-    isLastInSuperset?: boolean;       // Is this the last exercise in its superset group?
-    canSuperset?: boolean;            // Can this exercise be linked (not last in list)?
+    previousSets?: PreviousSetData[];
+    isInSuperset?: boolean;
+    isLastInSuperset?: boolean;
+    canSuperset?: boolean;
+    isCollapsed?: boolean;
+    showSwipeHint?: boolean;
+    showRpe?: boolean;
     onUpdateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
     onCompleteSet: (exerciseId: string, setId: string) => void;
     onAddSet: (exerciseId: string) => void;
@@ -37,16 +54,23 @@ interface ExerciseCardProps {
     onRemoveExercise: (exerciseId: string) => void;
     onToggleSuperset?: (exerciseId: string) => void;
     onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
+    onUpdateNote?: (exerciseId: string, note: string | null) => void;
+    onAddWarmupSets?: (exerciseId: string) => void;
+    onReplaceExercise?: (exerciseId: string) => void;
+    onToggleCollapse?: (exerciseId: string) => void;
 }
 
-// PP-005 fix: React.memo prevents re-rendering when parent re-renders but props haven't changed
 function ExerciseCardInner({
     workoutExercise,
     exerciseId,
     focusState,
+    previousSets,
     isInSuperset = false,
     isLastInSuperset = false,
     canSuperset = false,
+    isCollapsed = false,
+    showSwipeHint = false,
+    showRpe = false,
     onUpdateSet,
     onCompleteSet,
     onAddSet,
@@ -54,18 +78,23 @@ function ExerciseCardInner({
     onRemoveExercise,
     onToggleSuperset,
     onFocusField,
+    onUpdateNote,
+    onAddWarmupSets,
+    onReplaceExercise,
+    onToggleCollapse,
 }: ExerciseCardProps) {
     const { exercise, sets } = workoutExercise;
 
-    // Get completed sets count
-    const completedSets = sets.filter(s => s.status === 'completed').length;
-    const totalSets = sets.length;
+    // Local UI state
+    const [menuVisible, setMenuVisible] = useState(false);
+    const [isEditingNote, setIsEditingNote] = useState(false);
+    const [noteInput, setNoteInput] = useState(workoutExercise.note ?? '');
 
     // Get primary muscle group for display
     const primaryMuscle = exercise.muscleGroups.find(mg => mg.isPrimary)?.muscle ?? 'unknown';
     const formattedMuscle = primaryMuscle.replace('_', ' ');
 
-    // Count working sets (non-warmup, non-completed)
+    // Count working sets (non-warmup)
     const workingSetNumber = (setIndex: number): number => {
         let count = 0;
         for (let i = 0; i <= setIndex; i++) {
@@ -76,6 +105,9 @@ function ExerciseCardInner({
         return count;
     };
 
+    // Compute active set index: first uncompleted set
+    const activeSetIndex = sets.findIndex(s => s.status !== 'completed');
+
     // Check if a specific field is focused
     const isFieldFocused = (setId: string, field: 'weight' | 'reps') => {
         return focusState?.exerciseId === workoutExercise.id &&
@@ -83,8 +115,7 @@ function ExerciseCardInner({
             focusState?.field === field;
     };
 
-    // PP-003 fix: Fine-grained selectors — only subscribe to fields this card reads.
-    // Prevents all ExerciseCards from re-rendering on every timer tick.
+    // Rest timer selectors
     const restTimerActive = useRestTimerStore(s => s.restTimerActive);
     const restTimerRemaining = useRestTimerStore(s => s.restTimerRemaining);
     const restTimerDuration = useRestTimerStore(s => s.restTimerDuration);
@@ -93,12 +124,68 @@ function ExerciseCardInner({
     const adjustRestTimer = useRestTimerStore(s => s.adjustRestTimer);
     const stopRestTimer = useRestTimerStore(s => s.stopRestTimer);
 
-    // Check if a specific set has the active timer
     const isSetTimerActive = (setId: string) => {
         return restTimerActive &&
             activeRestTimerExerciseId === workoutExercise.id &&
             activeRestTimerSetId === setId;
     };
+
+    // Note handlers
+    const handleAddNote = () => {
+        setNoteInput(workoutExercise.note ?? '');
+        setIsEditingNote(true);
+    };
+
+    const handleSaveNote = () => {
+        const trimmed = noteInput.trim();
+        onUpdateNote?.(exerciseId, trimmed || null);
+        setIsEditingNote(false);
+    };
+
+    const handleCancelNote = () => {
+        setNoteInput(workoutExercise.note ?? '');
+        setIsEditingNote(false);
+    };
+
+    // Collapse/expand with LayoutAnimation
+    const handleToggleCollapse = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        onToggleCollapse?.(exerciseId);
+    };
+
+    // Stats for collapsed view
+    const completedSets = sets.filter(s => s.status === 'completed').length;
+
+    // ========================
+    // COLLAPSED VIEW
+    // ========================
+    if (isCollapsed) {
+        return (
+            <TouchableOpacity
+                style={[styles.card, styles.collapsedCard]}
+                onPress={handleToggleCollapse}
+                activeOpacity={0.7}
+            >
+                <View style={styles.collapsedRow}>
+                    <View style={styles.collapsedCheckmark}>
+                        <Text style={styles.collapsedCheckmarkText}>✓</Text>
+                    </View>
+                    <Text style={styles.collapsedName} numberOfLines={1}>
+                        {exercise.name}
+                    </Text>
+                    <Text style={styles.collapsedSets}>
+                        {completedSets} {completedSets === 1 ? 'Set' : 'Sets'}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    }
+
+    // ========================
+    // EXPANDED VIEW (default)
+    // ========================
+
+    const noteText = workoutExercise.note;
 
     return (
         <View style={[styles.card, isInSuperset && !isLastInSuperset && styles.cardInSuperset]}>
@@ -115,14 +202,49 @@ function ExerciseCardInner({
                     <Text style={styles.exerciseName}>{exercise.name}</Text>
                     <Text style={styles.muscleTag}>{formattedMuscle}</Text>
                 </View>
-                <TouchableOpacity style={styles.menuButton} onPress={() => onRemoveExercise(exerciseId)}>
-                    <Text style={styles.menuIcon}>×</Text>
+                <TouchableOpacity
+                    style={styles.menuButton}
+                    onPress={() => setMenuVisible(true)}
+                >
+                    <Text style={styles.menuIcon}>⋯</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Exercise-level note — display mode */}
+            {noteText && !isEditingNote ? (
+                <TouchableOpacity onPress={handleAddNote}>
+                    <Text style={styles.exerciseNote}>{noteText}</Text>
+                </TouchableOpacity>
+            ) : null}
+
+            {/* Exercise-level note — edit mode */}
+            {isEditingNote && (
+                <View style={styles.noteInputContainer}>
+                    <TextInput
+                        style={styles.noteInput}
+                        value={noteInput}
+                        onChangeText={setNoteInput}
+                        placeholder="Add a note..."
+                        placeholderTextColor={colors.text.disabled}
+                        multiline
+                        autoFocus
+                        maxLength={200}
+                    />
+                    <View style={styles.noteActions}>
+                        <TouchableOpacity onPress={handleCancelNote} style={styles.noteActionButton}>
+                            <Text style={styles.noteActionCancel}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleSaveNote} style={styles.noteActionButton}>
+                            <Text style={styles.noteActionSave}>Save</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
 
             {/* Sets header row */}
             <View style={styles.setsHeader}>
                 <Text style={[styles.columnHeader, styles.setColumn]}>SET</Text>
+                <Text style={[styles.columnHeader, styles.prevColumn]}>PREVIOUS</Text>
                 {exercise.trackWeight && (
                     <Text style={[styles.columnHeader, styles.weightColumn]}>WEIGHT</Text>
                 )}
@@ -131,6 +253,9 @@ function ExerciseCardInner({
                 )}
                 {exercise.trackTime && !exercise.trackReps && (
                     <Text style={[styles.columnHeader, styles.repsColumn]}>TIME</Text>
+                )}
+                {showRpe && (
+                    <Text style={[styles.columnHeader, styles.rpeColumn]}>RPE</Text>
                 )}
                 <Text style={[styles.columnHeader, styles.checkColumn]}>✓</Text>
             </View>
@@ -147,14 +272,17 @@ function ExerciseCardInner({
                             trackWeight={exercise.trackWeight}
                             trackReps={exercise.trackReps}
                             trackTime={exercise.trackTime}
+                            previousData={previousSets?.[index] ?? null}
+                            isActiveSet={index === activeSetIndex}
+                            showSwipeHint={showSwipeHint && index === 0}
                             isWeightFocused={isFieldFocused(set.id, 'weight')}
                             isRepsFocused={isFieldFocused(set.id, 'reps')}
+                            showRpe={showRpe}
                             onUpdateSet={onUpdateSet}
                             onCompleteSet={onCompleteSet}
                             onRemoveSet={onRemoveSet}
                             onFocusField={onFocusField}
                         />
-                        {/* Show rest timer after completed sets */}
                         {isSetTimerActive(set.id) && (
                             <ActiveRestLine
                                 duration={restTimerDuration}
@@ -168,36 +296,24 @@ function ExerciseCardInner({
                 ))}
             </View>
 
-            {/* Add set and superset buttons */}
-            <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.addSetButton} onPress={() => onAddSet(exerciseId)}>
-                    <Text style={styles.addSetText}>+ Add Set</Text>
-                </TouchableOpacity>
-                {canSuperset && onToggleSuperset && (
-                    <TouchableOpacity style={styles.supersetButton} onPress={() => onToggleSuperset?.(exerciseId)}>
-                        <Text style={styles.supersetButtonText}>
-                            {isInSuperset ? '🔗 Unlink' : '🔗 Link'}
-                        </Text>
-                    </TouchableOpacity>
-                )}
-            </View>
+            {/* Add set button */}
+            <TouchableOpacity style={styles.addSetButton} onPress={() => onAddSet(exerciseId)}>
+                <Text style={styles.addSetText}>+ Add Set</Text>
+            </TouchableOpacity>
 
-            {/* Progress indicator */}
-            {totalSets > 0 && (
-                <View style={styles.progressContainer}>
-                    <View style={styles.progressBar}>
-                        <View
-                            style={[
-                                styles.progressFill,
-                                { width: `${(completedSets / totalSets) * 100}%` }
-                            ]}
-                        />
-                    </View>
-                    <Text style={styles.progressText}>
-                        {completedSets}/{totalSets} sets
-                    </Text>
-                </View>
-            )}
+            {/* Exercise action menu */}
+            <ExerciseMenu
+                visible={menuVisible}
+                exerciseName={exercise.name}
+                isInSuperset={isInSuperset}
+                canSuperset={canSuperset}
+                onClose={() => setMenuVisible(false)}
+                onAddNote={handleAddNote}
+                onAddWarmupSets={() => onAddWarmupSets?.(exerciseId)}
+                onReplaceExercise={() => onReplaceExercise?.(exerciseId)}
+                onToggleSuperset={() => onToggleSuperset?.(exerciseId)}
+                onRemoveExercise={() => onRemoveExercise(exerciseId)}
+            />
         </View>
     );
 }
@@ -218,6 +334,45 @@ const styles = StyleSheet.create({
         borderBottomWidth: 2,
         borderBottomColor: colors.accent.primary,
     },
+
+    // Collapsed card
+    collapsedCard: {
+        // Same card base, no extra padding needed
+    },
+    collapsedRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.md,
+    },
+    collapsedCheckmark: {
+        width: 28,
+        height: 28,
+        borderRadius: borderRadius.full,
+        backgroundColor: colors.accent.success,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: spacing.sm,
+    },
+    collapsedCheckmarkText: {
+        color: colors.text.primary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.bold,
+    },
+    collapsedName: {
+        flex: 1,
+        color: colors.text.primary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.semibold,
+    },
+    collapsedSets: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.medium,
+        marginLeft: spacing.sm,
+    },
+
+    // Superset badge
     supersetBadge: {
         backgroundColor: colors.accent.primary,
         paddingHorizontal: spacing.md,
@@ -253,21 +408,71 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.medium,
     },
     menuButton: {
-        width: 32,
-        height: 32,
+        width: 36,
+        height: 36,
         justifyContent: 'center',
         alignItems: 'center',
+        borderRadius: borderRadius.full,
     },
     menuIcon: {
         color: colors.text.secondary,
-        fontSize: typography.size.xxl,
-        lineHeight: typography.size.xxl,
+        fontSize: typography.size.xl,
+        fontWeight: typography.weight.bold,
+        letterSpacing: 2,
+    },
+
+    // Exercise-level note
+    exerciseNote: {
+        color: colors.text.secondary,
+        fontSize: typography.size.xs,
+        fontStyle: 'italic',
+        paddingHorizontal: spacing.md,
+        paddingBottom: spacing.sm,
+    },
+
+    // Note editing
+    noteInputContainer: {
+        paddingHorizontal: spacing.md,
+        paddingBottom: spacing.sm,
+    },
+    noteInput: {
+        color: colors.text.primary,
+        fontSize: typography.size.sm,
+        backgroundColor: colors.background.tertiary,
+        borderRadius: borderRadius.md,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        minHeight: 36,
+        maxHeight: 80,
+        borderWidth: 1,
+        borderColor: colors.accent.primary,
+    },
+    noteActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: spacing.xs,
+        gap: spacing.md,
+    },
+    noteActionButton: {
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.sm,
+    },
+    noteActionCancel: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.medium,
+    },
+    noteActionSave: {
+        color: colors.accent.primary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.semibold,
     },
 
     // Sets header
     setsHeader: {
         flexDirection: 'row',
-        paddingHorizontal: spacing.md,
+        alignItems: 'center',
+        paddingHorizontal: spacing.sm,
         paddingVertical: spacing.xs,
         borderBottomWidth: 1,
         borderBottomColor: colors.separator,
@@ -276,9 +481,13 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         fontSize: typography.size.xs,
         fontWeight: typography.weight.medium,
+        textAlign: 'center',
     },
     setColumn: {
         width: 40,
+    },
+    prevColumn: {
+        width: 72,
     },
     weightColumn: {
         flex: 1,
@@ -288,14 +497,18 @@ const styles = StyleSheet.create({
         flex: 1,
         textAlign: 'center',
     },
+    rpeColumn: {
+        width: 44,
+        textAlign: 'center',
+    },
     checkColumn: {
-        width: 50,
+        width: 44,
         textAlign: 'center',
     },
 
     // Sets list
     setsList: {
-        padding: spacing.sm,
+        paddingHorizontal: spacing.sm,
     },
 
     // Add set button
@@ -309,46 +522,5 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
         fontSize: typography.size.md,
         fontWeight: typography.weight.medium,
-    },
-    actionRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        borderTopWidth: 1,
-        borderTopColor: colors.separator,
-    },
-    supersetButton: {
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-    },
-    supersetButtonText: {
-        color: colors.accent.primary,
-        fontSize: typography.size.md,
-        fontWeight: typography.weight.medium,
-    },
-
-    // Progress
-    progressContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: spacing.md,
-        paddingBottom: spacing.md,
-    },
-    progressBar: {
-        flex: 1,
-        height: 4,
-        backgroundColor: colors.background.tertiary,
-        borderRadius: borderRadius.full,
-        overflow: 'hidden',
-        marginRight: spacing.sm,
-    },
-    progressFill: {
-        height: '100%',
-        backgroundColor: colors.accent.success,
-        borderRadius: borderRadius.full,
-    },
-    progressText: {
-        color: colors.text.secondary,
-        fontSize: typography.size.xs,
     },
 });

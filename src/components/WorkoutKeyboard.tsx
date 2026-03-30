@@ -11,7 +11,7 @@
  * - Hide button to dismiss
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -24,6 +24,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useWeightUnit } from '../hooks/useWeightUnit';
+import PlateCalculator from './PlateCalculator';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const KEYBOARD_HEIGHT = 340; // Total height including padding
@@ -64,6 +65,7 @@ export default function WorkoutKeyboard({
     const totalHeight = KEYBOARD_HEIGHT + bottomInset;
     const slideAnim = useRef(new Animated.Value(totalHeight)).current;
     const hasBeenVisible = useRef(false);
+    const [showPlateCalc, setShowPlateCalc] = useState(false);
 
     // Track if keyboard has ever been shown
     useEffect(() => {
@@ -166,6 +168,14 @@ export default function WorkoutKeyboard({
                 <TouchableOpacity style={styles.hideButton} onPress={onHide}>
                     <Text style={styles.hideButtonText}>Hide ↓</Text>
                 </TouchableOpacity>
+                {fieldType === 'weight' && parseFloat(currentValue) > 0 && (
+                    <TouchableOpacity
+                        style={styles.plateButton}
+                        onPress={() => setShowPlateCalc(true)}
+                    >
+                        <Text style={styles.plateButtonText}>🏋️</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Keyboard layout */}
@@ -226,6 +236,14 @@ export default function WorkoutKeyboard({
                     </TouchableOpacity>
                 </View>
             </View>
+
+            {/* Plate calculator modal */}
+            <PlateCalculator
+                visible={showPlateCalc}
+                weight={parseFloat(currentValue) || 0}
+                unit={weightUnit}
+                onClose={() => setShowPlateCalc(false)}
+            />
         </Animated.View>
     );
 }
@@ -287,6 +305,16 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         fontSize: typography.size.sm,
         fontWeight: typography.weight.medium,
+    },
+    plateButton: {
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.sm,
+        backgroundColor: colors.background.tertiary,
+        borderRadius: borderRadius.md,
+        marginLeft: spacing.sm,
+    },
+    plateButtonText: {
+        fontSize: typography.size.md,
     },
 
     // Keyboard container

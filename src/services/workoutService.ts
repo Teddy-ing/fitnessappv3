@@ -13,6 +13,7 @@ import {
     WorkoutExercise,
     WorkoutSet,
     WorkoutSection,
+    SetType,
     createWorkout,
     createWorkoutExercise,
     createSet
@@ -451,6 +452,76 @@ export async function getWorkoutDatesThisWeek(): Promise<Date[]> {
 }
 
 
+/**
+ * Data from a previous session's set, used for the "Previous" column.
+ */
+export interface PreviousSetData {
+    weight: number | null;
+    reps: number | null;
+    type: SetType;
+}
+
+/**
+ * Fetch sets from the most recent completed workout containing the given exerciseId.
+ * Returns an empty array if no prior workout exists for this exercise.
+ */
+export async function getPreviousSetsForExercise(
+    exerciseId: string
+): Promise<PreviousSetData[]> {
+    const db = await getDatabase();
+    if (!db) return [];
+
+    try {
+        const rows = await db.getAllAsync<{
+            weight: number | null;
+            reps: number | null;
+            type: string;
+            order_index: number;
+        }>(
+            `SELECT ws.weight, ws.reps, ws.type, ws.order_index
+             FROM workout_sets ws
+             WHERE ws.workout_exercise_id = (
+               SELECT we.id
+               FROM workout_exercises we
+               JOIN workouts w ON we.workout_id = w.id
+               WHERE we.exercise_id = ?
+                 AND w.status = 'completed'
+               ORDER BY w.completed_at DESC
+               LIMIT 1
+             )
+             ORDER BY ws.order_index`,
+            [exerciseId]
+        );
+
+        return rows.map(r => ({
+            weight: r.weight,
+            reps: r.reps,
+            type: r.type as SetType,
+        }));
+    } catch (error) {
+        console.error('[WorkoutService] Failed to get previous sets:', error);
+        return [];
+    }
+}
+
+/**
+ * Batch-fetch previous sets for multiple exercises at once.
+ * Returns a Map keyed by exerciseId.
+ */
+export async function getPreviousSetsForExercises(
+    exerciseIds: string[]
+): Promise<Map<string, PreviousSetData[]>> {
+    const result = new Map<string, PreviousSetData[]>();
+    // Fetch in parallel for all exercises
+    await Promise.all(
+        exerciseIds.map(async (id) => {
+            const sets = await getPreviousSetsForExercise(id);
+            result.set(id, sets);
+        })
+    );
+    return result;
+}
+
 export default {
     saveWorkout,
     updateWorkout,
@@ -459,6 +530,7 @@ export default {
     deleteWorkout,
     getWorkoutCount,
     getWorkoutDatesThisWeek,
+    getPreviousSetsForExercise,
+    getPreviousSetsForExercises,
 };
-
 
