@@ -31,7 +31,7 @@ import { File, Paths } from 'expo-file-system';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
-import { ExerciseCard, ExercisePicker, RestTimer, WorkoutKeyboard, SaveTemplateModal, ErrorBoundary } from '../components';
+import { ExerciseCard, ExercisePicker, RestTimer, WorkoutKeyboard, SaveTemplateModal, ErrorBoundary, WorkoutSettingsMenu } from '../components';
 import { useElapsedTimer, formatElapsedTime, useWorkoutKeyboard, useHomeScreenData } from '../hooks';
 import {
     saveWorkout,
@@ -41,6 +41,7 @@ import {
     markWorkoutCompletedToday,
     getPreviousSetsForExercises,
     getSettings,
+    updateSettings,
     Template,
 } from '../services';
 import { Workout } from '../models/workout';
@@ -99,15 +100,44 @@ export default function WorkoutScreen() {
     // Replace exercise flow — tracks which exercise is being replaced
     const [replaceExerciseId, setReplaceExerciseId] = useState<string | null>(null);
 
+    // Workout Settings
+    const [settingsMenuVisible, setSettingsMenuVisible] = useState(false);
+    const [showPrevious, setShowPrevious] = useState(true);
+    const [showRpe, setShowRpe] = useState(false);
+    const [showRir, setShowRir] = useState(false);
+    const [showPlateCalc, setShowPlateCalc] = useState(true);
+    const [defaultWarmupSets, setDefaultWarmupSets] = useState(2);
+
+    // Load settings on mount
+    useEffect(() => {
+        getSettings().then(settings => {
+            setShowPrevious(settings.showPrevious ?? true);
+            setShowRpe(settings.showRpe ?? false);
+            setShowRir(settings.showRir ?? false);
+            setShowPlateCalc(settings.showPlateCalc ?? true);
+            setDefaultWarmupSets(settings.defaultWarmupSets ?? 2);
+        });
+    }, []);
+
+    const handleToggleSetting = async (key: 'showPrevious' | 'showRpe' | 'showRir' | 'showPlateCalc', value: boolean) => {
+        if (key === 'showPrevious') setShowPrevious(value);
+        if (key === 'showRpe') setShowRpe(value);
+        if (key === 'showRir') setShowRir(value);
+        if (key === 'showPlateCalc') setShowPlateCalc(value);
+        await updateSettings({ [key]: value });
+    };
+
+    const handleChangeWarmupSets = async (count: number) => {
+        setDefaultWarmupSets(count);
+        await updateSettings({ defaultWarmupSets: count });
+    };
+
     // Workout-level note state
     const [showWorkoutNote, setShowWorkoutNote] = useState(false);
     const [workoutNoteInput, setWorkoutNoteInput] = useState('');
 
     // Swipe-hint onboarding: show on first workout ever
     const [showSwipeHint, setShowSwipeHint] = useState(false);
-
-    // RPE column visibility (loaded from settings)
-    const [showRpe, setShowRpe] = useState(false);
 
     useEffect(() => {
         // Swipe hint check
@@ -117,9 +147,6 @@ export default function WorkoutScreen() {
             setShowSwipeHint(true);
             SWIPE_HINT_FILE.write('1');
         }
-
-        // Load RPE setting
-        getSettings().then(s => setShowRpe(s.showRpe)).catch(() => {});
     }, []);
 
     // Live timer - extracted to useElapsedTimer hook
@@ -354,15 +381,9 @@ export default function WorkoutScreen() {
                     <View style={styles.headerRight}>
                         <TouchableOpacity
                             style={styles.noteIconButton}
-                            onPress={() => {
-                                setWorkoutNoteInput(activeWorkout.note ?? '');
-                                setShowWorkoutNote(!showWorkoutNote);
-                            }}
+                            onPress={() => setSettingsMenuVisible(true)}
                         >
-                            <Text style={[
-                                styles.noteIcon,
-                                activeWorkout.note && styles.noteIconActive,
-                            ]}>📝</Text>
+                            <Text style={styles.settingsIcon}>⋮</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleFinishWorkout}>
                             <Text style={styles.finishButton}>{isEditMode ? 'Save' : 'Finish'}</Text>
@@ -473,12 +494,15 @@ export default function WorkoutScreen() {
                                 workoutExercise={workoutExercise}
                                 focusState={focusState}
                                 isInSuperset={isInSuperset}
+                                isFirstInSuperset={isFirstInSuperset}
                                 isLastInSuperset={isLastInSuperset}
                                 canSuperset={canSuperset}
                                 exerciseId={exId}
                                 isCollapsed={isCollapsed}
                                 showSwipeHint={showSwipeHint && index === 0}
+                                showPrevious={showPrevious}
                                 showRpe={showRpe}
+                                showRir={showRir}
                                 previousSets={previousSets.get(workoutExercise.exerciseId)}
                                 onUpdateSet={updateSet}
                                 onCompleteSet={completeSet}
@@ -488,7 +512,7 @@ export default function WorkoutScreen() {
                                 onToggleSuperset={toggleSuperset}
                                 onFocusField={handleFocusField}
                                 onUpdateNote={updateExerciseNote}
-                                onAddWarmupSets={addWarmupSets}
+                                onAddWarmupSets={() => addWarmupSets(exId, defaultWarmupSets)}
                                 onReplaceExercise={(exId) => setReplaceExerciseId(exId)}
                                 onToggleCollapse={toggleCollapse}
                             />
@@ -510,11 +534,14 @@ export default function WorkoutScreen() {
                                         workoutExercise={ssEx}
                                         focusState={focusState}
                                         isInSuperset={true}
+                                        isFirstInSuperset={false}
                                         isLastInSuperset={ssIsLast}
                                         canSuperset={j < exercises.length - 1}
                                         exerciseId={ssEx.id}
                                         isCollapsed={ssCollapsed}
+                                        showPrevious={showPrevious}
                                         showRpe={showRpe}
+                                        showRir={showRir}
                                         previousSets={previousSets.get(ssEx.exerciseId)}
                                         onUpdateSet={updateSet}
                                         onCompleteSet={completeSet}
@@ -524,7 +551,7 @@ export default function WorkoutScreen() {
                                         onToggleSuperset={toggleSuperset}
                                         onFocusField={handleFocusField}
                                         onUpdateNote={updateExerciseNote}
-                                        onAddWarmupSets={addWarmupSets}
+                                        onAddWarmupSets={() => addWarmupSets(ssEx.id, defaultWarmupSets)}
                                         onReplaceExercise={(exId) => setReplaceExerciseId(exId)}
                                         onToggleCollapse={toggleCollapse}
                                     />
@@ -574,6 +601,23 @@ export default function WorkoutScreen() {
             {/* Rest Timer — hidden in edit mode */}
             {!isEditMode && <RestTimer />}
 
+            {/* Settings Menu */}
+            <WorkoutSettingsMenu
+                visible={settingsMenuVisible}
+                onClose={() => setSettingsMenuVisible(false)}
+                onAddNote={() => {
+                    setWorkoutNoteInput(activeWorkout.note ?? '');
+                    setShowWorkoutNote(true);
+                }}
+                showPrevious={showPrevious}
+                showRpe={showRpe}
+                showRir={showRir}
+                showPlateCalc={showPlateCalc}
+                defaultWarmupSets={defaultWarmupSets}
+                onToggleSetting={handleToggleSetting}
+                onChangeWarmupSets={handleChangeWarmupSets}
+            />
+
             {/* Custom Workout Keyboard */}
             <WorkoutKeyboard
                 visible={focusState !== null}
@@ -586,6 +630,7 @@ export default function WorkoutScreen() {
                 onAdjust={handleAdjust}
                 onNext={handleNext}
                 onHide={handleHideKeyboard}
+                showPlateCalc={showPlateCalc}
             />
 
             {/* Exercise picker modal — adding new exercise */}
@@ -658,12 +703,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    noteIcon: {
-        fontSize: typography.size.md,
-        opacity: 0.5,
-    },
-    noteIconActive: {
-        opacity: 1,
+    settingsIcon: {
+        fontSize: typography.size.xl,
+        color: colors.text.primary,
+        fontWeight: typography.weight.bold,
     },
     discardButton: {
         color: colors.accent.error,

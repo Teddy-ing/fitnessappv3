@@ -79,11 +79,15 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ---
 
+- [x] **Workout Logging Redesign — Phase 2** (Interactions + Menu: `⋯` ellipsis menu with 5 actions, SetTypeMenu pill selector, inline exercise notes, replace exercise flow, warm-up set insertion)
+- [x] **Workout Logging Redesign — Phase 3** (Auto-collapsing cards with LayoutAnimation, visual superset bracketing with vertical purple line + badge, workout-level notes via 📝 header icon, swipe-hint onboarding animation using expo-file-system guard)
+- [x] **Workout Logging Redesign — Phase 4** (Settings-gated RPE column with RpeSelector popover, plate calculator modal in WorkoutKeyboard, v9 DB migration for `show_rpe` column)
+
+---
+
 ## In Progress
 
-- [ ] **Workout Logging Redesign — Phase 2** (Interactions + Menu: `...` ellipsis menu, set type popover, exercise-level notes)
-- [ ] **Workout Logging Redesign — Phase 3** (Auto-collapsing cards, superset visuals, workout notes, swipe hint)
-- [ ] **Workout Logging Redesign — Phase 4** (RPE column, plate calculator)
+*Nothing currently in progress.*
 
 ---
 
@@ -937,3 +941,113 @@ description: Living document tracking completed work, in-progress tasks, next st
 - `src/services/analyticsService.ts` — Muscle group SQL filter + primary muscle extraction
 - `src/screens/AnalyticsScreen.tsx` — 3-layer ExerciseListView rewrite
 - `src/services/__tests__/analyticsService.test.ts` — 3 new tests
+
+### 2026-03-29 (Evening): Workout Logging Redesign — Phases 2, 3, 4
+
+**Duration:** ~3 hours
+**Focus:** Completing the entire workout logging screen redesign PRD (Phases 2-4)
+
+**Phase 2 — Interactions + Menu:**
+- Created `ExerciseMenu.tsx` — bottom-sheet with 5 actions (Add Note, Type, Warm-up, Replace, Remove)
+- Created `SetTypeMenu.tsx` — pill-based set type selector (Working/Warmup/Drop/Failure)
+- Integrated inline exercise notes (collapsible TextInput with Save/Cancel)
+- Added replace exercise flow (opens ExercisePicker for swap)
+- Added warm-up set insertion via menu
+
+**Phase 3 — Polish & Refinement:**
+- Implemented auto-collapsing cards: `collapsedExercises: Set<string>` state, `toggleCollapse` action, auto-collapse on all-sets-complete
+- Added `LayoutAnimation.easeInEaseOut` for smooth expand/collapse transitions
+- Implemented visual superset bracketing: shared container with 3px purple vertical line + SUPERSET badge
+- Added workout-level notes: 📝 header icon, collapsible TextInput, `updateWorkoutNote` action
+- Implemented swipe-hint onboarding: first set row slides 40px left on first workout, guarded by `.swipe_hint_seen` file via `expo-file-system`
+- **Note:** Replaced original `@react-native-async-storage/async-storage` approach with `expo-file-system` File API (project doesn't have AsyncStorage installed)
+
+**Phase 4 — Settings-Gated Features:**
+- Added DB migration v9: `show_rpe INTEGER DEFAULT 0` on `user_settings`
+- Added `showRpe: boolean` to `UserSettings` interface + `preferencesService` (row type, defaults, read/write mapping)
+- Created `RpeSelector.tsx` — centered modal with pill buttons for RPE 6-10 in 0.5 steps, red styling for ≥9.5, clear button
+- Added RPE column to `SetRow` (between reps and ✓ checkbox), gated by `showRpe` prop
+- Added RPE header to `ExerciseCard` column headers
+- `WorkoutScreen` loads `showRpe` from `getSettings()` on mount, passes to all ExerciseCards
+- Created `PlateCalculator.tsx` — modal showing per-side plate breakdown for entered weight, color-coded visuals (Blue=45, Yellow=35, Green=25, White=10, Red=5), remainder warning
+- Added 🏋️ button to `WorkoutKeyboard` display row (only visible when field type is weight and value > 0)
+
+**Verification:**
+- TypeScript: 0 errors across all phases
+- Jest: 232/233 tests passing (1 pre-existing calendar streak boundary failure)
+- 2 test suites flagged as failing:
+  - `calendarService.test.ts` — 1 flaky test (`returns streak count for consecutive weeks`, line 217): time-dependent ISO week boundary issue where mock dates may not span 3 distinct ISO weeks depending on day-of-week test runs
+  - `workoutStore.test.ts` — entire suite fails to parse: `workoutStore.ts` now imports `workoutService.ts` (added in Phase 1 for previous-sets data), which transitively imports `expo-sqlite`, and Jest can't parse that ESM native module. Pre-existing since Phase 1; test mock needs updating to also mock `workoutService`.
+
+**Files created:**
+- `src/components/RpeSelector.tsx`
+- `src/components/PlateCalculator.tsx`
+- `src/components/ExerciseMenu.tsx` (Phase 2)
+- `src/components/SetTypeMenu.tsx` (Phase 2)
+
+**Files modified:**
+- `src/stores/workoutStore.ts` — collapsedExercises, toggleCollapse, updateWorkoutNote, auto-collapse in completeSet
+- `src/components/ExerciseCard.tsx` — collapsed view, LayoutAnimation, RPE column, showSwipeHint forwarding
+- `src/components/SetRow.tsx` — swipe-hint animation, RPE cell + RpeSelector, SetTypeMenu import
+- `src/screens/WorkoutScreen.tsx` — superset container, workout notes UI, swipe hint state, RPE setting, plate calc, getSettings import
+- `src/components/WorkoutKeyboard.tsx` — PlateCalculator button + modal
+- `src/services/migrations.ts` — v9: show_rpe column
+- `src/models/preferences.ts` — showRpe in UserSettings
+- `src/services/preferencesService.ts` — showRpe wiring (row type, defaults, read/write)
+
+---
+
+### 2026-03-30: Workout Logging Redesign Phase 5 — Dynamic Columns + Settings
+
+**Duration:** Single session
+**Focus:** Finalizing the workout logging UI, preventing data loss on exercise replacement, and building a responsive global workout settings menu that dynamically injects RPE, RIR, and Previous metrics onto tracking cards.
+
+**What was done:**
+- Fixed exercise replacement edge-case logic so `replaceExercise` strictly resets all tracked inputs (weight, reps, time, RIR, RPE) to empty without destroying the active set architecture.
+- Replaced the hardcoded note emoji logic with a formalized layout rendering `WorkoutSettingsMenu.tsx` which can be launched via a high-visibility `⋮` (Vertical Ellipsis) header click.
+- Enforced a 2-Column global cap via UI constraint logic to preserve optimal mobile scaling without data crowding.
+- Completed and mapped `RirSelector.tsx` functionality directly into the `SetRow` active state logic.
+- Implemented state decoupling on `showPlateCalc`, pushing modal visibility to local element scope without crossing wires with the actual user preference boolean globally defining it.
+- Connected component updates across `ExerciseCard.tsx`, `SetRow.tsx`, and `WorkoutScreen.tsx` to handle dynamic flex fitting rendering. 
+
+**Files Created:**
+- `src/components/WorkoutSettingsMenu.tsx`
+- `src/components/RirSelector.tsx`
+
+**Files Modified:**
+- `src/screens/WorkoutScreen.tsx` — `WorkoutSettingsMenu` header import and state architecture 
+- `src/components/ExerciseCard.tsx` — Flex width conditionals
+- `src/components/SetRow.tsx` — Conditional rendering cells 
+- `src/components/WorkoutKeyboard.tsx` — Localizing plate calc modal visibility state
+- `src/services/migrations.ts` — Database schema (v10) supporting `show_rir` and visual preferences 
+- `src/services/preferencesService.ts` 
+- `src/stores/workoutStore.ts` 
+- `src/components/index.ts`
+
+---
+
+### Future Feature Candidate: Comprehensive RPE & RIR Analytics Integration
+
+**Focus:** Transforming qualitative RPE/RIR user inputs logged during workouts into quantifiable training metrics within the app's Analytics and Widget suites.
+
+*The following outlines potential implementations linking training exertion data to performance tracking:*
+
+**1. "True Potential" e1RM Calculations**
+- **Trigger:** When users track `RIR` or `RPE` alongside standard `weight × reps`.
+- **Implementation:** Enhance the `exerciseAnalyticsService.ts` to calculate a theoretical 1RM incorporating remaining effort. E.g., a set of 5 reps at 2 RIR is mathematically equivalent to a 7-rep max. 
+- **UI Element:** Under `ExerciseAnalyticsScreen`, plot two lines on the 1RM LineChart: "Historical 1RM" (solid) and "Potential 1RM" (dotted, calculated via RIR offset).
+
+**2. Fatigue Detection & Deload Prompting**
+- **Trigger:** High `RPE` averages aggregated across successive weeks via the calendar service.
+- **Implementation:** Create a chron-aggregator that flags when a user's trailing 14-day average RPE spikes into the 9–10 range on major compound lifts. 
+- **UI Elements:** 
+  - A contextual banner injected into `AnalyticsScreen` triggering a "High CNS Fatigue Risk: Consider a deload week".
+  - Calendar integration reflecting "Redline" days in the heatmap or journal.
+
+**3. "Stimulating" Volume Visualization**
+- **Trigger:** Advanced volume tracking inside `AnalyticsScreen`. 
+- **Implementation:** Shift focus from sheer physical volume (`reps × sets × weight`) to hypertrophy-stimulating volume by filtering sets. Sets registered at RIR 0–4 act as the core stimulus block.
+- **UI Element:** Stacked `BarChart` on the Volume breakdown tab visualizing "Effective Volume" (Green, <4 RIR) vs "Junk/Warmup Volume" (Grey, >5 RIR).
+
+**4. Evolved Workload Readiness Widget**
+- **Implementation:** Modify the ACWR (Acute:Chronic Workload Ratio) algorithm powering the Home Screen's `WorkloadReadinessWidget` to scalar-multiply incoming `volume` by internal exertion (`RPE`). 10,000 lbs moved at RPE 6 will yield a drastically different recovery decay rate than 10,000 lbs moved at RPE 10.

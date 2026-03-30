@@ -22,6 +22,7 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import { getWeightUnitSync } from '../hooks/useWeightUnit';
 import SetTypeMenu from './SetTypeMenu';
 import RpeSelector from './RpeSelector';
+import RirSelector from './RirSelector';
 
 // PP-005 fix: Props use store-shaped action signatures so the parent can pass
 // stable references (from getState()) instead of inline arrow closures.
@@ -43,7 +44,9 @@ interface SetRowProps {
     onCompleteSet: (exerciseId: string, setId: string) => void;
     onRemoveSet: (exerciseId: string, setId: string) => void;
     onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
+    showPrevious?: boolean;
     showRpe?: boolean;
+    showRir?: boolean;
 }
 
 function SetRowInner({
@@ -64,7 +67,9 @@ function SetRowInner({
     onCompleteSet,
     onRemoveSet,
     onFocusField,
+    showPrevious = true,
     showRpe = false,
+    showRir = false,
 }: SetRowProps) {
     const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
@@ -75,6 +80,9 @@ function SetRowInner({
 
     // RPE selector visibility
     const [showRpeSelector, setShowRpeSelector] = useState(false);
+
+    // RIR selector visibility
+    const [showRirSelector, setShowRirSelector] = useState(false);
 
     // Pulsing animation for active set checkbox
     const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -221,11 +229,13 @@ function SetRowInner({
                 </TouchableOpacity>
 
                 {/* Previous column */}
-                <View style={styles.prevCell}>
-                    <Text style={[styles.prevText, { opacity: textOpacity }]}>
-                        {formatPrevious()}
-                    </Text>
-                </View>
+                {showPrevious && (
+                    <View style={styles.prevCell}>
+                        <Text style={[styles.prevText, { opacity: textOpacity }]}>
+                            {formatPrevious()}
+                        </Text>
+                    </View>
+                )}
 
                 {/* Weight input — borderless inline text */}
                 {trackWeight && (
@@ -312,6 +322,23 @@ function SetRowInner({
                     </TouchableOpacity>
                 )}
 
+                {/* RIR column (conditional) */}
+                {showRir && (
+                    <TouchableOpacity
+                        style={styles.rpeCell}
+                        onPress={() => setShowRirSelector(true)}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={[
+                            styles.rpeText,
+                            set.rir == null && styles.dataTextPlaceholder,
+                            { opacity: textOpacity },
+                        ]}>
+                            {set.rir != null ? (set.rir === 5 ? '5+' : set.rir.toString()) : '—'}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+
                 {/* Completion checkbox */}
                 <Animated.View style={[
                     styles.checkboxContainer,
@@ -346,6 +373,14 @@ function SetRowInner({
                 currentValue={set.rpe}
                 onSelect={(val) => onUpdateSet(exerciseId, setId, { rpe: val })}
                 onClose={() => setShowRpeSelector(false)}
+            />
+
+            {/* RIR selector modal */}
+            <RirSelector
+                visible={showRirSelector}
+                currentValue={set.rir}
+                onSelect={(val) => onUpdateSet(exerciseId, setId, { rir: val })}
+                onClose={() => setShowRirSelector(false)}
             />
         </Swipeable>
     );

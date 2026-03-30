@@ -27,4 +27,8 @@ export interface UserSettings {
     relativeStrengthExercise: string | null;
     widgetConfig: WidgetConfig[];
     showRpe: boolean;
+    showRir: boolean;
+    showPlateCalc: boolean;
+    defaultWarmupSets: number;
+    showPrevious: boolean;
 }

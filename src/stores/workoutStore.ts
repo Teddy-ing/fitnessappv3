@@ -561,11 +561,22 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
         const exercises = activeWorkout.main.exercises.map(ex => {
             if (ex.id === exerciseId) {
-                // Keep set structure, swap exercise definition
+                // Keep set structure, swap exercise definition, and clear entered data
                 return {
                     ...ex,
                     exerciseId: newExercise.id,
                     exercise: newExercise,
+                    sets: ex.sets.map(s => ({
+                        ...s,
+                        weight: null,
+                        reps: null,
+                        duration: null,
+                        distance: null,
+                        rpe: null,
+                        rir: null,
+                        status: 'pending' as const,
+                        completedAt: null,
+                    }))
                 };
             }
             return ex;

@@ -44,6 +44,7 @@ interface WorkoutKeyboardProps {
     onAdjust: (delta: number) => void;
     onNext: () => void;
     onHide: () => void;
+    showPlateCalc?: boolean;
 }
 
 export default function WorkoutKeyboard({
@@ -58,6 +59,7 @@ export default function WorkoutKeyboard({
     onAdjust,
     onNext,
     onHide,
+    showPlateCalc = true,
 }: WorkoutKeyboardProps) {
     const weightUnit = useWeightUnit();
     const insets = useSafeAreaInsets();
@@ -65,7 +67,7 @@ export default function WorkoutKeyboard({
     const totalHeight = KEYBOARD_HEIGHT + bottomInset;
     const slideAnim = useRef(new Animated.Value(totalHeight)).current;
     const hasBeenVisible = useRef(false);
-    const [showPlateCalc, setShowPlateCalc] = useState(false);
+    const [isPlateCalcModalVisible, setIsPlateCalcModalVisible] = useState(false);
 
     // Track if keyboard has ever been shown
     useEffect(() => {
@@ -168,10 +170,10 @@ export default function WorkoutKeyboard({
                 <TouchableOpacity style={styles.hideButton} onPress={onHide}>
                     <Text style={styles.hideButtonText}>Hide ↓</Text>
                 </TouchableOpacity>
-                {fieldType === 'weight' && parseFloat(currentValue) > 0 && (
+                {showPlateCalc && fieldType === 'weight' && parseFloat(currentValue) > 0 && (
                     <TouchableOpacity
                         style={styles.plateButton}
-                        onPress={() => setShowPlateCalc(true)}
+                        onPress={() => setIsPlateCalcModalVisible(true)}
                     >
                         <Text style={styles.plateButtonText}>🏋️</Text>
                     </TouchableOpacity>
@@ -239,10 +241,10 @@ export default function WorkoutKeyboard({
 
             {/* Plate calculator modal */}
             <PlateCalculator
-                visible={showPlateCalc}
+                visible={isPlateCalcModalVisible}
                 weight={parseFloat(currentValue) || 0}
                 unit={weightUnit}
-                onClose={() => setShowPlateCalc(false)}
+                onClose={() => setIsPlateCalcModalVisible(false)}
             />
         </Animated.View>
     );

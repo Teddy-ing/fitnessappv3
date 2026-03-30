@@ -565,6 +565,43 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v10: Workout screen settings (RIR, Plate Calc, Warmups, Previous)
+    // ----------------------------------------------------------
+    {
+        version: 10,
+        name: 'workout_screen_settings',
+        up: async (db) => {
+            const hasRir = await columnExists(db, 'user_settings', 'show_rir');
+            if (!hasRir) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN show_rir INTEGER DEFAULT 0;`,
+                );
+            }
+
+            const hasPlateCalc = await columnExists(db, 'user_settings', 'show_plate_calc');
+            if (!hasPlateCalc) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN show_plate_calc INTEGER DEFAULT 1;`,
+                );
+            }
+
+            const hasWarmups = await columnExists(db, 'user_settings', 'default_warmup_sets');
+            if (!hasWarmups) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN default_warmup_sets INTEGER DEFAULT 2;`,
+                );
+            }
+
+            const hasPrevious = await columnExists(db, 'user_settings', 'show_previous');
+            if (!hasPrevious) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN show_previous INTEGER DEFAULT 1;`,
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

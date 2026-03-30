@@ -41,6 +41,10 @@ interface UserSettingsRow {
     relative_strength_exercise: string | null;
     widget_config: string | null;
     show_rpe: number;
+    show_rir: number;
+    show_plate_calc: number;
+    default_warmup_sets: number;
+    show_previous: number;
 }
 
 /** Default settings — used if the row doesn't exist yet */
@@ -65,6 +69,10 @@ const DEFAULTS: UserSettings = {
     relativeStrengthExercise: null,
     widgetConfig: DEFAULT_WIDGETS,
     showRpe: false,
+    showRir: false,
+    showPlateCalc: true,
+    defaultWarmupSets: 2,
+    showPrevious: true,
 };
 
 // ============================================================
@@ -110,6 +118,10 @@ export async function getSettings(): Promise<UserSettings> {
             DEFAULT_WIDGETS,
         ),
         showRpe: row.show_rpe === 1,
+        showRir: row.show_rir === 1,
+        showPlateCalc: row.show_plate_calc === 1,
+        defaultWarmupSets: row.default_warmup_sets ?? 2,
+        showPrevious: row.show_previous === 1,
     };
 }
 
@@ -151,6 +163,10 @@ export async function updateSettings(
         relativeStrengthExercise: 'relative_strength_exercise',
         widgetConfig: 'widget_config',
         showRpe: 'show_rpe',
+        showRir: 'show_rir',
+        showPlateCalc: 'show_plate_calc',
+        defaultWarmupSets: 'default_warmup_sets',
+        showPrevious: 'show_previous',
     };
 
     const setClauses: string[] = [];

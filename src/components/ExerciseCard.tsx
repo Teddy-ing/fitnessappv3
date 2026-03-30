@@ -42,11 +42,14 @@ interface ExerciseCardProps {
     focusState?: FocusState | null;
     previousSets?: PreviousSetData[];
     isInSuperset?: boolean;
+    isFirstInSuperset?: boolean;
     isLastInSuperset?: boolean;
     canSuperset?: boolean;
     isCollapsed?: boolean;
     showSwipeHint?: boolean;
+    showPrevious?: boolean;
     showRpe?: boolean;
+    showRir?: boolean;
     onUpdateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
     onCompleteSet: (exerciseId: string, setId: string) => void;
     onAddSet: (exerciseId: string) => void;
@@ -66,11 +69,14 @@ function ExerciseCardInner({
     focusState,
     previousSets,
     isInSuperset = false,
+    isFirstInSuperset = true,
     isLastInSuperset = false,
     canSuperset = false,
     isCollapsed = false,
     showSwipeHint = false,
+    showPrevious = true,
     showRpe = false,
+    showRir = false,
     onUpdateSet,
     onCompleteSet,
     onAddSet,
@@ -188,7 +194,11 @@ function ExerciseCardInner({
     const noteText = workoutExercise.note;
 
     return (
-        <View style={[styles.card, isInSuperset && !isLastInSuperset && styles.cardInSuperset]}>
+        <View style={[
+            styles.card,
+            isInSuperset && !isLastInSuperset && styles.cardInSuperset,
+            isInSuperset && !isFirstInSuperset && styles.cardSubsequentInSuperset
+        ]}>
             {/* Superset badge */}
             {isInSuperset && (
                 <View style={styles.supersetBadge}>
@@ -244,7 +254,7 @@ function ExerciseCardInner({
             {/* Sets header row */}
             <View style={styles.setsHeader}>
                 <Text style={[styles.columnHeader, styles.setColumn]}>SET</Text>
-                <Text style={[styles.columnHeader, styles.prevColumn]}>PREVIOUS</Text>
+                {showPrevious && <Text style={[styles.columnHeader, styles.prevColumn]}>PREVIOUS</Text>}
                 {exercise.trackWeight && (
                     <Text style={[styles.columnHeader, styles.weightColumn]}>WEIGHT</Text>
                 )}
@@ -256,6 +266,9 @@ function ExerciseCardInner({
                 )}
                 {showRpe && (
                     <Text style={[styles.columnHeader, styles.rpeColumn]}>RPE</Text>
+                )}
+                {showRir && (
+                    <Text style={[styles.columnHeader, styles.rpeColumn]}>RIR</Text>
                 )}
                 <Text style={[styles.columnHeader, styles.checkColumn]}>✓</Text>
             </View>
@@ -277,7 +290,9 @@ function ExerciseCardInner({
                             showSwipeHint={showSwipeHint && index === 0}
                             isWeightFocused={isFieldFocused(set.id, 'weight')}
                             isRepsFocused={isFieldFocused(set.id, 'reps')}
+                            showPrevious={showPrevious}
                             showRpe={showRpe}
+                            showRir={showRir}
                             onUpdateSet={onUpdateSet}
                             onCompleteSet={onCompleteSet}
                             onRemoveSet={onRemoveSet}
@@ -333,6 +348,10 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 0,
         borderBottomWidth: 2,
         borderBottomColor: colors.accent.primary,
+    },
+    cardSubsequentInSuperset: {
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
     },
 
     // Collapsed card
