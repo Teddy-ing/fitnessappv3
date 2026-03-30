@@ -7,21 +7,43 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Last scoped pass:** 2026-03-28 (widget system + bug fix pass — 22 files)
-- **Open issues:** 1 (Active: 0, Latent: 1)
+- **Last scoped pass:** 2026-03-30 (Workout Logging Redesign Phase 1-4 — 5 files)
+- **Open issues:** 5 (Active: 4, Latent: 2)
 - **Fixed since baseline:** 27
 
 ---
 
 ## Open Issues — Active Debt
 
-*No active debt issues.*
+### TD-030 · `WorkoutScreen.tsx` exceeds 600-line limit
+- **Guardrail violated:** #1 (Component size limit)
+- **Context:** Following the 4-phase refactor, the component ballooned to 856 lines. Major violation of the component size guardrail.
+- **Action Required:** Extract isolated responsibilities. E.g., `WorkoutHeader`, `StatsRow`, `WorkoutSettingsMenu`. `WorkoutScreen` should serve as a thin orchestrator routing props between these components.
+
+### TD-031 · `workoutStore.ts` exceeds 600-line limit
+- **Guardrail violated:** #1 (File size limit)
+- **Context:** The file is now exactly 650 lines. The store handles both simple state management and complex domain orchestration across exercises, sets, and workout lifecycle.
+- **Action Required:** Extract complex business logic (like superset toggling and replacing exercises) outside the store into pure service functions or split store slices.
+
+### TD-032 · UI State Leakage in Domain Store (Regression)
+- **Guardrail violated:** QA Policy (UI state belongs in component-local state)
+- **Context:** `collapsedExercises: Set<string>` was added to `workoutStore.ts` to manage the auto-collapsing UI behavior of exercise cards. This is strictly local UI state, not domain state.
+- **Action Required:** Move `collapsedExercises` to a separate UI store or purely local state in `WorkoutScreen.tsx`.
+
+### TD-033 · N+1 Query in `getPreviousSetsForExercises`
+- **Guardrail violated:** #8 (Avoid N+1, use batch queries)
+- **Context:** In `workoutService.ts`, the `getPreviousSetsForExercises` batch method loops over IDs and executes a `Promise.all` map calling the single-query `getPreviousSetsForExercise` for each ID. This generates N sequential/parallel queries when starting from a template.
+- **Action Required:** Replace with a single bulk query (e.g., using `IN (...)` with subqueries or window functions).
 
 ---
 
 ## Open Issues — Latent Debt
 
 Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatbot).
+
+### TD-034 · Service Domain Coupling (`workoutService` → `goalProgressService`)
+- **Context:** `workoutService.ts` directly imports `refreshAllGoalProgress` from `goalProgressService.ts` and invokes it on workout save/update. This tightly couples the workout domain to the goals domain.
+- **Action Required:** Extract this into an event/pub-sub pattern or decouple orchestration.
 
 
 
@@ -327,5 +349,5 @@ Areas to monitor as the app approaches later roadmap phases:
 ---
 
 ## Last Updated
-- Date: 2026-03-29
-- Session Context: Resolved TD-004 and TD-005. Created `useWeightUnit` hook (TD-004), centralized `muscleGroups.ts` taxonomy (TD-005). 0 active debt, 1 latent remain (TD-029).
+- Date: 2026-03-30
+- Session Context: Ran tech debt auditor over Phase 1-4 Workout Logging screen refactor. Discovered 4 Active Debt issues (TD-030 to TD-033) primarily related to component/store size limits and UI state leakage, and 1 Latent Debt issue (TD-034) around service domain coupling.

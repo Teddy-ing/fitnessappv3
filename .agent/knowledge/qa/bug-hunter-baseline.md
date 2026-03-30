@@ -6,9 +6,9 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ## Summary
 
-- **Last full pass:** 2026-03-28 (Widget System + Bug Fix & QOL pass — 21 files)
+- **Last full pass:** 2026-03-30 (Workout Logging Refactor — 9 files)
 - **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
-- **Fixed since baseline:** 29
+- **Fixed since baseline:** 31
 
 ---
 
@@ -66,6 +66,21 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ---
 
 ## Resolved
+
+#### BH-032 · Duration input logs reps instead of duration — **RESOLVED 2026-03-30**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx), [useWorkoutKeyboard.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWorkoutKeyboard.ts), [ExerciseCard.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/ExerciseCard.tsx)
+- **Root cause:** The custom numeric keyboard was hardcoded to `'weight' | 'reps'`, and clicking the duration field incorrectly focused `'reps'`. Typing updated the `reps` field in state, but the UI displayed the untouched `duration` field, rendering duration un-loggable.
+- **Fix applied:** Expanded `FocusState` to include `'duration'`, wired `isDurationFocused`, and updated `useWorkoutKeyboard.ts` to properly edit and mutate `set.duration`.
+
+#### BH-031 · Unhandled promise rejections on settings update / read — **RESOLVED 2026-03-30**
+- **Severity:** Low
+- **Original status:** 🔴 Confirmed
+- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx)
+- **Root cause:** `getSettings().then(...)` lacked a `.catch()`, and `handleToggleSetting` / `handleChangeWarmupSets` were lacking try/catch blocks.
+- **Fix applied:** Wrapped mutation lines in `try/catch` and appended `.catch(console.error)` to the mount effect promise.
+
 
 #### BH-030 · `WidgetEditorModal` internal state not reset on external visibility toggle — **RESOLVED 2026-03-28**
 - **Severity:** Low
@@ -285,5 +300,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-03-28
-- Session Context: Fixed BH-025 (GoalProgressWidget directional formula), BH-026 (TrendsTab stale deps), BH-027 (SwipeableTabScreen deps), BH-029 (ProfileScreen guard), BH-030 (WidgetEditorModal reset). BH-028 (WidgetGrid fetch optimization) deferred as perf-only.
+- **Date:** 2026-03-30
+- **Session Context:** Addressed BH-031 and BH-032 during QA review of the Workout Logging Screen refactor. Fixed critical duration logging bug in the custom keyboard.

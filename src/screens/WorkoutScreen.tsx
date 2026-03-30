@@ -116,7 +116,7 @@ export default function WorkoutScreen() {
             setShowRir(settings.showRir ?? false);
             setShowPlateCalc(settings.showPlateCalc ?? true);
             setDefaultWarmupSets(settings.defaultWarmupSets ?? 2);
-        });
+        }).catch(err => console.error('[WorkoutScreen] Failed to load settings:', err));
     }, []);
 
     const handleToggleSetting = async (key: 'showPrevious' | 'showRpe' | 'showRir' | 'showPlateCalc', value: boolean) => {
@@ -124,12 +124,20 @@ export default function WorkoutScreen() {
         if (key === 'showRpe') setShowRpe(value);
         if (key === 'showRir') setShowRir(value);
         if (key === 'showPlateCalc') setShowPlateCalc(value);
-        await updateSettings({ [key]: value });
+        try {
+            await updateSettings({ [key]: value });
+        } catch (err) {
+            console.error('[WorkoutScreen] Failed to update setting', err);
+        }
     };
 
     const handleChangeWarmupSets = async (count: number) => {
         setDefaultWarmupSets(count);
-        await updateSettings({ defaultWarmupSets: count });
+        try {
+            await updateSettings({ defaultWarmupSets: count });
+        } catch (err) {
+            console.error('[WorkoutScreen] Failed to update warmup sets', err);
+        }
     };
 
     // Workout-level note state

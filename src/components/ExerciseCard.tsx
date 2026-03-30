@@ -33,7 +33,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export interface FocusState {
     exerciseId: string;
     setId: string;
-    field: 'weight' | 'reps';
+    field: 'weight' | 'reps' | 'duration';
 }
 
 interface ExerciseCardProps {
@@ -56,7 +56,7 @@ interface ExerciseCardProps {
     onRemoveSet: (exerciseId: string, setId: string) => void;
     onRemoveExercise: (exerciseId: string) => void;
     onToggleSuperset?: (exerciseId: string) => void;
-    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
+    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps' | 'duration') => void;
     onUpdateNote?: (exerciseId: string, note: string | null) => void;
     onAddWarmupSets?: (exerciseId: string) => void;
     onReplaceExercise?: (exerciseId: string) => void;
@@ -115,7 +115,7 @@ function ExerciseCardInner({
     const activeSetIndex = sets.findIndex(s => s.status !== 'completed');
 
     // Check if a specific field is focused
-    const isFieldFocused = (setId: string, field: 'weight' | 'reps') => {
+    const isFieldFocused = (setId: string, field: 'weight' | 'reps' | 'duration') => {
         return focusState?.exerciseId === workoutExercise.id &&
             focusState?.setId === setId &&
             focusState?.field === field;
@@ -290,6 +290,7 @@ function ExerciseCardInner({
                             showSwipeHint={showSwipeHint && index === 0}
                             isWeightFocused={isFieldFocused(set.id, 'weight')}
                             isRepsFocused={isFieldFocused(set.id, 'reps')}
+                            isDurationFocused={isFieldFocused(set.id, 'duration')}
                             showPrevious={showPrevious}
                             showRpe={showRpe}
                             showRir={showRir}

@@ -82,6 +82,7 @@ description: Living document tracking completed work, in-progress tasks, next st
 - [x] **Workout Logging Redesign — Phase 2** (Interactions + Menu: `⋯` ellipsis menu with 5 actions, SetTypeMenu pill selector, inline exercise notes, replace exercise flow, warm-up set insertion)
 - [x] **Workout Logging Redesign — Phase 3** (Auto-collapsing cards with LayoutAnimation, visual superset bracketing with vertical purple line + badge, workout-level notes via 📝 header icon, swipe-hint onboarding animation using expo-file-system guard)
 - [x] **Workout Logging Redesign — Phase 4** (Settings-gated RPE column with RpeSelector popover, plate calculator modal in WorkoutKeyboard, v9 DB migration for `show_rpe` column)
+- [x] **Workout Logging Redesign QA & Audit** (Bug Hunter caught and resolved BH-031 unhandled promises and BH-032 critical duration field logging bug; baseline updated)
 
 ---
 

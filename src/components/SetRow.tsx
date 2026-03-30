@@ -40,10 +40,11 @@ interface SetRowProps {
     showSwipeHint?: boolean;
     isWeightFocused?: boolean;
     isRepsFocused?: boolean;
+    isDurationFocused?: boolean;
     onUpdateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
     onCompleteSet: (exerciseId: string, setId: string) => void;
     onRemoveSet: (exerciseId: string, setId: string) => void;
-    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
+    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps' | 'duration') => void;
     showPrevious?: boolean;
     showRpe?: boolean;
     showRir?: boolean;
@@ -63,6 +64,7 @@ function SetRowInner({
     showSwipeHint = false,
     isWeightFocused = false,
     isRepsFocused = false,
+    isDurationFocused = false,
     onUpdateSet,
     onCompleteSet,
     onRemoveSet,
@@ -287,12 +289,12 @@ function SetRowInner({
                 {trackTime && !trackReps && (
                     <TouchableOpacity
                         style={styles.dataCell}
-                        onPress={() => onFocusField?.(exerciseId, setId, 'reps')}
+                        onPress={() => onFocusField?.(exerciseId, setId, 'duration')}
                         activeOpacity={0.7}
                     >
                         <View style={[
                             styles.inlineInput,
-                            isRepsFocused && styles.inlineInputFocused,
+                            isDurationFocused && styles.inlineInputFocused,
                         ]}>
                             <Text style={[
                                 styles.dataText,

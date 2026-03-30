@@ -20,7 +20,7 @@ interface UseWorkoutKeyboardReturn {
     /** Current display value in the keyboard */
     keyboardValue: string;
     /** Called when a set field is tapped */
-    handleFocusField: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
+    handleFocusField: (exerciseId: string, setId: string, field: 'weight' | 'reps' | 'duration') => void;
     /** Called when a digit or '.' key is pressed */
     handleKeyPress: (key: string) => void;
     /** Delete last character */
@@ -65,7 +65,7 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         }
     }, [activeWorkout?.id]);
 
-    const handleFocusField = (exerciseId: string, setId: string, field: 'weight' | 'reps') => {
+    const handleFocusField = (exerciseId: string, setId: string, field: 'weight' | 'reps' | 'duration') => {
         if (!activeWorkout) return;
 
         const exercise = activeWorkout.main.exercises.find(e => e.id === exerciseId);
@@ -76,6 +76,8 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
             currentValue = set?.weight?.toString() ?? '';
         } else if (field === 'reps') {
             currentValue = set?.reps?.toString() ?? '';
+        } else if (field === 'duration') {
+            currentValue = set?.duration?.toString() ?? '';
         }
 
         setFocusState({ exerciseId, setId, field });
@@ -99,8 +101,10 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         if (!isNaN(numValue)) {
             if (focusState.field === 'weight') {
                 updateSet(focusState.exerciseId, focusState.setId, { weight: numValue });
-            } else {
+            } else if (focusState.field === 'reps') {
                 updateSet(focusState.exerciseId, focusState.setId, { reps: Math.floor(numValue) });
+            } else if (focusState.field === 'duration') {
+                updateSet(focusState.exerciseId, focusState.setId, { duration: Math.floor(numValue) });
             }
         }
     };
@@ -114,8 +118,10 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         const numValue = newValue.length > 0 ? parseFloat(newValue) : null;
         if (focusState.field === 'weight') {
             updateSet(focusState.exerciseId, focusState.setId, { weight: numValue && !isNaN(numValue) ? numValue : null });
-        } else {
+        } else if (focusState.field === 'reps') {
             updateSet(focusState.exerciseId, focusState.setId, { reps: numValue && !isNaN(numValue) ? Math.floor(numValue) : null });
+        } else if (focusState.field === 'duration') {
+            updateSet(focusState.exerciseId, focusState.setId, { duration: numValue && !isNaN(numValue) ? Math.floor(numValue) : null });
         }
     };
 
@@ -125,8 +131,10 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         setKeyboardValue('');
         if (focusState.field === 'weight') {
             updateSet(focusState.exerciseId, focusState.setId, { weight: null });
-        } else {
+        } else if (focusState.field === 'reps') {
             updateSet(focusState.exerciseId, focusState.setId, { reps: null });
+        } else if (focusState.field === 'duration') {
+            updateSet(focusState.exerciseId, focusState.setId, { duration: null });
         }
     };
 
@@ -141,11 +149,16 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
             const newWeight = Math.max(0, currentWeight + delta);
             updateSet(focusState.exerciseId, focusState.setId, { weight: newWeight });
             setKeyboardValue(newWeight.toString());
-        } else {
+        } else if (focusState.field === 'reps') {
             const currentReps = set?.reps ?? 0;
             const newReps = Math.max(0, currentReps + delta);
             updateSet(focusState.exerciseId, focusState.setId, { reps: newReps });
             setKeyboardValue(newReps.toString());
+        } else if (focusState.field === 'duration') {
+            const currentDuration = set?.duration ?? 0;
+            const newDuration = Math.max(0, currentDuration + delta);
+            updateSet(focusState.exerciseId, focusState.setId, { duration: newDuration });
+            setKeyboardValue(newDuration.toString());
         }
     };
 
@@ -156,11 +169,12 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         if (!exercise) return;
 
         if (focusState.field === 'weight') {
-            // Move to reps
+            // Move to reps or duration depending, but normally weight goes to reps.
             const set = exercise.sets.find(s => s.id === focusState.setId);
-            const repsValue = set?.reps?.toString() ?? '';
-            setFocusState({ ...focusState, field: 'reps' });
-            setKeyboardValue(repsValue);
+            const nextField = exercise.exercise.trackReps ? 'reps' : 'duration';
+            const nextValue = nextField === 'reps' ? (set?.reps?.toString() ?? '') : (set?.duration?.toString() ?? '');
+            setFocusState({ ...focusState, field: nextField });
+            setKeyboardValue(nextValue);
         } else {
             // Complete the set and hide keyboard
             completeSet(focusState.exerciseId, focusState.setId);
@@ -175,7 +189,7 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
     };
 
     const getKeyboardFieldType = (): KeyboardFieldType => {
-        return focusState?.field === 'weight' ? 'weight' : 'reps';
+        return focusState?.field === 'weight' ? 'weight' : (focusState?.field === 'duration' ? 'duration' : 'reps');
     };
 
     const getFieldLabel = (): string => {
@@ -187,7 +201,11 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         const setIndex = exercise.sets.findIndex(s => s.id === focusState.setId);
         const setNum = setIndex + 1;
 
-        return `${exercise.exercise.name} - Set ${setNum} ${focusState.field === 'weight' ? 'Weight' : 'Reps'}`;
+        let fieldLabel = 'Reps';
+        if (focusState.field === 'weight') fieldLabel = 'Weight';
+        if (focusState.field === 'duration') fieldLabel = 'Duration';
+
+        return `${exercise.exercise.name} - Set ${setNum} ${fieldLabel}`;
     };
 
     return {
