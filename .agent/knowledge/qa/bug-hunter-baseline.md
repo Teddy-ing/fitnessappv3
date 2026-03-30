@@ -7,7 +7,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-29 (Workout Logging Redesign Phases 1–5 — 18 files)
-- **Open issues:** 6 (Critical: 0, High: 0, Medium: 2, Low: 4)
+- **Open issues:** 7 (Critical: 0, High: 1, Medium: 2, Low: 4)
 - **Fixed since baseline:** 29
 
 ---
@@ -20,7 +20,17 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ### High (Incorrect Behavior)
 
-*No open high issues.*
+#### BH-037 · Duration input logs reps instead of duration — keyboard has no `'duration'` field concept
+- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx#L286-L306), [useWorkoutKeyboard.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWorkoutKeyboard.ts)
+- **Phase:** Phase 1 (March 29th)
+- **Description:** The entire custom keyboard pipeline is hardcoded to `'weight' | 'reps'`. Duration-tracked exercises (planks, stretches, yoga holds) are affected at every level:
+  1. `SetRow.tsx:290` — Duration cell `onPress` calls `onFocusField(exerciseId, setId, 'reps')` instead of `'duration'`.
+  2. `useWorkoutKeyboard.ts:68` — `handleFocusField` signature only accepts `'weight' | 'reps'`; no `'duration'` option.
+  3. `useWorkoutKeyboard.ts:98-104` — `handleKeyPress` binary-branches on `field === 'weight'` else writes to `reps`. Duration input silently updates `set.reps`.
+  4. `useWorkoutKeyboard.ts:177-178` — `getKeyboardFieldType()` returns `'reps'` for duration, showing wrong unit label.
+  5. `SetRow.tsx:302` — UI displays `set.duration` which is never written to, so user sees `'—'` despite typing values.
+- **Impact:** Duration-tracked exercises are completely unloggable via the custom keyboard. The user types a value, sees no change in the UI, and `reps` is silently corrupted.
+- **Fix:** Add `'duration'` to the `handleFocusField` field union, branch on it in `handleKeyPress`/`handleBackspace`/`handleClear`/`handleAdjust`/`handleNext` to update `set.duration`, pass `'duration'` from `SetRow.tsx:290`, and update `getKeyboardFieldType` / `getFieldLabel` to return `'duration'` / `'sec'`.
 
 ### Medium (Edge Cases)
 
@@ -326,4 +336,4 @@ These were found and fixed before this baseline was created. Documented here for
 
 ## Last Updated
 - Date: 2026-03-29
-- Session Context: Bug Hunter pass on Workout Logging Redesign (Phases 1–5, 18 files). Added 6 open issues: BH-031 (animated deps), BH-032 (BackHandler stale closure), BH-033 (superset ErrorBoundary gap), BH-034 (replace+collapse interaction), BH-035 (PlateCalc barbell-only), BH-036 (settings toggle race). Added 7 false positives. Session analysis: 29th session (Phases 1–4) produced all 3 confirmed bugs; 30th session (Phase 5, Gemini 3.1 Pro) produced 1 plausible low-severity issue.
+- Session Context: Bug Hunter pass on Workout Logging Redesign (Phases 1–5, 18 files). Added 7 open issues: BH-031 (animated deps), BH-032 (BackHandler stale closure), BH-033 (superset ErrorBoundary gap), BH-034 (replace+collapse interaction), BH-035 (PlateCalc barbell-only), BH-036 (settings toggle race), BH-037 (duration input → reps, High). Added 7 false positives.
