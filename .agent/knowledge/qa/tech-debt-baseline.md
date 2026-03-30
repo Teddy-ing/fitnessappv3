@@ -7,15 +7,25 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Last scoped pass:** 2026-03-28 (widget system + bug fix pass — 22 files)
-- **Open issues:** 1 (Active: 0, Latent: 1)
+- **Last scoped pass:** 2026-03-30 (workout logging refactor Phases 1–5 — 16 files)
+- **Open issues:** 5 (Active: 1, Latent: 4)
 - **Fixed since baseline:** 27
 
 ---
 
 ## Open Issues — Active Debt
 
-*No active debt issues.*
+### TD-030 · `WorkoutScreen.tsx` exceeds 600-line component guardrail
+
+- **Guardrail violated:** #1 (Component size limit)
+- **Current:** 856 lines (43% over limit)
+- **Root cause:** Phases 2–5 added superset rendering logic (inline loop at L480–590), workout note UI (L428–471), settings state/handlers (L103–133), and ~190 lines of superset/note styles.
+- **Extraction targets:**
+  1. **Superset rendering block** (L480–590) → `SupersetGroup.tsx` — the inner `while` loop collecting superset cards + wrapping container with badge/line. ~110 lines of JSX + styles.
+  2. **Workout note UI** (L428–471) → `WorkoutNoteSection.tsx` — edit/display toggle for workout-level notes with isolated state. ~45 lines.
+  3. **Superset + note styles** (L807–838, L746–790) → move with extracted components. ~80 lines.
+- **Estimated result:** WorkoutScreen drops to ~620 lines with superset extraction alone, well under 600 with both.
+- **Found:** 2026-03-30 (workout logging refactor audit)
 
 ---
 
@@ -23,14 +33,30 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatbot).
 
+### TD-031 · `PreviousSetData` type defined in service, imported by 3 components
 
+- **Guardrail:** #5 (Canonical types live in `src/models/`)
+- **Defined in:** `workoutService.ts:458`
+- **Imported by:** `SetRow.tsx`, `ExerciseCard.tsx`, `workoutStore.ts`
+- **Risk:** Cross-boundary type consumed by UI components + store. Same pattern that caused issues with `Template`, `CalendarDayData`, `UserSettings` (TD-009/TD-015).
+- **Fix:** Move `PreviousSetData` to `src/models/workout.ts`. Re-export from `workoutService` for backward compatibility.
+- **Found:** 2026-03-30 (workout logging refactor audit)
 
+### TD-032 · `RpeSelector` and `RirSelector` are near-identical (85%+ structural duplication)
 
+- **Category:** DRY violation
+- **Files:** `RpeSelector.tsx` (154 lines), `RirSelector.tsx` (161 lines)
+- **Evidence:** Identical structure (Modal > backdrop > container > title > pill grid > clear button), identical props interface, identical styles. Only differences: title text, subtitle, values array, and "hard" threshold.
+- **Fix:** Extract shared `NumericPillSelector` component parameterized by `title`, `subtitle?`, `values`, `hardThreshold`, `formatLabel`. Both RPE/RIR become thin wrappers (~15 lines each). Saves ~130 lines.
+- **Found:** 2026-03-30 (workout logging refactor audit)
 
+### TD-033 · Inline volume formatting in `WorkoutScreen.tsx` duplicates `formatCompactVolume`
 
-
-
-
+- **Category:** DRY violation / drift risk
+- **File:** `WorkoutScreen.tsx:414–416`
+- **Evidence:** Stats row formats volume inline with `> 999 ? ${(v/1000).toFixed(1)}k : v` — functionally identical to `formatCompactVolume()` in `src/utils/formatters.ts` (TD-028 resolution).
+- **Fix:** Replace with `formatCompactVolume(stats.volume)`. One-line change.
+- **Found:** 2026-03-30 (workout logging refactor audit)
 
 
 
@@ -259,6 +285,13 @@ Acceptable now but will bite during Phase 5+ (Settings, Import/Export, ML, Chatb
 - **What:** `generateMockTimeSeries()` and `getWebMockData()` are included in the production bundle, gated behind `Platform.OS === 'web'`.
 - **Why accepted:** Web is development-only (no production web target). Mock data enables chart debugging via browser DevTools, which was critical for fixing x-axis alignment issues. Code is cleanly separated and clearly documented. When tree-shaking is needed for a production web build, this can be extracted to `__mocks__/`.
 
+### TD-034 · `workoutStore.ts` borderline at 650 lines
+
+- **Guardrail:** #1 (Component size limit — 600)
+- **Current:** 650 lines (8% over)
+- **Why accepted:** The store is logically cohesive — all actions operate on `activeWorkout`. The persistence subscriber at the bottom (L640–649) is a natural extension. Action methods are individually small. Splitting a Zustand store has higher cost than benefit at this size. Will revisit if Phase 7 (ML auto-suggestions) adds significantly.
+- **Found:** 2026-03-30 (workout logging refactor audit)
+
 ---
 
 ## Historical Tech Debt Addressed
@@ -284,18 +317,18 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 
 | # | Guardrail | Full-Project Status |
 |---|-----------|----------------------------|
-| 1 | Component size limit (600 lines) | ✅ All components under 600 lines (TD-025 resolved). Services `analyticsService.ts` 755, `calendarService.ts` 741 tracked as latent (TD-003/011). |
-| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted), `SaveTemplateModal` Alert buttons, and navigation ref casts (React Navigation limitation) |
-| 3 | Database schema changes require versioned migrations | ✅ 8 versioned migrations, all with `columnExists` guards |
-| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ All complex state correctly extracted to hooks (`useGoalCreation`, `useWorkoutKeyboard`, `useExerciseAnalytics`, `useMacroAnalytics`, `useHomeScreenData`) |
-| 5 | Canonical types live in `src/models/` | ✅ `WeightTrendIntent` moved to models (TD-026 resolved). `SparklinePoint` in `BodyweightSparklineWidget.tsx` (TD-029 latent). `SplitInfo` remains in `splitService.ts` (internal). |
-| 6 | State reset on lifecycle boundaries | ✅ All hooks and modals properly reset on identity/visibility change |
-| 7 | SafeAreaView edges must match tab bar visibility | ✅ All screens verified correct |
-| 8 | Batch `IN (...)` queries chunked at 500 | ✅ All IN() queries use shared `batchGetAll()` utility (PP-037 resolved). |
-| 9 | Services must not reach into stores | ✅ `workoutService.ts` and `measurementService.ts` decoupled (BH-024 resolved). |
-| 10 | Shared SQL formulas in one canonical location | ✅ SQL formulas in `sqlFragments.ts`. JS formatters in `formatters.ts` including `formatCompactVolume` (TD-028 resolved). |
-| 11 | New tables registered in `clearAllData()` | ✅ All 15 user-data tables cleared in FK-safe order (TD-022 resolved). v8 adds only a column, no new table. |
-| 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ `updateWorkout()` now UPDATEs parent row in place (TD-023 resolved). |
+| 1 | Component size limit (600 lines) | ❌ `WorkoutScreen.tsx` at 856 lines (TD-030 active). `workoutStore.ts` at 650 (TD-034 accepted). All other components under 600. |
+| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted), `SaveTemplateModal` Alert buttons, and navigation ref casts (React Navigation limitation). No new `any` in refactor. |
+| 3 | Database schema changes require versioned migrations | ✅ 10 versioned migrations, all with `columnExists` guards. v9 (`show_rpe`) and v10 (`show_rir`, `show_plate_calc`, `default_warmup_sets`, `show_previous`) added correctly. |
+| 4 | Hook extraction signal: 3+ `useState` for one concern | ⚠️ `WorkoutScreen` has 5 `useState` for settings concern — will resolve naturally with TD-030 extraction. |
+| 5 | Canonical types live in `src/models/` | 🟡 `PreviousSetData` in `workoutService.ts` (TD-031 latent). `SparklinePoint` in `BodyweightSparklineWidget.tsx` (TD-029 latent). |
+| 6 | State reset on lifecycle boundaries | ✅ `previousSets`, `collapsedExercises`, edit-mode states all reset in `startWorkout`/`finishWorkout`/`discardWorkout`. `loadWorkoutForEditing` properly resets and re-fetches. |
+| 7 | SafeAreaView edges must match tab bar visibility | ✅ `WorkoutScreen` uses `edges={['top', 'bottom']}` — correct since tab bar hidden during active workout. |
+| 8 | Batch `IN (...)` queries chunked at 500 | ✅ All IN() queries use shared `batchGetAll()`. New `getPreviousSetsForExercises` uses per-exercise `Promise.all` (no IN pattern). |
+| 9 | Services must not reach into stores | ✅ Services return data; `WorkoutScreen` handles celebration dispatch. `workoutStore` imports service functions (allowed direction). |
+| 10 | Shared SQL formulas in one canonical location | 🟡 `formatCompactVolume` exists but WorkoutScreen uses inline duplicate (TD-033 latent). SQL formulas still canonical in `sqlFragments.ts`. |
+| 11 | New tables registered in `clearAllData()` | ✅ v9 and v10 add columns only, no new tables — no `clearAllData()` update needed. |
+| 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ `updateWorkout()` UPDATEs parent row in place (TD-023). No new update patterns introduced. |
 
 ---
 
@@ -313,8 +346,12 @@ Areas to monitor as the app approaches later roadmap phases:
 | Hydration layer | Single mapping file, 256 lines | Every new model field = hydration update needed — fragile |
 | Unit hardcoding (`lbs`) | ✅ Resolved (TD-004) — `useWeightUnit` hook + `getWeightUnitSync` accessor | — |
 | SQL formula duplication | ✅ Resolved (TD-024) — `sqlFragments.ts` | — |
-| JS formatter duplication | ✅ Resolved (TD-028) — `formatCompactVolume` in `formatters.ts` | — |
+| JS formatter duplication | 🟡 `formatCompactVolume` exists but `WorkoutScreen` has inline duplicate (TD-033 latent) | Drift on formula updates |
 | Widget system type ownership | ✅ `WeightTrendIntent` in models (TD-026 resolved). `SparklinePoint` remains in widget (TD-029 latent). | Widget refactors |
+| Workout logging type ownership | 🟡 `PreviousSetData` in `workoutService.ts`, imported by 3 UI files (TD-031 latent) | Exercise analytics integration |
+| Selector component duplication | 🟡 `RpeSelector`/`RirSelector` 85%+ identical (TD-032 latent) | Adding tempo/rest selectors |
+| `WorkoutScreen` component size | ❌ 856 lines (TD-030 active) — superset rendering + note UI need extraction | Next feature phase |
+| `workoutStore` size | ⚠️ 650 lines (TD-034 accepted) — cohesive, monitor only | Phase 7 ML additions |
 | Bodyweight intent derivation | ✅ Resolved (TD-027) — shared `deriveBodyweightIntent` in `goalHelpers.ts` | — |
 | Service→store coupling | ✅ Resolved — `workoutService`/`measurementService` decoupled (BH-024) | — |
 | Chart label logic | ✅ Resolved (TD-002) — shared via `chartLabels.tsx` | — |
@@ -327,5 +364,5 @@ Areas to monitor as the app approaches later roadmap phases:
 ---
 
 ## Last Updated
-- Date: 2026-03-29
-- Session Context: Resolved TD-004 and TD-005. Created `useWeightUnit` hook (TD-004), centralized `muscleGroups.ts` taxonomy (TD-005). 0 active debt, 1 latent remain (TD-029).
+- Date: 2026-03-30
+- Session Context: Workout logging refactor audit (Phases 1–5, 16 files). Added TD-030 (active: WorkoutScreen 856 lines), TD-031/032/033 (latent: PreviousSetData type ownership, RpeSelector/RirSelector duplication, inline volume formatting), TD-034 (accepted: workoutStore 650 lines). 1 active, 4 latent, 1 accepted.

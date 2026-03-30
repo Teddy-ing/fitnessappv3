@@ -6,8 +6,8 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ## Summary
 
-- **Last full pass:** 2026-03-28 (Widget System + Bug Fix & QOL pass — 21 files)
-- **Open issues:** 0 (Critical: 0, High: 0, Medium: 0, Low: 0)
+- **Last full pass:** 2026-03-29 (Workout Logging Redesign Phases 1–5 — 18 files)
+- **Open issues:** 6 (Critical: 0, High: 0, Medium: 2, Low: 4)
 - **Fixed since baseline:** 29
 
 ---
@@ -24,11 +24,45 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ### Medium (Edge Cases)
 
-*No open medium issues.*
+#### BH-033 · Superset cards rendered without ErrorBoundary wrapping
+- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx#L522-L573)
+- **Phase:** Phase 3 (March 29th)
+- **Description:** When exercises are grouped in a superset, the `isFirstInSuperset` branch builds a `supersetCards` array and renders them inside a `<View>` container — but none of the cards are wrapped in `<ErrorBoundary>`. Non-superset cards ARE correctly wrapped. If any ExerciseCard in a superset throws a render error, it crashes the entire workout screen.
+- **Fix:** Wrap each card or the superset container with `<ErrorBoundary fallback="card">`.
+
+#### BH-032 · `handleDiscardWorkout` captured in stale BackHandler closure
+- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx#L307-L318)
+- **Phase:** Phase 2–3 (March 29th)
+- **Description:** The BackHandler `useEffect` deps are `[activeWorkout !== null]` but the handler calls `handleDiscardWorkout()`, which references `handleHideKeyboard` from `useWorkoutKeyboard()`. That function is recreated on each render, so the BackHandler captures a stale version. The baseline FP entry for this effect (line 47) covered the `activeWorkout` coercion — this is a separate concern about the function dep.
+- **Fix:** Wrap `handleDiscardWorkout` in `useCallback` and add it to deps, or inline with stable refs.
 
 ### Low (Defensive Gaps)
 
-*No open low issues.*
+#### BH-031 · `pulseAnim` / `swipeHintAnim` missing from `useEffect` dependency arrays
+- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx#L90-L139)
+- **Phase:** Phase 1 + 3 (March 29th)
+- **Description:** `useEffect` at line 90 references `pulseAnim` but deps are `[isActiveSet, isCompleted]`. Line 139's `useEffect` references `swipeHintAnim` but deps are `[showSwipeHint]`. Both are `useRef`-created Animated values (stable), so no runtime failure — but violates exhaustive-deps contract.
+- **Fix:** Add the animated values to their respective dep arrays.
+
+#### BH-034 · `replaceExercise` doesn't clear `collapsedExercises` for the replaced exercise
+- **File:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts#L558-L602)
+- **Phase:** Phase 2 × Phase 3 interaction (March 29th)
+- **Description:** If an exercise is auto-collapsed (all sets completed) and then replaced via the `⋯` menu, the exercise ID stays in the `collapsedExercises` Set. The new exercise appears collapsed with "✓ X Sets" badge despite all sets being reset to pending.
+- **Likelihood:** Low — user must expand the card before accessing the menu, which removes it from `collapsedExercises`. Would only manifest if the replace flow changes.
+- **Fix:** Delete the exercise ID from `collapsedExercises` inside `replaceExercise`.
+
+#### BH-035 · PlateCalculator rejects barbell-only weight as invalid
+- **File:** [PlateCalculator.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/PlateCalculator.tsx#L83-L84)
+- **Phase:** Phase 4 (March 29th)
+- **Description:** `const isValid = weight > barbellWeight` uses strict `>`, so entering exactly 45 lbs (barbell only, no plates) shows the error "Weight must be greater than the barbell." 45 lbs is a valid weight.
+- **Fix:** Change to `>=` and show "Barbell only — no plates needed" when `plates.length === 0`.
+
+#### BH-036 · `WorkoutSettingsMenu` 2-column max could be bypassed on rapid toggles
+- **File:** [WorkoutSettingsMenu.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/WorkoutSettingsMenu.tsx#L49-L61)
+- **Phase:** Phase 5 (March 30th, Gemini 3.1 Pro)
+- **Description:** `activeColumnsCount` is derived from props. If a user rapidly taps two disabled toggles before the first state update propagates through React's render cycle, both could fire before `activeColumnsCount` reflects the intermediate state, enabling 3 columns.
+- **Likelihood:** Very low — switches also have `disabled` props as a secondary guard, and React batching typically prevents this.
+- **Fix:** Use a ref counter or derive count inside the handler from full state.
 
 ---
 
@@ -44,7 +78,13 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 | `searchNotes` N+1 query pattern | `calendarService.ts:671-680` | Each workout row triggers a separate `SELECT` for exercise notes. With typical journal usage (10-50 entries), this is within acceptable bounds. Could be optimized later if journals grow large. |
 | `JournalView` debounce timer not cleared on unmount | `JournalView.tsx:99,117-123` | The `setTimeout` ref could fire after unmount, but the effect would only call `setEntries` / `setLoading` on an unmounted component. React suppresses this as a no-op warning. Low-priority cleanup. |
 | `loadOlderMonths` captures `months` in closure | `CalendarScreen.tsx:633-656` | The `months` dependency in `useCallback` is correct — it reads `months[0]` to determine the oldest loaded month. The `isLoadingOlderRef` guard prevents re-entrancy. |
-| `handleDiscardWorkout` stale closure on `activeWorkout` | `WorkoutScreen.tsx:214-224` | The `useEffect` dep array uses `[activeWorkout !== null]` (boolean coercion). This is intentional — the effect only needs to re-bind when transitioning between "has workout" and "no workout" states, not on every set update. |
+| `handleDiscardWorkout` stale closure on `activeWorkout` | `WorkoutScreen.tsx:214-224` | The `useEffect` dep array uses `[activeWorkout !== null]` (boolean coercion). This is intentional — the effect only needs to re-bind when transitioning between "has workout" and "no workout" states, not on every set update. **Note:** BH-032 identified a separate concern about `handleDiscardWorkout` as a function dep — the coercion itself remains a valid FP. |
+| `SWIPE_HINT_FILE.write('1')` sync file write on mount | `WorkoutScreen.tsx:148` | expo-file-system `File.write()` is synchronous for small payloads in the new API, and this is a one-time operation on first-ever workout. No perf concern. |
+| `getSettings()` called without error handling on mount | `WorkoutScreen.tsx:112-120` | `getSettings()` returns `DEFAULTS` on failure (database unavailable returns spread of DEFAULTS). The `.then()` safely applies defaults. No crash path. |
+| `SetTypeMenu` / `RpeSelector` / `RirSelector` Modal rendered per set row | `SetRow.tsx:363-384` | Each SetRow renders 3 Modal components with `visible={false}`. React Native `<Modal visible={false}>` does not mount a native modal view — it's a no-op. Performance-profiler concern, not a logic bug. |
+| `getPreviousSetsForExercises` N+1 query pattern | `workoutService.ts:511-523` | Each exerciseId fires a separate query inside `Promise.all`. With typical workout sizes (3-8 exercises), this is O(n) with n < 10. Could be batched into a single CTE query but not a correctness issue. |
+| `updateSettings` fire-and-forget in `handleToggleSetting` | `WorkoutScreen.tsx:122-128` | The async `updateSettings` call is not awaited in the toggle handler. Optimistic state update already applied, and settings writes are idempotent. A failed write means the toggle won't persist — edge case, not a crash. |
+| `noteInput` useState not re-synced on external note change | `ExerciseCard.tsx:97` | `noteInput` is initialized from `workoutExercise.note` on first render. If the note changes externally, `useState` initializer doesn't re-run. However, `handleAddNote` (line 141) calls `setNoteInput(workoutExercise.note ?? '')` before opening the editor, overwriting the stale initial value at interaction time. Effectively safe. |
 | `DailyWorkoutModal` filter matching logic (AND vs OR) | `CalendarScreen.tsx:163-166` | `matchesFilter` uses AND semantics: a day must match *all* active filters to avoid dimming. This is intentional — PRs + Notes means "show days with both PRs AND notes." |
 | `loadSparklines` fires only on mount (empty deps) | `TrendsTab.tsx:793-795` | `loadSparklines` is called via `useEffect([], [])`. The sparkline list doesn't auto-refresh when the user logs new data on the Track tab and switches to Trends. However, this is acceptable — the component remounts when switching tabs because it's conditionally rendered (`activeTab === 'trends'`), so the `useEffect` fires each time. |
 | `loadData` / `loadFields` defined with `useCallback` but called from `useEffect` without cleanup | `MeasurementsScreen.tsx:619-665` | The async calls fire without an abort signal. However, the result is only `setState` calls, which are safe on unmounted components (React suppresses). No data-corruption risk. |
@@ -285,5 +325,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-03-28
-- Session Context: Fixed BH-025 (GoalProgressWidget directional formula), BH-026 (TrendsTab stale deps), BH-027 (SwipeableTabScreen deps), BH-029 (ProfileScreen guard), BH-030 (WidgetEditorModal reset). BH-028 (WidgetGrid fetch optimization) deferred as perf-only.
+- Date: 2026-03-29
+- Session Context: Bug Hunter pass on Workout Logging Redesign (Phases 1–5, 18 files). Added 6 open issues: BH-031 (animated deps), BH-032 (BackHandler stale closure), BH-033 (superset ErrorBoundary gap), BH-034 (replace+collapse interaction), BH-035 (PlateCalc barbell-only), BH-036 (settings toggle race). Added 7 false positives. Session analysis: 29th session (Phases 1–4) produced all 3 confirmed bugs; 30th session (Phase 5, Gemini 3.1 Pro) produced 1 plausible low-severity issue.
