@@ -10,13 +10,11 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { colors, spacing, typography } from '../../theme';
-import type { WeightTrendIntent } from '../../models/widget';
+import type { WeightTrendIntent, SparklinePoint } from '../../models/widget';
 import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 
-export interface SparklinePoint {
-    date: string;
-    value: number;
-}
+// Re-export for backward compatibility — new consumers should import from models/widget
+export type { SparklinePoint };
 
 interface BodyweightSparklineWidgetProps {
     data: SparklinePoint[];

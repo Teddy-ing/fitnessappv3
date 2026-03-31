@@ -19,7 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, spacing, typography, borderRadius } from '../../theme';
-import { WidgetConfig, WeightTrendIntent } from '../../models/widget';
+import { WidgetConfig, WeightTrendIntent, SparklinePoint } from '../../models/widget';
 import { Goal } from '../../models/goal';
 import { MuscleDistributionPoint, FatigueRatioResult, ExerciseTimeSeriesPoint } from '../../models/analytics';
 import { ProfileStackParamList } from '../../navigation/AppNavigator';
@@ -38,7 +38,7 @@ import { deriveBodyweightIntent } from '../../utils/goalHelpers';
 import WidgetCard from './WidgetCard';
 import StreakBadgeWidget from './StreakBadgeWidget';
 import WeeklyWrapUpWidget, { WeeklyData } from './WeeklyWrapUpWidget';
-import BodyweightSparklineWidget, { SparklinePoint } from './BodyweightSparklineWidget';
+import BodyweightSparklineWidget from './BodyweightSparklineWidget';
 import GoalProgressWidget from './GoalProgressWidget';
 import MuscleBalanceWidget from './MuscleBalanceWidget';
 import WorkloadReadinessWidget from './WorkloadReadinessWidget';

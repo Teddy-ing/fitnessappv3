@@ -63,6 +63,16 @@ export interface WorkoutSet {
 }
 
 /**
+ * Data from a previous session's set, used for the "Previous" column.
+ * Canonical type — imported by components, stores, and services.
+ */
+export interface PreviousSetData {
+    weight: number | null;
+    reps: number | null;
+    type: SetType;
+}
+
+/**
  * An exercise instance within a workout
  * This is a specific occurrence of an exercise with its sets
  */

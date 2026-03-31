@@ -27,8 +27,8 @@ import {
 import {
     getPreviousSetsForExercise,
     getPreviousSetsForExercises,
-    type PreviousSetData,
 } from '../services/workoutService';
+import { type PreviousSetData } from '../models/workout';
 
 /** Signal emitted when a set is completed, watched by RestTimer */
 export interface CompletedSetSignal {
@@ -582,12 +582,19 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             return ex;
         });
 
+        // BH-034 fix: Clear the replaced exercise from collapsedExercises
+        // to prevent the new exercise from inheriting a stale collapsed state
+        const { collapsedExercises } = get();
+        const updatedCollapsed = new Set(collapsedExercises);
+        updatedCollapsed.delete(exerciseId);
+
         set({
             activeWorkout: {
                 ...activeWorkout,
                 main: { ...activeWorkout.main, exercises },
                 updatedAt: new Date(),
             },
+            collapsedExercises: updatedCollapsed,
         });
 
         // Fetch previous sets for the new exercise

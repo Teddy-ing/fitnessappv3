@@ -17,7 +17,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { WorkoutSet, SetType } from '../models/workout';
-import { PreviousSetData } from '../services/workoutService';
+import { PreviousSetData } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { getWeightUnitSync } from '../hooks/useWeightUnit';
 import SetTypeMenu from './SetTypeMenu';
@@ -40,10 +40,11 @@ interface SetRowProps {
     showSwipeHint?: boolean;
     isWeightFocused?: boolean;
     isRepsFocused?: boolean;
+    isDurationFocused?: boolean;
     onUpdateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
     onCompleteSet: (exerciseId: string, setId: string) => void;
     onRemoveSet: (exerciseId: string, setId: string) => void;
-    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
+    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps' | 'duration') => void;
     showPrevious?: boolean;
     showRpe?: boolean;
     showRir?: boolean;
@@ -63,6 +64,7 @@ function SetRowInner({
     showSwipeHint = false,
     isWeightFocused = false,
     isRepsFocused = false,
+    isDurationFocused = false,
     onUpdateSet,
     onCompleteSet,
     onRemoveSet,
@@ -108,7 +110,7 @@ function SetRowInner({
         } else {
             pulseAnim.setValue(1);
         }
-    }, [isActiveSet, isCompleted]);
+    }, [isActiveSet, isCompleted, pulseAnim]);
 
     // Swipe-hint onboarding animation
     const swipeHintAnim = useRef(new Animated.Value(0)).current;
@@ -136,7 +138,7 @@ function SetRowInner({
             }, 1000); // Wait 1s after mount before showing hint
             return () => clearTimeout(timer);
         }
-    }, [showSwipeHint]);
+    }, [showSwipeHint, swipeHintAnim]);
 
     // Get set type indicator
     const getSetTypeLabel = (type: SetType): string => {
@@ -287,12 +289,12 @@ function SetRowInner({
                 {trackTime && !trackReps && (
                     <TouchableOpacity
                         style={styles.dataCell}
-                        onPress={() => onFocusField?.(exerciseId, setId, 'reps')}
+                        onPress={() => onFocusField?.(exerciseId, setId, 'duration')}
                         activeOpacity={0.7}
                     >
                         <View style={[
                             styles.inlineInput,
-                            isRepsFocused && styles.inlineInputFocused,
+                            isDurationFocused && styles.inlineInputFocused,
                         ]}>
                             <Text style={[
                                 styles.dataText,

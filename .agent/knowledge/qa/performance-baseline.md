@@ -6,18 +6,34 @@ description: Tracking document for performance regression findings from Performa
 
 ## Summary
 
-- **Last full pass:** 2026-03-28 (widget system + bug fix pass — 23 files)
-- **Open issues:** 0
-- **Fixed this session:** 0
-- **Negligible / Won't Fix:** 13
+- **Last full pass:** 2026-03-30 (workout logging refactor Phases 1–4 — 20 files)
+- **Open issues:** 1 (0 confirmed, 1 likely)
+- **Fixed this session:** 3
+- **Negligible / Won't Fix:** 17
 
 ---
 
 ## Open Issues
 
-*No open performance issues.*
+### Confirmed Regressions
+
+*All confirmed regressions resolved.*
+
+### Likely Impact
+
+| ID | Area | File | Issue | Fix |
+|----|------|------|-------|-----|
+| PP-045 | Store subscription | `workoutStore.ts:641` | `useWorkoutStore.subscribe()` fires on every state change (incl. `lastCompletedSet`, `collapsedExercises`, `previousSets`), not just persistence-relevant fields. | Add shallow-compare guard or `subscribeWithSelector` middleware. |
 
 ---
+
+## Resolved (Session: 2026-03-30 — Workout Logging Refactor)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|-------------|
+| PP-042 | Inline arrow props | `WorkoutScreen.tsx`, `SupersetGroup.tsx`, `ExerciseCard.tsx` | Changed `onAddWarmupSets` prop to `(exerciseId, count)` signature. ExerciseCard now accepts `defaultWarmupSets` prop and calls `onAddWarmupSets(exerciseId, count)` internally. Parents pass stable store action ref. |
+| PP-043 | Inline arrow props | `WorkoutScreen.tsx`, `SupersetGroup.tsx` | Replaced `(exId) => setReplaceExerciseId(exId)` with direct `setReplaceExerciseId` (stable useState setter). SupersetGroup forwards directly instead of wrapping. |
+| PP-044 | ScrollView + .map() | `WorkoutScreen.tsx`, `RenderableExerciseItem.tsx` | Migrated exercises list from `ScrollView` + `.map()` to `FlatList` with pre-processed `RenderableItem` data. Superset groups collapsed into single entries. renderItem extracted to `RenderableExerciseItem` component. |
 
 ## Resolved (Session: 2026-03-24 — Staff Engineer Audit)
 
@@ -106,6 +122,14 @@ description: Tracking document for performance regression findings from Performa
 
 **PP-041** — `Dimensions.get('window')` at module level in `WidgetEditorModal.tsx` — same as PP-013/PP-027/PP-035, portrait-locked.
 
+**PP-046** — `Dimensions.get('window')` at module level in `WorkoutKeyboard.tsx` — same as PP-013/PP-027/PP-035/PP-041, portrait-locked.
+
+**PP-047** — `PlateCalculator` renders plate rows via `.map()` without `React.memo`. Max 6-7 standard plate sizes — trivially small.
+
+**PP-048** — `RpeSelector` / `RirSelector` render 6-9 pills via `.map()` without `React.memo`. Static data modals with max 9 items. No measurable cost.
+
+**PP-049** — `ExerciseMenu` builds `items` array inline on every render. Menu is only visible when user opens it — never in the hot render path.
+
 ---
 
 ## Historical Performance Issues
@@ -120,5 +144,5 @@ description: Tracking document for performance regression findings from Performa
 ---
 
 ## Last Updated
-- Date: 2026-03-28
-- Session Context: Performance Profiler pass on widget system (Phase 3A+3B) + bug fix & QOL pass. 23 files reviewed. 0 regressions, 4 negligible findings (PP-038–PP-041).
+- Date: 2026-03-30
+- Session Context: Performance Profiler pass on workout logging refactor (Phases 1–4). 20 files reviewed. 3 confirmed regressions (PP-042–PP-044), 1 likely (PP-045), 4 negligible (PP-046–PP-049).
