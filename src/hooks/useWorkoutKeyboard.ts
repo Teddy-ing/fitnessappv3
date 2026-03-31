@@ -4,7 +4,10 @@
  * Manages the custom numeric keyboard state machine for workout set editing.
  * Extracted from WorkoutScreen to isolate keyboard concern.
  *
- * State flow: tap field → keyboard opens → type value → Next → switch to reps → Next → complete set
+ * State flow:
+ *   weight+reps:     tap field → keyboard opens → type value → Next → switch to reps → Next → complete set
+ *   weight+duration: tap field → keyboard opens → type value → Next → switch to duration → Next → complete set
+ *   duration-only:   tap field → keyboard opens → type value → Next → complete set
  *
  * Dependencies: reads activeWorkout from store, calls updateSet/completeSet.
  */
@@ -14,13 +17,15 @@ import { Keyboard } from 'react-native';
 import { useWorkoutStore } from '../stores';
 import { FocusState, KeyboardFieldType } from '../components';
 
+type FieldType = 'weight' | 'reps' | 'duration';
+
 interface UseWorkoutKeyboardReturn {
     /** Current focus (which exercise/set/field is active), null when keyboard is hidden */
     focusState: FocusState | null;
     /** Current display value in the keyboard */
     keyboardValue: string;
     /** Called when a set field is tapped */
-    handleFocusField: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
+    handleFocusField: (exerciseId: string, setId: string, field: FieldType) => void;
     /** Called when a digit or '.' key is pressed */
     handleKeyPress: (key: string) => void;
     /** Delete last character */
@@ -29,7 +34,7 @@ interface UseWorkoutKeyboardReturn {
     handleClear: () => void;
     /** Increment or decrement by delta */
     handleAdjust: (delta: number) => void;
-    /** Advance from weight→reps or reps→complete */
+    /** Advance from weight→reps/duration or reps/duration→complete */
     handleNext: () => void;
     /** Dismiss keyboard */
     handleHideKeyboard: () => void;
@@ -65,18 +70,30 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         }
     }, [activeWorkout?.id]);
 
-    const handleFocusField = (exerciseId: string, setId: string, field: 'weight' | 'reps') => {
+    /** Read the current value for a field from the set model */
+    const getFieldValue = (set: any, field: FieldType): string => {
+        switch (field) {
+            case 'weight': return set?.weight?.toString() ?? '';
+            case 'reps': return set?.reps?.toString() ?? '';
+            case 'duration': return set?.duration?.toString() ?? '';
+        }
+    };
+
+    /** Build the partial update object for a given field */
+    const buildUpdate = (field: FieldType, value: number | null): Record<string, number | null> => {
+        switch (field) {
+            case 'weight': return { weight: value };
+            case 'reps': return { reps: value != null ? Math.floor(value) : null };
+            case 'duration': return { duration: value != null ? Math.floor(value) : null };
+        }
+    };
+
+    const handleFocusField = (exerciseId: string, setId: string, field: FieldType) => {
         if (!activeWorkout) return;
 
         const exercise = activeWorkout.main.exercises.find(e => e.id === exerciseId);
         const set = exercise?.sets.find(s => s.id === setId);
-
-        let currentValue = '';
-        if (field === 'weight') {
-            currentValue = set?.weight?.toString() ?? '';
-        } else if (field === 'reps') {
-            currentValue = set?.reps?.toString() ?? '';
-        }
+        const currentValue = getFieldValue(set, field);
 
         setFocusState({ exerciseId, setId, field });
         setKeyboardValue(currentValue);
@@ -88,6 +105,9 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         // Prevent multiple decimals
         if (key === '.' && keyboardValue.includes('.')) return;
 
+        // Prevent decimals for integer fields (reps, duration)
+        if (key === '.' && (focusState.field === 'reps' || focusState.field === 'duration')) return;
+
         // Limit length
         if (keyboardValue.length >= 6) return;
 
@@ -97,11 +117,7 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         // Update the set
         const numValue = parseFloat(newValue);
         if (!isNaN(numValue)) {
-            if (focusState.field === 'weight') {
-                updateSet(focusState.exerciseId, focusState.setId, { weight: numValue });
-            } else {
-                updateSet(focusState.exerciseId, focusState.setId, { reps: Math.floor(numValue) });
-            }
+            updateSet(focusState.exerciseId, focusState.setId, buildUpdate(focusState.field, numValue));
         }
     };
 
@@ -112,22 +128,15 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         setKeyboardValue(newValue);
 
         const numValue = newValue.length > 0 ? parseFloat(newValue) : null;
-        if (focusState.field === 'weight') {
-            updateSet(focusState.exerciseId, focusState.setId, { weight: numValue && !isNaN(numValue) ? numValue : null });
-        } else {
-            updateSet(focusState.exerciseId, focusState.setId, { reps: numValue && !isNaN(numValue) ? Math.floor(numValue) : null });
-        }
+        const safeValue = numValue && !isNaN(numValue) ? numValue : null;
+        updateSet(focusState.exerciseId, focusState.setId, buildUpdate(focusState.field, safeValue));
     };
 
     const handleClear = () => {
         if (!focusState) return;
 
         setKeyboardValue('');
-        if (focusState.field === 'weight') {
-            updateSet(focusState.exerciseId, focusState.setId, { weight: null });
-        } else {
-            updateSet(focusState.exerciseId, focusState.setId, { reps: null });
-        }
+        updateSet(focusState.exerciseId, focusState.setId, buildUpdate(focusState.field, null));
     };
 
     const handleAdjust = (delta: number) => {
@@ -136,17 +145,16 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         const exercise = activeWorkout.main.exercises.find(e => e.id === focusState.exerciseId);
         const set = exercise?.sets.find(s => s.id === focusState.setId);
 
-        if (focusState.field === 'weight') {
-            const currentWeight = set?.weight ?? 0;
-            const newWeight = Math.max(0, currentWeight + delta);
-            updateSet(focusState.exerciseId, focusState.setId, { weight: newWeight });
-            setKeyboardValue(newWeight.toString());
-        } else {
-            const currentReps = set?.reps ?? 0;
-            const newReps = Math.max(0, currentReps + delta);
-            updateSet(focusState.exerciseId, focusState.setId, { reps: newReps });
-            setKeyboardValue(newReps.toString());
+        let currentVal: number;
+        switch (focusState.field) {
+            case 'weight': currentVal = set?.weight ?? 0; break;
+            case 'reps': currentVal = set?.reps ?? 0; break;
+            case 'duration': currentVal = set?.duration ?? 0; break;
         }
+
+        const newVal = Math.max(0, currentVal + delta);
+        updateSet(focusState.exerciseId, focusState.setId, buildUpdate(focusState.field, newVal));
+        setKeyboardValue(newVal.toString());
     };
 
     const handleNext = () => {
@@ -155,14 +163,25 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         const exercise = activeWorkout.main.exercises.find(e => e.id === focusState.exerciseId);
         if (!exercise) return;
 
+        const set = exercise.sets.find(s => s.id === focusState.setId);
+        const ex = exercise.exercise;
+
         if (focusState.field === 'weight') {
-            // Move to reps
-            const set = exercise.sets.find(s => s.id === focusState.setId);
-            const repsValue = set?.reps?.toString() ?? '';
-            setFocusState({ ...focusState, field: 'reps' });
-            setKeyboardValue(repsValue);
+            // Weight → next trackable field (reps or duration)
+            if (ex.trackReps) {
+                setFocusState({ ...focusState, field: 'reps' });
+                setKeyboardValue(set?.reps?.toString() ?? '');
+            } else if (ex.trackTime) {
+                setFocusState({ ...focusState, field: 'duration' });
+                setKeyboardValue(set?.duration?.toString() ?? '');
+            } else {
+                // Weight-only exercise — complete
+                completeSet(focusState.exerciseId, focusState.setId);
+                setFocusState(null);
+                setKeyboardValue('');
+            }
         } else {
-            // Complete the set and hide keyboard
+            // reps or duration → complete the set
             completeSet(focusState.exerciseId, focusState.setId);
             setFocusState(null);
             setKeyboardValue('');
@@ -175,7 +194,12 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
     };
 
     const getKeyboardFieldType = (): KeyboardFieldType => {
-        return focusState?.field === 'weight' ? 'weight' : 'reps';
+        if (!focusState) return 'reps';
+        switch (focusState.field) {
+            case 'weight': return 'weight';
+            case 'duration': return 'duration';
+            default: return 'reps';
+        }
     };
 
     const getFieldLabel = (): string => {
@@ -187,7 +211,13 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         const setIndex = exercise.sets.findIndex(s => s.id === focusState.setId);
         const setNum = setIndex + 1;
 
-        return `${exercise.exercise.name} - Set ${setNum} ${focusState.field === 'weight' ? 'Weight' : 'Reps'}`;
+        const fieldNames: Record<FieldType, string> = {
+            weight: 'Weight',
+            reps: 'Reps',
+            duration: 'Duration',
+        };
+
+        return `${exercise.exercise.name} - Set ${setNum} ${fieldNames[focusState.field]}`;
     };
 
     return {

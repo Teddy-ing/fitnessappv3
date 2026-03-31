@@ -14,6 +14,7 @@ import {
     WorkoutSet,
     WorkoutSection,
     SetType,
+    PreviousSetData,
     createWorkout,
     createWorkoutExercise,
     createSet
@@ -453,13 +454,10 @@ export async function getWorkoutDatesThisWeek(): Promise<Date[]> {
 
 
 /**
- * Data from a previous session's set, used for the "Previous" column.
+ * Re-exported from models/workout for backward compatibility.
+ * New consumers should import from '../models/workout' directly.
  */
-export interface PreviousSetData {
-    weight: number | null;
-    reps: number | null;
-    type: SetType;
-}
+export type { PreviousSetData } from '../models/workout';
 
 /**
  * Fetch sets from the most recent completed workout containing the given exerciseId.

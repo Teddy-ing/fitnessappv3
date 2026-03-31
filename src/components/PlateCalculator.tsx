@@ -81,8 +81,8 @@ export default function PlateCalculator({
 }: PlateCalculatorProps) {
     const barbellWeight = unit === 'kg' ? BARBELL_KG : BARBELL_LBS;
     const plates = useMemo(() => calculatePlates(weight, unit), [weight, unit]);
-    const isValid = weight > barbellWeight;
-    const remainder = isValid
+    const isValid = weight >= barbellWeight;
+    const remainder = isValid && plates.length > 0
         ? (weight - barbellWeight) / 2 - plates.reduce((sum, p) => sum + p.weight * p.count, 0)
         : 0;
 
@@ -102,7 +102,11 @@ export default function PlateCalculator({
 
                     {!isValid ? (
                         <Text style={styles.info}>
-                            Weight must be greater than the barbell ({barbellWeight} {unit})
+                            Weight must be at least the barbell ({barbellWeight} {unit})
+                        </Text>
+                    ) : plates.length === 0 ? (
+                        <Text style={styles.info}>
+                            Barbell only — no plates needed
                         </Text>
                     ) : (
                         <>

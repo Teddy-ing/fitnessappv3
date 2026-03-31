@@ -45,6 +45,15 @@ export interface WidgetConfig {
  */
 export type WeightTrendIntent = 'bulk' | 'cut' | 'neutral';
 
+/**
+ * A single data point for sparkline charts (e.g. bodyweight trend).
+ * Canonical type — imported by widget components and WidgetGrid.
+ */
+export interface SparklinePoint {
+    date: string;
+    value: number;
+}
+
 // ============================================================
 // Widget catalog (metadata for editor picker)
 // ============================================================

@@ -7,8 +7,8 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-03-29 (Workout Logging Redesign Phases 1–5 — 18 files)
-- **Open issues:** 7 (Critical: 0, High: 1, Medium: 2, Low: 4)
-- **Fixed since baseline:** 29
+- **Open issues:** 1 (Critical: 0, High: 0, Medium: 0, Low: 1)
+- **Fixed since baseline:** 35
 
 ---
 
@@ -20,52 +20,13 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ### High (Incorrect Behavior)
 
-#### BH-037 · Duration input logs reps instead of duration — keyboard has no `'duration'` field concept
-- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx#L286-L306), [useWorkoutKeyboard.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWorkoutKeyboard.ts)
-- **Phase:** Phase 1 (March 29th)
-- **Description:** The entire custom keyboard pipeline is hardcoded to `'weight' | 'reps'`. Duration-tracked exercises (planks, stretches, yoga holds) are affected at every level:
-  1. `SetRow.tsx:290` — Duration cell `onPress` calls `onFocusField(exerciseId, setId, 'reps')` instead of `'duration'`.
-  2. `useWorkoutKeyboard.ts:68` — `handleFocusField` signature only accepts `'weight' | 'reps'`; no `'duration'` option.
-  3. `useWorkoutKeyboard.ts:98-104` — `handleKeyPress` binary-branches on `field === 'weight'` else writes to `reps`. Duration input silently updates `set.reps`.
-  4. `useWorkoutKeyboard.ts:177-178` — `getKeyboardFieldType()` returns `'reps'` for duration, showing wrong unit label.
-  5. `SetRow.tsx:302` — UI displays `set.duration` which is never written to, so user sees `'—'` despite typing values.
-- **Impact:** Duration-tracked exercises are completely unloggable via the custom keyboard. The user types a value, sees no change in the UI, and `reps` is silently corrupted.
-- **Fix:** Add `'duration'` to the `handleFocusField` field union, branch on it in `handleKeyPress`/`handleBackspace`/`handleClear`/`handleAdjust`/`handleNext` to update `set.duration`, pass `'duration'` from `SetRow.tsx:290`, and update `getKeyboardFieldType` / `getFieldLabel` to return `'duration'` / `'sec'`.
+*No open high issues.*
 
 ### Medium (Edge Cases)
 
-#### BH-033 · Superset cards rendered without ErrorBoundary wrapping
-- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx#L522-L573)
-- **Phase:** Phase 3 (March 29th)
-- **Description:** When exercises are grouped in a superset, the `isFirstInSuperset` branch builds a `supersetCards` array and renders them inside a `<View>` container — but none of the cards are wrapped in `<ErrorBoundary>`. Non-superset cards ARE correctly wrapped. If any ExerciseCard in a superset throws a render error, it crashes the entire workout screen.
-- **Fix:** Wrap each card or the superset container with `<ErrorBoundary fallback="card">`.
-
-#### BH-032 · `handleDiscardWorkout` captured in stale BackHandler closure
-- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx#L307-L318)
-- **Phase:** Phase 2–3 (March 29th)
-- **Description:** The BackHandler `useEffect` deps are `[activeWorkout !== null]` but the handler calls `handleDiscardWorkout()`, which references `handleHideKeyboard` from `useWorkoutKeyboard()`. That function is recreated on each render, so the BackHandler captures a stale version. The baseline FP entry for this effect (line 47) covered the `activeWorkout` coercion — this is a separate concern about the function dep.
-- **Fix:** Wrap `handleDiscardWorkout` in `useCallback` and add it to deps, or inline with stable refs.
+*No open medium issues.*
 
 ### Low (Defensive Gaps)
-
-#### BH-031 · `pulseAnim` / `swipeHintAnim` missing from `useEffect` dependency arrays
-- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx#L90-L139)
-- **Phase:** Phase 1 + 3 (March 29th)
-- **Description:** `useEffect` at line 90 references `pulseAnim` but deps are `[isActiveSet, isCompleted]`. Line 139's `useEffect` references `swipeHintAnim` but deps are `[showSwipeHint]`. Both are `useRef`-created Animated values (stable), so no runtime failure — but violates exhaustive-deps contract.
-- **Fix:** Add the animated values to their respective dep arrays.
-
-#### BH-034 · `replaceExercise` doesn't clear `collapsedExercises` for the replaced exercise
-- **File:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts#L558-L602)
-- **Phase:** Phase 2 × Phase 3 interaction (March 29th)
-- **Description:** If an exercise is auto-collapsed (all sets completed) and then replaced via the `⋯` menu, the exercise ID stays in the `collapsedExercises` Set. The new exercise appears collapsed with "✓ X Sets" badge despite all sets being reset to pending.
-- **Likelihood:** Low — user must expand the card before accessing the menu, which removes it from `collapsedExercises`. Would only manifest if the replace flow changes.
-- **Fix:** Delete the exercise ID from `collapsedExercises` inside `replaceExercise`.
-
-#### BH-035 · PlateCalculator rejects barbell-only weight as invalid
-- **File:** [PlateCalculator.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/PlateCalculator.tsx#L83-L84)
-- **Phase:** Phase 4 (March 29th)
-- **Description:** `const isValid = weight > barbellWeight` uses strict `>`, so entering exactly 45 lbs (barbell only, no plates) shows the error "Weight must be greater than the barbell." 45 lbs is a valid weight.
-- **Fix:** Change to `>=` and show "Barbell only — no plates needed" when `plates.length === 0`.
 
 #### BH-036 · `WorkoutSettingsMenu` 2-column max could be bypassed on rapid toggles
 - **File:** [WorkoutSettingsMenu.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/WorkoutSettingsMenu.tsx#L49-L61)
@@ -116,6 +77,48 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ---
 
 ## Resolved
+
+#### BH-037 · Duration input logs reps instead of duration — **RESOLVED 2026-03-30**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx), [useWorkoutKeyboard.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWorkoutKeyboard.ts), [ExerciseCard.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/ExerciseCard.tsx)
+- **Root cause:** The custom numeric keyboard was hardcoded to `'weight' | 'reps'`, and clicking the duration field incorrectly focused `'reps'`. Typing updated the `reps` field in state, but the UI displayed the untouched `duration` field, rendering duration un-loggable.
+- **Fix applied:** Added `'duration'` to `FocusState.field` union. Rewrote `useWorkoutKeyboard.ts` with 3-way branching in all handlers (`handleKeyPress`, `handleBackspace`, `handleClear`, `handleAdjust`, `handleNext`). Updated `SetRow.tsx` to pass `'duration'` from the duration cell. Added `isDurationFocused` prop for highlight ring. Updated `getKeyboardFieldType` and `getFieldLabel` to return correct type/label.
+
+#### BH-033 · Superset cards rendered without ErrorBoundary wrapping — **RESOLVED 2026-03-30**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [SupersetGroup.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/workout/SupersetGroup.tsx)
+- **Root cause:** ExerciseCards in `SupersetGroup` were rendered directly without `<ErrorBoundary>` wrapping, unlike standalone cards in `WorkoutScreen`.
+- **Fix applied:** Wrapped each `<ExerciseCard>` inside the superset group's `.map()` with `<ErrorBoundary fallback="card" label={ex.exercise.name}>`.
+
+#### BH-032 · `handleDiscardWorkout` captured in stale BackHandler closure — **RESOLVED 2026-03-30**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx)
+- **Root cause:** `handleDiscardWorkout` referenced `handleHideKeyboard` (recreated each render) but was not memoized, and the BackHandler `useEffect` didn't include it in deps.
+- **Fix applied:** Wrapped `handleDiscardWorkout` in `useCallback` with `[handleHideKeyboard, discardWorkout]` deps, and added `handleDiscardWorkout` to the BackHandler `useEffect` deps.
+
+#### BH-035 · PlateCalculator rejects barbell-only weight as invalid — **RESOLVED 2026-03-30**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [PlateCalculator.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/PlateCalculator.tsx)
+- **Root cause:** `const isValid = weight > barbellWeight` used strict `>`, rejecting barbell-only weight (e.g., 45 lbs).
+- **Fix applied:** Changed to `>=`. Added ternary: when `isValid && plates.length === 0`, shows "Barbell only — no plates needed".
+
+#### BH-034 · `replaceExercise` doesn't clear `collapsedExercises` — **RESOLVED 2026-03-30**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts)
+- **Root cause:** `replaceExercise` swapped the exercise definition and reset sets to pending, but didn't remove the exercise ID from `collapsedExercises`.
+- **Fix applied:** Added `collapsedExercises.delete(exerciseId)` and included `collapsedExercises: updatedCollapsed` in the `set()` call.
+
+#### BH-031 · `pulseAnim` / `swipeHintAnim` missing from `useEffect` deps — **RESOLVED 2026-03-30**
+- **Severity:** Low
+- **Original status:** 🔴 Confirmed
+- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx)
+- **Root cause:** `useEffect` deps didn't include `pulseAnim` or `swipeHintAnim` despite referencing them.
+- **Fix applied:** Added `pulseAnim` to line 112's deps and `swipeHintAnim` to line 140's deps.
 
 #### BH-030 · `WidgetEditorModal` internal state not reset on external visibility toggle — **RESOLVED 2026-03-28**
 - **Severity:** Low
@@ -335,5 +338,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-03-29
-- Session Context: Bug Hunter pass on Workout Logging Redesign (Phases 1–5, 18 files). Added 7 open issues: BH-031 (animated deps), BH-032 (BackHandler stale closure), BH-033 (superset ErrorBoundary gap), BH-034 (replace+collapse interaction), BH-035 (PlateCalc barbell-only), BH-036 (settings toggle race), BH-037 (duration input → reps, High). Added 7 false positives.
+- Date: 2026-03-30
+- Session Context: Fixed 6 of 7 open issues from the Workout Logging Redesign QA pass: BH-037 (duration keyboard pipeline, High), BH-033 (superset ErrorBoundary), BH-032 (BackHandler stale closure), BH-035 (PlateCalc barbell-only), BH-034 (replaceExercise collapse), BH-031 (animated deps). BH-036 (settings toggle race) remains open as accepted low risk.

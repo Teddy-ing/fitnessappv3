@@ -17,7 +17,7 @@ import {
     UIManager,
 } from 'react-native';
 import { WorkoutExercise, WorkoutSet } from '../models/workout';
-import { PreviousSetData } from '../services/workoutService';
+import { PreviousSetData } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import SetRow from './SetRow';
@@ -33,7 +33,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export interface FocusState {
     exerciseId: string;
     setId: string;
-    field: 'weight' | 'reps';
+    field: 'weight' | 'reps' | 'duration';
 }
 
 interface ExerciseCardProps {
@@ -50,15 +50,16 @@ interface ExerciseCardProps {
     showPrevious?: boolean;
     showRpe?: boolean;
     showRir?: boolean;
+    defaultWarmupSets?: number;
     onUpdateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
     onCompleteSet: (exerciseId: string, setId: string) => void;
     onAddSet: (exerciseId: string) => void;
     onRemoveSet: (exerciseId: string, setId: string) => void;
     onRemoveExercise: (exerciseId: string) => void;
     onToggleSuperset?: (exerciseId: string) => void;
-    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps') => void;
+    onFocusField?: (exerciseId: string, setId: string, field: 'weight' | 'reps' | 'duration') => void;
     onUpdateNote?: (exerciseId: string, note: string | null) => void;
-    onAddWarmupSets?: (exerciseId: string) => void;
+    onAddWarmupSets?: (exerciseId: string, count: number) => void;
     onReplaceExercise?: (exerciseId: string) => void;
     onToggleCollapse?: (exerciseId: string) => void;
 }
@@ -77,6 +78,7 @@ function ExerciseCardInner({
     showPrevious = true,
     showRpe = false,
     showRir = false,
+    defaultWarmupSets = 2,
     onUpdateSet,
     onCompleteSet,
     onAddSet,
@@ -115,7 +117,7 @@ function ExerciseCardInner({
     const activeSetIndex = sets.findIndex(s => s.status !== 'completed');
 
     // Check if a specific field is focused
-    const isFieldFocused = (setId: string, field: 'weight' | 'reps') => {
+    const isFieldFocused = (setId: string, field: 'weight' | 'reps' | 'duration') => {
         return focusState?.exerciseId === workoutExercise.id &&
             focusState?.setId === setId &&
             focusState?.field === field;
@@ -290,6 +292,7 @@ function ExerciseCardInner({
                             showSwipeHint={showSwipeHint && index === 0}
                             isWeightFocused={isFieldFocused(set.id, 'weight')}
                             isRepsFocused={isFieldFocused(set.id, 'reps')}
+                            isDurationFocused={isFieldFocused(set.id, 'duration')}
                             showPrevious={showPrevious}
                             showRpe={showRpe}
                             showRir={showRir}
@@ -324,7 +327,7 @@ function ExerciseCardInner({
                 canSuperset={canSuperset}
                 onClose={() => setMenuVisible(false)}
                 onAddNote={handleAddNote}
-                onAddWarmupSets={() => onAddWarmupSets?.(exerciseId)}
+                onAddWarmupSets={() => onAddWarmupSets?.(exerciseId, defaultWarmupSets)}
                 onReplaceExercise={() => onReplaceExercise?.(exerciseId)}
                 onToggleSuperset={() => onToggleSuperset?.(exerciseId)}
                 onRemoveExercise={() => onRemoveExercise(exerciseId)}
