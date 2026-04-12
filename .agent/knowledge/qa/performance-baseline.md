@@ -6,10 +6,10 @@ description: Tracking document for performance regression findings from Performa
 
 ## Summary
 
-- **Last full pass:** 2026-03-30 (workout logging refactor Phases 1–4 — 20 files)
-- **Open issues:** 1 (0 confirmed, 1 likely)
-- **Fixed this session:** 3
-- **Negligible / Won't Fix:** 17
+- **Last full pass:** 2026-04-11 (Exercise Details Master Guide — 14 files)
+- **Open issues:** 1 (0 confirmed, 1 likely carried over from 2026-03-30)
+- **Fixed this session:** 4
+- **Negligible / Won't Fix:** 22
 
 ---
 
@@ -26,6 +26,15 @@ description: Tracking document for performance regression findings from Performa
 | PP-045 | Store subscription | `workoutStore.ts:641` | `useWorkoutStore.subscribe()` fires on every state change (incl. `lastCompletedSet`, `collapsedExercises`, `previousSets`), not just persistence-relevant fields. | Add shallow-compare guard or `subscribeWithSelector` middleware. |
 
 ---
+
+## Resolved (Session: 2026-04-11 — Exercise Details Master Guide)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|-------------|
+| PP-050 | Inline arrow prop | `ExerciseCard.tsx` | Extracted inline `onPress` arrow into `handleInfoPress` via `useCallback([exercise.id, exercise.name])`. Restores `React.memo` effectiveness on hot-path component. |
+| PP-051 | Chart data not memoized | `ChartsTab.tsx` | Wrapped `chartData`, `maxValue`, `latestValue`, `needsScroll` in `useMemo([data])` inside both `TimeSeriesLineChart` and `VolumeBarChart`. Eliminates ~60 allocations per render. |
+| PP-052 | React.memo missing | `HistoryTab.tsx` | Wrapped `SessionCard` in `React.memo`. Props are `session` object + `weightUnit` string — shallow compare is effective. |
+| PP-053 | Render-path compute | `RecordsTab.tsx` | Pre-computed `_formattedDate` in `useEffect` data transform (alongside `computeEpley1RM`). Render loop now reads cached string. Same pattern as PP-011. |
 
 ## Resolved (Session: 2026-03-30 — Workout Logging Refactor)
 
@@ -130,6 +139,16 @@ description: Tracking document for performance regression findings from Performa
 
 **PP-049** — `ExerciseMenu` builds `items` array inline on every render. Menu is only visible when user opens it — never in the hot render path.
 
+**PP-054** — `Dimensions.get('window')` at module level in `ChartsTab.tsx` — same as PP-013/PP-027/PP-041/PP-046, portrait-locked.
+
+**PP-055** — Notes list in `AboutTab.tsx` rendered via `.map()` inside ScrollView without `React.memo` on `NoteCard`. Max ~5–10 notes per exercise. Not a hot path.
+
+**PP-056** — Records table rows in `RecordsTab.tsx` rendered via `.map()` without `React.memo`. Max 12–15 rows. Static data, no interaction during render. Same as PP-029 (accepted).
+
+**PP-057** — Inline arrow `onPress={() => onTabChange(t.key)}` in `ExerciseDetailsScreen.tsx` tab pills. 4 tab buttons. Trivially small.
+
+**PP-058** — `formatEquipment`/`formatNoteDate` string transforms called in `AboutTab.tsx` render path. ~2–3 equipment items, ~5 notes. Sub-microsecond ops.
+
 ---
 
 ## Historical Performance Issues
@@ -144,5 +163,5 @@ description: Tracking document for performance regression findings from Performa
 ---
 
 ## Last Updated
-- Date: 2026-03-30
-- Session Context: Performance Profiler pass on workout logging refactor (Phases 1–4). 20 files reviewed. 3 confirmed regressions (PP-042–PP-044), 1 likely (PP-045), 4 negligible (PP-046–PP-049).
+- Date: 2026-04-11
+- Session Context: Performance Profiler pass on Exercise Details Master Guide feature. 14 files reviewed. 2 confirmed regressions (PP-050–PP-051) + 2 likely (PP-052–PP-053) found and fixed. 5 negligible (PP-054–PP-058). TypeScript 0 errors.

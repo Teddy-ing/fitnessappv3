@@ -602,6 +602,47 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v11: Persistent exercise notes (original single-note schema)
+    // ----------------------------------------------------------
+    {
+        version: 11,
+        name: 'exercise_notes_table',
+        up: async (db) => {
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS exercise_notes (
+                    exercise_id TEXT PRIMARY KEY,
+                    note TEXT NOT NULL,
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+            `);
+        },
+    },
+
+    // ----------------------------------------------------------
+    // v12: Multi-note exercise notes (drop + recreate)
+    // ----------------------------------------------------------
+    {
+        version: 12,
+        name: 'exercise_notes_multi',
+        up: async (db) => {
+            // Drop single-note table from v11 and recreate with multi-note schema
+            await db.execAsync(`DROP TABLE IF EXISTS exercise_notes;`);
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS exercise_notes (
+                    id TEXT PRIMARY KEY,
+                    exercise_id TEXT NOT NULL,
+                    note TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+            `);
+            await db.execAsync(`
+                CREATE INDEX IF NOT EXISTS idx_exercise_notes_exercise_id
+                    ON exercise_notes(exercise_id);
+            `);
+        },
+    },
 ];
 
 // ============================================================

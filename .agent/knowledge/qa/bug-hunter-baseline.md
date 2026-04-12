@@ -6,9 +6,9 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ## Summary
 
-- **Last full pass:** 2026-03-29 (Workout Logging Redesign Phases 1–5 — 18 files)
+- **Last full pass:** 2026-04-10 (Exercise Details "Master Guide" — 17 files)
 - **Open issues:** 1 (Critical: 0, High: 0, Medium: 0, Low: 1)
-- **Fixed since baseline:** 35
+- **Fixed since baseline:** 40
 
 ---
 
@@ -41,7 +41,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 | Concern | Reviewed Area | Why Not a Bug |
 |---------|--------------|---------------|
-| `SCREEN_WIDTH` stale on rotation | `ExerciseAnalyticsScreen.tsx:30-31`, `AnalyticsScreen.tsx:49-50`, `TrendsTab.tsx:42`, `GalleryTab.tsx:41` | Module-level `Dimensions.get()` would be stale on rotation, but this is a portrait-locked mobile fitness app — acceptable. |
+| `SCREEN_WIDTH` stale on rotation | `ExerciseAnalyticsScreen.tsx:30-31`, `AnalyticsScreen.tsx:49-50`, `TrendsTab.tsx:42`, `GalleryTab.tsx:41`, `ChartsTab.tsx:28-29` | Module-level `Dimensions.get()` would be stale on rotation, but this is a portrait-locked mobile fitness app — acceptable. |
 | `lastMonth` mutable in `.map()` | `AnalyticsScreen.tsx:205`, `ExerciseAnalyticsScreen.tsx:115,244` | Looks like a stale closure, but `lastMonth` is a `let` variable in the *render scope* above the `.map()`, capturing correctly via closure. Data is sorted by date, so mutation during iteration produces correct month-header logic. |
 | Missing error handling in `ConsistencyCards` / `FatigueRatioBanner` | Both components | Service functions already return safe defaults on failure; components correctly handle null/zero states. Not a gap. |
 | `safeJsonParse` doesn't validate shape | `analyticsService.ts:444,534` | `safeJsonParse` returns `as T` without runtime validation, but the `MuscleContribution[]` data is written by the app itself (not user input) and validated at write time. Acceptable given data provenance. |
@@ -73,10 +73,52 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 | `PinnedExerciseWidget` always assumes positive = good (green) | `PinnedExerciseWidget.tsx:75` | For exercise metrics (1RM, volume), increasing is always desirable. No "cut" analogue for bench press. Correct behavior. |
 | `BodyweightSparklineWidget` hardcodes `unit = 'lbs'` default | `BodyweightSparklineWidget.tsx:46` | Fallback default; parent should pass correct unit. Minor UX issue for kg users, not a runtime bug. |
 | `SwipeableTabScreen` fling gesture during vertical scroll | `SwipeableTabScreen.tsx:67-96` | `Gesture.Fling()` requires fast directional swipe; `Gesture.Race()` means first gesture wins. Standard RNGH pattern — no conflict with vertical scrolls. |
+| `tabContent` in `useMemo` remounts tabs on switch | `ExerciseDetailsScreen.tsx:119-130` | Each tab switch creates a new component instance via `useMemo`, remounting and re-fetching. Intentional — each tab manages its own loading state. Not expensive since tabs are lightweight and `useMemo` prevents unnecessary re-renders when other props change. |
+| `handleSaveNote` async without error boundary | `AboutTab.tsx:133-144` | `saveExerciseNote` and `getExerciseNotes` have try/catch blocks internally that log and return safe defaults. No unhandled promise rejection path. |
+| `ExerciseAnalyticsScreen` still in codebase but no route | `ExerciseAnalyticsScreen.tsx` | Dead code — no route points to it after `AppNavigator` switched to `ExerciseDetailsScreen`. Can be deleted in cleanup pass. Not a runtime bug. |
+| `handleDeleteNote` optimistic local update | `AboutTab.tsx:147-163` | If `deleteExerciseNote` fails, the note disappears from UI but remains in DB. On next tab visit it reappears. Acceptable — waiting for DB confirmation introduces visible lag. |
+| `computeEpley1RM` rounding to 1 decimal | `RecordsTab.tsx:38` | Standard Epley precision for gym users. No accuracy concern. |
+| `getExerciseSessionHistory` volume excludes warmup sets | `exerciseDetailsService.ts:212` | Intentional per PRD — session volume = working set volume only. Consistent with goalProgressService volume pattern (documented FP). |
+| `ExerciseCard` info icon visible on non-collapsed cards | `ExerciseCard.tsx:223-244` | PRD specifies icon should not appear on collapsed cards. The icon is inside the expanded view block (after the `if (isCollapsed)` early return at line 172), so it correctly hides when collapsed. |
 
 ---
 
 ## Resolved
+
+#### BH-042 · React key collision for warmup sets in HistoryTab — **RESOLVED 2026-04-10**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [HistoryTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/exerciseDetails/HistoryTab.tsx#L64)
+- **Root cause:** Set row keys used `{set.setNumber}-${set.type}`. Warmup sets all had `setNumber: 0` and `type: 'warmup'`, so multiple warmups produced duplicate keys.
+- **Fix applied:** Changed `.map((set) => ...)` to `.map((set, idx) => ...)` and key to `key={idx}`.
+
+#### BH-041 · `ExerciseCard` info button `as any` cast documented — **RESOLVED 2026-04-10**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [ExerciseCard.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/ExerciseCard.tsx#L235)
+- **Root cause:** Cross-stack navigation `as any` needed for nested params but lacked eslint-disable comment.
+- **Fix applied:** Added `// eslint-disable-next-line @typescript-eslint/no-explicit-any — cross-stack navigation requires untyped nested params (BH-041)` comment.
+
+#### BH-040 · Analytics Hub and Widget deep-link defaulted to wrong tab — **RESOLVED 2026-04-10**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [ExerciseListView.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/analytics/ExerciseListView.tsx#L81-L84), [WidgetGrid.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/widgets/WidgetGrid.tsx#L259-L262)
+- **Root cause:** Both callers navigated to `ExerciseDetails` without `initialTab` param. Screen defaulted to `'about'` instead of `'charts'` (PRD requirement for Path A and Path C).
+- **Fix applied:** Added `initialTab: 'charts'` to navigation params in both `ExerciseListView.tsx` and `WidgetGrid.tsx`.
+
+#### BH-039 · `AboutTab` permanent spinner on missing exercise — **RESOLVED 2026-04-10**
+- **Severity:** Medium
+- **Original status:** 🟡 Plausible
+- **File:** [AboutTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/exerciseDetails/AboutTab.tsx#L114-L130)
+- **Root cause:** `getExerciseById` returning `null` caused `if (loading || !exercise)` to show spinner forever.
+- **Fix applied:** Added `notFound` state. When exercise is null after fetch, shows `MaterialIcons error-outline` icon with "Exercise not found" message.
+
+#### BH-038 · `handleLoadMore` pagination race in HistoryTab — **RESOLVED 2026-04-10**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [HistoryTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/exerciseDetails/HistoryTab.tsx#L124-L134)
+- **Root cause:** `loadingMore` state guard was async (batched React state), allowing `onEndReached` to fire twice before the guard engaged.
+- **Fix applied:** Added `loadingMoreRef = useRef(false)` as a synchronous guard. Set `true` immediately before async fetch, `false` on completion. Removed `loadingMore` from the `useCallback` dep array.
 
 #### BH-037 · Duration input logs reps instead of duration — **RESOLVED 2026-03-30**
 - **Severity:** High
@@ -338,5 +380,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-03-30
-- Session Context: Fixed 6 of 7 open issues from the Workout Logging Redesign QA pass: BH-037 (duration keyboard pipeline, High), BH-033 (superset ErrorBoundary), BH-032 (BackHandler stale closure), BH-035 (PlateCalc barbell-only), BH-034 (replaceExercise collapse), BH-031 (animated deps). BH-036 (settings toggle race) remains open as accepted low risk.
+- Date: 2026-04-10
+- Session Context: Exercise Details ("Master Guide") QA pass — 17 files reviewed. 5 issues identified (BH-038 through BH-042) and all 5 resolved in the same session. Fixes: ref-guarded pagination (BH-038), exercise-not-found state (BH-039), correct default tab from Analytics/Widget (BH-040), eslint-disable on `as any` (BH-041), warmup key collision (BH-042). 7 new false positives documented.

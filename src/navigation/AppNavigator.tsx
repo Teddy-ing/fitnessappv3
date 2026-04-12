@@ -29,7 +29,7 @@ import WorkoutScreen from '../screens/WorkoutScreen';
 import AssistantScreen from '../screens/AssistantScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
-import ExerciseAnalyticsScreen from '../screens/ExerciseAnalyticsScreen';
+import ExerciseDetailsScreen from '../screens/ExerciseDetailsScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import MeasurementsScreen from '../screens/MeasurementsScreen';
 import GoalsScreen from '../screens/GoalsScreen';
@@ -78,7 +78,7 @@ const ProfileSwipeWrapper = ({ children }: { children: React.ReactNode }) => (
 export type ProfileStackParamList = {
     ProfileHome: undefined;
     Analytics: { initialTab?: 'workouts' | 'breakdown' | 'exercises' } | undefined;
-    ExerciseAnalytics: { exerciseId: string; exerciseName: string };
+    ExerciseDetails: { exerciseId: string; exerciseName: string; initialTab?: 'about' | 'history' | 'charts' | 'records'; source?: 'workout' };
     Calendar: undefined;
     Measurements: { initialTab?: 'track' | 'trends' | 'gallery'; autoSelectTypeId?: string } | undefined;
     Goals: undefined;
@@ -97,9 +97,9 @@ const AnalyticsScreenWithBoundary = () => (
         <AnalyticsScreen />
     </ErrorBoundary>
 );
-const ExerciseAnalyticsScreenWithBoundary = (props: any) => (
-    <ErrorBoundary fallback="screen" label="ExerciseAnalyticsScreen">
-        <ExerciseAnalyticsScreen {...props} />
+const ExerciseDetailsScreenWithBoundary = (props: any) => (
+    <ErrorBoundary fallback="screen" label="ExerciseDetailsScreen">
+        <ExerciseDetailsScreen {...props} />
     </ErrorBoundary>
 );
 const CalendarScreenWithBoundary = () => (
@@ -133,7 +133,7 @@ function ProfileStackNavigator() {
     return (
         <ErrorBoundary fallback="screen" label="ProfileStack">
             <ProfileStack.Navigator
-                initialRouteName={IS_WEB ? 'ExerciseAnalytics' : 'ProfileHome'}
+                initialRouteName={IS_WEB ? 'ExerciseDetails' : 'ProfileHome'}
                 screenOptions={{
                     headerStyle: {
                         backgroundColor: colors.background.primary,
@@ -161,8 +161,8 @@ function ProfileStackNavigator() {
                     }}
                 />
                 <ProfileStack.Screen
-                    name="ExerciseAnalytics"
-                    component={ExerciseAnalyticsScreenWithBoundary}
+                    name="ExerciseDetails"
+                    component={ExerciseDetailsScreenWithBoundary}
                     options={({ route }) => ({
                         title: route.params.exerciseName,
                     })}

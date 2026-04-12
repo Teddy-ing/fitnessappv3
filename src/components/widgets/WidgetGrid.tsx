@@ -257,9 +257,10 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
                     return () => navigation.navigate('Goals');
                 case 'pinned_exercise':
                     if (config.exerciseId && config.exerciseName) {
-                        return () => navigation.navigate('ExerciseAnalytics', {
+                        return () => navigation.navigate('ExerciseDetails', {
                             exerciseId: config.exerciseId!,
                             exerciseName: config.exerciseName!,
+                            initialTab: 'charts',
                         });
                     }
                     return () => navigation.navigate('Analytics', { initialTab: 'exercises' });

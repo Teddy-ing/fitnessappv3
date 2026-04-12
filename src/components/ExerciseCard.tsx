@@ -5,7 +5,7 @@
  * Phase 3: Auto-collapsing cards, LayoutAnimation transitions.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -16,6 +16,7 @@ import {
     Platform,
     UIManager,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { WorkoutExercise, WorkoutSet } from '../models/workout';
 import { PreviousSetData } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
@@ -23,6 +24,7 @@ import { useRestTimerStore } from '../stores/restTimerStore';
 import SetRow from './SetRow';
 import ActiveRestLine from './ActiveRestLine';
 import ExerciseMenu from './ExerciseMenu';
+import { navigationRef } from '../navigation/navigationRef';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -138,6 +140,21 @@ function ExerciseCardInner({
             activeRestTimerSetId === setId;
     };
 
+    // Navigate to Exercise Details screen (info icon)
+    const handleInfoPress = useCallback(() => {
+        navigationRef.navigate('Profile', {
+            screen: 'ExerciseDetails',
+            params: {
+                exerciseId: exercise.id,
+                exerciseName: exercise.name,
+                initialTab: 'about',
+                source: 'workout',
+            },
+            initial: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any — cross-stack navigation requires untyped nested params (BH-041)
+        } as any);
+    }, [exercise.id, exercise.name]);
+
     // Note handlers
     const handleAddNote = () => {
         setNoteInput(workoutExercise.note ?? '');
@@ -210,10 +227,25 @@ function ExerciseCardInner({
 
             {/* Header */}
             <View style={styles.header}>
-                <View style={styles.headerLeft}>
+                <TouchableOpacity 
+                    style={styles.headerLeft}
+                    onPress={handleToggleCollapse}
+                    activeOpacity={0.7}
+                >
                     <Text style={styles.exerciseName}>{exercise.name}</Text>
                     <Text style={styles.muscleTag}>{formattedMuscle}</Text>
-                </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.infoButton}
+                    onPress={handleInfoPress}
+                    activeOpacity={0.6}
+                >
+                    <MaterialIcons
+                        name="info-outline"
+                        size={18}
+                        color={colors.text.secondary}
+                    />
+                </TouchableOpacity>
                 <TouchableOpacity
                     style={styles.menuButton}
                     onPress={() => setMenuVisible(true)}
@@ -435,6 +467,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: borderRadius.full,
+    },
+    infoButton: {
+        width: 32,
+        height: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: borderRadius.full,
+        marginRight: spacing.xs,
     },
     menuIcon: {
         color: colors.text.secondary,

@@ -1,13 +1,13 @@
 /**
- * Exercise Analytics Screen
+ * Charts Tab — Exercise Details
  *
- * Per-exercise progression charts: Est. 1RM, Max Weight,
- * Volume per session, Max Reps, and a Best Weight for Reps table.
+ * Vertically stacked charts: Estimated 1RM (line), Max Weight (line),
+ * Session Volume (bar). Shared range pills across all charts.
  *
- * Accessed by tapping an exercise from the Exercises tab in AnalyticsScreen.
+ * Reuses the data hook from the legacy ExerciseAnalyticsScreen.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     Text,
@@ -17,53 +17,39 @@ import {
     ActivityIndicator,
     Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
-import { useExerciseAnalytics } from '../hooks/useExerciseAnalytics';
-import { ChartRange, CHART_RANGE_LABELS, ExerciseTimeSeriesPoint } from '../models/analytics';
-import type { ProfileStackParamList } from '../navigation/AppNavigator';
-import { createLabelProcessor, BAR_CHART_MARGINS, LINE_CHART_MARGINS } from '../utils/chartLabels';
-import { useWeightUnit } from '../hooks/useWeightUnit';
-
-type Props = NativeStackScreenProps<ProfileStackParamList, 'ExerciseDetails'>;
+import { colors, spacing, borderRadius, typography } from '../../theme';
+import { useExerciseAnalytics } from '../../hooks/useExerciseAnalytics';
+import { ChartRange, CHART_RANGE_LABELS, ExerciseTimeSeriesPoint } from '../../models/analytics';
+import { createLabelProcessor, BAR_CHART_MARGINS, LINE_CHART_MARGINS } from '../../utils/chartLabels';
+import { useWeightUnit } from '../../hooks/useWeightUnit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - spacing.md * 4 - 40;
 const CHART_RANGES: ChartRange[] = ['1M', '3M', '6M', '1Y', 'ALL'];
 
-// Bar chart needs manual spacing; LineChart uses adjustToWidth to auto-fit.
-// The library's adjustToWidth computes: spacing = (width - yAxisLabelWidth - initialSpacing) / (n-1)
-// which properly accounts for the y-axis label area and aligns data points with labels.
-const Y_AXIS_WIDTH = 35; // library default yAxisLabelWidth
-const LIB_INITIAL_SPACING = 20; // library default initialSpacing
+const Y_AXIS_WIDTH = 35;
+const LIB_INITIAL_SPACING = 20;
 const MIN_PER_POINT = 12;
 
 function computeChartSpacing(dataLength: number) {
     if (dataLength <= 1) {
         return { barWidth: 22, barSpacing: 18, needsScroll: false };
     }
-    // For bar chart, compute usable data area same as library does
     const dataArea = CHART_WIDTH - Y_AXIS_WIDTH - LIB_INITIAL_SPACING;
     const ideal = dataArea / (dataLength - 1);
     const perPoint = Math.max(MIN_PER_POINT, ideal);
     const needsScroll = ideal < MIN_PER_POINT;
     const bw = Math.max(4, Math.round(perPoint * 0.65));
     const bs = Math.max(1, perPoint - bw);
-    return {
-        barWidth: bw,
-        barSpacing: bs,
-        needsScroll,
-    };
+    return { barWidth: bw, barSpacing: bs, needsScroll };
 }
 
 // ============================================================
 // Sub-components
 // ============================================================
 
-/** Shared chart range pill row */
 function RangePills({
     selected,
     onSelect,
@@ -93,12 +79,10 @@ function RangePills({
     );
 }
 
-/** Section header with title */
 function SectionHeader({ title }: { title: string }) {
     return <Text style={styles.sectionTitle}>{title}</Text>;
 }
 
-/** Line chart for time-series data */
 function TimeSeriesLineChart({
     data,
     color,
@@ -116,24 +100,25 @@ function TimeSeriesLineChart({
         );
     }
 
-    const processLabel = createLabelProcessor(LINE_CHART_MARGINS, styles.axisText);
-
-    const chartData = data.map((d) => {
-        const { displayLabel, labelComponent } = processLabel(d.label);
-
+    const { chartData, maxValue, latestValue, needsScroll } = useMemo(() => {
+        const processLabel = createLabelProcessor(LINE_CHART_MARGINS, styles.axisText);
+        const cd = data.map((d) => {
+            const { displayLabel, labelComponent } = processLabel(d.label);
+            return {
+                value: d.value,
+                label: displayLabel,
+                labelComponent,
+                fullLabel: d.label,
+                dataPointText: undefined,
+            };
+        });
         return {
-            value: d.value,
-            label: displayLabel,
-            labelComponent,
-            fullLabel: d.label,
-            dataPointText: undefined,
+            chartData: cd,
+            maxValue: Math.max(...data.map((d) => d.value)) * 1.15,
+            latestValue: data[data.length - 1]?.value ?? 0,
+            needsScroll: computeChartSpacing(data.length).needsScroll,
         };
-    });
-
-    const maxValue = Math.max(...data.map((d) => d.value)) * 1.15;
-    const latestValue = data[data.length - 1]?.value ?? 0;
-
-    const { needsScroll } = computeChartSpacing(data.length);
+    }, [data]);
 
     return (
         <View style={styles.chartCard}>
@@ -210,7 +195,6 @@ function TimeSeriesLineChart({
     );
 }
 
-/** Bar chart for volume data */
 function VolumeBarChart({ data, weightUnit }: { data: ExerciseTimeSeriesPoint[]; weightUnit: string }) {
     if (data.length === 0) {
         return (
@@ -220,24 +204,28 @@ function VolumeBarChart({ data, weightUnit }: { data: ExerciseTimeSeriesPoint[];
         );
     }
 
-    const processLabel = createLabelProcessor(BAR_CHART_MARGINS, styles.axisText);
-
-    const chartData = data.map((d) => {
-        const { displayLabel, labelComponent } = processLabel(d.label);
-
+    const { chartData, maxValue, barWidth, barSpacing, needsScroll } = useMemo(() => {
+        const processLabel = createLabelProcessor(BAR_CHART_MARGINS, styles.axisText);
+        const cd = data.map((d) => {
+            const { displayLabel, labelComponent } = processLabel(d.label);
+            return {
+                value: d.value,
+                label: displayLabel,
+                labelComponent,
+                fullLabel: d.label,
+                frontColor: colors.accent.primary,
+                gradientColor: colors.accent.tertiary,
+            };
+        });
+        const spacing = computeChartSpacing(data.length);
         return {
-            value: d.value,
-            label: displayLabel,
-            labelComponent,
-            fullLabel: d.label,
-            frontColor: colors.accent.primary,
-            gradientColor: colors.accent.tertiary,
+            chartData: cd,
+            maxValue: Math.max(...data.map((d) => d.value)) * 1.15,
+            barWidth: spacing.barWidth,
+            barSpacing: spacing.barSpacing,
+            needsScroll: spacing.needsScroll,
         };
-    });
-
-    const maxValue = Math.max(...data.map((d) => d.value)) * 1.15;
-
-    const { barWidth, barSpacing, needsScroll } = computeChartSpacing(data.length);
+    }, [data]);
 
     return (
         <View style={styles.chartCard}>
@@ -286,7 +274,7 @@ function VolumeBarChart({ data, weightUnit }: { data: ExerciseTimeSeriesPoint[];
                             <Text style={styles.tooltipText}>
                                 {item.fullLabel || item.label}: {item.value >= 1000
                                     ? `${(item.value / 1000).toFixed(1)}k`
-                                    : Math.round(item.value)} ${weightUnit}
+                                    : Math.round(item.value)} {weightUnit}
                             </Text>
                         </View>
                     );
@@ -297,91 +285,50 @@ function VolumeBarChart({ data, weightUnit }: { data: ExerciseTimeSeriesPoint[];
 }
 
 // ============================================================
-// Main Screen
+// Main Tab Component
 // ============================================================
 
-export default function ExerciseAnalyticsScreen({ route }: Props) {
-    const { exerciseId } = route.params as { exerciseId: string; exerciseName: string };
+interface ChartsTabProps {
+    exerciseId: string;
+}
+
+export default function ChartsTab({ exerciseId }: ChartsTabProps) {
     const {
         chartRange,
         setChartRange,
         est1rm,
         maxWeight,
         volume,
-        maxReps,
-        bestForReps,
         loading,
     } = useExerciseAnalytics(exerciseId);
     const weightUnit = useWeightUnit();
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container} edges={['bottom']}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={colors.accent.primary} />
-                    <Text style={styles.loadingText}>Loading analytics...</Text>
-                </View>
-            </SafeAreaView>
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.accent.primary} />
+                <Text style={styles.loadingText}>Loading analytics...</Text>
+            </View>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['bottom']}>
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Shared range selector */}
-                <RangePills selected={chartRange} onSelect={setChartRange} />
+        <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+        >
+            <RangePills selected={chartRange} onSelect={setChartRange} />
 
-                {/* Chart 1: Estimated 1RM */}
-                <SectionHeader title="Estimated 1RM" />
-                <TimeSeriesLineChart data={est1rm} color={colors.accent.primary} suffix={` ${weightUnit}`} />
+            <SectionHeader title="Estimated 1RM" />
+            <TimeSeriesLineChart data={est1rm} color={colors.accent.primary} suffix={` ${weightUnit}`} />
 
-                {/* Chart 2: Max Weight */}
-                <SectionHeader title="Max Weight" />
-                <TimeSeriesLineChart data={maxWeight} color="#3b82f6" suffix={` ${weightUnit}`} />
+            <SectionHeader title="Max Weight" />
+            <TimeSeriesLineChart data={maxWeight} color="#3b82f6" suffix={` ${weightUnit}`} />
 
-                {/* Chart 3: Volume per Session */}
-                <SectionHeader title="Session Volume" />
-                <VolumeBarChart data={volume} weightUnit={weightUnit} />
-
-                {/* Chart 4: Max Reps */}
-                <SectionHeader title="Max Reps" />
-                <TimeSeriesLineChart data={maxReps} color="#14b8a6" />
-
-                {/* Table: Best Weight for Reps */}
-                {bestForReps.length > 0 && (
-                    <View>
-                        <SectionHeader title="Best Weight for Reps" />
-                        <View style={styles.tableCard}>
-                            <View style={styles.tableHeader}>
-                                <Text style={styles.tableHeaderCell}>Reps</Text>
-                                <Text style={styles.tableHeaderCell}>Weight</Text>
-                                <Text style={[styles.tableHeaderCell, styles.tableDateCell]}>
-                                    Date
-                                </Text>
-                            </View>
-                            {bestForReps.map((row) => (
-                                <View key={row.reps} style={styles.tableRow}>
-                                    <Text style={styles.tableCell}>{row.reps}</Text>
-                                    <Text style={[styles.tableCell, styles.tableCellBold]}>
-                                        {row.weight} {weightUnit}
-                                    </Text>
-                                    <Text style={[styles.tableCell, styles.tableDateCell]}>
-                                        {new Date(row.date).toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                        })}
-                                    </Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                )}
-            </ScrollView>
-        </SafeAreaView>
+            <SectionHeader title="Session Volume" />
+            <VolumeBarChart data={volume} weightUnit={weightUnit} />
+        </ScrollView>
     );
 }
 
@@ -390,10 +337,6 @@ export default function ExerciseAnalyticsScreen({ route }: Props) {
 // ============================================================
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background.primary,
-    },
     scrollView: {
         flex: 1,
     },
@@ -490,42 +433,6 @@ const styles = StyleSheet.create({
     latestValue: {
         fontSize: typography.size.lg,
         fontWeight: typography.weight.bold,
-    },
-
-    // Best weight for reps table
-    tableCard: {
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.xl,
-        padding: spacing.md,
-    },
-    tableHeader: {
-        flexDirection: 'row',
-        paddingBottom: spacing.sm,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.background.tertiary,
-        marginBottom: spacing.xs,
-    },
-    tableHeaderCell: {
-        flex: 1,
-        fontSize: typography.size.xs,
-        fontWeight: typography.weight.semibold,
-        color: colors.text.secondary,
-    },
-    tableRow: {
-        flexDirection: 'row',
-        paddingVertical: spacing.xs + 2,
-    },
-    tableCell: {
-        flex: 1,
-        fontSize: typography.size.sm,
-        color: colors.text.primary,
-    },
-    tableCellBold: {
-        fontWeight: typography.weight.semibold,
-        color: colors.accent.primary,
-    },
-    tableDateCell: {
-        textAlign: 'right',
     },
 
     // Tooltips

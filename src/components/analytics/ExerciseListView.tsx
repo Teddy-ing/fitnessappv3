@@ -78,9 +78,10 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
             style={styles.exerciseRow}
             activeOpacity={0.6}
             onPress={() =>
-                navigation.navigate('ExerciseAnalytics', {
+                navigation.navigate('ExerciseDetails', {
                     exerciseId: ex.exerciseId,
                     exerciseName: ex.exerciseName,
+                    initialTab: 'charts',
                 })
             }
         >

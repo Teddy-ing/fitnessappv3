@@ -39,7 +39,7 @@ Focused review for logic bugs, runtime errors, and edge cases — the things tha
      - **🔴 Confirmed bug** — reproduce or clearly trace the failure path
      - **🟡 Plausible** — can't immediately reproduce but logic looks wrong
      - **⚪ False positive** — reviewer misunderstood context; note why
-   - Add confirmed/plausible issues to `bug-hunter-baseline.md`
+   - Add confirmed/plausible issues to file `@bug-hunter-baseline.md`
 
 4. **Fix confirmed bugs**
    - Fix inline if trivial (<5 lines)

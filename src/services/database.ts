@@ -98,6 +98,8 @@ export async function clearAllData(): Promise<void> {
 
     try {
         // Children → parents order to respect FK constraints
+        // v11 — Exercise notes
+        await database.execAsync(`DELETE FROM exercise_notes;`);
         // v7 — Goals
         await database.execAsync(`DELETE FROM goals;`);
         // v5 — Measurements & Photos

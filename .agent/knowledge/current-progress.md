@@ -7,7 +7,7 @@ description: Living document tracking completed work, in-progress tasks, next st
 ## Summary
 
 - **Phase:** Post-MVP Development — Workout Logging Redesign complete (all 4 phases)
-- **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign (table layout, interactions, collapse, RPE, plate calculator) all implemented.
+- **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign + **Exercise Details Master Guide screen** all implemented.
 - **Next Milestone:** Settings screen implementation, or further polish/testing
 
 ---
@@ -85,6 +85,10 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ---
 
+- [x] **Exercise Details "Master Guide" Screen** — 4-tab exercise reference (About/History/Charts/Records) replacing ExerciseAnalyticsScreen
+
+---
+
 ## In Progress
 
 *Nothing currently in progress.*
@@ -150,6 +154,55 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-04-10: Exercise Details "Master Guide" Screen
+
+**Duration:** Single session
+**Focus:** Comprehensive per-exercise reference screen with 4 tabs, replacing the legacy ExerciseAnalyticsScreen.
+
+**What was done:**
+
+- **PRD Created:** `exercise-details-prd.md` — full spec for the Exercise Master Guide screen
+- **New Screen:** `ExerciseDetailsScreen.tsx` — 4-tab layout (About/History/Charts/Records) with pill-style tab bar matching AnalyticsScreen
+- **Navigation Routing (3 paths):**
+  - Path A: Analytics → Exercises tab → tap row → `ExerciseDetails` (Charts tab)
+  - Path B: Active workout → `info-outline` icon on ExerciseCard → `ExerciseDetails` (About tab) via `navigationRef`
+  - Path C: Pinned Exercise widget deep-link → `ExerciseDetails` (Charts tab)
+- **Route Rename:** `ExerciseAnalytics` → `ExerciseDetails` in `ProfileStackParamList` (clean break)
+- **Charts Tab:** `ChartsTab.tsx` — Extracted Est. 1RM, Max Weight, Volume charts with range pills from legacy screen. Removed Max Reps chart (redundant with Records).
+- **Records Tab:** `RecordsTab.tsx` — Best weight at each rep count (1–12RM) with Epley Est. 1RM column. Highest Est. 1RM row highlighted with purple accent.
+- **History Tab:** `HistoryTab.tsx` — Paginated FlatList (20/page) of session cards showing date, workout name, sets detail, and per-exercise volume.
+- **About Tab:** `AboutTab.tsx` — Exercise icon placeholder (96×96), metadata pills (muscle/equipment/category), numbered instructions list (placeholder), persistent exercise notes with auto-save on blur.
+- **DB Migration v11:** `exercise_notes` table (exercise_id PK, note TEXT, updated_at). Added to `clearAllData()` per Guardrail #11.
+- **New Service:** `exerciseDetailsService.ts` — `getExerciseNote()`, `saveExerciseNote()`, `deleteExerciseNote()`, `getExerciseSessionHistory()` with pagination.
+- **New Model:** `exerciseDetails.ts` — `ExerciseSession`, `ExerciseSessionSet` types.
+- **ExerciseCard Update:** Added `info-outline` icon (18dp, muted secondary color) between exercise name and ⋯ menu button.
+
+**Files created:**
+- `src/screens/ExerciseDetailsScreen.tsx`
+- `src/components/exerciseDetails/AboutTab.tsx`
+- `src/components/exerciseDetails/HistoryTab.tsx`
+- `src/components/exerciseDetails/ChartsTab.tsx`
+- `src/components/exerciseDetails/RecordsTab.tsx`
+- `src/models/exerciseDetails.ts`
+- `src/services/exerciseDetailsService.ts`
+- `.agent/knowledge/exercise-details-prd.md`
+
+**Files modified:**
+- `src/navigation/AppNavigator.tsx` — Route rename, import update
+- `src/components/analytics/ExerciseListView.tsx` — Navigate to ExerciseDetails
+- `src/components/widgets/WidgetGrid.tsx` — Pinned exercise deep-link update
+- `src/components/ExerciseCard.tsx` — Added info icon + navigationRef import
+- `src/services/migrations.ts` — v11 exercise_notes migration
+- `src/services/database.ts` — clearAllData updated
+- `src/services/index.ts` — New exports
+- `src/models/index.ts` — New export
+- `src/screens/index.ts` — Updated barrel export
+- `src/screens/ExerciseAnalyticsScreen.tsx` — Fixed type references (dead code)
+
+**Verification:** TypeScript 0 errors
+
+---
 
 ### 2026-03-29: Workout Logging Redesign — Phase 1 (Table Layout + Visual Cleanup)
 

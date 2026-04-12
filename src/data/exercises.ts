@@ -123,6 +123,22 @@ export const SEED_EXERCISES: Exercise[] = [
         ['triceps', 'shoulders'],
         ['dip_bars', 'bodyweight']
     ),
+    seedExercise(
+        'machine-chest-press',
+        'Machine Chest Press',
+        'strength',
+        ['chest'],
+        ['triceps', 'shoulders'],
+        ['machine']
+    ),
+    seedExercise(
+        'pec-deck',
+        'Pec Deck (Machine Fly)',
+        'strength',
+        ['chest'],
+        ['shoulders'],
+        ['machine']
+    ),
 
     // ============================================
     // BACK
@@ -190,6 +206,38 @@ export const SEED_EXERCISES: Exercise[] = [
         ['back', 'lats'],
         ['biceps', 'core'],
         ['barbell']
+    ),
+    seedExercise(
+        'chest-supported-row',
+        'Chest-Supported Row',
+        'strength',
+        ['back', 'lats'],
+        ['biceps'],
+        ['machine']
+    ),
+    seedExercise(
+        'machine-lat-pulldown',
+        'Machine Lat Pulldown',
+        'strength',
+        ['lats', 'back'],
+        ['biceps'],
+        ['machine']
+    ),
+    seedExercise(
+        'straight-arm-lat-pulldown',
+        'Straight-Arm Lat Pulldown',
+        'strength',
+        ['lats'],
+        ['core'],
+        ['cable']
+    ),
+    seedExercise(
+        'back-extension',
+        'Back Extension',
+        'strength',
+        ['back', 'glutes', 'hamstrings'],
+        ['core'],
+        ['machine', 'bodyweight']
     ),
 
     // ============================================
@@ -259,6 +307,30 @@ export const SEED_EXERCISES: Exercise[] = [
         ['shoulders'],
         ['dumbbell']
     ),
+    seedExercise(
+        'machine-shoulder-press',
+        'Machine Shoulder Press',
+        'strength',
+        ['shoulders'],
+        ['triceps'],
+        ['machine']
+    ),
+    seedExercise(
+        'upright-row',
+        'Upright Row',
+        'strength',
+        ['shoulders', 'traps'],
+        ['biceps'],
+        ['barbell', 'cable']
+    ),
+    seedExercise(
+        'cable-lateral-raise',
+        'Cable Lateral Raise',
+        'strength',
+        ['shoulders'],
+        [],
+        ['cable']
+    ),
 
     // ============================================
     // ARMS - BICEPS
@@ -303,6 +375,22 @@ export const SEED_EXERCISES: Exercise[] = [
         [],
         ['cable']
     ),
+    seedExercise(
+        'ez-bar-curl',
+        'EZ-Bar Curl',
+        'strength',
+        ['biceps'],
+        ['forearms'],
+        ['ez_bar']
+    ),
+    seedExercise(
+        'incline-dumbbell-curl',
+        'Incline Dumbbell Curl',
+        'strength',
+        ['biceps'],
+        ['forearms'],
+        ['dumbbell', 'bench']
+    ),
 
     // ============================================
     // ARMS - TRICEPS
@@ -342,6 +430,14 @@ export const SEED_EXERCISES: Exercise[] = [
     seedExercise(
         'overhead-tricep-extension',
         'Overhead Tricep Extension',
+        'strength',
+        ['triceps'],
+        [],
+        ['dumbbell']
+    ),
+    seedExercise(
+        'tricep-kickback',
+        'Tricep Kickback',
         'strength',
         ['triceps'],
         [],
@@ -407,6 +503,22 @@ export const SEED_EXERCISES: Exercise[] = [
         ['hamstrings'],
         ['dumbbell', 'bench']
     ),
+    seedExercise(
+        'hack-squat',
+        'Hack Squat',
+        'strength',
+        ['quads', 'glutes'],
+        ['hamstrings'],
+        ['machine']
+    ),
+    seedExercise(
+        'smith-machine-squat',
+        'Smith Machine Squat',
+        'strength',
+        ['quads', 'glutes'],
+        ['hamstrings', 'core'],
+        ['smith_machine']
+    ),
 
     // ============================================
     // LEGS - HAMSTRINGS & GLUTES
@@ -420,8 +532,16 @@ export const SEED_EXERCISES: Exercise[] = [
         ['barbell']
     ),
     seedExercise(
-        'leg-curl',
-        'Leg Curl',
+        'leg-curl-seated',
+        'Seated Leg Curl',
+        'strength',
+        ['hamstrings'],
+        [],
+        ['machine']
+    ),
+    seedExercise(
+        'leg-curl-lying',
+        'Lying Leg Curl',
         'strength',
         ['hamstrings'],
         [],
@@ -451,6 +571,22 @@ export const SEED_EXERCISES: Exercise[] = [
         ['glutes'],
         ['barbell']
     ),
+    seedExercise(
+        'hip-abductor-machine',
+        'Hip Abductor Machine',
+        'strength',
+        ['abductors', 'glutes'],
+        [],
+        ['machine']
+    ),
+    seedExercise(
+        'hip-adductor-machine',
+        'Hip Adductor Machine',
+        'strength',
+        ['adductors'],
+        [],
+        ['machine']
+    ),
 
     // ============================================
     // LEGS - CALVES
@@ -466,6 +602,14 @@ export const SEED_EXERCISES: Exercise[] = [
     seedExercise(
         'calf-raise-seated',
         'Seated Calf Raise',
+        'strength',
+        ['calves'],
+        [],
+        ['machine']
+    ),
+    seedExercise(
+        'leg-press-calf-raise',
+        'Leg Press Calf Raise',
         'strength',
         ['calves'],
         [],
@@ -526,6 +670,33 @@ export const SEED_EXERCISES: Exercise[] = [
         ['core'],
         ['shoulders'],
         ['other'],
+        { trackWeight: false }
+    ),
+    seedExercise(
+        'sit-up',
+        'Sit-Up',
+        'strength',
+        ['core'],
+        ['hip_flexors'],
+        ['bodyweight'],
+        { trackWeight: false }
+    ),
+    seedExercise(
+        'side-plank',
+        'Side Plank',
+        'isometric',
+        ['core'],
+        ['shoulders'],
+        ['bodyweight'],
+        { trackWeight: false, trackReps: false, trackTime: true }
+    ),
+    seedExercise(
+        'bicycle-crunch',
+        'Bicycle Crunch',
+        'strength',
+        ['core'],
+        ['hip_flexors'],
+        ['bodyweight'],
         { trackWeight: false }
     ),
 

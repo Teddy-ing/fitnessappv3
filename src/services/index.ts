@@ -139,3 +139,9 @@ export {
     exportAllData,
     importAllData,
 } from './dataTransferService';
+export {
+    getExerciseNotes,
+    saveExerciseNote,
+    deleteExerciseNote,
+    getExerciseSessionHistory,
+} from './exerciseDetailsService';
