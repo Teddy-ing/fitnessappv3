@@ -7,9 +7,9 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Last scoped pass:** 2026-03-30 (workout logging refactor Phases 1–5 — 16 files)
+- **Last scoped pass:** 2026-04-12 (Exercise Details "Master Guide" — 8 files)
 - **Open issues:** 0 (Active: 0, Latent: 0)
-- **Fixed since baseline:** 32
+- **Fixed since baseline:** 35
 
 ---
 
@@ -26,6 +26,24 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ---
 
 ## Resolved
+
+### ~~TD-037~~ · Chart sub-components duplicated between ChartsTab and dead ExerciseAnalyticsScreen — **RESOLVED 2026-04-12**
+
+- **Category:** DRY violation / drift risk
+- **Fix applied:** Auto-resolved by deleting dead `ExerciseAnalyticsScreen.tsx` (TD-036). `ChartsTab.tsx` is now the sole owner of `TimeSeriesLineChart`, `VolumeBarChart`, `RangePills`, `SectionHeader`, and `computeChartSpacing`.
+- **Result:** Zero duplication. Future chart fixes apply in one place.
+
+### ~~TD-036~~ · `ExerciseAnalyticsScreen.tsx` is dead code (545 lines) — **RESOLVED 2026-04-12**
+
+- **Category:** Dead code / maintenance burden
+- **Fix applied:** Deleted `src/screens/ExerciseAnalyticsScreen.tsx`. No route in `AppNavigator.tsx` pointed to it after `ExerciseDetails` replaced it. Confirmed zero imports remain.
+- **Result:** 545 lines of unmaintained dead code removed.
+
+### ~~TD-035~~ · Epley 1RM formula duplicated in RecordsTab (client-side JS) — **RESOLVED 2026-04-12**
+
+- **Guardrail:** #10 (Shared formulas in one canonical location)
+- **Fix applied:** Created `src/utils/formulas.ts` with `computeEpley1RM()` — the canonical JS implementation of the Epley formula (companion to the SQL version in `sqlFragments.ts`). `RecordsTab.tsx` now imports from `formulas.ts` instead of defining its own copy. Updated guardrail #10 in `conventions.md` to cover JS formulas alongside SQL fragments.
+- **Result:** Single source of truth for Epley formula in both SQL and JS.
 
 ### ~~TD-029~~ · `SparklinePoint` type defined in widget component — **RESOLVED 2026-03-30**
 
@@ -315,18 +333,18 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 
 | # | Guardrail | Full-Project Status |
 |---|-----------|----------------------------|
-| 1 | Component size limit (600 lines) | ✅ `WorkoutScreen.tsx` at 603 lines (TD-030 resolved). `workoutStore.ts` at 650 (TD-034 accepted). All other components under 600. |
-| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted), `SaveTemplateModal` Alert buttons, and navigation ref casts (React Navigation limitation). No new `any` in refactor. |
-| 3 | Database schema changes require versioned migrations | ✅ 10 versioned migrations, all with `columnExists` guards. v9 (`show_rpe`) and v10 (`show_rir`, `show_plate_calc`, `default_warmup_sets`, `show_previous`) added correctly. |
-| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ Settings concern extracted to `useWorkoutSettings` hook (TD-030). All complex state correctly in hooks. |
-| 5 | Canonical types live in `src/models/` | ✅ All cross-boundary types in models. `PreviousSetData` (TD-031), `SparklinePoint` (TD-029) resolved. |
-| 6 | State reset on lifecycle boundaries | ✅ `previousSets`, `collapsedExercises`, edit-mode states all reset in `startWorkout`/`finishWorkout`/`discardWorkout`. `loadWorkoutForEditing` properly resets and re-fetches. |
-| 7 | SafeAreaView edges must match tab bar visibility | ✅ `WorkoutScreen` uses `edges={['top', 'bottom']}` — correct since tab bar hidden during active workout. |
-| 8 | Batch `IN (...)` queries chunked at 500 | ✅ All IN() queries use shared `batchGetAll()`. New `getPreviousSetsForExercises` uses per-exercise `Promise.all` (no IN pattern). |
-| 9 | Services must not reach into stores | ✅ Services return data; `WorkoutScreen` handles celebration dispatch. `workoutStore` imports service functions (allowed direction). |
-| 10 | Shared SQL formulas in one canonical location | ✅ SQL formulas in `sqlFragments.ts`. JS formatters in `formatters.ts` including `formatCompactVolume` (TD-033 resolved). |
-| 11 | New tables registered in `clearAllData()` | ✅ v9 and v10 add columns only, no new tables — no `clearAllData()` update needed. |
-| 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ `updateWorkout()` UPDATEs parent row in place (TD-023). No new update patterns introduced. |
+| 1 | Component size limit (600 lines) | ✅ `WorkoutScreen.tsx` at 603 lines (TD-030 resolved). `workoutStore.ts` at 650 (TD-034 accepted). All Exercise Details tabs under 452. |
+| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted — also in `ChartsTab.tsx`), `SaveTemplateModal` Alert buttons, navigation ref casts, and `ExerciseCard` cross-stack nav (BH-041). |
+| 3 | Database schema changes require versioned migrations | ✅ 12 versioned migrations. v11 (`exercise_notes` single-note) and v12 (`exercise_notes` multi-note with DROP+recreate) added correctly. |
+| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ All complex state correctly in hooks. Exercise Details tabs keep concerns separated (no single concern exceeds 3). |
+| 5 | Canonical types live in `src/models/` | ✅ All cross-boundary types in models. `ExerciseSession`/`ExerciseNote` in `models/exerciseDetails.ts` (TD-035 compliant). |
+| 6 | State reset on lifecycle boundaries | ✅ All Exercise Details tabs reset state in `useEffect([exerciseId])`. HistoryTab resets `sessions`, `hasMore`, `loadingMoreRef`. |
+| 7 | SafeAreaView edges must match tab bar visibility | ✅ `ExerciseDetailsScreen` uses `edges={['bottom']}` — correct (stack header handles top, tab bar hidden in Profile stack). |
+| 8 | Batch `IN (...)` queries chunked at 500 | ✅ `exerciseDetailsService.ts` chunks workout IDs at `BATCH_SIZE = 500`. All other IN() queries use shared `batchGetAll()`. |
+| 9 | Services must not reach into stores | ✅ `exerciseDetailsService` imports only `getDatabase`, models, and `expo-crypto`. Zero store imports. |
+| 10 | Shared formulas in one canonical location | ✅ SQL formulas in `sqlFragments.ts`. JS formulas in `formulas.ts` (`computeEpley1RM`, TD-035 resolved). JS formatters in `formatters.ts`. |
+| 11 | New tables registered in `clearAllData()` | ✅ `exercise_notes` table added to `clearAllData()` with v11 reference comment. |
+| 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ No update functions introduced in Exercise Details. `saveExerciseNote` uses INSERT, `deleteExerciseNote` uses DELETE by ID. |
 
 ---
 
@@ -340,10 +358,10 @@ Areas to monitor as the app approaches later roadmap phases:
 | **SQLite 999-param limit** | ✅ All IN() queries chunked via `batchGetAll()` (PP-037 resolved) | N/A |
 | Navigation structure (3 tabs + modals) | Adequate for current features. Swipe navigation added. | Phase 5 (Settings) may need nested stacks or drawer |
 | SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
-| Service file boundaries | ✅ 15 services, all under 600 lines. `analyticsService` 462 + `exerciseAnalyticsService` 421 (TD-003). `calendarService` 542 + `personalRecordsService` 327 (TD-011). | ML features (Phase 7) |
+| Service file boundaries | ✅ 16 services, all under 600 lines. New `exerciseDetailsService` at 231 lines. `analyticsService` 462 + `exerciseAnalyticsService` 421 (TD-003). `calendarService` 542 + `personalRecordsService` 327 (TD-011). | ML features (Phase 7) |
 | Hydration layer | Single mapping file, 256 lines | Every new model field = hydration update needed — fragile |
 | Unit hardcoding (`lbs`) | ✅ Resolved (TD-004) — `useWeightUnit` hook + `getWeightUnitSync` accessor | — |
-| SQL formula duplication | ✅ Resolved (TD-024) — `sqlFragments.ts` | — |
+| SQL formula duplication | ✅ Resolved (TD-024) — `sqlFragments.ts` + `formulas.ts` (TD-035) | — |
 | JS formatter duplication | ✅ Resolved (TD-033) — `formatCompactVolume` in `formatters.ts`, used by `WorkoutHeader` | — |
 | Widget system type ownership | ✅ Resolved (TD-026, TD-029) — `WeightTrendIntent` + `SparklinePoint` in `models/widget.ts` | — |
 | Workout logging type ownership | ✅ Resolved (TD-031) — `PreviousSetData` in `src/models/workout.ts` | — |
@@ -358,9 +376,11 @@ Areas to monitor as the app approaches later roadmap phases:
 | Goals component sizes | ✅ Resolved (TD-016/017/018/019) — all under 440 lines | — |
 | `formatISODate` duplication | 4 files with identical date formatting logic (TD-015) | Any timezone edge-case fix |
 | Type ownership | ✅ Resolved (TD-009) — all cross-boundary types in `src/models/` | — |
+| Dead code (`ExerciseAnalyticsScreen`) | ✅ Resolved (TD-036) — deleted 545-line dead screen | — |
+| Exercise Details component sizes | ✅ All tabs under 452 lines. Screen shell at 182. | — |
 
 ---
 
 ## Last Updated
-- Date: 2026-03-30
-- Session Context: Resolved TD-029 (SparklinePoint moved from BodyweightSparklineWidget to models/widget). All tech debt from the workout logging refactor audit is now resolved: TD-029, TD-030, TD-031, TD-032, TD-033 closed. TD-034 accepted (workoutStore 650 lines). 0 open issues.
+- Date: 2026-04-12
+- Session Context: Exercise Details ("Master Guide") tech debt audit — 8 files reviewed. TD-035 (Epley JS duplication → extracted to `formulas.ts`), TD-036 (dead `ExerciseAnalyticsScreen` → deleted), TD-037 (chart duplication → auto-resolved by TD-036). Guardrail #10 updated in conventions.md to cover JS formulas. 0 open issues.

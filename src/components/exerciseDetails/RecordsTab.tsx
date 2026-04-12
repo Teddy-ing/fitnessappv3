@@ -18,6 +18,7 @@ import { colors, spacing, borderRadius, typography } from '../../theme';
 import { getBestWeightForReps } from '../../services/exerciseAnalyticsService';
 import { BestWeightForRep } from '../../models/analytics';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
+import { computeEpley1RM } from '../../utils/formulas';
 
 // ============================================================
 // Types
@@ -26,17 +27,6 @@ import { useWeightUnit } from '../../hooks/useWeightUnit';
 interface RecordRow extends BestWeightForRep {
     est1rm: number;
     _formattedDate: string;
-}
-
-// ============================================================
-// Helpers
-// ============================================================
-
-/** Epley formula: weight × (1 + reps / 30) */
-function computeEpley1RM(weight: number, reps: number): number {
-    if (reps <= 0 || weight <= 0) return 0;
-    if (reps === 1) return weight; // 1RM is the actual weight
-    return Math.round(weight * (1 + reps / 30) * 10) / 10;
 }
 
 // ============================================================

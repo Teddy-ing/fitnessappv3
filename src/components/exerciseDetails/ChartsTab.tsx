@@ -4,7 +4,7 @@
  * Vertically stacked charts: Estimated 1RM (line), Max Weight (line),
  * Session Volume (bar). Shared range pills across all charts.
  *
- * Reuses the data hook from the legacy ExerciseAnalyticsScreen.
+ * Reuses the useExerciseAnalytics data hook.
  */
 
 import React, { useMemo } from 'react';

@@ -74,15 +74,15 @@ These rules are enforced to prevent the specific categories of tech debt that ha
    *Bad:* `workoutService.ts` calling `useGoalCelebrationStore.getState().celebrate(completed)` after save.
    *Good:* `saveWorkout()` returns a result, and the caller in `WorkoutScreen.tsx` triggers the celebration.
 
-10. **Shared SQL formulas live in one canonical location**
-    Any SQL formula or filter used in more than one service must be defined once and imported. Duplicated formulas drift silently — one copy gets a bugfix, the others don't.
-    
-    Currently duplicated:
-    - Epley 1RM: `weight * (1.0 + reps / 30.0)` — in `analyticsService`, `calendarService`, `goalProgressService`
-    - Volume: `SUM(weight * reps)` — same three files
-    - Status filter: `w.status = 'completed'` — missing in `goalProgressService` but present elsewhere
-    
-    *Approach:* Create string-builder helpers or constants in a shared `src/services/sqlFragments.ts`, or centralize the computation in one service that others call.
+10. **Shared formulas live in one canonical location**
+     Any SQL formula used in more than one service must be defined once in `src/utils/sqlFragments.ts` and imported. Any equivalent JS computation must be defined once in `src/utils/formulas.ts` and imported. Duplicated formulas drift silently — one copy gets a bugfix, the others don't.
+     
+     Currently centralized:
+     - Epley 1RM SQL: `weight * (1.0 + reps / 30.0)` — in `sqlFragments.ts`
+     - Epley 1RM JS: `computeEpley1RM()` — in `formulas.ts`
+     - Volume: `SUM(weight * reps)` — in `sqlFragments.ts`
+     
+     *Approach:* SQL string-builder helpers in `src/utils/sqlFragments.ts`, JS computation helpers in `src/utils/formulas.ts`.
 
 11. **New tables must be registered in `clearAllData()`**
     Every migration that creates a new table must also add a corresponding `DELETE FROM <table>` line in `database.ts → clearAllData()`. Without this, "clear all data" leaves orphaned rows that corrupt imports and dev testing. Add a comment in `clearAllData()` referencing the migration version for each table.
