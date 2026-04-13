@@ -22,7 +22,15 @@ import { useWorkoutStore } from '../stores';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import { colors, spacing, borderRadius, typography } from '../theme';
 
-export default function RestTimer() {
+interface RestTimerProps {
+    autoStartRestTimer?: boolean;
+    defaultRestTime?: number;
+}
+
+export default function RestTimer({
+    autoStartRestTimer = true,
+    defaultRestTime = 120,
+}: RestTimerProps) {
     // PP-009 fix: Fine-grained selectors to avoid full-store subscription
     const restTimerActive = useRestTimerStore(s => s.restTimerActive);
     const restTimerRemaining = useRestTimerStore(s => s.restTimerRemaining);
@@ -40,15 +48,21 @@ export default function RestTimer() {
     const appState = useRef(AppState.currentState);
     const [isInForeground, setIsInForeground] = React.useState(AppState.currentState === 'active');
 
-    // Auto-start timer when a set is completed
+    // Auto-start timer when a set is completed (gated by setting)
     const prevTimestamp = useRef<number | null>(null);
     useEffect(() => {
         if (!lastCompletedSet) return;
-        // Only react to new signals (avoid re-firing on re-renders)
         if (lastCompletedSet.timestamp === prevTimestamp.current) return;
         prevTimestamp.current = lastCompletedSet.timestamp;
 
-        const restDuration = getExerciseRestTime(lastCompletedSet.exerciseId);
+        // Only auto-start if the setting is enabled
+        if (!autoStartRestTimer) return;
+
+        // Check if exercise has a custom rest time set in the store,
+        // otherwise fall back to the user's configured default
+        const { exerciseRestTimes } = useRestTimerStore.getState();
+        const customTime = exerciseRestTimes[lastCompletedSet.exerciseId];
+        const restDuration = customTime ?? defaultRestTime;
         startRestTimer(restDuration, lastCompletedSet.exerciseId, lastCompletedSet.setId);
     }, [lastCompletedSet]);
 

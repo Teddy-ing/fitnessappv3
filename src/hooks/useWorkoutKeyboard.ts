@@ -16,6 +16,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Keyboard } from 'react-native';
 import { useWorkoutStore } from '../stores';
 import { FocusState, KeyboardFieldType } from '../components';
+import { getWeightUnitSync } from '../hooks/useWeightUnit';
+import { convertWeight, toCanonicalWeight } from '../utils/unitConversion';
 
 type FieldType = 'weight' | 'reps' | 'duration';
 
@@ -79,10 +81,16 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         }
     };
 
-    /** Build the partial update object for a given field */
+    /** Build the partial update object for a given field.
+     *  For weight fields, converts from display unit → canonical (lbs) before storing. */
     const buildUpdate = (field: FieldType, value: number | null): Record<string, number | null> => {
         switch (field) {
-            case 'weight': return { weight: value };
+            case 'weight': {
+                const canonical = value != null
+                    ? toCanonicalWeight(value, getWeightUnitSync())
+                    : null;
+                return { weight: canonical };
+            }
             case 'reps': return { reps: value != null ? Math.floor(value) : null };
             case 'duration': return { duration: value != null ? Math.floor(value) : null };
         }
@@ -93,7 +101,17 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
 
         const exercise = activeWorkout.main.exercises.find(e => e.id === exerciseId);
         const set = exercise?.sets.find(s => s.id === setId);
-        const currentValue = getFieldValue(set, field);
+
+        // For weight fields, convert from canonical (lbs) → display unit
+        let currentValue: string;
+        if (field === 'weight' && set?.weight != null) {
+            const displayVal = convertWeight(set.weight, getWeightUnitSync());
+            // Round to 1 decimal to avoid floating point noise
+            const rounded = Math.round(displayVal * 10) / 10;
+            currentValue = rounded.toString();
+        } else {
+            currentValue = getFieldValue(set, field);
+        }
 
         setFocusState({ exerciseId, setId, field });
         setKeyboardValue(currentValue);
@@ -146,13 +164,18 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         const set = exercise?.sets.find(s => s.id === focusState.setId);
 
         let currentVal: number;
-        switch (focusState.field) {
-            case 'weight': currentVal = set?.weight ?? 0; break;
-            case 'reps': currentVal = set?.reps ?? 0; break;
-            case 'duration': currentVal = set?.duration ?? 0; break;
+        if (focusState.field === 'weight') {
+            // Read canonical value and convert to display unit for adjustment
+            const canonical = set?.weight ?? 0;
+            currentVal = convertWeight(canonical, getWeightUnitSync());
+        } else {
+            switch (focusState.field) {
+                case 'reps': currentVal = set?.reps ?? 0; break;
+                case 'duration': currentVal = set?.duration ?? 0; break;
+            }
         }
 
-        const newVal = Math.max(0, currentVal + delta);
+        const newVal = Math.max(0, Math.round((currentVal + delta) * 10) / 10);
         updateSet(focusState.exerciseId, focusState.setId, buildUpdate(focusState.field, newVal));
         setKeyboardValue(newVal.toString());
     };

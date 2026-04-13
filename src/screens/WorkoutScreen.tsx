@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { File, Paths } from 'expo-file-system';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
@@ -42,7 +43,7 @@ import {
     getPreviousSetsForExercises,
     Template,
 } from '../services';
-import { Workout } from '../models/workout';
+import { Workout, createSet } from '../models/workout';
 import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import WorkoutHomeView from './WorkoutHomeView';
 import { navigateToTab, navigationRef } from '../navigation/navigationRef';
@@ -105,11 +106,123 @@ export default function WorkoutScreen() {
         showRir,
         showPlateCalc,
         defaultWarmupSets,
+        defaultSetsPerExercise,
+        defaultWeightIncrement,
+        autoStartRestTimer,
+        defaultRestTime,
+        smartSuggestions,
+        weightUnit,
+        keepAwakeDuringWorkout,
         settingsMenuVisible,
         setSettingsMenuVisible,
         handleToggleSetting,
         handleChangeWarmupSets,
+        handleChangeDefaultSets,
+        handleChangeWeightIncrement,
+        handleChangeRestTime,
     } = useWorkoutSettings();
+
+    // Keep screen awake during active workout (gated by setting)
+    useEffect(() => {
+        if (activeWorkout && keepAwakeDuringWorkout) {
+            activateKeepAwakeAsync('workout').catch(() => {});
+        } else {
+            deactivateKeepAwake('workout');
+        }
+        return () => { deactivateKeepAwake('workout'); };
+    }, [!!activeWorkout, keepAwakeDuringWorkout]);
+
+    // ------------------------------------------------
+    // Live-apply default/warmup set changes to unstarted exercises
+    // ------------------------------------------------
+
+    /** True if an exercise has zero completed/in-progress sets */
+    const isExerciseUnstarted = useCallback((ex: { sets: Array<{ status: string }> }) =>
+        ex.sets.every(s => s.status === 'pending'),
+    []);
+
+    const handleChangeDefaultSetsLive = useCallback((count: number) => {
+        handleChangeDefaultSets(count);
+
+        // Apply to unstarted exercises in the current workout
+        const workout = useWorkoutStore.getState().activeWorkout;
+        if (!workout) return;
+
+        const updated = workout.main.exercises.map(ex => {
+            if (!isExerciseUnstarted(ex)) return ex;
+            const workingSets = ex.sets.filter(s => s.type === 'working');
+            const otherSets = ex.sets.filter(s => s.type !== 'working');
+            const currentCount = workingSets.length;
+
+            if (count === currentCount) return ex;
+
+            let newWorkingSets;
+            if (count > currentCount) {
+                // Add sets
+                const toAdd = Array.from({ length: count - currentCount }, (_, i) =>
+                    createSet(otherSets.length + currentCount + i, 'working')
+                );
+                newWorkingSets = [...workingSets, ...toAdd];
+            } else {
+                // Remove from the end
+                newWorkingSets = workingSets.slice(0, count);
+            }
+
+            const allSets = [...otherSets, ...newWorkingSets].map((s, idx) => ({
+                ...s, orderIndex: idx,
+            }));
+            return { ...ex, sets: allSets };
+        });
+
+        useWorkoutStore.setState({
+            activeWorkout: {
+                ...workout,
+                main: { ...workout.main, exercises: updated },
+                updatedAt: new Date(),
+            },
+        });
+    }, [handleChangeDefaultSets, isExerciseUnstarted]);
+
+    const handleChangeWarmupSetsLive = useCallback((count: number) => {
+        handleChangeWarmupSets(count);
+
+        // Apply to unstarted exercises in the current workout
+        const workout = useWorkoutStore.getState().activeWorkout;
+        if (!workout) return;
+
+        const updated = workout.main.exercises.map(ex => {
+            if (!isExerciseUnstarted(ex)) return ex;
+            const warmups = ex.sets.filter(s => s.type === 'warmup');
+            const nonWarmups = ex.sets.filter(s => s.type !== 'warmup');
+            const currentCount = warmups.length;
+
+            if (count === currentCount) return ex;
+
+            let newWarmups;
+            if (count > currentCount) {
+                const toAdd = Array.from({ length: count - currentCount }, (_, i) =>
+                    createSet(currentCount + i, 'warmup')
+                );
+                newWarmups = [...warmups, ...toAdd];
+            } else {
+                newWarmups = warmups.slice(0, count);
+            }
+
+            // Warmups first, then non-warmups, reindex
+            const allSets = [...newWarmups, ...nonWarmups].map((s, idx) => ({
+                ...s, orderIndex: idx,
+            }));
+            return { ...ex, sets: allSets };
+        });
+
+        useWorkoutStore.setState({
+            activeWorkout: {
+                ...workout,
+                main: { ...workout.main, exercises: updated },
+                updatedAt: new Date(),
+            },
+        });
+    }, [handleChangeWarmupSets, isExerciseUnstarted]);
 
     // Workout-level note state
     const [showWorkoutNote, setShowWorkoutNote] = useState(false);
@@ -468,7 +581,12 @@ export default function WorkoutScreen() {
             />
 
             {/* Rest Timer — hidden in edit mode */}
-            {!isEditMode && <RestTimer />}
+            {!isEditMode && (
+                <RestTimer
+                    autoStartRestTimer={autoStartRestTimer}
+                    defaultRestTime={defaultRestTime}
+                />
+            )}
 
             {/* Settings Menu */}
             <WorkoutSettingsMenu
@@ -483,8 +601,17 @@ export default function WorkoutScreen() {
                 showRir={showRir}
                 showPlateCalc={showPlateCalc}
                 defaultWarmupSets={defaultWarmupSets}
+                defaultSetsPerExercise={defaultSetsPerExercise}
+                defaultWeightIncrement={defaultWeightIncrement}
+                autoStartRestTimer={autoStartRestTimer}
+                defaultRestTime={defaultRestTime}
+                smartSuggestions={smartSuggestions}
+                weightUnit={weightUnit}
                 onToggleSetting={handleToggleSetting}
-                onChangeWarmupSets={handleChangeWarmupSets}
+                onChangeWarmupSets={handleChangeWarmupSetsLive}
+                onChangeDefaultSets={handleChangeDefaultSetsLive}
+                onChangeWeightIncrement={handleChangeWeightIncrement}
+                onChangeRestTime={handleChangeRestTime}
             />
 
             {/* Custom Workout Keyboard */}
@@ -500,6 +627,7 @@ export default function WorkoutScreen() {
                 onNext={handleNext}
                 onHide={handleHideKeyboard}
                 showPlateCalc={showPlateCalc}
+                weightIncrement={defaultWeightIncrement}
             />
 
             {/* Exercise picker modal — adding new exercise */}

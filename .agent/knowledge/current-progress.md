@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Workout Logging Redesign complete (all 4 phases)
-- **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign + **Exercise Details Master Guide screen** all implemented.
-- **Next Milestone:** Settings screen implementation, or further polish/testing
+- **Phase:** Post-MVP Development — Settings Feature complete, canonical weight storage implemented
+- **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign + Exercise Details Master Guide + **Settings feature (with canonical unit storage)** all implemented.
+- **Next Milestone:** Import & Export (Phase 6), or next feature from roadmap
 
 ---
 
@@ -114,10 +114,15 @@ description: Living document tracking completed work, in-progress tasks, next st
 - Dedicated analytics screens (progress charts, PRs, volume trends) implemented
 - Visual consistency achieved across all feature areas
 
-### Phase 5: Settings
-- User preferences screen (units, theme, rest timer defaults, notifications)
-- App configuration (data management, about, privacy)
-- On-device ML toggle and privacy controls
+### ~~Phase 5: Settings~~ ✅ COMPLETE
+- General settings screen (units, theme placeholder, calendar start day, keep-awake, exercise media/instructions toggles)
+- Workout settings menu (Previous/RPE/RIR columns, plate calc, warmup sets, default sets, weight increment, auto timer, timer duration, smart suggestions placeholder)
+- Reusable row components (SettingToggleRow, SettingSegmentedRow, SettingNavigationRow)
+- DB migration v12-v13 for 6 new settings columns
+- Canonical weight storage (lbs) with input/output conversion
+- Live-apply default/warmup sets to active workout
+- RestTimer auto-start gating + configurable duration
+- Weight unit propagation across analytics, records, history, calendar
 
 ### Phase 6: Import & Export
 - Export workout data (CSV, JSON, PDF)
@@ -154,6 +159,57 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-04-12/13: Settings Feature — Complete
+
+**Duration:** Multi-session
+**Focus:** Full settings implementation per `settings-prd.md`, followed by three rounds of user-testing fixes.
+
+**Phase 1 — Foundation:**
+- DB migration v12 (show_plate_calc, auto_start_rest_timer, default_rest_time) + v13 (measurement_unit, keep_awake, show_exercise_media, show_exercise_instructions, smart_suggestions, default_weight_increment)
+- Extended `UserSettings` model + `preferencesService` (6 new fields)
+- Created 3 reusable row components: `SettingToggleRow`, `SettingSegmentedRow`, `SettingNavigationRow`
+
+**Phase 2 — Settings Screen Overhaul:**
+- Complete `SettingsScreen.tsx` rewrite: General (units, calendar start, keep-awake, exercise media/instructions), Data Management, Support, About, Dev Tools
+- Version footer from expo-constants
+
+**Phase 3 — Workout Settings Menu:**
+- Extended `useWorkoutSettings` hook with 7 new state/handler pairs
+- WorkoutSettingsMenu with DEFAULTS section (default sets, weight increment, auto timer, timer duration, smart suggestions placeholder)
+
+**Phase 4 — Integrations:**
+- `expo-keep-awake` imperative API gated by setting
+- Configurable weight increment in WorkoutKeyboard
+- Calendar start day toggle moved from CalendarHeader to Settings
+
+**Post-Implementation Fixes — Round 1:**
+- ScrollView in WorkoutSettingsMenu for reachability
+- Live-apply default/warmup sets to unstarted exercises in active workout
+- Warmup sets minimum → 0
+- Weight unit subscriber pattern in `useWeightUnit` for instant propagation
+
+**Post-Implementation Fixes — Round 2:**
+- WorkoutSettingsMenu → full-screen page (presentationStyle=fullScreen, back button header)
+- RestTimer auto-start gating (controllable via `autoStartRestTimer` prop)
+- RestTimer default duration (reads `defaultRestTime` instead of hardcoded 120s)
+- Weight conversion in analytics: `convertWeight()` applied in MacroAnalyticsView, RecordsTab, HistoryTab
+
+**Post-Implementation Fixes — Round 3: Canonical Weight Storage:**
+- Created `unitConversion.ts` with `convertWeight()` / `toCanonicalWeight()` — all weights stored internally in lbs
+- Updated `useWorkoutKeyboard.ts` — input boundary converts display unit → canonical lbs
+- Updated `SetRow.tsx` — output boundary converts canonical lbs → display unit for weight + previous column
+- Updated `DailyWorkoutModal.tsx` — calendar workout detail weights + volume converted
+
+**Files created:**
+- `src/components/settings/SettingToggleRow.tsx`, `SettingSegmentedRow.tsx`, `SettingNavigationRow.tsx`, `index.ts`
+- `src/utils/unitConversion.ts`
+
+**Files modified:** SettingsScreen, WorkoutSettingsMenu (full rewrite), WorkoutScreen, RestTimer, useWorkoutKeyboard, useWorkoutSettings, useWeightUnit, SetRow, MacroAnalyticsView, RecordsTab, HistoryTab, DailyWorkoutModal, WorkoutKeyboard, CalendarHeader, CalendarScreen, migrations, preferencesService, preferences model, package.json
+
+**Verification:** TypeScript 0 errors, 233/233 tests passing
+
+---
 
 ### 2026-04-10: Exercise Details "Master Guide" Screen
 
@@ -900,8 +956,8 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Last Updated
-- Date: 2026-03-29
-- Session Context: Workout Logging Redesign Phase 1 — table layout, previous column, active set highlighting, warmup styling
+- Date: 2026-04-13
+- Session Context: Settings feature finalized — canonical weight storage, full-screen workout settings, RestTimer fixes, analytics conversion
 
 ### 2026-03-16: Calendar Feature Development (Phase 1)
 

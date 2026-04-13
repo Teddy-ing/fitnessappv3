@@ -19,6 +19,7 @@ import { colors, spacing, borderRadius, typography } from '../../theme';
 import { getExerciseSessionHistory } from '../../services/exerciseDetailsService';
 import { ExerciseSession } from '../../models/exerciseDetails';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
+import { convertWeight } from '../../utils/unitConversion';
 
 const PAGE_SIZE = 20;
 
@@ -51,7 +52,8 @@ const SessionCard = React.memo(function SessionCard({ session, weightUnit }: { s
                     let detail = '';
 
                     if (set.weight != null && set.reps != null) {
-                        detail = `${set.weight} ${weightUnit} × ${set.reps}`;
+                        const displayWeight = Math.round(convertWeight(set.weight, weightUnit) * 10) / 10;
+                        detail = `${displayWeight} ${weightUnit} × ${set.reps}`;
                     } else if (set.reps != null) {
                         detail = `${set.reps} reps`;
                     } else if (set.duration != null) {
@@ -78,9 +80,12 @@ const SessionCard = React.memo(function SessionCard({ session, weightUnit }: { s
                 <View style={styles.volumeRow}>
                     <Text style={styles.volumeLabel}>Volume</Text>
                     <Text style={styles.volumeValue}>
-                        {session.totalVolume >= 1000
-                            ? `${(session.totalVolume / 1000).toFixed(1)}k`
-                            : Math.round(session.totalVolume)}{' '}
+                        {(() => {
+                            const converted = convertWeight(session.totalVolume, weightUnit);
+                            return converted >= 1000
+                                ? `${(converted / 1000).toFixed(1)}k`
+                                : Math.round(converted);
+                        })()}{' '}
                         {weightUnit}
                     </Text>
                 </View>

@@ -20,6 +20,7 @@ import { WorkoutSet, SetType } from '../models/workout';
 import { PreviousSetData } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { getWeightUnitSync } from '../hooks/useWeightUnit';
+import { convertWeight } from '../utils/unitConversion';
 import SetTypeMenu from './SetTypeMenu';
 import RpeSelector from './RpeSelector';
 import RirSelector from './RirSelector';
@@ -158,12 +159,16 @@ function SetRowInner({
     };
 
     // Format previous set data: "135×8" or "—"
+    // Previous data is in canonical lbs — convert to display unit
     const formatPrevious = (): string => {
         if (!previousData || (previousData.weight === null && previousData.reps === null)) {
             return '—';
         }
         const parts: string[] = [];
-        if (previousData.weight !== null) parts.push(String(previousData.weight));
+        if (previousData.weight !== null) {
+            const display = Math.round(convertWeight(previousData.weight, weightUnit) * 10) / 10;
+            parts.push(String(display));
+        }
         if (previousData.reps !== null) parts.push(String(previousData.reps));
         return parts.join('×');
     };
@@ -256,7 +261,9 @@ function SetRowInner({
                                 !set.weight && styles.dataTextPlaceholder,
                                 { opacity: textOpacity },
                             ]}>
-                                {set.weight?.toString() ?? '—'}
+                                {set.weight != null
+                                    ? String(Math.round(convertWeight(set.weight, weightUnit) * 10) / 10)
+                                    : '—'}
                             </Text>
                         </View>
                     </TouchableOpacity>

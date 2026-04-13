@@ -24,6 +24,7 @@ import MetricSelector from './MetricSelector';
 import PillRow from './PillRow';
 import { createLabelProcessor, BAR_CHART_MARGINS } from '../../utils/chartLabels';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
+import { convertWeight } from '../../utils/unitConversion';
 
 import {
     MetricType,
@@ -112,8 +113,16 @@ export default function MacroAnalyticsView() {
                 labelComp = result.labelComponent;
             }
 
+            // Convert value based on metric and display unit
+            let value = point.value;
+            if (metric === 'duration') {
+                value = Math.round(value / 60);
+            } else if (metric === 'volume') {
+                value = convertWeight(value, weightUnit);
+            }
+
             return {
-                value: metric === 'duration' ? Math.round(point.value / 60) : point.value,
+                value,
                 label: displayLabel,
                 labelComponent: labelComp,
                 fullLabel: point.label,
@@ -128,7 +137,7 @@ export default function MacroAnalyticsView() {
             : 100;
 
         return { chartData: transformed, maxValue: max };
-    }, [data, metric, timeBucket]);
+    }, [data, metric, timeBucket, weightUnit]);
 
     return (
         <View>
@@ -226,7 +235,9 @@ export default function MacroAnalyticsView() {
                             <Text style={styles.summaryLabel}>Total</Text>
                             <Text style={styles.summaryValue}>
                                 {formatMetricValue(
-                                    data.reduce((sum, d) => sum + d.value, 0),
+                                    metric === 'volume'
+                                        ? convertWeight(data.reduce((sum, d) => sum + d.value, 0), weightUnit)
+                                        : data.reduce((sum, d) => sum + d.value, 0),
                                     metric,
                                 )}
                                 {getYAxisSuffix(metric, weightUnit)}

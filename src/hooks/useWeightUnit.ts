@@ -5,19 +5,23 @@
  * the unit label string ('lbs' | 'kg'). Replaces all hardcoded 'lbs'
  * strings across the UI (TD-004).
  *
- * Caches the result in module scope so only one DB query is made per
- * app session, regardless of how many components call the hook.
+ * Uses a module-level cache + subscriber pattern so that when the cache
+ * is invalidated (e.g., from SettingsScreen), all mounted components
+ * re-read the updated value.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getSettings } from '../services/preferencesService';
 
 // ============================================================
-// Module-level cache (avoids repeated DB reads)
+// Module-level cache + subscriber list
 // ============================================================
 
 let cachedUnit: string | null = null;
 let cachePromise: Promise<string> | null = null;
+
+/** Set of subscriber callbacks — notified on cache invalidation */
+const subscribers = new Set<(unit: string) => void>();
 
 async function loadWeightUnit(): Promise<string> {
     if (cachedUnit) return cachedUnit;
@@ -32,10 +36,20 @@ async function loadWeightUnit(): Promise<string> {
     return cachePromise;
 }
 
-/** Invalidate cache when settings change (call from SettingsScreen). */
+/**
+ * Invalidate cache when settings change (call from SettingsScreen).
+ * Automatically re-reads from DB and notifies all mounted subscribers.
+ */
 export function invalidateWeightUnitCache(): void {
     cachedUnit = null;
     cachePromise = null;
+
+    // Re-read from DB and notify all subscribers
+    loadWeightUnit().then((unit) => {
+        for (const fn of subscribers) {
+            fn(unit);
+        }
+    });
 }
 
 // ============================================================
@@ -45,12 +59,21 @@ export function invalidateWeightUnitCache(): void {
 /**
  * Returns the user's preferred weight unit ('lbs' or 'kg').
  * Safe to call from any component — uses a module-level cache.
+ * Automatically updates when the cache is invalidated.
  */
 export function useWeightUnit(): string {
     const [unit, setUnit] = useState(cachedUnit ?? 'lbs');
 
     useEffect(() => {
+        // Subscribe to future updates
+        subscribers.add(setUnit);
+
+        // Load the initial value (may already be cached)
         loadWeightUnit().then(setUnit);
+
+        return () => {
+            subscribers.delete(setUnit);
+        };
     }, []);
 
     return unit;

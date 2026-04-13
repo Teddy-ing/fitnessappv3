@@ -1,31 +1,94 @@
 /**
  * Settings Screen
  *
- * App settings, data management, and developer tools.
- * Reached via Profile → Settings.
+ * Comprehensive app settings hub with 5 sections:
+ * - General: theme, units, display preferences
+ * - Data Management: export, import, cloud backup
+ * - Support: rate app, donate, feedback
+ * - About: changelog, privacy, app info
+ * - Dev Tools: clear data, mock data (__DEV__ only)
+ *
+ * Reached via Profile → Settings gear icon.
  */
 
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     ScrollView,
     Alert,
+    TouchableOpacity,
+    Linking,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { getSettings, updateSettings } from '../services/preferencesService';
 import { clearAllData, generateMockData, exportAllData, importAllData } from '../services';
+import { UserSettings } from '../models/preferences';
+import { SettingToggleRow, SettingSegmentedRow, SettingNavigationRow } from '../components/settings';
+import { invalidateWeightUnitCache } from '../hooks/useWeightUnit';
+
+// ============================================================
+// Segment options
+// ============================================================
+
+const WEIGHT_UNIT_OPTIONS = [
+    { key: 'lbs', label: 'lbs' },
+    { key: 'kg', label: 'kg' },
+];
+
+const DISTANCE_UNIT_OPTIONS = [
+    { key: 'mi', label: 'mi' },
+    { key: 'km', label: 'km' },
+];
+
+const MEASUREMENT_UNIT_OPTIONS = [
+    { key: 'in', label: 'in' },
+    { key: 'cm', label: 'cm' },
+];
+
+const CALENDAR_START_OPTIONS = [
+    { key: 'sunday', label: 'Sun' },
+    { key: 'monday', label: 'Mon' },
+];
+
+const THEME_OPTIONS = [
+    { key: 'dark', label: 'Dark' },
+    { key: 'light', label: 'Light' },
+];
+
+// ============================================================
+// Component
+// ============================================================
 
 export default function SettingsScreen() {
-    const [isGenerating, setIsGenerating] = React.useState(false);
-    const [isExporting, setIsExporting] = React.useState(false);
-    const [isImporting, setIsImporting] = React.useState(false);
+    const [settings, setSettings] = useState<UserSettings | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+
+    // Load settings on mount
+    useEffect(() => {
+        getSettings().then(setSettings);
+    }, []);
+
+    // Helper to update a setting optimistically
+    const handleUpdate = useCallback(async (updates: Partial<UserSettings>) => {
+        setSettings(prev => prev ? { ...prev, ...updates } : prev);
+        await updateSettings(updates);
+
+        // Invalidate the weight unit cache so all components
+        // using useWeightUnit() pick up the new value
+        if ('weightUnit' in updates) {
+            invalidateWeightUnitCache();
+        }
+    }, []);
 
     // ============================================================
-    // Handlers (moved from ProfileScreen)
+    // Data Management Handlers
     // ============================================================
 
     const handleExportData = async () => {
@@ -54,6 +117,9 @@ export default function SettingsScreen() {
                             setIsImporting(true);
                             const success = await importAllData();
                             if (success) {
+                                // Reload settings after import
+                                const refreshed = await getSettings();
+                                setSettings(refreshed);
                                 Alert.alert(
                                     'Import Complete',
                                     'Your data has been restored. Restart the app to see all changes.',
@@ -86,6 +152,8 @@ export default function SettingsScreen() {
                     onPress: async () => {
                         try {
                             await clearAllData();
+                            const refreshed = await getSettings();
+                            setSettings(refreshed);
                             Alert.alert('Done', 'All data has been cleared. Restart the app to see changes.');
                         } catch (error) {
                             console.error('Error clearing data:', error);
@@ -123,118 +191,256 @@ export default function SettingsScreen() {
     };
 
     // ============================================================
+    // Theme guard — light theme is a placeholder
+    // ============================================================
+
+    const handleThemeSelect = (key: string) => {
+        if (key === 'light') {
+            Alert.alert('Coming Soon', 'Light theme coming soon! We\'re working on it.');
+            return;
+        }
+        handleUpdate({ theme: key });
+    };
+
+    // ============================================================
     // Render
     // ============================================================
+
+    if (!settings) return null;
+
+    const appVersion = Constants.expoConfig?.version ?? '0.1.0';
 
     return (
         <View style={styles.container}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
             >
-                {/* Data Management */}
+                {/* ═══════════════ GENERAL ═══════════════ */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Data Management</Text>
+                    <Text style={styles.sectionTitle}>GENERAL</Text>
 
-                    <TouchableOpacity
-                        style={styles.menuItem}
+                    <SettingSegmentedRow
+                        icon="brightness-6"
+                        label="Theme Mode"
+                        options={THEME_OPTIONS}
+                        selectedKey={settings.theme}
+                        onSelect={handleThemeSelect}
+                    />
+
+                    <SettingSegmentedRow
+                        icon="fitness-center"
+                        label="Weight Unit"
+                        options={WEIGHT_UNIT_OPTIONS}
+                        selectedKey={settings.weightUnit}
+                        onSelect={(key) => handleUpdate({ weightUnit: key })}
+                    />
+
+                    <SettingSegmentedRow
+                        icon="straighten"
+                        label="Distance Unit"
+                        options={DISTANCE_UNIT_OPTIONS}
+                        selectedKey={settings.distanceUnit}
+                        onSelect={(key) => handleUpdate({ distanceUnit: key })}
+                    />
+
+                    <SettingSegmentedRow
+                        icon="square-foot"
+                        label="Measurement Unit"
+                        options={MEASUREMENT_UNIT_OPTIONS}
+                        selectedKey={settings.measurementUnit}
+                        onSelect={(key) => handleUpdate({ measurementUnit: key })}
+                    />
+
+                    <SettingSegmentedRow
+                        icon="calendar-today"
+                        label="Calendar Start Day"
+                        options={CALENDAR_START_OPTIONS}
+                        selectedKey={settings.calendarStartDay}
+                        onSelect={(key) => handleUpdate({ calendarStartDay: key })}
+                    />
+
+                    <SettingToggleRow
+                        icon="phone-android"
+                        label="Keep Awake During Workout"
+                        subtitle="Prevent screen lock while training"
+                        value={settings.keepAwakeDuringWorkout}
+                        onValueChange={(val) => handleUpdate({ keepAwakeDuringWorkout: val })}
+                    />
+
+                    <SettingNavigationRow
+                        icon="local-fire-department"
+                        iconColor={colors.accent.warning}
+                        label="Warm-Up Calculator"
+                        subtitle="Advanced warm-up weight calculator"
+                        onPress={() => {
+                            Alert.alert(
+                                'Coming Soon',
+                                'Warm-up calculator coming in a future update! This will help you calculate optimal warm-up weights based on your working weight.',
+                            );
+                        }}
+                    />
+
+                    <SettingToggleRow
+                        icon="image"
+                        label="Show Exercise Media"
+                        subtitle="Show icons in exercise list"
+                        value={settings.showExerciseMedia}
+                        onValueChange={(val) => handleUpdate({ showExerciseMedia: val })}
+                    />
+
+                    <SettingToggleRow
+                        icon="description"
+                        label="Show Exercise Instructions"
+                        subtitle="Show form instructions on exercise details"
+                        value={settings.showExerciseInstructions}
+                        onValueChange={(val) => handleUpdate({ showExerciseInstructions: val })}
+                    />
+                </View>
+
+                {/* ═══════════════ DATA MANAGEMENT ═══════════════ */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>DATA MANAGEMENT</Text>
+
+                    <SettingNavigationRow
+                        icon={isExporting ? 'hourglass-top' : 'upload'}
+                        label={isExporting ? 'Exporting...' : 'Export Data'}
                         onPress={handleExportData}
-                        disabled={isExporting || isImporting}
-                    >
-                        <View style={styles.menuIconContainer}>
-                            <MaterialIcons
-                                name={isExporting ? 'hourglass-top' : 'upload'}
-                                size={20}
-                                color={colors.text.primary}
-                            />
-                        </View>
-                        <Text style={styles.menuText}>
-                            {isExporting ? 'Exporting...' : 'Export Data'}
-                        </Text>
-                        <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
-                    </TouchableOpacity>
+                    />
 
-                    <TouchableOpacity
-                        style={styles.menuItem}
+                    <SettingNavigationRow
+                        icon={isImporting ? 'hourglass-top' : 'download'}
+                        label={isImporting ? 'Importing...' : 'Import Data'}
                         onPress={handleImportData}
-                        disabled={isExporting || isImporting}
-                    >
-                        <View style={styles.menuIconContainer}>
-                            <MaterialIcons
-                                name={isImporting ? 'hourglass-top' : 'download'}
-                                size={20}
-                                color={colors.text.primary}
-                            />
-                        </View>
-                        <Text style={styles.menuText}>
-                            {isImporting ? 'Importing...' : 'Import Data'}
-                        </Text>
-                        <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
-                    </TouchableOpacity>
+                    />
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <View style={styles.menuIconContainer}>
-                            <MaterialIcons name="cloud-upload" size={20} color={colors.text.primary} />
-                        </View>
-                        <Text style={styles.menuText}>Cloud Backup</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
-                    </TouchableOpacity>
+                    <SettingNavigationRow
+                        icon="cloud-upload"
+                        label="Cloud Backup"
+                        subtitle="Coming soon"
+                        onPress={() => {
+                            Alert.alert('Coming Soon', 'Cloud backup will be available in a future update.');
+                        }}
+                    />
                 </View>
 
-                {/* App */}
+                {/* ═══════════════ SUPPORT ═══════════════ */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>App</Text>
+                    <Text style={styles.sectionTitle}>SUPPORT</Text>
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <View style={styles.menuIconContainer}>
-                            <MaterialIcons name="favorite" size={20} color={colors.accent.error} />
-                        </View>
-                        <Text style={styles.menuText}>Support the App</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
-                    </TouchableOpacity>
+                    <SettingNavigationRow
+                        icon="star-outline"
+                        iconColor={colors.accent.warning}
+                        label="Rate App"
+                        onPress={() => {
+                            Alert.alert('Thank You!', 'Rating will be available once the app is published to the store.');
+                        }}
+                    />
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <View style={styles.menuIconContainer}>
-                            <MaterialIcons name="info-outline" size={20} color={colors.text.primary} />
-                        </View>
-                        <Text style={styles.menuText}>About</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
-                    </TouchableOpacity>
+                    <SettingNavigationRow
+                        icon="favorite"
+                        iconColor={colors.accent.error}
+                        label="Support the Dev"
+                        onPress={() => {
+                            Alert.alert(
+                                'Thank You! 💜',
+                                'Thank you for your interest in supporting the project! Donation options are coming soon.',
+                            );
+                        }}
+                    />
+
+                    <SettingNavigationRow
+                        icon="feedback"
+                        iconColor={colors.accent.primary}
+                        label="Send Feedback"
+                        onPress={() => {
+                            Linking.openURL('mailto:feedback@example.com?subject=Workout App Feedback').catch(() => {
+                                Alert.alert('Error', 'Could not open email client.');
+                            });
+                        }}
+                    />
                 </View>
 
-                {/* Dev Tools */}
+                {/* ═══════════════ ABOUT ═══════════════ */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🛠️ DEV TOOLS</Text>
+                    <Text style={styles.sectionTitle}>ABOUT</Text>
 
-                    <TouchableOpacity
-                        style={[styles.menuItem, styles.dangerItem]}
-                        onPress={handleClearAllData}
-                        disabled={isGenerating}
-                    >
-                        <View style={styles.menuIconContainer}>
-                            <MaterialIcons name="delete-forever" size={20} color={colors.accent.error} />
-                        </View>
-                        <Text style={[styles.menuText, styles.dangerText]}>Clear All Data</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
-                    </TouchableOpacity>
+                    <SettingNavigationRow
+                        icon="new-releases"
+                        label="Changelog"
+                        onPress={() => {
+                            Alert.alert(
+                                `What's New — v${appVersion}`,
+                                '• Settings screen with app-wide preferences\n• Expanded workout settings menu\n• Configurable units and display options\n• Exercise Details master guide screen',
+                            );
+                        }}
+                    />
 
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={handleGenerateMockData}
-                        disabled={isGenerating}
-                    >
-                        <View style={styles.menuIconContainer}>
-                            <MaterialIcons
-                                name={isGenerating ? 'hourglass-top' : 'science'}
-                                size={20}
-                                color={colors.text.primary}
-                            />
-                        </View>
-                        <Text style={styles.menuText}>
-                            {isGenerating ? 'Generating...' : 'Generate Mock Data (3 Months)'}
-                        </Text>
-                        <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
-                    </TouchableOpacity>
+                    <SettingNavigationRow
+                        icon="shield"
+                        label="Privacy Policy"
+                        subtitle="Your data stays on your device"
+                        onPress={() => {
+                            Alert.alert(
+                                'Privacy First',
+                                'Privacy policy will be available before the app launches. Your data is stored locally on your device — we never collect or transmit workout data.',
+                            );
+                        }}
+                    />
+
+                    <SettingNavigationRow
+                        icon="info-outline"
+                        label="About"
+                        onPress={() => {
+                            Alert.alert(
+                                'About',
+                                `Workout App v${appVersion}\n\nA free, privacy-first workout tracker.\n\nMade with 💜`,
+                            );
+                        }}
+                    />
+                </View>
+
+                {/* ═══════════════ DEV TOOLS ═══════════════ */}
+                {__DEV__ && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>🛠️ DEV TOOLS</Text>
+
+                        <TouchableOpacity
+                            style={[styles.menuItem, styles.dangerItem]}
+                            onPress={handleClearAllData}
+                            disabled={isGenerating}
+                        >
+                            <View style={styles.menuIconContainer}>
+                                <MaterialIcons name="delete-forever" size={20} color={colors.accent.error} />
+                            </View>
+                            <Text style={[styles.menuText, styles.dangerText]}>Clear All Data</Text>
+                            <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={handleGenerateMockData}
+                            disabled={isGenerating}
+                        >
+                            <View style={styles.menuIconContainer}>
+                                <MaterialIcons
+                                    name={isGenerating ? 'hourglass-top' : 'science'}
+                                    size={20}
+                                    color={colors.text.primary}
+                                />
+                            </View>
+                            <Text style={styles.menuText}>
+                                {isGenerating ? 'Generating...' : 'Generate Mock Data (3 Months)'}
+                            </Text>
+                            <MaterialIcons name="chevron-right" size={20} color={colors.text.secondary} />
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* ═══════════════ VERSION FOOTER ═══════════════ */}
+                <View style={styles.versionFooter}>
+                    <Text style={styles.versionText}>v{appVersion}</Text>
                 </View>
 
                 {/* Bottom spacer */}
@@ -243,6 +449,10 @@ export default function SettingsScreen() {
         </View>
     );
 }
+
+// ============================================================
+// Styles
+// ============================================================
 
 const styles = StyleSheet.create({
     container: {
@@ -269,7 +479,7 @@ const styles = StyleSheet.create({
         marginLeft: spacing.xs,
     },
 
-    // Menu items
+    // Dev tools menu items (legacy pattern for Clear/Generate)
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -300,5 +510,16 @@ const styles = StyleSheet.create({
     },
     dangerText: {
         color: colors.accent.error,
+    },
+
+    // Version footer
+    versionFooter: {
+        alignItems: 'center',
+        paddingVertical: spacing.lg,
+        marginTop: spacing.md,
+    },
+    versionText: {
+        fontSize: typography.size.sm,
+        color: colors.text.disabled,
     },
 });

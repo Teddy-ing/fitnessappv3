@@ -45,6 +45,12 @@ interface UserSettingsRow {
     show_plate_calc: number;
     default_warmup_sets: number;
     show_previous: number;
+    measurement_unit: string;
+    keep_awake: number;
+    show_exercise_media: number;
+    show_exercise_instructions: number;
+    smart_suggestions: number;
+    default_weight_increment: number;
 }
 
 /** Default settings — used if the row doesn't exist yet */
@@ -73,6 +79,12 @@ const DEFAULTS: UserSettings = {
     showPlateCalc: true,
     defaultWarmupSets: 2,
     showPrevious: true,
+    measurementUnit: 'in',
+    keepAwakeDuringWorkout: true,
+    showExerciseMedia: true,
+    showExerciseInstructions: true,
+    smartSuggestions: false,
+    defaultWeightIncrement: 5,
 };
 
 // ============================================================
@@ -122,6 +134,12 @@ export async function getSettings(): Promise<UserSettings> {
         showPlateCalc: row.show_plate_calc === 1,
         defaultWarmupSets: row.default_warmup_sets ?? 2,
         showPrevious: row.show_previous === 1,
+        measurementUnit: row.measurement_unit ?? 'in',
+        keepAwakeDuringWorkout: row.keep_awake === 1,
+        showExerciseMedia: row.show_exercise_media === 1,
+        showExerciseInstructions: row.show_exercise_instructions === 1,
+        smartSuggestions: row.smart_suggestions === 1,
+        defaultWeightIncrement: row.default_weight_increment ?? 5,
     };
 }
 
@@ -167,6 +185,12 @@ export async function updateSettings(
         showPlateCalc: 'show_plate_calc',
         defaultWarmupSets: 'default_warmup_sets',
         showPrevious: 'show_previous',
+        measurementUnit: 'measurement_unit',
+        keepAwakeDuringWorkout: 'keep_awake',
+        showExerciseMedia: 'show_exercise_media',
+        showExerciseInstructions: 'show_exercise_instructions',
+        smartSuggestions: 'smart_suggestions',
+        defaultWeightIncrement: 'default_weight_increment',
     };
 
     const setClauses: string[] = [];

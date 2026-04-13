@@ -15,7 +15,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
-import { METRIC_OPTIONS, START_DAY_OPTIONS } from './types';
+import { METRIC_OPTIONS } from './types';
 
 // ============================================================
 // Props
@@ -31,7 +31,6 @@ interface CalendarHeaderProps {
     showFatigueFilter: boolean;
     showJournalView: boolean;
     onMetricChange: (metric: string) => void;
-    onStartDayChange: (day: string) => void;
     onPRFilterToggle: () => void;
     onNoteFilterToggle: () => void;
     onFatigueFilterToggle: () => void;
@@ -52,7 +51,6 @@ export default function CalendarHeader({
     showFatigueFilter,
     showJournalView,
     onMetricChange,
-    onStartDayChange,
     onPRFilterToggle,
     onNoteFilterToggle,
     onFatigueFilterToggle,
@@ -94,30 +92,6 @@ export default function CalendarHeader({
                                 style={[
                                     styles.pillText,
                                     heatmapMetric === opt.key && styles.pillTextActive,
-                                ]}
-                            >
-                                {opt.label}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                {/* Start day toggle */}
-                <View style={styles.startDayToggle}>
-                    {START_DAY_OPTIONS.map((opt) => (
-                        <TouchableOpacity
-                            key={opt.key}
-                            style={[
-                                styles.startDayPill,
-                                startDay === opt.key && styles.startDayPillActive,
-                            ]}
-                            onPress={() => onStartDayChange(opt.key)}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.startDayText,
-                                    startDay === opt.key && styles.startDayTextActive,
                                 ]}
                             >
                                 {opt.label}
@@ -263,28 +237,7 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontWeight: typography.weight.semibold,
     },
-    startDayToggle: {
-        flexDirection: 'row',
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.full,
-        padding: 2,
-    },
-    startDayPill: {
-        paddingHorizontal: spacing.sm + 2,
-        paddingVertical: spacing.xs,
-        borderRadius: borderRadius.full,
-    },
-    startDayPillActive: {
-        backgroundColor: colors.background.tertiary,
-    },
-    startDayText: {
-        fontSize: typography.size.xs,
-        fontWeight: typography.weight.medium,
-        color: colors.text.disabled,
-    },
-    startDayTextActive: {
-        color: colors.text.primary,
-    },
+
 
     // Filter pills
     filterRow: {

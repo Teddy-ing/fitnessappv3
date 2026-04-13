@@ -31,4 +31,10 @@ export interface UserSettings {
     showPlateCalc: boolean;
     defaultWarmupSets: number;
     showPrevious: boolean;
+    measurementUnit: string;
+    keepAwakeDuringWorkout: boolean;
+    showExerciseMedia: boolean;
+    showExerciseInstructions: boolean;
+    smartSuggestions: boolean;
+    defaultWeightIncrement: number;
 }

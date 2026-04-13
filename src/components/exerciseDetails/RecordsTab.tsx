@@ -18,6 +18,7 @@ import { colors, spacing, borderRadius, typography } from '../../theme';
 import { getBestWeightForReps } from '../../services/exerciseAnalyticsService';
 import { BestWeightForRep } from '../../models/analytics';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
+import { convertWeight } from '../../utils/unitConversion';
 import { computeEpley1RM } from '../../utils/formulas';
 
 // ============================================================
@@ -127,10 +128,10 @@ export default function RecordsTab({ exerciseId }: RecordsTabProps) {
                                 {row.reps}
                             </Text>
                             <Text style={[styles.tableCell, styles.weightCol, styles.tableCellBold]}>
-                                {row.weight} {weightUnit}
+                                {Math.round(convertWeight(row.weight, weightUnit) * 10) / 10} {weightUnit}
                             </Text>
                             <Text style={[styles.tableCell, styles.estCol, isBest && styles.tableCellBest]}>
-                                {row.est1rm} {weightUnit}
+                                {Math.round(convertWeight(row.est1rm, weightUnit) * 10) / 10} {weightUnit}
                             </Text>
                             <Text style={[styles.tableCell, styles.dateCol]}>
                                 {row._formattedDate}

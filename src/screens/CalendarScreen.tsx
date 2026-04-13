@@ -244,10 +244,7 @@ export default function CalendarScreen() {
         updateSettings({ calendarHeatmapMetric: metric });
     }, []);
 
-    const handleStartDayChange = useCallback((day: string) => {
-        setStartDay(day);
-        updateSettings({ calendarStartDay: day });
-    }, []);
+
 
     // ------------------------------------------------
     // Render
@@ -291,7 +288,6 @@ export default function CalendarScreen() {
                 showFatigueFilter={showFatigueFilter}
                 showJournalView={showJournalView}
                 onMetricChange={handleMetricChange}
-                onStartDayChange={handleStartDayChange}
                 onPRFilterToggle={() => setShowPRFilter(prev => !prev)}
                 onNoteFilterToggle={() => {
                     setShowNoteFilter(prev => {

@@ -25,6 +25,8 @@ import { getWorkoutsForDate, getPRSetIdsForDate, type PRSetIds } from '../servic
 import { useWorkoutStore } from '../stores';
 import { navigateToTab } from '../navigation/navigationRef';
 import { formatDuration, formatVolume } from '../utils/formatters';
+import { convertWeight } from '../utils/unitConversion';
+import { useWeightUnit } from '../hooks/useWeightUnit';
 import type { Workout, WorkoutExercise, WorkoutSet } from '../models/workout';
 
 // ============================================================
@@ -54,11 +56,13 @@ function formatDateHeader(dateStr: string): string {
 }
 
 /** Summarize a set concisely: "225 × 8" or "BW × 12" or "30s" */
-function formatSet(set: WorkoutSet): string {
+function formatSet(set: WorkoutSet, weightUnit: string): string {
     if (set.duration && !set.weight && !set.reps) {
         return `${set.duration}s`;
     }
-    const weight = set.weight != null ? `${set.weight}` : 'BW';
+    const weight = set.weight != null
+        ? `${Math.round(convertWeight(set.weight, weightUnit) * 10) / 10}`
+        : 'BW';
     const reps = set.reps ?? '?';
     return `${weight} × ${reps}`;
 }
@@ -87,10 +91,10 @@ function SummaryBadge({
     );
 }
 
-function SetRow({ set, isPR }: { set: WorkoutSet; isPR: boolean }) {
+function SetRow({ set, isPR, weightUnit }: { set: WorkoutSet; isPR: boolean; weightUnit: string }) {
     return (
         <View style={styles.setRow}>
-            <Text style={styles.setText}>{formatSet(set)}</Text>
+            <Text style={styles.setText}>{formatSet(set, weightUnit)}</Text>
             {isPR && <Text style={styles.prBadge}>🏆</Text>}
             {set.note ? (
                 <Text style={styles.setNote} numberOfLines={1}>
@@ -104,9 +108,11 @@ function SetRow({ set, isPR }: { set: WorkoutSet; isPR: boolean }) {
 function ExerciseCard({
     exercise,
     prSetIds,
+    weightUnit,
 }: {
     exercise: WorkoutExercise;
     prSetIds: PRSetIds;
+    weightUnit: string;
 }) {
     // Show all sets (not just completed) for historical view
     const sets = exercise.sets;
@@ -129,6 +135,7 @@ function ExerciseCard({
                     key={set.id}
                     set={set}
                     isPR={prSetIds.has(set.id)}
+                    weightUnit={weightUnit}
                 />
             ))}
 
@@ -149,10 +156,12 @@ function WorkoutCard({
     workout,
     prSetIds,
     onEdit,
+    weightUnit,
 }: {
     workout: Workout;
     prSetIds: PRSetIds;
     onEdit: (workout: Workout) => void;
+    weightUnit: string;
 }) {
     const exercises = workout.main.exercises;
 
@@ -183,6 +192,7 @@ function WorkoutCard({
                         key={ex.id}
                         exercise={ex}
                         prSetIds={prSetIds}
+                        weightUnit={weightUnit}
                     />
                 ))
             ) : (
@@ -212,6 +222,7 @@ export default function DailyWorkoutModal({ date, onClose }: DailyWorkoutModalPr
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [prSetIds, setPrSetIds] = useState<PRSetIds>(new Set());
     const [loading, setLoading] = useState(false);
+    const weightUnit = useWeightUnit();
 
     const handleEditWorkout = useCallback((workout: Workout) => {
         const { activeWorkout, loadWorkoutForEditing } = useWorkoutStore.getState();
@@ -262,8 +273,9 @@ export default function DailyWorkoutModal({ date, onClose }: DailyWorkoutModalPr
 
     if (!date) return null;
 
-    // Compute day-level totals
-    const totalVolume = workouts.reduce((sum, w) => sum + (w.totalVolume ?? 0), 0);
+    // Compute day-level totals (totalVolume is in canonical lbs — convert for display)
+    const totalVolumeRaw = workouts.reduce((sum, w) => sum + (w.totalVolume ?? 0), 0);
+    const totalVolume = convertWeight(totalVolumeRaw, weightUnit);
     const totalSets = workouts.reduce((sum, w) => sum + (w.totalSets ?? 0), 0);
     const totalDuration = workouts.reduce((sum, w) => sum + (w.totalDuration ?? 0), 0);
 
@@ -344,6 +356,7 @@ export default function DailyWorkoutModal({ date, onClose }: DailyWorkoutModalPr
                                         workout={w}
                                         prSetIds={prSetIds}
                                         onEdit={handleEditWorkout}
+                                        weightUnit={weightUnit}
                                     />
                                 ))
                             ) : (

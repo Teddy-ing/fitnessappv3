@@ -643,6 +643,62 @@ const MIGRATIONS: Migration[] = [
             `);
         },
     },
+    // ----------------------------------------------------------
+    // v13: Settings expansion — new general + workout settings
+    // ----------------------------------------------------------
+    {
+        version: 13,
+        name: 'settings_expansion',
+        up: async (db) => {
+            // measurement_unit: in (inches) or cm (centimeters) for body measurements
+            const hasMeasurementUnit = await columnExists(db, 'user_settings', 'measurement_unit');
+            if (!hasMeasurementUnit) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN measurement_unit TEXT DEFAULT 'in';`,
+                );
+            }
+
+            // keep_awake: prevent screen lock during active workout
+            const hasKeepAwake = await columnExists(db, 'user_settings', 'keep_awake');
+            if (!hasKeepAwake) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN keep_awake INTEGER DEFAULT 1;`,
+                );
+            }
+
+            // show_exercise_media: toggle exercise icons in ExercisePicker
+            const hasShowMedia = await columnExists(db, 'user_settings', 'show_exercise_media');
+            if (!hasShowMedia) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN show_exercise_media INTEGER DEFAULT 1;`,
+                );
+            }
+
+            // show_exercise_instructions: toggle instructions on Exercise Details About tab
+            const hasShowInstructions = await columnExists(db, 'user_settings', 'show_exercise_instructions');
+            if (!hasShowInstructions) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN show_exercise_instructions INTEGER DEFAULT 1;`,
+                );
+            }
+
+            // smart_suggestions: ML prediction toggle (future, default disabled)
+            const hasSmartSuggestions = await columnExists(db, 'user_settings', 'smart_suggestions');
+            if (!hasSmartSuggestions) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN smart_suggestions INTEGER DEFAULT 0;`,
+                );
+            }
+
+            // default_weight_increment: step size for weight +/− buttons in keyboard
+            const hasWeightIncrement = await columnExists(db, 'user_settings', 'default_weight_increment');
+            if (!hasWeightIncrement) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN default_weight_increment REAL DEFAULT 5;`,
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

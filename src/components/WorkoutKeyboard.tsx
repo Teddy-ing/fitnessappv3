@@ -45,6 +45,8 @@ interface WorkoutKeyboardProps {
     onNext: () => void;
     onHide: () => void;
     showPlateCalc?: boolean;
+    /** Configurable step size for weight +/− buttons (default: 5) */
+    weightIncrement?: number;
 }
 
 export default function WorkoutKeyboard({
@@ -60,6 +62,7 @@ export default function WorkoutKeyboard({
     onNext,
     onHide,
     showPlateCalc = true,
+    weightIncrement = 5,
 }: WorkoutKeyboardProps) {
     const weightUnit = useWeightUnit();
     const insets = useSafeAreaInsets();
@@ -123,7 +126,7 @@ export default function WorkoutKeyboard({
     // Get adjustment amount based on field type
     const getAdjustAmount = () => {
         switch (fieldType) {
-            case 'weight': return 5;
+            case 'weight': return weightIncrement;
             case 'reps': return 1;
             case 'duration': return 10;
             default: return 1;
