@@ -94,10 +94,7 @@ export interface WorkoutExercise {
 /**
  * Workout section types
  */
-export type WorkoutSectionType =
-    | 'warmup'      // Pre-workout warmup
-    | 'main'        // Main workout
-    | 'cooldown';   // Post-workout stretching/cooldown
+export type WorkoutSectionType = 'main';
 
 /**
  * A section within a workout (warmup, main, cooldown)
@@ -130,10 +127,8 @@ export interface Workout {
     name: string;               // User-editable name
     status: WorkoutStatus;
 
-    // Sections (all optional - user can use any combination)
-    warmup: WorkoutSection | null;
+    // Sections
     main: WorkoutSection;
-    cooldown: WorkoutSection | null;
 
     // Timing
     startedAt: Date;
@@ -179,9 +174,7 @@ export function createWorkout(name?: string): Workout {
         id: Crypto.randomUUID(),
         name: name ?? `Workout ${now.toLocaleDateString()}`,
         status: 'in_progress',
-        warmup: null,
         main: mainSection,
-        cooldown: null,
         startedAt: now,
         completedAt: null,
         totalDuration: null,
@@ -222,14 +215,24 @@ export function createSet(orderIndex: number, type: SetType = 'working'): Workou
 
 /**
  * Helper to create a workout exercise instance
+ *
+ * @param warmupSets — Number of leading sets to mark as 'warmup'.
+ *   Defaults to 0 so callers that don't care (templates, mock data) get
+ *   all-working sets. The live workout path passes the user's
+ *   `defaultWarmupSets` setting value.
  */
 export function createWorkoutExercise(
     exercise: Exercise,
     orderIndex: number,
-    initialSets: number = 3
+    initialSets: number = 3,
+    warmupSets: number = 0
 ): WorkoutExercise {
+    // Only apply warmup typing to strength exercises
+    const effectiveWarmups = exercise.category === 'strength'
+        ? Math.min(warmupSets, initialSets)
+        : 0;
     const sets: WorkoutSet[] = Array.from({ length: initialSets }, (_, i) =>
-        createSet(i, i === 0 && exercise.category === 'strength' ? 'warmup' : 'working')
+        createSet(i, i < effectiveWarmups ? 'warmup' : 'working')
     );
 
     return {

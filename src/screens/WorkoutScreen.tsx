@@ -12,7 +12,7 @@
  * - View workout history
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -43,10 +43,11 @@ import {
     getPreviousSetsForExercises,
     Template,
 } from '../services';
-import { Workout, createSet } from '../models/workout';
+import { Workout } from '../models/workout';
 import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import WorkoutHomeView from './WorkoutHomeView';
 import { navigateToTab, navigationRef } from '../navigation/navigationRef';
+import { useIsFocused } from '@react-navigation/native';
 
 // Swipe hint persistence key
 const SWIPE_HINT_FILE = new File(Paths.document, '.swipe_hint_seen');
@@ -120,7 +121,16 @@ export default function WorkoutScreen() {
         handleChangeDefaultSets,
         handleChangeWeightIncrement,
         handleChangeRestTime,
+        refreshSettings,
     } = useWorkoutSettings();
+
+    // BH-051: Re-read settings when the Workout tab receives focus.
+    // keepAwakeDuringWorkout (and other settings) were stale if changed
+    // in SettingsScreen while the tab stayed mounted.
+    const isFocused = useIsFocused();
+    useEffect(() => {
+        if (isFocused) refreshSettings();
+    }, [isFocused, refreshSettings]);
 
     // Keep screen awake during active workout (gated by setting)
     useEffect(() => {
@@ -131,98 +141,6 @@ export default function WorkoutScreen() {
         }
         return () => { deactivateKeepAwake('workout'); };
     }, [!!activeWorkout, keepAwakeDuringWorkout]);
-
-    // ------------------------------------------------
-    // Live-apply default/warmup set changes to unstarted exercises
-    // ------------------------------------------------
-
-    /** True if an exercise has zero completed/in-progress sets */
-    const isExerciseUnstarted = useCallback((ex: { sets: Array<{ status: string }> }) =>
-        ex.sets.every(s => s.status === 'pending'),
-    []);
-
-    const handleChangeDefaultSetsLive = useCallback((count: number) => {
-        handleChangeDefaultSets(count);
-
-        // Apply to unstarted exercises in the current workout
-        const workout = useWorkoutStore.getState().activeWorkout;
-        if (!workout) return;
-
-        const updated = workout.main.exercises.map(ex => {
-            if (!isExerciseUnstarted(ex)) return ex;
-            const workingSets = ex.sets.filter(s => s.type === 'working');
-            const otherSets = ex.sets.filter(s => s.type !== 'working');
-            const currentCount = workingSets.length;
-
-            if (count === currentCount) return ex;
-
-            let newWorkingSets;
-            if (count > currentCount) {
-                // Add sets
-                const toAdd = Array.from({ length: count - currentCount }, (_, i) =>
-                    createSet(otherSets.length + currentCount + i, 'working')
-                );
-                newWorkingSets = [...workingSets, ...toAdd];
-            } else {
-                // Remove from the end
-                newWorkingSets = workingSets.slice(0, count);
-            }
-
-            const allSets = [...otherSets, ...newWorkingSets].map((s, idx) => ({
-                ...s, orderIndex: idx,
-            }));
-            return { ...ex, sets: allSets };
-        });
-
-        useWorkoutStore.setState({
-            activeWorkout: {
-                ...workout,
-                main: { ...workout.main, exercises: updated },
-                updatedAt: new Date(),
-            },
-        });
-    }, [handleChangeDefaultSets, isExerciseUnstarted]);
-
-    const handleChangeWarmupSetsLive = useCallback((count: number) => {
-        handleChangeWarmupSets(count);
-
-        // Apply to unstarted exercises in the current workout
-        const workout = useWorkoutStore.getState().activeWorkout;
-        if (!workout) return;
-
-        const updated = workout.main.exercises.map(ex => {
-            if (!isExerciseUnstarted(ex)) return ex;
-            const warmups = ex.sets.filter(s => s.type === 'warmup');
-            const nonWarmups = ex.sets.filter(s => s.type !== 'warmup');
-            const currentCount = warmups.length;
-
-            if (count === currentCount) return ex;
-
-            let newWarmups;
-            if (count > currentCount) {
-                const toAdd = Array.from({ length: count - currentCount }, (_, i) =>
-                    createSet(currentCount + i, 'warmup')
-                );
-                newWarmups = [...warmups, ...toAdd];
-            } else {
-                newWarmups = warmups.slice(0, count);
-            }
-
-            // Warmups first, then non-warmups, reindex
-            const allSets = [...newWarmups, ...nonWarmups].map((s, idx) => ({
-                ...s, orderIndex: idx,
-            }));
-            return { ...ex, sets: allSets };
-        });
-
-        useWorkoutStore.setState({
-            activeWorkout: {
-                ...workout,
-                main: { ...workout.main, exercises: updated },
-                updatedAt: new Date(),
-            },
-        });
-    }, [handleChangeWarmupSets, isExerciseUnstarted]);
 
     // Workout-level note state
     const [showWorkoutNote, setShowWorkoutNote] = useState(false);
@@ -294,8 +212,14 @@ export default function WorkoutScreen() {
         }
     };
 
+    // BH-059: Guard against double-tap on finish (guardrail #14).
+    // Set synchronously before first await, cleared in finally.
+    const isSavingRef = useRef(false);
+
     // Handle finish workout
     const handleFinishWorkout = async () => {
+        if (isSavingRef.current) return;
+
         const completedSets = activeWorkout?.main.exercises.reduce(
             (acc, ex) => acc + ex.sets.filter(s => s.status === 'completed').length,
             0
@@ -311,6 +235,7 @@ export default function WorkoutScreen() {
                 ]
             );
         } else {
+            isSavingRef.current = true;
             try {
                 // BH-007 fix: Snapshot edit-mode state BEFORE finishWorkout() clears it.
                 // finishWorkout() resets isEditMode/original* to false/null in the store,
@@ -375,6 +300,8 @@ export default function WorkoutScreen() {
             } catch (error) {
                 console.error('[WorkoutScreen] Error finishing workout:', error);
                 Alert.alert('Error', 'Failed to save workout. Please try again.');
+            } finally {
+                isSavingRef.current = false;
             }
         }
     };
@@ -473,6 +400,43 @@ export default function WorkoutScreen() {
 
     const exerciseKeyExtractor = (item: RenderableItem) => item.id;
 
+    // Stable renderItem — avoids creating a new closure on every render,
+    // which would defeat React.memo on RenderableExerciseItem.
+    const renderExerciseItem = useCallback(({ item }: { item: RenderableItem }) => (
+        <RenderableExerciseItem
+            item={item}
+            totalExercises={activeWorkout!.main.exercises.length}
+            focusState={focusState}
+            collapsedExercises={collapsedExercises}
+            showPrevious={showPrevious}
+            showRpe={showRpe}
+            showRir={showRir}
+            showSwipeHint={showSwipeHint}
+            defaultWarmupSets={defaultWarmupSets}
+            previousSets={previousSets}
+            onUpdateSet={updateSet}
+            onCompleteSet={completeSet}
+            onAddSet={addSet}
+            onRemoveSet={removeSet}
+            onRemoveExercise={removeExercise}
+            onToggleSuperset={toggleSuperset}
+            onFocusField={handleFocusField}
+            onUpdateNote={updateExerciseNote}
+            onAddWarmupSets={addWarmupSets}
+            onReplaceExercise={setReplaceExerciseId}
+            onToggleCollapse={toggleCollapse}
+        />
+    ), [
+        // Props that change between renders (all others are stable refs from getState/useState):
+        activeWorkout, focusState, collapsedExercises,
+        showPrevious, showRpe, showRir, showSwipeHint,
+        defaultWarmupSets, previousSets,
+        // Stable refs — listed for completeness but won't cause re-creation:
+        handleFocusField, updateSet, completeSet, addSet, removeSet,
+        removeExercise, toggleSuperset, updateExerciseNote, addWarmupSets,
+        setReplaceExerciseId, toggleCollapse,
+    ]);
+
     // Render home view (no active workout) — WorkoutHomeView owns its own modals
     if (!activeWorkout) {
         return (
@@ -518,31 +482,8 @@ export default function WorkoutScreen() {
             {/* Exercises list — PP-044: FlatList for virtualization */}
             <FlatList
                 data={renderableItems}
-                renderItem={({ item }) => (
-                    <RenderableExerciseItem
-                        item={item}
-                        totalExercises={activeWorkout.main.exercises.length}
-                        focusState={focusState}
-                        collapsedExercises={collapsedExercises}
-                        showPrevious={showPrevious}
-                        showRpe={showRpe}
-                        showRir={showRir}
-                        showSwipeHint={showSwipeHint}
-                        defaultWarmupSets={defaultWarmupSets}
-                        previousSets={previousSets}
-                        onUpdateSet={updateSet}
-                        onCompleteSet={completeSet}
-                        onAddSet={addSet}
-                        onRemoveSet={removeSet}
-                        onRemoveExercise={removeExercise}
-                        onToggleSuperset={toggleSuperset}
-                        onFocusField={handleFocusField}
-                        onUpdateNote={updateExerciseNote}
-                        onAddWarmupSets={addWarmupSets}
-                        onReplaceExercise={setReplaceExerciseId}
-                        onToggleCollapse={toggleCollapse}
-                    />
-                )}
+                renderItem={renderExerciseItem}
+                keyExtractor={exerciseKeyExtractor}
                 style={styles.scrollView}
                 contentContainerStyle={styles.exercisesList}
                 ListHeaderComponent={
@@ -608,8 +549,8 @@ export default function WorkoutScreen() {
                 smartSuggestions={smartSuggestions}
                 weightUnit={weightUnit}
                 onToggleSetting={handleToggleSetting}
-                onChangeWarmupSets={handleChangeWarmupSetsLive}
-                onChangeDefaultSets={handleChangeDefaultSetsLive}
+                onChangeWarmupSets={handleChangeWarmupSets}
+                onChangeDefaultSets={handleChangeDefaultSets}
                 onChangeWeightIncrement={handleChangeWeightIncrement}
                 onChangeRestTime={handleChangeRestTime}
             />
@@ -636,6 +577,17 @@ export default function WorkoutScreen() {
                 onClose={() => setExercisePickerOpen(false)}
                 onSelect={(exercise) => {
                     addExercise(exercise);
+                    // BH-062: Apply the user's warmup set preference to the newly added exercise.
+                    // The factory defaults to 0 warmups; we add them here where we have access to settings.
+                    if (defaultWarmupSets > 0 && exercise.category === 'strength') {
+                        addWarmupSets(
+                            // Get the just-added exercise's ID from the store
+                            useWorkoutStore.getState().activeWorkout!.main.exercises[
+                                useWorkoutStore.getState().activeWorkout!.main.exercises.length - 1
+                            ].id,
+                            defaultWarmupSets,
+                        );
+                    }
                     setExercisePickerOpen(false);
                 }}
             />

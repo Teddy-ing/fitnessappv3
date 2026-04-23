@@ -24,7 +24,7 @@ import MetricSelector from './MetricSelector';
 import PillRow from './PillRow';
 import { createLabelProcessor, BAR_CHART_MARGINS } from '../../utils/chartLabels';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
-import { convertWeight } from '../../utils/unitConversion';
+import { convertWeight, displayWeight } from '../../utils/unitConversion';
 
 import {
     MetricType,
@@ -118,7 +118,7 @@ export default function MacroAnalyticsView() {
             if (metric === 'duration') {
                 value = Math.round(value / 60);
             } else if (metric === 'volume') {
-                value = convertWeight(value, weightUnit);
+                value = displayWeight(value, weightUnit);
             }
 
             return {

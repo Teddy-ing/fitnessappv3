@@ -25,7 +25,7 @@ import { getWorkoutsForDate, getPRSetIdsForDate, type PRSetIds } from '../servic
 import { useWorkoutStore } from '../stores';
 import { navigateToTab } from '../navigation/navigationRef';
 import { formatDuration, formatVolume } from '../utils/formatters';
-import { convertWeight } from '../utils/unitConversion';
+import { convertWeight, displayWeight } from '../utils/unitConversion';
 import { useWeightUnit } from '../hooks/useWeightUnit';
 import type { Workout, WorkoutExercise, WorkoutSet } from '../models/workout';
 
@@ -61,7 +61,7 @@ function formatSet(set: WorkoutSet, weightUnit: string): string {
         return `${set.duration}s`;
     }
     const weight = set.weight != null
-        ? `${Math.round(convertWeight(set.weight, weightUnit) * 10) / 10}`
+        ? `${displayWeight(set.weight, weightUnit)}`
         : 'BW';
     const reps = set.reps ?? '?';
     return `${weight} × ${reps}`;

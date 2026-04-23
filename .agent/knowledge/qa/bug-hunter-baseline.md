@@ -6,34 +6,41 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 ## Summary
 
-- **Last full pass:** 2026-04-10 (Exercise Details "Master Guide" — 17 files)
-- **Open issues:** 1 (Critical: 0, High: 0, Medium: 0, Low: 1)
-- **Fixed since baseline:** 40
+- **Last full pass:** 2026-04-13 (Settings Revamp + Canonical Weight Storage — 24 files)
+- **Last scoped pass:** 2026-04-13 (Staff Engineer Scalability Audit — full codebase)
+- **Open issues:** 2 (Critical: 0, High: 0, Medium: 0, Low: 1, Deferred: 1)
+- **Fixed since baseline:** 48
 
 ---
 
 ## Open Issues
 
-### Critical (Crashes / Data Loss)
+### Deferred
 
-*No open critical issues.*
+#### BH-058 · `dbInitFailed` is permanent — no retry, no recovery, no user feedback
+- **File:** [database.ts](file:///c:/Users/teddy/projects/workout-app/src/services/database.ts#L28-L44)
+- **Phase:** Latent (Jan 2026 — foundational)
+- **Description:** If `openDatabaseAsync` throws for any transient reason, `dbInitFailed = true` permanently. All data operations silently degrade.
+- **Deferred to:** Pre-launch polish. Has never triggered. Requires crash reporting (TD-048) to detect in production. Fix: retry with backoff + user-facing error banner.
 
-### High (Incorrect Behavior)
+### Accepted
 
-*No open high issues.*
+#### BH-060 · No FK constraint between `workout_exercises.exercise_id` and `exercises` table — **ACCEPTED 2026-04-17**
+- **Rationale:** The denormalized exercise snapshots in workout rows mean historical workouts display correctly even if the exercise is deleted. The only crash path (navigating to deleted exercise details) is already handled by BH-039's null guard. The index on `exercise_id` was already added (PP-076). Soft-delete would be a feature decision, not a bug fix.
 
-### Medium (Edge Cases)
-
-*No open medium issues.*
+#### BH-036 · `WorkoutSettingsMenu` 2-column bypass on rapid toggles — **ACCEPTED 2026-04-17**
+- **Rationale:** Requires impossibly fast taps + React batching failure. `disabled` prop is a secondary guard. Theoretical only — no user could reasonably trigger this.
 
 ### Low (Defensive Gaps)
 
-#### BH-036 · `WorkoutSettingsMenu` 2-column max could be bypassed on rapid toggles
-- **File:** [WorkoutSettingsMenu.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/WorkoutSettingsMenu.tsx#L49-L61)
-- **Phase:** Phase 5 (March 30th, Gemini 3.1 Pro)
-- **Description:** `activeColumnsCount` is derived from props. If a user rapidly taps two disabled toggles before the first state update propagates through React's render cycle, both could fire before `activeColumnsCount` reflects the intermediate state, enabling 3 columns.
-- **Likelihood:** Very low — switches also have `disabled` props as a secondary guard, and React batching typically prevents this.
-- **Fix:** Use a ref counter or derive count inside the handler from full state.
+#### BH-061 · Persisted workout `as Workout` cast with no runtime validation
+- **File:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts) → `restoreWorkout()`
+- **Phase:** Latent (Mar 2026 — TD-021 persistence)
+- **Description:** `loadPersistedWorkout()` casts persisted data as `Workout` with no runtime validation or schema versioning. If the model changes between app versions, the persisted JSON silently loads a malformed object. Note: TD-051 replaced `unknown` with `Workout | null` which adds compile-time protection, but runtime validation on load is still missing.
+- **Likelihood:** Low — only triggers on model schema changes between app updates.
+- **Impact:** Corrupted in-memory workout state after restore.
+- **Fix:** Add `schemaVersion` field. On mismatch, discard or migrate.
+- **Deferred to:** Before first model schema change (Phase 6 or 7).
 
 ---
 
@@ -84,6 +91,62 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ---
 
 ## Resolved
+
+#### BH-062 · `createWorkoutExercise` hardcodes first set as warmup regardless of settings — **RESOLVED 2026-04-16**
+- **Severity:** Low
+- **Original status:** 🟡 Latent
+- **File:** [workout.ts](file:///c:/Users/teddy/projects/workout-app/src/models/workout.ts#L226-L240)
+- **Root cause:** Factory always marked `i === 0 && exercise.category === 'strength'` as warmup. Setting warmups to 0 still produced 1 warmup set.
+- **Fix applied:** Added `warmupSets` parameter (defaults to 0) to `createWorkoutExercise`. Only creates warmup sets for strength exercises when `warmupSets > 0`. `WorkoutScreen` now passes the user's `defaultWarmupSets` setting via `addWarmupSets()` after adding each exercise.
+
+#### BH-059 · `handleFinishWorkout` double-tap race condition — **RESOLVED 2026-04-16**
+- **Severity:** High
+- **Original status:** 🔴 Latent
+- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx#L208-L299)
+- **Root cause:** `handleFinishWorkout` chained 6+ async operations with no guard against concurrent invocation. A double-tap would race two save operations.
+- **Fix applied:** Added `isSavingRef = useRef(false)` guard per guardrail #14. Set synchronously before first `await`, cleared in `finally`.
+
+#### BH-051 · `keepAwakeDuringWorkout` stale after Settings toggle — **RESOLVED 2026-04-16**
+- **Severity:** Medium
+- **Original status:** 🟡 Plausible
+- **File:** [useWorkoutSettings.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/workout/useWorkoutSettings.ts), [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx)
+- **Root cause:** Settings loaded once on mount via `getSettings().then(...)` with empty deps. Toggling keepAwake in SettingsScreen didn't propagate to already-mounted WorkoutScreen tab.
+- **Fix applied:** Extracted `refreshSettings()` callback from `useWorkoutSettings`. WorkoutScreen calls it on focus via `useIsFocused()` + `useEffect`. All settings (not just keepAwake) now refresh when the tab regains focus.
+
+#### BH-055 · `SettingsScreen.handleUpdate` no rollback on DB write failure — **RESOLVED 2026-04-16**
+- **Severity:** Medium
+- **Original status:** 🟡 Plausible
+- **File:** [SettingsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/SettingsScreen.tsx#L79-L101)
+- **Root cause:** Optimistic state update followed by bare `await updateSettings()`. On failure, local state showed new value but DB retained old value, causing silent revert on restart.
+- **Fix applied:** Added try/catch with rollback to `previousSettings` snapshot + `Alert.alert` on failure.
+
+#### BH-057 · `weightUnit` stale in WorkoutSettingsMenu label — **RESOLVED 2026-04-13**
+- **Severity:** Medium
+- **Original status:** 🟡 Plausible
+- **File:** [useWorkoutSettings.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/workout/useWorkoutSettings.ts#L43)
+- **Root cause:** `weightUnit` stored as local `useState` loaded once on mount. If user changed unit in SettingsScreen and returned, the WorkoutSettingsMenu stepper showed stale "5 lbs" instead of "5 kg".
+- **Fix applied:** Replaced `useState('lbs')` with `useWeightUnit()` subscriber hook, which auto-updates via module-level cache invalidation.
+
+#### BH-053/054 · `loadWeightUnit` unhandled promise rejection + stuck cache — **RESOLVED 2026-04-13**
+- **Severity:** High
+- **Original status:** 🔴 Confirmed
+- **File:** [useWeightUnit.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWeightUnit.ts#L26-L37)
+- **Root cause:** `getSettings().then(...)` had no `.catch()`. A DB init race caused an unhandled rejection and left `cachePromise` as a rejected promise permanently, making all future weight unit reads also fail.
+- **Fix applied:** Added `.catch()` that logs a warning, resets `cachePromise = null` (so next call retries), and returns `'lbs'` as fallback.
+
+#### BH-052 · Floating-point noise in MacroAnalyticsView chart data — **RESOLVED 2026-04-13**
+- **Severity:** Low
+- **Original status:** 🟡 Plausible
+- **File:** [MacroAnalyticsView.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/analytics/MacroAnalyticsView.tsx#L121)
+- **Root cause:** `convertWeight(value, weightUnit)` used without rounding in chart data transformation. In kg mode, produced values like `102.0582` which showed excessive decimal precision in chart tooltips and Y-axis labels.
+- **Fix applied:** Added `Math.round(... * 10) / 10` to match the rounding pattern used in all other conversion call sites.
+
+#### BH-050 · `handleBackspace` treats weight value `0` as null — **RESOLVED 2026-04-13**
+- **Severity:** Medium
+- **Original status:** 🔴 Confirmed
+- **File:** [useWorkoutKeyboard.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWorkoutKeyboard.ts#L149)
+- **Root cause:** `numValue && !isNaN(numValue)` is falsy when `numValue === 0`. Typing or backspacing to `0` silently stored `null` instead of `0`, making bodyweight exercises impossible to set to 0 weight.
+- **Fix applied:** Changed to `numValue != null && !isNaN(numValue)`.
 
 #### BH-042 · React key collision for warmup sets in HistoryTab — **RESOLVED 2026-04-10**
 - **Severity:** Low
@@ -380,5 +443,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-04-10
-- Session Context: Exercise Details ("Master Guide") QA pass — 17 files reviewed. 5 issues identified (BH-038 through BH-042) and all 5 resolved in the same session. Fixes: ref-guarded pagination (BH-038), exercise-not-found state (BH-039), correct default tab from Analytics/Widget (BH-040), eslint-disable on `as any` (BH-041), warmup key collision (BH-042). 7 new false positives documented.
+- Date: 2026-04-17
+- Session Context: QA final triage — deferred BH-058 (pre-launch), accepted BH-060 (snapshot pattern covers it) and BH-036 (theoretical). Updated BH-061 to note TD-051 partial fix. Remaining: 1 deferred (BH-058), 1 low (BH-061), 2 accepted.

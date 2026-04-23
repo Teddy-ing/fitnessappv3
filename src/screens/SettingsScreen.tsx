@@ -75,17 +75,27 @@ export default function SettingsScreen() {
         getSettings().then(setSettings);
     }, []);
 
-    // Helper to update a setting optimistically
+    // Helper to update a setting optimistically (BH-055: with rollback on failure)
     const handleUpdate = useCallback(async (updates: Partial<UserSettings>) => {
+        // Snapshot current state for rollback
+        const previousSettings = settings;
         setSettings(prev => prev ? { ...prev, ...updates } : prev);
-        await updateSettings(updates);
 
-        // Invalidate the weight unit cache so all components
-        // using useWeightUnit() pick up the new value
-        if ('weightUnit' in updates) {
-            invalidateWeightUnitCache();
+        try {
+            await updateSettings(updates);
+
+            // Invalidate the weight unit cache so all components
+            // using useWeightUnit() pick up the new value
+            if ('weightUnit' in updates) {
+                invalidateWeightUnitCache();
+            }
+        } catch (error) {
+            console.error('[SettingsScreen] Failed to save setting:', error);
+            // Rollback to previous state
+            setSettings(previousSettings);
+            Alert.alert('Error', 'Failed to save setting. Please try again.');
         }
-    }, []);
+    }, [settings]);
 
     // ============================================================
     // Data Management Handlers

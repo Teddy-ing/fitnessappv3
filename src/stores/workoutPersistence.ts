@@ -11,6 +11,7 @@
  */
 
 import { File, Paths } from 'expo-file-system';
+import { type Workout } from '../models/workout';
 
 // ============================================================
 // Constants
@@ -30,7 +31,7 @@ function getFile(): File {
 
 /** The subset of workout store state that gets persisted */
 export interface PersistedWorkoutState {
-    activeWorkout: unknown; // Serialized Workout (Dates → ISO strings)
+    activeWorkout: Workout | null;
     isEditMode: boolean;
     originalDuration: number | null;
     originalCompletedAt: string | null; // ISO string
@@ -87,7 +88,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
  * Call this on every store mutation.
  */
 export function persistWorkoutState(state: {
-    activeWorkout: unknown;
+    activeWorkout: Workout | null;
     isEditMode: boolean;
     originalDuration: number | null;
     originalCompletedAt: Date | null;
@@ -125,7 +126,7 @@ export function persistWorkoutState(state: {
  * Returns null if no persisted state exists or if parsing fails.
  */
 export async function loadPersistedWorkout(): Promise<{
-    activeWorkout: unknown;
+    activeWorkout: Workout;
     isEditMode: boolean;
     originalDuration: number | null;
     originalCompletedAt: Date | null;

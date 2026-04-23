@@ -19,7 +19,7 @@ import { colors, spacing, borderRadius, typography } from '../../theme';
 import { getExerciseSessionHistory } from '../../services/exerciseDetailsService';
 import { ExerciseSession } from '../../models/exerciseDetails';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
-import { convertWeight } from '../../utils/unitConversion';
+import { convertWeight, displayWeight } from '../../utils/unitConversion';
 
 const PAGE_SIZE = 20;
 
@@ -52,8 +52,8 @@ const SessionCard = React.memo(function SessionCard({ session, weightUnit }: { s
                     let detail = '';
 
                     if (set.weight != null && set.reps != null) {
-                        const displayWeight = Math.round(convertWeight(set.weight, weightUnit) * 10) / 10;
-                        detail = `${displayWeight} ${weightUnit} × ${set.reps}`;
+                        const weight = displayWeight(set.weight, weightUnit);
+                        detail = `${weight} ${weightUnit} × ${set.reps}`;
                     } else if (set.reps != null) {
                         detail = `${set.reps} reps`;
                     } else if (set.duration != null) {

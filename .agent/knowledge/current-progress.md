@@ -160,6 +160,56 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Session Log
 
+### 2026-04-18: Dropped Keystroke Fix (PP-074)
+
+**Duration:** ~1 hr
+**Focus:** Diagnosing and fixing user-reported dropped keystrokes on the custom numeric keyboard.
+
+**Root cause:** Every keystroke triggered a full FlatList re-render cascade — `updateSet` → new `activeWorkout` → WorkoutScreen re-renders → `useWorkoutKeyboard` creates new `handleFocusField` → inline `renderItem` creates new closure → unmemoized `RenderableExerciseItem` re-renders ALL cards → ExerciseCard memo busted by new focusField ref. On mid-range devices, the JS thread was blocked 20-40ms per keystroke, silently dropping touch events.
+
+**Fix applied (3 files):**
+- **`useWorkoutKeyboard.ts`** — Ref-sync pattern: all callbacks use `useCallback` + `useRef` to produce stable function references. Extracted `getFieldValue` and `buildUpdate` as pure module-level functions.
+- **`RenderableExerciseItem.tsx`** — Wrapped in `React.memo`. Non-modified exercise cards now skip re-render during typing.
+- **`WorkoutScreen.tsx`** — Extracted `renderItem` to `useCallback` so FlatList sees a stable function reference.
+
+**Also completed (Tier 3 cleanup):**
+- **TD-043** — Removed dead `warmup`/`cooldown` fields from Workout model, factory, and hydration.
+- **TD-051** — Replaced `unknown` → `Workout | null` in workoutPersistence.ts.
+- **Baseline triage** — Formally accepted/deferred all remaining items across all 3 baselines.
+
+**Files changed:** `useWorkoutKeyboard.ts`, `RenderableExerciseItem.tsx`, `WorkoutScreen.tsx`, `workout.ts`, `hydration.ts`, `workoutPersistence.ts`
+
+**Verification:** TypeScript 0 errors. 30 keyboard tests pass. All 233 tests pass.
+
+### 2026-04-16: QA Quick Wins (Tier 1) + Tier 2 Fixes
+
+**Duration:** ~1 hr
+**Focus:** Resolving quick-win and medium-complexity issues from the unified QA triage.
+
+**Tier 1 (Quick Wins):**
+- **PP-076** — New v14 migration for missing index on `workout_exercises(exercise_id)`.
+- **PP-077** — Added `VACUUM` after all DELETEs in `clearAllData()`.
+- **BH-062** — `createWorkoutExercise` factory now accepts `warmupSets` param; WorkoutScreen passes user setting.
+- **PP-059/PP-060** — Moved to Accepted (confirmed negligible during triage).
+
+**Tier 2 (Medium Fixes):**
+- **BH-059** — `useRef(false)` double-tap guard on `handleFinishWorkout` per guardrail #14.
+- **PP-045** — Persistence subscriber shallow compare on 5 persistence-relevant fields.
+- **BH-051** — `refreshSettings()` extracted; WorkoutScreen calls on focus via `useIsFocused()`.
+- **BH-055** — Settings rollback on DB failure + user Alert.
+- **TD-040** — Restored 6 missing styles in ExercisePicker.tsx (botched by previous extraction). Fixed 6 TS errors. Now 468 lines.
+- **TD-041** — Extracted `SplitSchedulePreview.tsx` (142 lines) from SplitFormView. Parent now 474 lines.
+- **TD-043** — Removed dead `warmup`/`cooldown` fields from Workout model, factory, and hydration. Simplified `WorkoutSectionType` to `'main'`.
+- **TD-051** — Replaced `unknown` with `Workout | null` in `workoutPersistence.ts`. Compile-time protection for persistence types.
+
+**Baseline triage decisions:**
+- **Accepted:** TD-042 (denormalization is a feature), TD-044 (column-per-setting is standard), TD-045 (JSON blobs correct), BH-060 (snapshots cover it), BH-036 (theoretical), PP-074 (no jank, PP-045 was the fix)
+- **Deferred:** BH-058 (pre-launch), TD-046/TD-048 (pre-launch), TD-047/TD-049/PP-075 (Phase 6)
+
+**Files changed:** `database.ts`, `migrations.ts`, `workout.ts`, `hydration.ts`, `workoutPersistence.ts`, `WorkoutScreen.tsx`, `workoutStore.ts`, `useWorkoutSettings.ts`, `SettingsScreen.tsx`, `ExercisePicker.tsx`, `SplitFormView.tsx`, `SplitSchedulePreview.tsx` (new)
+
+**Verification:** TypeScript compiles with **zero errors**. All 233 tests pass.
+
 ### 2026-04-12/13: Settings Feature — Complete
 
 **Duration:** Multi-session

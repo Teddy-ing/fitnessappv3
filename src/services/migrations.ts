@@ -699,6 +699,22 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v14: Missing index on workout_exercises(exercise_id) — PP-076
+    // ----------------------------------------------------------
+    {
+        version: 14,
+        name: 'idx_workout_exercises_exercise_id',
+        up: async (db) => {
+            // PP-076: getPreviousSetsForExercise queries by exercise_id but
+            // the v1 schema only indexed workout_id. At 6000–8000 rows this
+            // degrades visibly.
+            await db.execAsync(
+                `CREATE INDEX IF NOT EXISTS idx_workout_exercises_exercise_id ON workout_exercises(exercise_id);`,
+            );
+        },
+    },
 ];
 
 // ============================================================

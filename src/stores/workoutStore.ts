@@ -640,12 +640,38 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 export default useWorkoutStore;
 
 // ============================================================
-// Persistence subscriber (TD-021)
-// Debounced write to disk on every state change that touches
-// activeWorkout or edit-mode fields.
+// Persistence subscriber (TD-021, PP-045)
+// Only fires when persistence-relevant fields change.
+// Previous implementation used bare subscribe() which fired on
+// every state mutation (including lastCompletedSet, collapsedExercises,
+// previousSets), running JSON.stringify on the entire workout tree
+// even when nothing persistence-relevant changed.
 // ============================================================
 
+let _prevActiveWorkout: unknown = undefined;
+let _prevIsEditMode: boolean | undefined = undefined;
+let _prevOriginalDuration: number | null | undefined = undefined;
+let _prevOriginalCompletedAt: Date | null | undefined = undefined;
+let _prevOriginalStartedAt: Date | null | undefined = undefined;
+
 useWorkoutStore.subscribe((state) => {
+    // Skip if no persistence-relevant fields changed (reference equality)
+    if (
+        state.activeWorkout === _prevActiveWorkout &&
+        state.isEditMode === _prevIsEditMode &&
+        state.originalDuration === _prevOriginalDuration &&
+        state.originalCompletedAt === _prevOriginalCompletedAt &&
+        state.originalStartedAt === _prevOriginalStartedAt
+    ) {
+        return;
+    }
+
+    _prevActiveWorkout = state.activeWorkout;
+    _prevIsEditMode = state.isEditMode;
+    _prevOriginalDuration = state.originalDuration;
+    _prevOriginalCompletedAt = state.originalCompletedAt;
+    _prevOriginalStartedAt = state.originalStartedAt;
+
     persistWorkoutState({
         activeWorkout: state.activeWorkout,
         isEditMode: state.isEditMode,

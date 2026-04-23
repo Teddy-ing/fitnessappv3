@@ -20,7 +20,7 @@ import { WorkoutSet, SetType } from '../models/workout';
 import { PreviousSetData } from '../models/workout';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { getWeightUnitSync } from '../hooks/useWeightUnit';
-import { convertWeight } from '../utils/unitConversion';
+import { convertWeight, displayWeight } from '../utils/unitConversion';
 import SetTypeMenu from './SetTypeMenu';
 import RpeSelector from './RpeSelector';
 import RirSelector from './RirSelector';
@@ -166,7 +166,7 @@ function SetRowInner({
         }
         const parts: string[] = [];
         if (previousData.weight !== null) {
-            const display = Math.round(convertWeight(previousData.weight, weightUnit) * 10) / 10;
+            const display = displayWeight(previousData.weight, weightUnit);
             parts.push(String(display));
         }
         if (previousData.reps !== null) parts.push(String(previousData.reps));
@@ -262,7 +262,7 @@ function SetRowInner({
                                 { opacity: textOpacity },
                             ]}>
                                 {set.weight != null
-                                    ? String(Math.round(convertWeight(set.weight, weightUnit) * 10) / 10)
+                                    ? String(displayWeight(set.weight, weightUnit))
                                     : '—'}
                             </Text>
                         </View>

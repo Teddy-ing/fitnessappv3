@@ -27,11 +27,17 @@ async function loadWeightUnit(): Promise<string> {
     if (cachedUnit) return cachedUnit;
     if (cachePromise) return cachePromise;
 
-    cachePromise = getSettings().then((s) => {
-        cachedUnit = s.weightUnit;
-        cachePromise = null;
-        return cachedUnit;
-    });
+    cachePromise = getSettings()
+        .then((s) => {
+            cachedUnit = s.weightUnit;
+            cachePromise = null;
+            return cachedUnit;
+        })
+        .catch((err) => {
+            console.warn('[useWeightUnit] Failed to load settings:', err);
+            cachePromise = null; // Reset so next call retries
+            return 'lbs'; // Fallback to default
+        });
 
     return cachePromise;
 }

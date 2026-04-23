@@ -34,6 +34,16 @@ export function convertWeight(value: number, displayUnit: string): number {
 }
 
 /**
+ * Convert a weight from canonical storage (lbs) to display unit and round
+ * to 1 decimal place. Use this everywhere a weight is shown to the user.
+ *
+ * Equivalent to: Math.round(convertWeight(value, unit) * 10) / 10
+ */
+export function displayWeight(value: number, displayUnit: string): number {
+    return Math.round(convertWeight(value, displayUnit) * 10) / 10;
+}
+
+/**
  * Convert a weight value from the display unit to the canonical storage unit (lbs).
  * This is the inverse of convertWeight — used at the input boundary (keyboard).
  * If displayUnit is 'lbs', returns the value unchanged.

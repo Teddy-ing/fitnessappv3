@@ -6,10 +6,12 @@ description: Tracking document for performance regression findings from Performa
 
 ## Summary
 
-- **Last full pass:** 2026-04-11 (Exercise Details Master Guide — 14 files)
-- **Open issues:** 1 (0 confirmed, 1 likely carried over from 2026-03-30)
-- **Fixed this session:** 4
-- **Negligible / Won't Fix:** 22
+- **Last full pass:** 2026-04-13 (Settings Revamp — 20 files)
+- **Last scoped pass:** 2026-04-13 (Staff Engineer Scalability Audit — full codebase)
+- **Open issues:** 1 (0 confirmed, 0 likely, 1 latent)
+- **Fixed this session:** 3 (PP-045 selector, PP-076 index, PP-077 VACUUM)
+- **Accepted / Won't Fix:** 38
+- **Deferred:** 1 (PP-075 → Phase 6)
 
 ---
 
@@ -21,11 +23,39 @@ description: Tracking document for performance regression findings from Performa
 
 ### Likely Impact
 
-| ID | Area | File | Issue | Fix |
-|----|------|------|-------|-----|
-| PP-045 | Store subscription | `workoutStore.ts:641` | `useWorkoutStore.subscribe()` fires on every state change (incl. `lastCompletedSet`, `collapsedExercises`, `previousSets`), not just persistence-relevant fields. | Add shallow-compare guard or `subscribeWithSelector` middleware. |
+*All likely-impact issues resolved.*
+
+### Latent
+
+| ID | Area | File | Issue | Status |
+|----|------|------|-------|--------|
+| PP-078 | Startup overhead | `services/index.ts` | Barrel re-exports 80+ symbols from 22 service files. Metro doesn't tree-shake barrel files effectively. | Latent. Profile if startup >100ms on low-end devices. |
+
+### Accepted
+
+*No performance issues currently accepted.*
+
+### Deferred
+
+| ID | Area | Issue | Deferred To |
+|----|------|-------|-------------|
+| PP-075 | N+1 query pattern | `getPreviousSetsForExercises` fires N parallel queries | Phase 6 Import. <100ms on startup with 3-8 exercises. Not user-visible. Import will force batch query patterns anyway. |
 
 ---
+
+## Resolved (Session: 2026-04-18 — Dropped Keystroke Fix)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|--------------|
+| PP-074 | Render cascade on keystroke | `useWorkoutKeyboard.ts`, `RenderableExerciseItem.tsx`, `WorkoutScreen.tsx` | Root cause: every keystroke triggered full FlatList re-render (unmemoized RenderableExerciseItem, inline renderItem, unstable handleFocusField). Fix: (1) ref-sync pattern on all keyboard callbacks for stable references, (2) React.memo on RenderableExerciseItem, (3) extracted renderItem to useCallback. Result: only the single modified exercise card re-renders during typing instead of all cards. 30 keyboard tests pass. |
+
+## Resolved (Session: 2026-04-16 — QA Quick Wins)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|--------------|
+| PP-045 | Store subscription | `workoutStore.ts:648` | Added manual shallow comparison of the 5 persistence-relevant fields (`activeWorkout`, `isEditMode`, `originalDuration`, `originalCompletedAt`, `originalStartedAt`) before calling `persistWorkoutState`. Changes to ephemeral fields (`lastCompletedSet`, `collapsedExercises`, `previousSets`) no longer trigger JSON.stringify. |
+| PP-076 | Missing index | `migrations.ts` (v14) | Added `CREATE INDEX IF NOT EXISTS idx_workout_exercises_exercise_id ON workout_exercises(exercise_id)` via new v14 migration. Fixes full table scan in `getPreviousSetsForExercise`. |
+| PP-077 | Storage bloat | `database.ts:clearAllData` | Added `await database.execAsync('VACUUM;')` after all DELETE operations. Reclaims freed SQLite pages so DB file doesn't grow monotonically on clear-import cycles. |
 
 ## Resolved (Session: 2026-04-11 — Exercise Details Master Guide)
 
@@ -149,6 +179,36 @@ description: Tracking document for performance regression findings from Performa
 
 **PP-058** — `formatEquipment`/`formatNoteDate` string transforms called in `AboutTab.tsx` render path. ~2–3 equipment items, ~5 notes. Sub-microsecond ops.
 
+**PP-061** — `convertWeight()` in `MacroAnalyticsView.tsx` — already inside `useMemo([data, metric, timeBucket, weightUnit])`. Correctly memoized.
+
+**PP-062** — `convertWeight()` in `RecordsTab.tsx` render path. Max 12 rows. Same as PP-029/PP-056 (accepted).
+
+**PP-063** — `convertWeight()` in `HistoryTab.tsx` `SessionCard`. Inside `React.memo` + `FlatList` + `useCallback`. Virtualized. Clean.
+
+**PP-064** — `convertWeight()` in `DailyWorkoutModal.tsx`. Modal, not hot path. ~120 conversions max on open. Same as PP-022.
+
+**PP-065** — Inline IIFE `(() => {...})()` for volume formatting in `HistoryTab.tsx:83-88`. Inside `React.memo` boundary. Acceptable.
+
+**PP-066** — `Dimensions.get('window')` at module level in `WorkoutKeyboard.tsx`. Same as PP-013/PP-046, portrait-locked.
+
+**PP-067** — 12 `useState` hooks in `useWorkoutSettings.ts`. Loaded via single `.then()` callback. React batches. Guardrail #4 addressed by hook extraction.
+
+**PP-068** — `getSettings()` called on mount in 2-3 hooks. Single-row `SELECT * WHERE id = 1`, <1ms. Not measurable.
+
+**PP-069** — `useWeightUnit` module-level subscriber pattern. Clean — proper cleanup, promise dedup. No leaks.
+
+**PP-070** — `formatTimerDuration()` in `WorkoutSettingsMenu.tsx` render. Single integer op. Not a hot path.
+
+**PP-071** — Inline arrow in `RestTimer.tsx` `useEffect`. Fires once per set completion. Timestamp guard prevents re-entry.
+
+**PP-072** — `SettingToggleRow` / `SettingNavigationRow` not `React.memo`. Only used in Settings screen — not a list or hot path.
+
+**PP-073** — `preferencesService.getSettings()` builds full object each call. Single-row read, <1ms. `useWeightUnit` caches the hot-path field.
+
+**PP-059** — `convertWeight()` in `SetRow.tsx` render path. Sub-microsecond per call. Inside `React.memo`. Confirmed negligible during 2026-04-16 triage.
+
+**PP-060** — Inline arrow props in `SettingsScreen.tsx`. Settings renders ~once. Confirmed negligible during 2026-04-16 triage.
+
 ---
 
 ## Historical Performance Issues
@@ -163,5 +223,5 @@ description: Tracking document for performance regression findings from Performa
 ---
 
 ## Last Updated
-- Date: 2026-04-11
-- Session Context: Performance Profiler pass on Exercise Details Master Guide feature. 14 files reviewed. 2 confirmed regressions (PP-050–PP-051) + 2 likely (PP-052–PP-053) found and fixed. 5 negligible (PP-054–PP-058). TypeScript 0 errors.
+- Date: 2026-04-18
+- Session Context: Resolved PP-074 — user-reported dropped keystrokes traced to unmemoized render cascade. Fixed with ref-sync callbacks + React.memo on FlatList items.

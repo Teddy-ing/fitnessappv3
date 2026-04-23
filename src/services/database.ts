@@ -128,6 +128,10 @@ export async function clearAllData(): Promise<void> {
         // Re-seed the single settings row with defaults
         await database.execAsync(`INSERT OR IGNORE INTO user_settings (id) VALUES (1);`);
 
+        // PP-077: Reclaim freed pages so the DB file doesn't grow monotonically
+        // after repeated clear-import cycles.
+        await database.execAsync(`VACUUM;`);
+
         // Clear persisted in-progress workout file (TD-021)
         try {
             const { clearPersistedWorkout } = await import('../stores/workoutPersistence');

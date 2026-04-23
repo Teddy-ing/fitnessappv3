@@ -88,7 +88,25 @@ These rules are enforced to prevent the specific categories of tech debt that ha
     Every migration that creates a new table must also add a corresponding `DELETE FROM <table>` line in `database.ts → clearAllData()`. Without this, "clear all data" leaves orphaned rows that corrupt imports and dev testing. Add a comment in `clearAllData()` referencing the migration version for each table.
 
 12. **`updateX()` must use UPDATE, not delete-then-reinsert**
-    Update functions must use SQL `UPDATE` statements on the existing rows. The pattern of deleting a parent + all children and re-inserting them is fragile: any table with a foreign key reference that isn't `ON DELETE CASCADE` will silently orphan data. If a complex update is truly needed (e.g., replacing all child rows), use `DELETE` only on the children being replaced, and `UPDATE` the parent row in-place.
+     Update functions must use SQL `UPDATE` statements on the existing rows. The pattern of deleting a parent + all children and re-inserting them is fragile: any table with a foreign key reference that isn't `ON DELETE CASCADE` will silently orphan data. If a complex update is truly needed (e.g., replacing all child rows), use `DELETE` only on the children being replaced, and `UPDATE` the parent row in-place.
+
+13. **Batch data operations must use batch queries, not loops**
+     When operating on multiple entities (e.g., loading previous sets for N exercises, inserting N imported workouts), write a single query that handles all entities at once — do not call a single-entity function in a loop or `Promise.all`. SQLite is single-writer; parallel queries serialize internally and multiply overhead.
+     
+     *Bad:* `exerciseIds.map(id => getPreviousSetsForExercise(id))` — N queries.
+     *Good:* A single query with `WHERE exercise_id IN (...)` grouped by exercise, or a CTE that handles the batch. Use `batchGetAll()` from `src/utils/batchQuery.ts` for reads.
+     
+     *Rationale:* Phase 6 (Import) and Phase 7 (ML) will involve bulk operations on hundreds of entities. The N+1 pattern that's tolerable for 5 exercises becomes a multi-second hang at 50.
+
+14. **Destructive async actions must guard against concurrent invocation**
+     Any button that triggers a non-idempotent async operation (save, finish, import, export, delete-all) must be protected against double-taps. Use one of:
+     - A `useRef(false)` flag set synchronously before the first `await`, cleared in `finally`
+     - A loading state that disables the button
+     
+     *Bad:* `onPress={handleFinishWorkout}` where `handleFinishWorkout` is a bare async function.
+     *Good:* `const saving = useRef(false); if (saving.current) return; saving.current = true; try { ... } finally { saving.current = false; }`
+     
+     *Rationale:* `handleFinishWorkout` chains 6+ async operations with no debounce. A double-tap races two save operations. Phase 6 (Import) will have the same pattern with even higher stakes.
 
 ### Git Practices
 - Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
@@ -164,5 +182,5 @@ src/
 ---
 
 ## Last Updated
-- Date: 2026-03-24
-- Session Context: Added guardrails 8–12 from staff engineer code audit — batch IN() chunking, service-store decoupling, shared SQL formulas, clearAllData coverage, and UPDATE-not-delete patterns
+- Date: 2026-04-13
+- Session Context: Added guardrails 13–14 from staff engineer scalability audit — batch queries over loops (prevents N+1 in Import/ML phases), concurrent invocation guards (prevents double-tap race conditions on finish/import/export)

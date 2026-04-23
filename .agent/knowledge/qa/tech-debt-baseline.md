@@ -7,25 +7,114 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Last scoped pass:** 2026-04-12 (Exercise Details "Master Guide" — 8 files)
-- **Open issues:** 0 (Active: 0, Latent: 0)
-- **Fixed since baseline:** 35
+- **Last scoped pass:** 2026-04-13 (Staff Engineer Scalability Audit — full codebase)
+- **Open issues:** 4 (Active: 0, Latent: 4, Accepted: 4)
+- **Fixed since baseline:** 41
 
 ---
 
 ## Open Issues — Active Debt
 
-*No active debt issues.*
+*All active debt resolved.*
 
 ---
 
-## Open Issues
+## Open Issues — Latent Debt
 
-*No open tech debt issues. All items resolved as of 2026-03-30.*
+These are foundational architectural decisions from Jan–Mar 2026 that predate the guardrail system. They are not regressions caused by recent code — the guardrails have been working. These are documented for awareness during future phases (Import/Export, ML, Chatbot).
+
+### TD-046 · Date serialization inconsistency across codebase
+- **Category:** Data integrity
+- **Files:** `workoutService.ts`, `workoutPersistence.ts`
+- **Description:** Two different date strategies: `toLocalISOString()` in `workoutService.ts` (local, no timezone designator) and `dateReplacer`/`dateReviver` in `workoutPersistence.ts` (uses `.toISOString()` with UTC `Z` suffix).
+- **Impact:** Potential date shift on DST transitions for workouts completed near midnight.
+- **Deferred to:** Pre-launch polish. Fix is simple but verification is hard (mixed DB of old local strings + new UTC strings). Zero user reports. Rare edge case.
+
+### TD-047 · No SQLite write concurrency protection
+- **Category:** Data integrity
+- **File:** `database.ts`
+- **Description:** Multiple async UI interactions can fire `db.runAsync` concurrently. WAL mode helps reads but concurrent writes can produce lock contention.
+- **Impact:** Theoretical on single-user mobile app. Would materialize with background syncing or import.
+- **Deferred to:** Phase 6 (Import/Export). Import will need a write queue or mutex for bulk inserts — solve it then with the concrete use case.
+
+### TD-048 · `console.log/warn/error` is the entire observability strategy
+- **Category:** Operational readiness
+- **Files:** 35+ files throughout `src/`
+- **Description:** No structured logging, no crash reporting (Sentry, Bugsnag). Zero visibility into production errors.
+- **Impact:** Cannot diagnose user-reported issues.
+- **Deferred to:** Pre-launch. Adding Sentry now creates noise during development without benefit. Do when preparing for real users.
+
+### TD-049 · Test coverage concentrated in 4 services, zero on most critical paths
+- **Category:** Test distribution
+- **Files:** Zero tests for `workoutService`, `templateService`, `splitService`, `preferencesService`, `exerciseService`, hydration, persistence.
+- **Description:** The workout save/update/load codepath has zero automated test coverage.
+- **Impact:** Refactoring the workout flow requires high manual QA effort.
+- **Deferred to:** Before Phase 6 Import refactors the save/load path. ~4–6 hours for meaningful coverage.
+
+---
+
+## Accepted / Won’t Fix
+
+### TD-042 · Exercise data denormalized into every workout and template row — **ACCEPTED 2026-04-17**
+- **Category:** Schema architecture
+- **Rationale:** The denormalization is a feature, not a bug. Exercise snapshots preserve historical accuracy — if a user did "Bench Press" with barbell at 185 lbs, that’s what happened, even if they later rename the exercise. Normalizing would retroactively rewrite workout history, which is worse for users. The ~360KB storage waste is negligible on any modern phone. Import/Export can reconcile by name + category + muscle groups if needed.
+
+### TD-044 · Single-row `user_settings` table with 25+ columns — **ACCEPTED 2026-04-17**
+- **Category:** Schema scalability
+- **Rationale:** Column-per-setting is the standard approach for SQLite mobile apps. SQLite handles wide rows fine. Migration cost per new setting is ~3 lines of SQL. Refactoring to key-value would lose type safety and gain nothing practical.
+
+### TD-045 · JSON blobs (`widget_config`, `visible_measurements`) in settings row — **ACCEPTED 2026-04-17**
+- **Category:** Schema normalization
+- **Rationale:** Both blobs store data that’s always read/written as a complete unit. Normalizing to relational tables only helps if you need to query individual items with SQL — you never will. This is a textbook case of denormalization being the correct choice.
+
+### TD-050 · No migration downgrade path — **ACCEPTED 2026-04-13**
+- **Category:** Migration strategy
+- **Rationale:** Fix-forward is industry standard for SQLite mobile. Downgrade would require maintaining reverse migrations for every version, which is impractical.
 
 ---
 
 ## Resolved
+
+### ~~TD-043~~ · Dead `warmup`/`cooldown` fields on Workout model — **RESOLVED 2026-04-17**
+
+- **Category:** Model bloat
+- **Original:** `warmup: WorkoutSection | null` and `cooldown: WorkoutSection | null` on every Workout object, always `null`.
+- **Fix applied:** Removed both fields from the `Workout` interface, `createWorkout()` factory, and `mapWorkoutRow()` hydration. Simplified `WorkoutSectionType` to just `'main'`.
+- **Result:** Every Zustand mutation, persistence write, and DB hydration now clones/serializes 2 fewer fields. Model is cleaner.
+
+### ~~TD-051~~ · `workoutPersistence.ts` uses `unknown` for persisted workout state — **RESOLVED 2026-04-17**
+
+- **Category:** Type safety
+- **Original:** `activeWorkout: unknown` in `PersistedWorkoutState`, `persistWorkoutState`, and `loadPersistedWorkout`.
+- **Fix applied:** Replaced `unknown` with `Workout | null` (or `Workout` for the load return type). Added `import { type Workout }` from models.
+- **Result:** Compile-time protection — if the Workout type changes, the persistence layer will surface type errors instead of silently mismatching.
+
+### ~~TD-040~~ · `ExercisePicker.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-04-16**
+
+- **Guardrail:** #1 (Component size limit)
+- **Original:** 619 lines (3% over limit)
+- **Fix applied:** Previous agent had extracted `ExercisePickerItem.tsx` (163 lines) but left 6 broken style references (`listContent`, `emptyState`, `emptyText`, `emptySubtext`, `createExerciseButton`, `createExerciseButtonText`) — styles removed from StyleSheet but still used in JSX. Restored missing styles. Also fixed 6 pre-existing TypeScript errors.
+- **Result:** `ExercisePicker.tsx` at 468 lines. `ExercisePickerItem.tsx` at 155 lines. **Zero TS errors.**
+
+### ~~TD-041~~ · `SplitFormView.tsx` at 605 lines — just over 600-line guardrail — **RESOLVED 2026-04-16**
+
+- **Guardrail:** #1 (Component size limit)
+- **Original:** 606 lines (1% over limit)
+- **Fix applied:** Extracted `SplitSchedulePreview.tsx` — the rest day button + schedule preview section with its 11 associated styles. Component wrapped in `React.memo`.
+- **Result:** `SplitFormView.tsx` at 474 lines. `SplitSchedulePreview.tsx` at 142 lines.
+
+### ~~TD-039~~ · `displayWeight` rounding pattern repeated 7 times — **RESOLVED 2026-04-13**
+
+- **Category:** DRY violation / drift risk
+- **Fix applied:** Created `displayWeight(value, displayUnit)` in `src/utils/unitConversion.ts` that combines `convertWeight` + `Math.round(... * 10) / 10`. Replaced all 7 inline patterns across 5 files (`SetRow.tsx`, `MacroAnalyticsView.tsx`, `RecordsTab.tsx`, `DailyWorkoutModal.tsx`, `HistoryTab.tsx`).
+- **Result:** Single source of truth for weight display formatting. Future rounding strategy changes (e.g., per-unit decimal places) require editing one function.
+
+### ~~TD-038~~ · `WorkoutScreen.tsx` exceeds 600-line component guardrail (again) — **RESOLVED 2026-04-13**
+
+- **Guardrail:** #1 (Component size limit)
+- **Original:** 710 lines (18% over limit)
+- **Fix applied:** Extracted live-apply logic (`handleChangeDefaultSetsLive`, `handleChangeWarmupSetsLive`, `isExerciseUnstarted`) into the existing `useWorkoutSettings` hook. The hook now imports `useWorkoutStore` and `createSet` directly, exports the live-apply callbacks as `handleChangeWarmupSets`/`handleChangeDefaultSets`.
+- **Result:** `WorkoutScreen.tsx` reduced to 617 lines. `useWorkoutSettings.ts` grew from 121 to 217 lines (both well under 600).
 
 ### ~~TD-037~~ · Chart sub-components duplicated between ChartsTab and dead ExerciseAnalyticsScreen — **RESOLVED 2026-04-12**
 
@@ -301,6 +390,13 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 - **What:** `generateMockTimeSeries()` and `getWebMockData()` are included in the production bundle, gated behind `Platform.OS === 'web'`.
 - **Why accepted:** Web is development-only (no production web target). Mock data enables chart debugging via browser DevTools, which was critical for fixing x-axis alignment issues. Code is cleanly separated and clearly documented. When tree-shaking is needed for a production web build, this can be extracted to `__mocks__/`.
 
+### TD-050 · Migration system has no downgrade path
+
+- **Category:** Schema management
+- **File:** [migrations.ts](file:///c:/Users/teddy/projects/workout-app/src/services/migrations.ts#L725-L770)
+- **Description:** Forward-only migrations. If a migration introduces data corruption, there's no rollback — requires a manual fix migration. Standard for SQLite mobile apps, but worth documenting.
+- **Why accepted:** Fix-forward is the standard pattern for SQLite mobile apps. No production users have been affected.
+
 ### TD-034 · `workoutStore.ts` borderline at 650 lines
 
 - **Guardrail:** #1 (Component size limit — 600)
@@ -333,18 +429,20 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 
 | # | Guardrail | Full-Project Status |
 |---|-----------|----------------------------|
-| 1 | Component size limit (600 lines) | ✅ `WorkoutScreen.tsx` at 603 lines (TD-030 resolved). `workoutStore.ts` at 650 (TD-034 accepted). All Exercise Details tabs under 452. |
-| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted — also in `ChartsTab.tsx`), `SaveTemplateModal` Alert buttons, navigation ref casts, and `ExerciseCard` cross-stack nav (BH-041). |
-| 3 | Database schema changes require versioned migrations | ✅ 12 versioned migrations. v11 (`exercise_notes` single-note) and v12 (`exercise_notes` multi-note with DROP+recreate) added correctly. |
-| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ All complex state correctly in hooks. Exercise Details tabs keep concerns separated (no single concern exceeds 3). |
-| 5 | Canonical types live in `src/models/` | ✅ All cross-boundary types in models. `ExerciseSession`/`ExerciseNote` in `models/exerciseDetails.ts` (TD-035 compliant). |
-| 6 | State reset on lifecycle boundaries | ✅ All Exercise Details tabs reset state in `useEffect([exerciseId])`. HistoryTab resets `sessions`, `hasMore`, `loadingMoreRef`. |
-| 7 | SafeAreaView edges must match tab bar visibility | ✅ `ExerciseDetailsScreen` uses `edges={['bottom']}` — correct (stack header handles top, tab bar hidden in Profile stack). |
-| 8 | Batch `IN (...)` queries chunked at 500 | ✅ `exerciseDetailsService.ts` chunks workout IDs at `BATCH_SIZE = 500`. All other IN() queries use shared `batchGetAll()`. |
-| 9 | Services must not reach into stores | ✅ `exerciseDetailsService` imports only `getDatabase`, models, and `expo-crypto`. Zero store imports. |
-| 10 | Shared formulas in one canonical location | ✅ SQL formulas in `sqlFragments.ts`. JS formulas in `formulas.ts` (`computeEpley1RM`, TD-035 resolved). JS formatters in `formatters.ts`. |
-| 11 | New tables registered in `clearAllData()` | ✅ `exercise_notes` table added to `clearAllData()` with v11 reference comment. |
-| 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ No update functions introduced in Exercise Details. `saveExerciseNote` uses INSERT, `deleteExerciseNote` uses DELETE by ID. |
+| 1 | Component size limit (600 lines) | ✅ `WorkoutScreen.tsx` at 617 lines (TD-038 resolved). `workoutStore.ts` at 656 (TD-034 accepted). `DailyWorkoutModal.tsx` at 604 (borderline, acceptable). All settings components well under limit (SettingsScreen 526, WorkoutSettingsMenu 482). |
+| 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted), `SaveTemplateModal` Alert buttons, navigation ref casts, and `ExerciseCard` cross-stack nav (BH-041). New settings code uses no `any`. |
+| 3 | Database schema changes require versioned migrations | ✅ 13 versioned migrations. v13 (`settings_expansion`) correctly adds 6 new columns with `columnExists` guards. All columns have sensible defaults. |
+| 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ `useWorkoutSettings` (12 `useState` → 1 hook call). `useWeightUnit` uses module-level cache + subscriber pattern for reactive updates. |
+| 5 | Canonical types live in `src/models/` | ✅ `UserSettings` in `models/preferences.ts`. Service re-exports for barrel consumers. New settings row/component types are service-internal only. |
+| 6 | State reset on lifecycle boundaries | ✅ `useWorkoutSettings` loads on mount (`useEffect([], ...)`). `useWeightUnit` subscriber pattern auto-updates on invalidation. |
+| 7 | SafeAreaView edges must match tab bar visibility | ✅ `SettingsScreen` uses `SafeAreaView edges={['bottom']}` — correct (Profile stack header handles top, tab bar hidden). |
+| 8 | Batch `IN (...)` queries chunked at 500 | ✅ No new batch queries in settings feature. Single-row `user_settings` table uses `WHERE id = 1`. |
+| 9 | Services must not reach into stores | ✅ `preferencesService` imports only `getDatabase`, `hydration`, and models. Zero store imports. `useWorkoutSettings` hook calls service directly. |
+| 10 | Shared formulas in one canonical location | ✅ Unit conversion centralized in `unitConversion.ts` (`convertWeight`, `toCanonicalWeight`, `displayWeight` TD-039 resolved). |
+| 11 | New tables registered in `clearAllData()` | ✅ No new tables in v13 (only columns added to existing `user_settings`). `user_settings` already cleared + re-seeded in `clearAllData()`. |
+| 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ `updateSettings()` uses proper `UPDATE ... SET ... WHERE id = 1` with dynamic column mapping. No delete-reinsert. |
+| 13 | Batch data operations must use batch queries, not loops | ⚠️ `getPreviousSetsForExercises` calls single-entity function in `Promise.all` loop (PP-075). All `IN(...)` reads correctly use `batchGetAll()`. |
+| 14 | Destructive async actions must guard against concurrent invocation | ❌ `handleFinishWorkout` has no double-tap protection (BH-059). No other destructive actions are guarded. |
 
 ---
 
@@ -367,7 +465,17 @@ Areas to monitor as the app approaches later roadmap phases:
 | Workout logging type ownership | ✅ Resolved (TD-031) — `PreviousSetData` in `src/models/workout.ts` | — |
 | Selector component duplication | ✅ Resolved (TD-032) — `NumericPillSelector` shared, RPE/RIR are thin wrappers | — |
 | `WorkoutScreen` component size | ✅ Resolved (TD-030) — 603 lines after extracting 4 modules | — |
-| `workoutStore` size | ⚠️ 650 lines (TD-034 accepted) — cohesive, monitor only | Phase 7 ML additions |
+| `workoutStore` size | ⚠️ 656 lines (TD-034 accepted) — cohesive, monitor only | Phase 7 ML additions |
+| `WorkoutScreen` size | ✅ Resolved (TD-038) — 617 lines after extracting live-apply to `useWorkoutSettings` | — |
+| `ExercisePicker` size | ❌ 619 lines (TD-040 active) — already over guardrail | Needs extraction now |
+| `SplitFormView` size | ⚠️ 605 lines (TD-041 active) — just over guardrail, mixed concerns | Next splits enhancement |
+| Exercise data denormalization | ⚠️ Latent (TD-042) — snapshots in every workout/template row | Phase 6 Import/Export |
+| Single-row settings pattern | ⚠️ Latent (TD-044) — 25+ columns, grows per feature | Cumulative — no hard break |
+| Date serialization consistency | ⚠️ Latent (TD-046) — 2 different strategies (`toLocalISOString` vs `.toISOString()`) | DST edge cases near midnight |
+| Crash reporting / observability | ❌ None (TD-048) — console.log only | Public launch |
+| Workout service test coverage | ❌ Zero (TD-049) — most critical path untested | Any refactor of save/load |
+| `displayWeight` rounding pattern | ✅ Resolved (TD-039) — `displayWeight()` in `unitConversion.ts`, 7 call sites updated | — |
+| `useWeightUnit` cache coherency | Module-level cache with subscriber pattern. Works for current single-settings-screen use case. | Multi-screen concurrent settings editing (unlikely) |
 | Bodyweight intent derivation | ✅ Resolved (TD-027) — shared `deriveBodyweightIntent` in `goalHelpers.ts` | — |
 | Service→store coupling | ✅ Resolved — `workoutService`/`measurementService` decoupled (BH-024) | — |
 | Chart label logic | ✅ Resolved (TD-002) — shared via `chartLabels.tsx` | — |
@@ -378,9 +486,10 @@ Areas to monitor as the app approaches later roadmap phases:
 | Type ownership | ✅ Resolved (TD-009) — all cross-boundary types in `src/models/` | — |
 | Dead code (`ExerciseAnalyticsScreen`) | ✅ Resolved (TD-036) — deleted 545-line dead screen | — |
 | Exercise Details component sizes | ✅ All tabs under 452 lines. Screen shell at 182. | — |
+| Settings component sizes | ✅ SettingsScreen 526, WorkoutSettingsMenu 482, all row components under 120. | — |
 
 ---
 
 ## Last Updated
-- Date: 2026-04-12
-- Session Context: Exercise Details ("Master Guide") tech debt audit — 8 files reviewed. TD-035 (Epley JS duplication → extracted to `formulas.ts`), TD-036 (dead `ExerciseAnalyticsScreen` → deleted), TD-037 (chart duplication → auto-resolved by TD-036). Guardrail #10 updated in conventions.md to cover JS formulas. 0 open issues.
+- Date: 2026-04-17
+- Session Context: QA Tier 2/3 — resolved TD-043 (dead warmup/cooldown fields) and TD-051 (unknown persistence type). Accepted TD-042 (denormalization is a feature), TD-044 (column-per-setting is standard), TD-045 (JSON blobs are the correct choice). Deferred TD-046/TD-047/TD-048/TD-049 with clear trigger points. Final tally: 4 latent (deferred), 4 accepted.

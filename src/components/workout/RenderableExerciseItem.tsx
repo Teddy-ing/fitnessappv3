@@ -46,7 +46,7 @@ interface RenderableExerciseItemProps {
     onToggleCollapse: (exerciseId: string) => void;
 }
 
-export default function RenderableExerciseItem({
+function RenderableExerciseItemInner({
     item,
     totalExercises,
     focusState,
@@ -137,3 +137,5 @@ export default function RenderableExerciseItem({
         </ErrorBoundary>
     );
 }
+
+export default React.memo(RenderableExerciseItemInner);

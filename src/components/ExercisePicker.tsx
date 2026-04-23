@@ -20,7 +20,6 @@ import {
     FlatList,
     StyleSheet,
     Alert,
-    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Exercise, MuscleGroup, ExerciseCategory } from '../models/exercise';
@@ -28,6 +27,7 @@ import { INDIVIDUAL_MUSCLE_FILTERS } from '../models/muscleGroups';
 import { getExercises, toggleExerciseFavorite, toggleExerciseHidden } from '../services';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import AddExerciseScreen from '../screens/AddExerciseScreen';
+import ExercisePickerItem from './ExercisePickerItem';
 
 interface ExercisePickerProps {
     visible: boolean;
@@ -42,8 +42,7 @@ type CategoryTab = 'all' | ExerciseCategory;
 // Track if user has hidden an exercise during this session
 let hasShownHideNotice = false;
 
-// Placeholder image for exercises
-const EXERCISE_PLACEHOLDER = require('../../assets/exercise-placeholder.png');
+
 
 const CATEGORY_TABS: { key: CategoryTab; label: string; icon: string }[] = [
     { key: 'all', label: 'All', icon: '🏋️' },
@@ -195,61 +194,23 @@ export default function ExercisePicker({
         Alert.alert(exercise.name, 'Choose an action', buttons);
     };
 
-    // Render exercise item
-    const renderExerciseItem = ({ item }: { item: Exercise }) => {
-        const primaryMuscle = item.muscleGroups.find(mg => mg.isPrimary)?.muscle ?? '';
-        const formattedMuscle = primaryMuscle.replace('_', ' ');
-        const equipment = item.equipment[0]?.replace('_', ' ') ?? '';
-        const isHiddenView = activeFilter === 'hidden';
+    // Handle unhide (from hidden tab)
+    const handleUnhide = useCallback(async (exercise: Exercise) => {
+        await toggleExerciseHidden(exercise.id);
+        loadExercises();
+    }, [loadExercises]);
 
-        return (
-            <TouchableOpacity
-                style={styles.exerciseItem}
-                onPress={() => isHiddenView ? null : handleSelect(item)}
-                onLongPress={() => handleLongPress(item)}
-                disabled={isHiddenView}
-            >
-                <Image
-                    source={item.imageUrl ? { uri: item.imageUrl } : EXERCISE_PLACEHOLDER}
-                    style={styles.exerciseImage}
-                    resizeMode="cover"
-                />
-                <View style={styles.exerciseInfo}>
-                    <View style={styles.exerciseNameRow}>
-                        <Text style={styles.exerciseName}>{item.name}</Text>
-                        {item.isCustom && <Text style={styles.customBadge}>Custom</Text>}
-                        {item.isHidden && <Text style={styles.hiddenBadge}>Hidden</Text>}
-                    </View>
-                    <Text style={styles.exerciseMeta}>
-                        {formattedMuscle} • {equipment}
-                    </Text>
-                </View>
-                {isHiddenView ? (
-                    <TouchableOpacity
-                        style={styles.unhideButton}
-                        onPress={async () => {
-                            await toggleExerciseHidden(item.id);
-                            loadExercises();
-                        }}
-                    >
-                        <Text style={styles.unhideButtonText}>Unhide</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <>
-                        <TouchableOpacity
-                            style={styles.starButton}
-                            onPress={() => handleToggleFavorite(item)}
-                        >
-                            <Text style={[styles.starIcon, item.isFavorite && styles.starIconActive]}>
-                                {item.isFavorite ? '★' : '☆'}
-                            </Text>
-                        </TouchableOpacity>
-                        <Text style={styles.addIcon}>+</Text>
-                    </>
-                )}
-            </TouchableOpacity>
-        );
-    };
+    // Render exercise item
+    const renderExerciseItem = useCallback(({ item }: { item: Exercise }) => (
+        <ExercisePickerItem
+            exercise={item}
+            isHiddenView={activeFilter === 'hidden'}
+            onSelect={handleSelect}
+            onToggleFavorite={handleToggleFavorite}
+            onLongPress={handleLongPress}
+            onUnhide={handleUnhide}
+        />
+    ), [activeFilter, handleSelect, handleToggleFavorite, handleLongPress, handleUnhide]);
 
     return (
         <Modal
@@ -501,87 +462,6 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.semibold,
     },
 
-    // List
-    listContent: {
-        padding: spacing.md,
-    },
-    exerciseItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.md,
-        padding: spacing.md,
-        marginBottom: spacing.sm,
-    },
-    exerciseInfo: {
-        flex: 1,
-    },
-    exerciseNameRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: spacing.xs,
-    },
-    exerciseName: {
-        color: colors.text.primary,
-        fontSize: typography.size.md,
-        fontWeight: typography.weight.medium,
-    },
-    customBadge: {
-        color: colors.accent.primary,
-        fontSize: typography.size.xs,
-        marginLeft: spacing.sm,
-        backgroundColor: colors.accent.primary + '20',
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 2,
-        borderRadius: borderRadius.sm,
-    },
-    exerciseMeta: {
-        color: colors.text.secondary,
-        fontSize: typography.size.sm,
-    },
-    starButton: {
-        padding: spacing.sm,
-    },
-    starIcon: {
-        color: colors.text.secondary,
-        fontSize: 20,
-    },
-    starIconActive: {
-        color: colors.accent.warning,
-    },
-    addIcon: {
-        color: colors.accent.primary,
-        fontSize: typography.size.xxl,
-        fontWeight: typography.weight.bold,
-    },
-
-    // Empty state
-    emptyState: {
-        alignItems: 'center',
-        paddingVertical: spacing.xxl,
-    },
-    emptyText: {
-        color: colors.text.primary,
-        fontSize: typography.size.lg,
-        fontWeight: typography.weight.medium,
-        marginBottom: spacing.sm,
-    },
-    emptySubtext: {
-        color: colors.text.secondary,
-        fontSize: typography.size.md,
-        marginBottom: spacing.lg,
-    },
-    createExerciseButton: {
-        backgroundColor: colors.accent.primary,
-        paddingHorizontal: spacing.lg,
-        paddingVertical: spacing.md,
-        borderRadius: borderRadius.md,
-    },
-    createExerciseButtonText: {
-        color: colors.text.primary,
-        fontSize: typography.size.md,
-        fontWeight: typography.weight.medium,
-    },
     hint: {
         color: colors.text.disabled,
         fontSize: typography.size.xs,
@@ -589,31 +469,41 @@ const styles = StyleSheet.create({
         marginTop: spacing.md,
         marginBottom: spacing.xl,
     },
-    exerciseImage: {
-        width: 40,
-        height: 40,
-        borderRadius: borderRadius.sm,
-        marginRight: spacing.md,
-        backgroundColor: colors.background.tertiary,
-    },
-    hiddenBadge: {
-        color: colors.text.disabled,
-        fontSize: typography.size.xs,
-        marginLeft: spacing.sm,
-        backgroundColor: colors.background.tertiary,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 2,
-        borderRadius: borderRadius.sm,
-    },
-    unhideButton: {
-        backgroundColor: colors.accent.primary,
+
+    // Exercise list & empty state (referenced by FlatList in render)
+    listContent: {
         paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderRadius: borderRadius.md,
+        paddingTop: spacing.sm,
     },
-    unhideButtonText: {
-        color: colors.text.primary,
+    emptyState: {
+        alignItems: 'center',
+        paddingVertical: spacing.xxl,
+        paddingHorizontal: spacing.lg,
+    },
+    emptyText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.md,
+        fontWeight: typography.weight.medium,
+        marginBottom: spacing.sm,
+    },
+    emptySubtext: {
+        color: colors.text.disabled,
         fontSize: typography.size.sm,
+        textAlign: 'center',
+        marginBottom: spacing.lg,
+    },
+    createExerciseButton: {
+        backgroundColor: colors.accent.primary + '20',
+        borderRadius: borderRadius.md,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.accent.primary + '40',
+        borderStyle: 'dashed',
+    },
+    createExerciseButtonText: {
+        color: colors.accent.primary,
+        fontSize: typography.size.md,
         fontWeight: typography.weight.medium,
     },
 });
