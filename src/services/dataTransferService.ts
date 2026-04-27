@@ -52,6 +52,8 @@ const EXPORT_TABLES = [
     'measurements',
     'progress_photos',
     'goals',
+    'exercise_notes',          // v11 — Exercise Details
+    // NOTE: cloud_backup_config deliberately excluded — it's device-specific
 ] as const;
 
 // ============================================================
@@ -59,14 +61,12 @@ const EXPORT_TABLES = [
 // ============================================================
 
 /**
- * Export all app data as a JSON file and open the share sheet.
- * The file is written to the app's cache directory and shared
- * via the system share sheet (save to files, send via email, etc).
+ * Generate the export payload JSON object from the database.
+ * Reused by both local export (share sheet) and cloud backup (Drive upload).
  *
- * @returns The file URI of the exported file
- * @throws If the database is unavailable or sharing fails
+ * @returns The export payload object
  */
-export async function exportAllData(): Promise<string> {
+export async function generateExportPayload(): Promise<ExportPayload> {
     const db = await getDatabase();
     if (!db) throw new Error('Database not available');
 
@@ -86,7 +86,7 @@ export async function exportAllData(): Promise<string> {
         tables[table] = rows;
     }
 
-    const payload: ExportPayload = {
+    return {
         meta: {
             appVersion: '0.1.0',
             schemaVersion,
@@ -95,6 +95,18 @@ export async function exportAllData(): Promise<string> {
         },
         tables,
     };
+}
+
+/**
+ * Export all app data as a JSON file and open the share sheet.
+ * The file is written to the app's cache directory and shared
+ * via the system share sheet (save to files, send via email, etc).
+ *
+ * @returns The file URI of the exported file
+ * @throws If the database is unavailable or sharing fails
+ */
+export async function exportAllData(): Promise<string> {
+    const payload = await generateExportPayload();
 
     // Write to cache directory using new expo-file-system API
     const dateStamp = formatISODate(new Date());

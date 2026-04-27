@@ -138,6 +138,7 @@ export {
 export {
     exportAllData,
     importAllData,
+    generateExportPayload,
 } from './dataTransferService';
 export {
     getExerciseNotes,
@@ -145,3 +146,19 @@ export {
     deleteExerciseNote,
     getExerciseSessionHistory,
 } from './exerciseDetailsService';
+export {
+    generateSpreadsheetExport,
+} from './exportService';
+export {
+    getImportSummary,
+    executeCompetitorImport,
+} from './competitorImportService';
+export {
+    connectGoogleDrive,
+    disconnectCloudProvider,
+    getCloudBackupConfig,
+    backupToCloud,
+    restoreFromCloud,
+    setAutoBackup,
+    triggerAutoBackupIfEnabled,
+} from './cloudBackupService';

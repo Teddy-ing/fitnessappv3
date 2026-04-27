@@ -43,6 +43,7 @@ import {
     getPreviousSetsForExercises,
     Template,
 } from '../services';
+import { triggerAutoBackupIfEnabled } from '../services/cloudBackupService';
 import { Workout } from '../models/workout';
 import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import WorkoutHomeView from './WorkoutHomeView';
@@ -275,6 +276,9 @@ export default function WorkoutScreen() {
 
                         await markWorkoutCompletedToday();
                         await loadData();
+
+                        // Fire-and-forget cloud backup (Option A: immediate)
+                        triggerAutoBackupIfEnabled();
 
                         const matchingTemplate = await findMatchingTemplate(workout);
                         if (matchingTemplate) {

@@ -43,11 +43,10 @@ Items to **strip out** entirely to reduce visual clutter:
 | ID | What | Where | Why |
 |----|------|-------|-----|
 | R-01 | Fragmented accent colors (orange/yellow active circles, green "Save" buttons) | `SetRow` styles, `ExerciseCard` | Clashing, inconsistent with theme palette |
-| R-02 | Persistent "+ Add Set" text link | `ExerciseCard.tsx:172-175` | Clutters every card; moves to `...` menu |
-| R-03 | Persistent pencil/notes icon under each exercise | `ExerciseCard` | Rarely used; moves to `...` menu |
-| R-04 | Massive solid dark-gray input rectangles | `SetRow` input styles | Blocky, takes too much space; replace with inline text |
-| R-05 | Standalone superset button at bottom of card | `ExerciseCard.tsx:176-182` | Redundant once `...` menu exists |
-| R-06 | Progress bar at bottom of each card | `ExerciseCard.tsx:186-200` | Redundant once auto-collapse shows completion state |
+| R-02 | Persistent pencil/notes icon under each exercise | `ExerciseCard` | Rarely used; moves to `...` menu |
+| R-03 | Massive solid dark-gray input rectangles | `SetRow` input styles | Blocky, takes too much space; replace with inline text |
+| R-04 | Standalone superset button at bottom of card | `ExerciseCard.tsx:176-182` | Redundant once `...` menu exists |
+| R-05 | Progress bar at bottom of each card | `ExerciseCard.tsx:186-200` | Redundant once auto-collapse shows completion state |
 
 ---
 

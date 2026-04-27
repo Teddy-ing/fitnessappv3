@@ -715,6 +715,26 @@ const MIGRATIONS: Migration[] = [
             );
         },
     },
+
+    // ----------------------------------------------------------
+    // v15: Cloud backup configuration table (Phase 6 groundwork)
+    // ----------------------------------------------------------
+    {
+        version: 15,
+        name: 'cloud_backup_config',
+        up: async (db) => {
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS cloud_backup_config (
+                    id INTEGER PRIMARY KEY DEFAULT 1,
+                    provider TEXT,
+                    account_identifier TEXT,
+                    auto_backup_enabled INTEGER DEFAULT 0,
+                    last_backup_at TEXT,
+                    last_backup_status TEXT DEFAULT 'none'
+                );
+            `);
+        },
+    },
 ];
 
 // ============================================================

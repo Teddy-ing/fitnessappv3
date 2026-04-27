@@ -42,3 +42,4 @@ yarn-error.*
 
 # Agent
 .agent/reference/
+setup-gcp.md

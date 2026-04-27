@@ -40,7 +40,7 @@ Focused review for performance regressions — the things that make the app feel
      - **🔴 Confirmed regression** — measurable or obvious (e.g., full-store subscription)
      - **🟡 Likely impact** — hard to measure but pattern is known-bad
      - **⚪ Negligible** — technically true but impact is trivial for this app's scale
-   - Add confirmed/likely issues to `performance-baseline.md`
+   - Add confirmed/likely issues to file `@performance-baseline.md` 
 
 4. **Fix confirmed regressions**
    - Common quick fixes:

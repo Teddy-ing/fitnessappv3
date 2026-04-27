@@ -34,6 +34,8 @@ import CalendarScreen from '../screens/CalendarScreen';
 import MeasurementsScreen from '../screens/MeasurementsScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import ExerciseMappingScreen from '../screens/ExerciseMappingScreen';
+import type { ExerciseMappingParams } from '../screens/ExerciseMappingScreen';
 
 // Wrap each screen in its own error boundary + swipe navigation
 // Tab order: Assistant (left) → Workout (center) → Profile (right)
@@ -83,6 +85,7 @@ export type ProfileStackParamList = {
     Measurements: { initialTab?: 'track' | 'trends' | 'gallery'; autoSelectTypeId?: string } | undefined;
     Goals: undefined;
     Settings: undefined;
+    ExerciseMapping: ExerciseMappingParams;
 };
 
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
@@ -194,6 +197,15 @@ function ProfileStackNavigator() {
                     component={SettingsScreenWithBoundary}
                     options={{
                         title: 'Settings',
+                    }}
+                />
+                <ProfileStack.Screen
+                    name="ExerciseMapping"
+                    component={ExerciseMappingScreen}
+                    options={{
+                        title: 'Import',
+                        presentation: 'fullScreenModal',
+                        headerShown: false,
                     }}
                 />
             </ProfileStack.Navigator>

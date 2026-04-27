@@ -6,9 +6,9 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Summary
 
-- **Phase:** Post-MVP Development — Settings Feature complete, canonical weight storage implemented
-- **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign + Exercise Details Master Guide + **Settings feature (with canonical unit storage)** all implemented.
-- **Next Milestone:** Import & Export (Phase 6), or next feature from roadmap
+- **Phase:** Post-MVP Development — Phase 6 Import, Export & Cloud Backup fully implemented
+- **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign + Exercise Details + Settings + **Import/Export + Cloud Backup (Google Drive)** all implemented.
+- **Next Milestone:** GCP setup for Cloud Backup testing, then Phase 7 ML
 
 ---
 
@@ -93,6 +93,12 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 *Nothing currently in progress.*
 
+### Phase 6: Cloud Backup — Blocked on GCP setup
+- Code complete: `cloudBackupService.ts`, `CloudBackupSection.tsx`, auto-backup hook in WorkoutScreen
+- **Blocked:** Requires Google Cloud project setup (OAuth client IDs)
+- Follow `.agent/workflows/setup-gcp.md` for setup instructions
+- After setup: replace placeholder client IDs → native rebuild → test
+
 ---
 
 ## Upcoming Roadmap
@@ -124,10 +130,11 @@ description: Living document tracking completed work, in-progress tasks, next st
 - RestTimer auto-start gating + configurable duration
 - Weight unit propagation across analytics, records, history, calendar
 
-### Phase 6: Import & Export
-- Export workout data (CSV, JSON, PDF)
-- Import from competitors (Hevy, Strong, Fitnotes CSV formats)
-- Backup/restore functionality
+### ~~Phase 6: Import & Export~~ ✅ COMPLETE (code)
+- ~~Export workout data (XLSX, JSON)~~ ✅ Phases 1–3
+- ~~Import from competitors (Hevy, Strong, FitNotes CSV formats)~~ ✅
+- ~~Cloud Backup (Google Drive)~~ ✅ Phase 4 code complete (blocked on GCP setup)
+- iCloud backup deferred
 
 ### Phase 7: ML & Personalization
 - On-device ML for rep/weight autocomplete
@@ -159,6 +166,90 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-04-26: Phase 6 Cloud Backup — Google Drive (Code Complete)
+
+**Duration:** Single session
+**Focus:** Google Drive cloud backup with auto-backup after workout save.
+
+**What was done:**
+
+- **Cloud Backup Service:**
+  - `cloudBackupService.ts` — Google Sign-In auth, Drive REST API (upload/download/find), auto-backup trigger
+  - Reuses `generateExportPayload()` (extracted from `dataTransferService.ts`) for the backup JSON
+  - `drive.appdata` scope for minimal permissions (hidden App Data folder only)
+  - Single backup file (`workout-backup-latest.json`), overwritten each time
+  - `triggerAutoBackupIfEnabled()` — fire-and-forget, non-blocking
+
+- **Cloud Backup UI:**
+  - `CloudBackupSection.tsx` — disconnected state (connect button) + connected state (auto-backup toggle, last backup time, backup now, restore, disconnect)
+  - Two-step destructive confirmation for cloud restore per PRD
+  - Failed backup warning indicator when `last_backup_status === 'failed'`
+
+- **Auto-Backup Integration:**
+  - `WorkoutScreen.tsx` — `triggerAutoBackupIfEnabled()` called after `saveWorkout()` + `markWorkoutCompletedToday()` (non-blocking)
+  - Only in normal save flow (not edit mode)
+
+- **Infrastructure:**
+  - Extracted `generateExportPayload()` from `dataTransferService.ts` for reuse
+  - Installed `@react-native-google-signin/google-signin`
+  - Updated `app.json` with Google Sign-In config plugin (placeholder client IDs)
+  - GCP setup guide: `.agent/workflows/setup-gcp.md`
+
+- **Decisions:**
+  - iCloud deferred (JSON payload too large for NSUbiquitousKeyValueStore)
+  - Option A: auto-backup fires immediately after save (no delay)
+
+**Files created:** 3 (cloudBackupService.ts, CloudBackupSection.tsx, setup-gcp.md)
+**Files modified:** dataTransferService.ts, SettingsScreen.tsx, WorkoutScreen.tsx, services/index.ts, app.json, package.json
+
+**Verification:** TypeScript 0 errors, all tests passing (calendarService streak test is pre-existing flaky)
+
+**Blocked:** GCP project setup required (follow `.agent/workflows/setup-gcp.md`)
+
+---
+
+### 2026-04-23: Phase 6 Import & Export — Phases 1–3 Complete
+
+**Duration:** Single session
+**Focus:** Spreadsheet export (.xlsx), competitor CSV import (Hevy, Strong, FitNotes), exercise fuzzy matching, and full import UI flow.
+
+**What was done:**
+
+- **Spreadsheet Export:**
+  - `exportService.ts` — 4-sheet .xlsx workbook (Workouts, Measurements, Goals, Personal Records) via SheetJS
+  - `ExportBottomSheet.tsx` — format picker (Spreadsheet vs App Backup) with concurrent invocation guard
+  - Respects user's weight unit setting for display values
+
+- **Competitor Import Parsers:**
+  - `importParsers/types.ts` — shared intermediate types (ParsedWorkout, ParsedExercise, ParsedSet, ParsedMeasurement, ExerciseMapping, ImportSummary)
+  - `hevyParser.ts` — Hevy CSV (custom date format, 0-indexed sets, L/R measurement column mapping)
+  - `strongParser.ts` — Strong CSV (semicolon delimiter, Rest Timer row filtering, kg→lbs conversion)
+  - `fitnotesParser.ts` — FitNotes CSV (date grouping, per-row weight unit, H:MM:SS time parsing)
+  - `exerciseMapper.ts` — 3-tier fuzzy matching (exact → substring → Levenshtein distance), equipment suffix stripping
+
+- **Import Service:**
+  - `competitorImportService.ts` — orchestrator with custom exercise creation, batch INSERT (chunked at 500), single transaction, additive-only
+  - Import summary generation for the confirmation screen
+
+- **Import UI Flow:**
+  - `ImportBottomSheet.tsx` — source selector (This App / Hevy / Strong / FitNotes) with document picker integration
+  - `ExerciseMappingScreen.tsx` — step-through mapping for unresolved exercises + integrated import summary view + execute button
+  - Option A: auto-matched exercises (≥80% confidence) skip mapping screen entirely
+  - Option C: L/R measurements imported separately to existing measurement types
+
+- **Infrastructure:**
+  - v15 migration: `cloud_backup_config` table (groundwork for Phase 4)
+  - Bug fix: `exercise_notes` added to `EXPORT_TABLES` (missing since v11)
+  - `clearAllData()` updated for new table per Guardrail #11
+  - Dependencies: `xlsx`, `papaparse`, `@types/papaparse`
+
+**Files created:** 11 new files (1 service, 3 parsers, 1 mapper, 1 types, 1 barrel, 2 bottom sheets, 1 screen, 1 import service)
+**Files modified:** migrations.ts, database.ts, dataTransferService.ts, SettingsScreen.tsx, AppNavigator.tsx, services/index.ts
+
+**Verification:** TypeScript 0 errors, 233/233 tests passing
+
+---
 
 ### 2026-04-18: Dropped Keystroke Fix (PP-074)
 

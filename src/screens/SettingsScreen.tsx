@@ -27,8 +27,12 @@ import Constants from 'expo-constants';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { getSettings, updateSettings } from '../services/preferencesService';
 import { clearAllData, generateMockData, exportAllData, importAllData } from '../services';
+import { generateSpreadsheetExport } from '../services/exportService';
 import { UserSettings } from '../models/preferences';
 import { SettingToggleRow, SettingSegmentedRow, SettingNavigationRow } from '../components/settings';
+import ExportBottomSheet from '../components/settings/ExportBottomSheet';
+import ImportBottomSheet from '../components/settings/ImportBottomSheet';
+import CloudBackupSection from '../components/settings/CloudBackupSection';
 import { invalidateWeightUnitCache } from '../hooks/useWeightUnit';
 
 // ============================================================
@@ -67,8 +71,8 @@ const THEME_OPTIONS = [
 export default function SettingsScreen() {
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
-    const [isImporting, setIsImporting] = useState(false);
+    const [showExportSheet, setShowExportSheet] = useState(false);
+    const [showImportSheet, setShowImportSheet] = useState(false);
 
     // Load settings on mount
     useEffect(() => {
@@ -101,19 +105,25 @@ export default function SettingsScreen() {
     // Data Management Handlers
     // ============================================================
 
-    const handleExportData = async () => {
+    const handleExportSpreadsheet = useCallback(async () => {
         try {
-            setIsExporting(true);
+            await generateSpreadsheetExport();
+        } catch (error) {
+            console.error('Spreadsheet export failed:', error);
+            Alert.alert('Export Failed', String(error instanceof Error ? error.message : error));
+        }
+    }, []);
+
+    const handleExportJSON = useCallback(async () => {
+        try {
             await exportAllData();
         } catch (error) {
-            console.error('Export failed:', error);
+            console.error('JSON export failed:', error);
             Alert.alert('Export Failed', String(error instanceof Error ? error.message : error));
-        } finally {
-            setIsExporting(false);
         }
-    };
+    }, []);
 
-    const handleImportData = () => {
+    const handleImportJSON = useCallback(() => {
         Alert.alert(
             'Import Data',
             'This will REPLACE all your current data with the imported backup. Your existing workouts, templates, and measurements will be deleted.\n\nThis cannot be undone!',
@@ -124,10 +134,8 @@ export default function SettingsScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            setIsImporting(true);
                             const success = await importAllData();
                             if (success) {
-                                // Reload settings after import
                                 const refreshed = await getSettings();
                                 setSettings(refreshed);
                                 Alert.alert(
@@ -141,14 +149,12 @@ export default function SettingsScreen() {
                                 'Import Failed',
                                 String(error instanceof Error ? error.message : error),
                             );
-                        } finally {
-                            setIsImporting(false);
                         }
                     },
                 },
             ],
         );
-    };
+    }, []);
 
     const handleClearAllData = () => {
         Alert.alert(
@@ -314,26 +320,20 @@ export default function SettingsScreen() {
                     <Text style={styles.sectionTitle}>DATA MANAGEMENT</Text>
 
                     <SettingNavigationRow
-                        icon={isExporting ? 'hourglass-top' : 'upload'}
-                        label={isExporting ? 'Exporting...' : 'Export Data'}
-                        onPress={handleExportData}
+                        icon="upload"
+                        label="Export Data"
+                        onPress={() => setShowExportSheet(true)}
                     />
 
                     <SettingNavigationRow
-                        icon={isImporting ? 'hourglass-top' : 'download'}
-                        label={isImporting ? 'Importing...' : 'Import Data'}
-                        onPress={handleImportData}
-                    />
-
-                    <SettingNavigationRow
-                        icon="cloud-upload"
-                        label="Cloud Backup"
-                        subtitle="Coming soon"
-                        onPress={() => {
-                            Alert.alert('Coming Soon', 'Cloud backup will be available in a future update.');
-                        }}
+                        icon="download"
+                        label="Import Data"
+                        onPress={() => setShowImportSheet(true)}
                     />
                 </View>
+
+                {/* ═══════════════ CLOUD BACKUP ═══════════════ */}
+                <CloudBackupSection />
 
                 {/* ═══════════════ SUPPORT ═══════════════ */}
                 <View style={styles.section}>
@@ -456,6 +456,19 @@ export default function SettingsScreen() {
                 {/* Bottom spacer */}
                 <View style={{ height: spacing.xxl }} />
             </ScrollView>
+
+            {/* Bottom Sheets — rendered outside ScrollView for proper overlay */}
+            <ExportBottomSheet
+                isOpen={showExportSheet}
+                onClose={() => setShowExportSheet(false)}
+                onExportSpreadsheet={handleExportSpreadsheet}
+                onExportJSON={handleExportJSON}
+            />
+            <ImportBottomSheet
+                isOpen={showImportSheet}
+                onClose={() => setShowImportSheet(false)}
+                onImportJSON={handleImportJSON}
+            />
         </View>
     );
 }
