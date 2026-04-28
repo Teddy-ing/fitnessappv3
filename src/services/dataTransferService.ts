@@ -14,6 +14,8 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { getDatabase } from './database';
 import { formatISODate } from '../utils/formatters';
+import { withWriteLock } from '../utils/dbMutex';
+import { batchInsert, normalizeRowValues } from '../utils/batchInsert';
 
 // ============================================================
 // Types
@@ -37,7 +39,7 @@ interface ExportPayload {
  * Order matters for import — parent tables before children (FK dependencies).
  * `measurement_types` is excluded: it's seed data from migrations.
  */
-const EXPORT_TABLES = [
+export const EXPORT_TABLES = [
     'user_settings',
     'exercises',
     'templates',
@@ -143,7 +145,7 @@ export async function exportAllData(): Promise<string> {
  * @throws If the file is invalid or the import fails
  */
 export async function importAllData(): Promise<boolean> {
-    // Pick a file
+    // Pick a file (outside the lock — user interaction)
     const result = await DocumentPicker.getDocumentAsync({
         type: 'application/json',
         copyToCacheDirectory: true,
@@ -192,7 +194,8 @@ export async function importAllData(): Promise<boolean> {
         );
     }
 
-    // ---- Destructive restore ----
+    // ---- Destructive restore (under write lock) ----
+    return withWriteLock(async () => {
     await db.withTransactionAsync(async () => {
         // Clear tables in reverse order (children before parents) to respect FK constraints
         const reversedTables = [...EXPORT_TABLES].reverse();
@@ -200,26 +203,16 @@ export async function importAllData(): Promise<boolean> {
             await db.execAsync(`DELETE FROM ${table};`);
         }
 
-        // Insert data for each table
+        // Insert data using batched multi-value INSERT (PP-079)
         for (const table of EXPORT_TABLES) {
             const rows = payload.tables[table];
             if (!rows || rows.length === 0) continue;
 
-            for (const row of rows) {
-                const columns = Object.keys(row);
-                const placeholders = columns.map(() => '?').join(', ');
-                const values = columns.map((col) => {
-                    const val = row[col];
-                    if (val === null || val === undefined) return null;
-                    if (typeof val === 'boolean') return val ? 1 : 0;
-                    return val;
-                });
-
-                await db.runAsync(
-                    `INSERT OR REPLACE INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`,
-                    values as (string | number | null)[],
-                );
-            }
+            const columns = Object.keys(rows[0]);
+            const normalizedRows = rows.map((row) =>
+                normalizeRowValues(row, columns),
+            );
+            await batchInsert(db, table, columns, normalizedRows);
         }
     });
 
@@ -229,4 +222,5 @@ export async function importAllData(): Promise<boolean> {
     );
 
     return true;
+    }); // withWriteLock
 }

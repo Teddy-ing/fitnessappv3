@@ -54,10 +54,14 @@ export interface ParsedMeasurement {
 
 export interface ExerciseMapping {
     originalName: string;
-    suggestedMatch: { id: string; name: string } | null;  // Fuzzy match
+    suggestedMatch: { id: string; name: string } | null;  // Best fuzzy match
+    suggestedMatches: { id: string; name: string; confidence: number }[];  // Top 3
     confidence: number;          // 0–100
     action: 'map' | 'create' | 'skip';  // User decides
     resolvedExerciseId: string | null;   // Set after user resolution
+    // Custom exercise metadata (set during mapping if action === 'create')
+    customMuscleGroup?: string;
+    customEquipment?: string;
 }
 
 export interface ImportSummary {

@@ -17,6 +17,7 @@ import {
     TouchableWithoutFeedback,
     StyleSheet,
     ActivityIndicator,
+    Alert,
     Modal,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -52,6 +53,12 @@ export default function ExportBottomSheet({
             } else {
                 await onExportJSON();
             }
+        } catch (error) {
+            // BH-068: Surface export errors to the user instead of swallowing them
+            Alert.alert(
+                'Export Failed',
+                String(error instanceof Error ? error.message : error),
+            );
         } finally {
             isRunning.current = false;
             setLoadingType(null);

@@ -97,28 +97,26 @@ function computeSimilarity(parsedName: string, dbName: string): number {
 }
 
 /**
- * Find the best match for a parsed exercise name against the exercise DB.
+ * Find the top N matches for a parsed exercise name against the exercise DB.
+ * Returns matches sorted by score descending, filtered to score >= 50.
  */
-function findBestMatch(
+function findTopMatches(
     parsedName: string,
     exercises: Exercise[],
-): { exercise: Exercise; confidence: number } | null {
-    let bestMatch: Exercise | null = null;
-    let bestScore = 0;
+    topN: number = 3,
+): { exercise: Exercise; confidence: number }[] {
+    const scored: { exercise: Exercise; confidence: number }[] = [];
 
     for (const ex of exercises) {
         const score = computeSimilarity(parsedName, ex.name);
-        if (score > bestScore) {
-            bestScore = score;
-            bestMatch = ex;
+        if (score >= 50) {
+            scored.push({ exercise: ex, confidence: score });
         }
     }
 
-    if (bestMatch && bestScore >= 50) {
-        return { exercise: bestMatch, confidence: bestScore };
-    }
-
-    return null;
+    // Sort descending by confidence, take top N
+    scored.sort((a, b) => b.confidence - a.confidence);
+    return scored.slice(0, topN);
 }
 
 // ============================================================
@@ -147,23 +145,32 @@ export async function generateExerciseMappings(
     const mappings: ExerciseMapping[] = [];
 
     for (const originalName of uniqueNames) {
-        const match = findBestMatch(originalName, dbExercises);
+        const topMatches = findTopMatches(originalName, dbExercises);
+        const bestMatch = topMatches[0] ?? null;
 
-        if (match && match.confidence >= 80) {
+        const suggestedMatches = topMatches.map((m) => ({
+            id: m.exercise.id,
+            name: m.exercise.name,
+            confidence: m.confidence,
+        }));
+
+        if (bestMatch && bestMatch.confidence >= 80) {
             // Auto-accept high-confidence matches
             mappings.push({
                 originalName,
-                suggestedMatch: { id: match.exercise.id, name: match.exercise.name },
-                confidence: match.confidence,
+                suggestedMatch: { id: bestMatch.exercise.id, name: bestMatch.exercise.name },
+                suggestedMatches,
+                confidence: bestMatch.confidence,
                 action: 'map',
-                resolvedExerciseId: match.exercise.id,
+                resolvedExerciseId: bestMatch.exercise.id,
             });
-        } else if (match) {
+        } else if (bestMatch) {
             // Low confidence — suggest but don't auto-accept
             mappings.push({
                 originalName,
-                suggestedMatch: { id: match.exercise.id, name: match.exercise.name },
-                confidence: match.confidence,
+                suggestedMatch: { id: bestMatch.exercise.id, name: bestMatch.exercise.name },
+                suggestedMatches,
+                confidence: bestMatch.confidence,
                 action: 'map', // Default to map, user can override
                 resolvedExerciseId: null, // Needs user confirmation
             });
@@ -172,6 +179,7 @@ export async function generateExerciseMappings(
             mappings.push({
                 originalName,
                 suggestedMatch: null,
+                suggestedMatches: [],
                 confidence: 0,
                 action: 'create', // Default to create custom
                 resolvedExerciseId: null,

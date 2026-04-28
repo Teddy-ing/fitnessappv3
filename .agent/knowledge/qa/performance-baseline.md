@@ -7,11 +7,11 @@ description: Tracking document for performance regression findings from Performa
 ## Summary
 
 - **Last full pass:** 2026-04-13 (Settings Revamp — 20 files)
-- **Last scoped pass:** 2026-04-13 (Staff Engineer Scalability Audit — full codebase)
+- **Last scoped pass:** 2026-04-28 (Phase 6 Import/Export/Cloud Backup — 19 files)
 - **Open issues:** 1 (0 confirmed, 0 likely, 1 latent)
-- **Fixed this session:** 3 (PP-045 selector, PP-076 index, PP-077 VACUUM)
-- **Accepted / Won't Fix:** 38
-- **Deferred:** 1 (PP-075 → Phase 6)
+- **Fixed this session:** 1 (PP-079 row-level INSERT → batched multi-value INSERT)
+- **Accepted / Won't Fix:** 47
+- **Deferred:** 0
 
 ---
 
@@ -37,11 +37,21 @@ description: Tracking document for performance regression findings from Performa
 
 ### Deferred
 
-| ID | Area | Issue | Deferred To |
-|----|------|-------|-------------|
-| PP-075 | N+1 query pattern | `getPreviousSetsForExercises` fires N parallel queries | Phase 6 Import. <100ms on startup with 3-8 exercises. Not user-visible. Import will force batch query patterns anyway. |
+*All deferred items resolved.*
 
 ---
+
+## Resolved (Session: 2026-04-28 — Phase 6 Import/Export/Cloud Backup)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|--------------|
+| PP-079 | Row-level INSERT | `cloudBackupService.ts`, `dataTransferService.ts`, `competitorImportService.ts` | Replaced O(N) individual `db.runAsync()` per row with batched multi-value INSERT via new `batchInsert()` utility (`src/utils/batchInsert.ts`). Auto-calculates max rows per batch from column count vs SQLite's 999 parameter limit. For a 16-column table (workout_sets), batches at 62 rows per statement — reducing 10K round-trips to ~162. |
+
+## Resolved (Session: 2026-04-27 — Post-Phase 6 Tech Debt)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|--------------|
+| PP-075 | N+1 query pattern | `workoutService.ts` | Replaced `Promise.all` + per-exercise loop with single CTE query using `ROW_NUMBER() OVER (PARTITION BY exercise_id ORDER BY completed_at DESC)`. Routed through `batchGetAll()` for guardrail #8 compliance. N queries → 1 query (or chunked batches for >500 exercises). |
 
 ## Resolved (Session: 2026-04-18 — Dropped Keystroke Fix)
 
@@ -209,6 +219,24 @@ description: Tracking document for performance regression findings from Performa
 
 **PP-060** — Inline arrow props in `SettingsScreen.tsx`. Settings renders ~once. Confirmed negligible during 2026-04-16 triage.
 
+**PP-080** — `generateExportPayload()` sequential table reads in `dataTransferService.ts`. 15 sequential `SELECT *` queries — each is a simple full-table read, completes in <50ms total. Not a hot path.
+
+**PP-081** — Levenshtein O(n×m) per exercise pair in `exerciseMapper.ts`. ~6K comparisons on short strings. Sub-30ms total.
+
+**PP-082** — `formatLastBackup()` in `CloudBackupSection.tsx` render path. Single `new Date()` + arithmetic. Not a hot path.
+
+**PP-083** — Inline arrow `onPress` in `ExerciseMappingScreen.tsx` suggestion cards. Max 3 cards. Not a list.
+
+**PP-084** — Chip grids rendered via `.map()` without `React.memo` in `ExerciseMappingScreen.tsx`. 25 static items in a modal.
+
+**PP-085** — `SourceRow` in `ImportBottomSheet.tsx` not wrapped in `React.memo`. 3 static rows in a modal.
+
+**PP-086** — `StatCard` in `ExerciseMappingScreen.tsx` not wrapped in `React.memo`. 4 static items in summary view.
+
+**PP-087** — `Promise.all` on 4 SQLite reads in `exportService.ts`. Reads are safe in parallel under WAL mode.
+
+**PP-088** — `Uint8Array` conversion loop in `exportService.ts`. O(n) single-pass on ~500KB buffer. <10ms.
+
 ---
 
 ## Historical Performance Issues
@@ -223,5 +251,5 @@ description: Tracking document for performance regression findings from Performa
 ---
 
 ## Last Updated
-- Date: 2026-04-18
-- Session Context: Resolved PP-074 — user-reported dropped keystrokes traced to unmemoized render cascade. Fixed with ref-sync callbacks + React.memo on FlatList items.
+- Date: 2026-04-28
+- Session Context: Phase 6 Performance Profiler pass — 19 files reviewed. Resolved PP-079 (row-level INSERT → batched multi-value INSERT via new batchInsert utility). Added 9 negligible findings (PP-080–PP-088) to Accepted.

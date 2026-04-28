@@ -19,7 +19,9 @@ import {
     statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { getDatabase } from './database';
-import { generateExportPayload } from './dataTransferService';
+import { generateExportPayload, EXPORT_TABLES } from './dataTransferService';
+import { withWriteLock } from '../utils/dbMutex';
+import { batchInsert, normalizeRowValues } from '../utils/batchInsert';
 
 // ============================================================
 // Configuration
@@ -54,13 +56,14 @@ interface DriveFileListResponse {
 // Initialization
 // ============================================================
 
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+
 let isConfigured = false;
 
 function ensureConfigured(): void {
     if (isConfigured) return;
 
     GoogleSignin.configure({
-        scopes: ['https://www.googleapis.com/auth/drive.appdata'],
         webClientId: WEB_CLIENT_ID,
         offlineAccess: false,
     });
@@ -75,14 +78,27 @@ function ensureConfigured(): void {
 /**
  * Sign in with Google and store the provider config in the database.
  * Returns the user's email address.
+ *
+ * Flow: signIn() first (basic profile), then addScopes() for Drive access.
+ * This avoids DEVELOPER_ERROR that can occur when requesting non-standard
+ * scopes during the initial configure/signIn on v16+.
  */
 export async function connectGoogleDrive(): Promise<{ email: string }> {
     ensureConfigured();
 
+    // Step 1: Basic sign-in (profile + email only)
     const response = await GoogleSignin.signIn();
 
     if (!isSuccessResponse(response)) {
         throw new Error('Google Sign-In was cancelled');
+    }
+
+    // Step 2: Request Drive scope after sign-in
+    try {
+        await GoogleSignin.addScopes({ scopes: [DRIVE_SCOPE] });
+    } catch (scopeError) {
+        console.warn('[CloudBackup] addScopes failed, Drive access may be limited:', scopeError);
+        // Continue anyway — some devices grant scopes during signIn
     }
 
     const email = response.data.user.email;
@@ -294,6 +310,7 @@ async function downloadFromDrive(accessToken: string): Promise<string | null> {
  * Generates the export payload and uploads it to the App Data folder.
  */
 export async function backupToCloud(): Promise<{ timestamp: string }> {
+    return withWriteLock(async () => {
     const db = await getDatabase();
     if (!db) throw new Error('Database not available');
 
@@ -316,6 +333,7 @@ export async function backupToCloud(): Promise<{ timestamp: string }> {
 
     console.log(`[CloudBackup] Backup complete at ${timestamp}`);
     return { timestamp };
+    }); // withWriteLock
 }
 
 /**
@@ -325,6 +343,7 @@ export async function backupToCloud(): Promise<{ timestamp: string }> {
  * @returns true if restore succeeded, false if no backup was found
  */
 export async function restoreFromCloud(): Promise<boolean> {
+    return withWriteLock(async () => {
     const accessToken = await getAccessToken();
     const content = await downloadFromDrive(accessToken);
 
@@ -359,47 +378,33 @@ export async function restoreFromCloud(): Promise<boolean> {
         );
     }
 
-    // Use the same EXPORT_TABLES ordering as dataTransferService
-    const RESTORE_TABLES = [
-        'user_settings', 'exercises', 'templates', 'template_exercises',
-        'splits', 'splits_templates', 'splits_schedule', 'workouts',
-        'workout_exercises', 'workout_sets', 'personal_records',
-        'measurements', 'progress_photos', 'goals', 'exercise_notes',
-    ] as const;
+    // BH-066: Reuse EXPORT_TABLES from dataTransferService — single source of truth.
+    // PP-079: Batched multi-value INSERT (was row-level, O(N) round-trips).
 
     // Destructive restore
     await db.withTransactionAsync(async () => {
         // Clear in reverse FK order
-        const reversed = [...RESTORE_TABLES].reverse();
+        const reversed = [...EXPORT_TABLES].reverse();
         for (const table of reversed) {
             await db.execAsync(`DELETE FROM ${table};`);
         }
 
-        // Insert all rows
-        for (const table of RESTORE_TABLES) {
+        // Insert all rows using batched multi-value INSERT
+        for (const table of EXPORT_TABLES) {
             const rows = payload.tables[table];
             if (!rows || rows.length === 0) continue;
 
-            for (const row of rows) {
-                const columns = Object.keys(row);
-                const placeholders = columns.map(() => '?').join(', ');
-                const values = columns.map((col: string) => {
-                    const val = row[col];
-                    if (val === null || val === undefined) return null;
-                    if (typeof val === 'boolean') return val ? 1 : 0;
-                    return val;
-                });
-
-                await db.runAsync(
-                    `INSERT OR REPLACE INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`,
-                    values as (string | number | null)[],
-                );
-            }
+            const columns = Object.keys(rows[0]);
+            const normalizedRows = rows.map((row: Record<string, unknown>) =>
+                normalizeRowValues(row, columns),
+            );
+            await batchInsert(db, table, columns, normalizedRows);
         }
     });
 
     console.log(`[CloudBackup] Restore complete from ${payload.meta.exportedAt}`);
     return true;
+    }); // withWriteLock
 }
 
 // ============================================================

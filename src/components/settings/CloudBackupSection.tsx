@@ -108,6 +108,33 @@ export default function CloudBackupSection() {
         }
     }, [loadConfig]);
 
+    const executeRestore = useCallback(async () => {
+        if (restoreGuard.current) return;
+        restoreGuard.current = true;
+        setIsRestoring(true);
+
+        try {
+            const success = await restoreFromCloud();
+            if (success) {
+                Alert.alert(
+                    'Restore Complete',
+                    'Your data has been restored from the cloud backup. Restart the app to see all changes.',
+                );
+            } else {
+                Alert.alert('No Backup Found', 'No cloud backup was found for this account.');
+            }
+        } catch (error) {
+            console.error('[CloudBackupSection] Restore failed:', error);
+            Alert.alert(
+                'Restore Failed',
+                String(error instanceof Error ? error.message : error),
+            );
+        } finally {
+            restoreGuard.current = false;
+            setIsRestoring(false);
+        }
+    }, []);
+
     const handleRestore = useCallback(() => {
         // Two-step destructive confirmation per PRD
         Alert.alert(
@@ -138,34 +165,7 @@ export default function CloudBackupSection() {
                 },
             ],
         );
-    }, []);
-
-    const executeRestore = useCallback(async () => {
-        if (restoreGuard.current) return;
-        restoreGuard.current = true;
-        setIsRestoring(true);
-
-        try {
-            const success = await restoreFromCloud();
-            if (success) {
-                Alert.alert(
-                    'Restore Complete',
-                    'Your data has been restored from the cloud backup. Restart the app to see all changes.',
-                );
-            } else {
-                Alert.alert('No Backup Found', 'No cloud backup was found for this account.');
-            }
-        } catch (error) {
-            console.error('[CloudBackupSection] Restore failed:', error);
-            Alert.alert(
-                'Restore Failed',
-                String(error instanceof Error ? error.message : error),
-            );
-        } finally {
-            restoreGuard.current = false;
-            setIsRestoring(false);
-        }
-    }, []);
+    }, [executeRestore]); // BH-069: include executeRestore in deps
 
     const handleDisconnect = useCallback(() => {
         Alert.alert(

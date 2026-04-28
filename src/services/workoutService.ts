@@ -8,6 +8,7 @@
 import { getDatabase } from './database';
 import { refreshAllGoalProgress } from './goalProgressService';
 import { toLocalISOString } from '../utils/localDate';
+import { withWriteLock } from '../utils/dbMutex';
 import {
     Workout,
     WorkoutExercise,
@@ -34,6 +35,7 @@ import { Goal } from '../models/goal';
  * Returns any goals that were completed as a result of this workout.
  */
 export async function saveWorkout(workout: Workout): Promise<Goal[]> {
+    return withWriteLock(async () => {
     const db = await getDatabase();
     if (!db) {
         console.log('[WorkoutService] Database not available - workout not saved (Expo Go mode)');
@@ -139,6 +141,7 @@ export async function saveWorkout(workout: Workout): Promise<Goal[]> {
         console.error('[WorkoutService] Failed to save workout:', error);
         throw error;
     }
+    }); // withWriteLock
 }
 
 /**
@@ -147,6 +150,7 @@ export async function saveWorkout(workout: Workout): Promise<Goal[]> {
  * Returns any goals that were completed as a result of this update.
  */
 export async function updateWorkout(workout: Workout): Promise<Goal[]> {
+    return withWriteLock(async () => {
     const db = await getDatabase();
     if (!db) {
         console.log('[WorkoutService] Database not available - workout not updated (Expo Go mode)');
@@ -267,6 +271,7 @@ export async function updateWorkout(workout: Workout): Promise<Goal[]> {
         console.error('[WorkoutService] Failed to update workout:', error);
         throw error;
     }
+    }); // withWriteLock
 }
 
 /**
@@ -505,19 +510,79 @@ export async function getPreviousSetsForExercise(
 /**
  * Batch-fetch previous sets for multiple exercises at once.
  * Returns a Map keyed by exerciseId.
+ *
+ * PP-075 fix: Uses a single CTE query with ROW_NUMBER() instead of
+ * calling getPreviousSetsForExercise in a loop (N+1 → 1 query).
+ * Chunked via batchGetAll for guardrail #8 (500 ID limit).
  */
 export async function getPreviousSetsForExercises(
     exerciseIds: string[]
 ): Promise<Map<string, PreviousSetData[]>> {
     const result = new Map<string, PreviousSetData[]>();
-    // Fetch in parallel for all exercises
-    await Promise.all(
-        exerciseIds.map(async (id) => {
-            const sets = await getPreviousSetsForExercise(id);
-            result.set(id, sets);
-        })
-    );
-    return result;
+    if (exerciseIds.length === 0) return result;
+
+    const db = await getDatabase();
+    if (!db) return result;
+
+    try {
+        const rows = await batchGetAll<{
+            exercise_id: string;
+            weight: number | null;
+            reps: number | null;
+            type: string;
+            order_index: number;
+        }>(
+            db,
+            exerciseIds,
+            (placeholders, batch) => [
+                `WITH latest_we AS (
+                    SELECT we.id, we.exercise_id,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY we.exercise_id
+                               ORDER BY w.completed_at DESC
+                           ) AS rn
+                    FROM workout_exercises we
+                    JOIN workouts w ON we.workout_id = w.id
+                    WHERE we.exercise_id IN (${placeholders})
+                      AND w.status = 'completed'
+                )
+                SELECT lwe.exercise_id, ws.weight, ws.reps, ws.type, ws.order_index
+                FROM workout_sets ws
+                JOIN latest_we lwe ON ws.workout_exercise_id = lwe.id
+                WHERE lwe.rn = 1
+                ORDER BY lwe.exercise_id, ws.order_index`,
+                batch,
+            ],
+        );
+
+        // Group results by exercise_id
+        for (const row of rows) {
+            if (!result.has(row.exercise_id)) {
+                result.set(row.exercise_id, []);
+            }
+            result.get(row.exercise_id)!.push({
+                weight: row.weight,
+                reps: row.reps,
+                type: row.type as SetType,
+            });
+        }
+
+        // Ensure all requested IDs have entries (empty array for exercises with no history)
+        for (const id of exerciseIds) {
+            if (!result.has(id)) {
+                result.set(id, []);
+            }
+        }
+
+        return result;
+    } catch (error) {
+        console.error('[WorkoutService] Failed to batch-get previous sets:', error);
+        // Fallback: return empty arrays for all
+        for (const id of exerciseIds) {
+            result.set(id, []);
+        }
+        return result;
+    }
 }
 
 export default {

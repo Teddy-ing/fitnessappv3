@@ -7,9 +7,9 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Last scoped pass:** 2026-04-13 (Staff Engineer Scalability Audit — full codebase)
-- **Open issues:** 4 (Active: 0, Latent: 4, Accepted: 4)
-- **Fixed since baseline:** 41
+- **Last scoped pass:** 2026-04-27 (Post-Phase 6 implementation — TD-047, TD-049, PP-075 resolved)
+- **Open issues:** 2 (Active: 0, Latent: 2, Accepted: 4)
+- **Fixed since baseline:** 44
 
 ---
 
@@ -21,35 +21,22 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 ## Open Issues — Latent Debt
 
-These are foundational architectural decisions from Jan–Mar 2026 that predate the guardrail system. They are not regressions caused by recent code — the guardrails have been working. These are documented for awareness during future phases (Import/Export, ML, Chatbot).
+These are foundational architectural decisions that predate the guardrail system. They are not regressions caused by recent code. Documented for awareness during future phases (ML, Chatbot).
 
 ### TD-046 · Date serialization inconsistency across codebase
 - **Category:** Data integrity
 - **Files:** `workoutService.ts`, `workoutPersistence.ts`
 - **Description:** Two different date strategies: `toLocalISOString()` in `workoutService.ts` (local, no timezone designator) and `dateReplacer`/`dateReviver` in `workoutPersistence.ts` (uses `.toISOString()` with UTC `Z` suffix).
 - **Impact:** Potential date shift on DST transitions for workouts completed near midnight.
+- **Phase 6 note:** New Phase 6 services (`dataTransferService`, `cloudBackupService`, `competitorImportService`, `exportService`) do not introduce additional date serialization patterns — they work with the JSON export format. The inconsistency was not widened.
 - **Deferred to:** Pre-launch polish. Fix is simple but verification is hard (mixed DB of old local strings + new UTC strings). Zero user reports. Rare edge case.
-
-### TD-047 · No SQLite write concurrency protection
-- **Category:** Data integrity
-- **File:** `database.ts`
-- **Description:** Multiple async UI interactions can fire `db.runAsync` concurrently. WAL mode helps reads but concurrent writes can produce lock contention.
-- **Impact:** Theoretical on single-user mobile app. Would materialize with background syncing or import.
-- **Deferred to:** Phase 6 (Import/Export). Import will need a write queue or mutex for bulk inserts — solve it then with the concrete use case.
 
 ### TD-048 · `console.log/warn/error` is the entire observability strategy
 - **Category:** Operational readiness
-- **Files:** 35+ files throughout `src/`
+- **Files:** 40+ files throughout `src/` (grew with Phase 6 additions)
 - **Description:** No structured logging, no crash reporting (Sentry, Bugsnag). Zero visibility into production errors.
 - **Impact:** Cannot diagnose user-reported issues.
 - **Deferred to:** Pre-launch. Adding Sentry now creates noise during development without benefit. Do when preparing for real users.
-
-### TD-049 · Test coverage concentrated in 4 services, zero on most critical paths
-- **Category:** Test distribution
-- **Files:** Zero tests for `workoutService`, `templateService`, `splitService`, `preferencesService`, `exerciseService`, hydration, persistence.
-- **Description:** The workout save/update/load codepath has zero automated test coverage.
-- **Impact:** Refactoring the workout flow requires high manual QA effort.
-- **Deferred to:** Before Phase 6 Import refactors the save/load path. ~4–6 hours for meaningful coverage.
 
 ---
 
@@ -441,8 +428,8 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 | 10 | Shared formulas in one canonical location | ✅ Unit conversion centralized in `unitConversion.ts` (`convertWeight`, `toCanonicalWeight`, `displayWeight` TD-039 resolved). |
 | 11 | New tables registered in `clearAllData()` | ✅ No new tables in v13 (only columns added to existing `user_settings`). `user_settings` already cleared + re-seeded in `clearAllData()`. |
 | 12 | `updateX()` must use UPDATE, not delete-reinsert | ✅ `updateSettings()` uses proper `UPDATE ... SET ... WHERE id = 1` with dynamic column mapping. No delete-reinsert. |
-| 13 | Batch data operations must use batch queries, not loops | ⚠️ `getPreviousSetsForExercises` calls single-entity function in `Promise.all` loop (PP-075). All `IN(...)` reads correctly use `batchGetAll()`. |
-| 14 | Destructive async actions must guard against concurrent invocation | ❌ `handleFinishWorkout` has no double-tap protection (BH-059). No other destructive actions are guarded. |
+| 13 | Batch data operations must use batch queries, not loops | ✅ PP-075 resolved — `getPreviousSetsForExercises` now uses single CTE query with `ROW_NUMBER()` via `batchGetAll()`. Phase 6 import uses proper batch inserts inside `withTransactionAsync`. |
+| 14 | Destructive async actions must guard against concurrent invocation | ✅ `handleFinishWorkout` has `isSavingRef` guard (BH-059). Phase 6 UI components have `useRef` guards. TD-047: `withWriteLock` mutex now serializes all transaction-level writes (`saveWorkout`, `updateWorkout`, `backupToCloud`, `restoreFromCloud`, `clearAllData`, `importAllData`). |
 
 ---
 
@@ -454,9 +441,9 @@ Areas to monitor as the app approaches later roadmap phases:
 |---------|--------------|--------------|
 | **In-progress workout persistence** | ✅ Persisted via `workoutPersistence.ts` (TD-021 resolved) | N/A |
 | **SQLite 999-param limit** | ✅ All IN() queries chunked via `batchGetAll()` (PP-037 resolved) | N/A |
-| Navigation structure (3 tabs + modals) | Adequate for current features. Swipe navigation added. | Phase 5 (Settings) may need nested stacks or drawer |
-| SQLite write patterns | Single-user, low frequency | Import feature (Phase 6) — bulk inserts need batching |
-| Service file boundaries | ✅ 16 services, all under 600 lines. New `exerciseDetailsService` at 231 lines. `analyticsService` 462 + `exerciseAnalyticsService` 421 (TD-003). `calendarService` 542 + `personalRecordsService` 327 (TD-011). | ML features (Phase 7) |
+| Navigation structure (3 tabs + modals) | Adequate for current features. Swipe navigation added. Settings uses nested Profile stack. | Phase 7 (ML) |
+| SQLite write patterns | ✅ TD-047 resolved — `withWriteLock` mutex in `dbMutex.ts` serializes all transaction-level writes. | — |
+| Service file boundaries | ✅ 21 services, all under 600 lines. New `dbMutex.ts` utility at 40 lines. | ML features (Phase 7) |
 | Hydration layer | Single mapping file, 256 lines | Every new model field = hydration update needed — fragile |
 | Unit hardcoding (`lbs`) | ✅ Resolved (TD-004) — `useWeightUnit` hook + `getWeightUnitSync` accessor | — |
 | SQL formula duplication | ✅ Resolved (TD-024) — `sqlFragments.ts` + `formulas.ts` (TD-035) | — |
@@ -469,11 +456,11 @@ Areas to monitor as the app approaches later roadmap phases:
 | `WorkoutScreen` size | ✅ Resolved (TD-038) — 617 lines after extracting live-apply to `useWorkoutSettings` | — |
 | `ExercisePicker` size | ❌ 619 lines (TD-040 active) — already over guardrail | Needs extraction now |
 | `SplitFormView` size | ⚠️ 605 lines (TD-041 active) — just over guardrail, mixed concerns | Next splits enhancement |
-| Exercise data denormalization | ⚠️ Latent (TD-042) — snapshots in every workout/template row | Phase 6 Import/Export |
+| Exercise data denormalization | ⚠️ Latent (TD-042) — snapshots in every workout/template row. Phase 6 import reconciles by name + category as accepted. | — |
 | Single-row settings pattern | ⚠️ Latent (TD-044) — 25+ columns, grows per feature | Cumulative — no hard break |
-| Date serialization consistency | ⚠️ Latent (TD-046) — 2 different strategies (`toLocalISOString` vs `.toISOString()`) | DST edge cases near midnight |
-| Crash reporting / observability | ❌ None (TD-048) — console.log only | Public launch |
-| Workout service test coverage | ❌ Zero (TD-049) — most critical path untested | Any refactor of save/load |
+| Date serialization consistency | ⚠️ Latent (TD-046) — 2 different strategies (`toLocalISOString` vs `.toISOString()`). Phase 6 did not widen. | DST edge cases near midnight |
+| Crash reporting / observability | ❌ None (TD-048) — console.log only, 40+ files | Public launch |
+| Workout service test coverage | ✅ Resolved (TD-049) — 34 tests in `workoutService.test.ts` covering save/update/load/delete + previous sets | — |
 | `displayWeight` rounding pattern | ✅ Resolved (TD-039) — `displayWeight()` in `unitConversion.ts`, 7 call sites updated | — |
 | `useWeightUnit` cache coherency | Module-level cache with subscriber pattern. Works for current single-settings-screen use case. | Multi-screen concurrent settings editing (unlikely) |
 | Bodyweight intent derivation | ✅ Resolved (TD-027) — shared `deriveBodyweightIntent` in `goalHelpers.ts` | — |
@@ -491,5 +478,5 @@ Areas to monitor as the app approaches later roadmap phases:
 ---
 
 ## Last Updated
-- Date: 2026-04-17
-- Session Context: QA Tier 2/3 — resolved TD-043 (dead warmup/cooldown fields) and TD-051 (unknown persistence type). Accepted TD-042 (denormalization is a feature), TD-044 (column-per-setting is standard), TD-045 (JSON blobs are the correct choice). Deferred TD-046/TD-047/TD-048/TD-049 with clear trigger points. Final tally: 4 latent (deferred), 4 accepted.
+- Date: 2026-04-27
+- Session Context: Resolved TD-047 (async write mutex via `withWriteLock`), TD-049 (34 workoutService tests), and PP-075 (batch CTE query for `getPreviousSetsForExercises`). All guardrails now fully compliant. Current tally: 0 active, 2 latent, 4 accepted.

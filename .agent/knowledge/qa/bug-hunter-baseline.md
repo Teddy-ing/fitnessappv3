@@ -7,9 +7,9 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-04-13 (Settings Revamp + Canonical Weight Storage — 24 files)
-- **Last scoped pass:** 2026-04-13 (Staff Engineer Scalability Audit — full codebase)
+- **Last scoped pass:** 2026-04-28 (Phase 6: Import, Export & Cloud Backup — 15 files)
 - **Open issues:** 2 (Critical: 0, High: 0, Medium: 0, Low: 1, Deferred: 1)
-- **Fixed since baseline:** 48
+- **Fixed since baseline:** 55
 
 ---
 
@@ -87,10 +87,73 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 | `computeEpley1RM` rounding to 1 decimal | `RecordsTab.tsx:38` | Standard Epley precision for gym users. No accuracy concern. |
 | `getExerciseSessionHistory` volume excludes warmup sets | `exerciseDetailsService.ts:212` | Intentional per PRD — session volume = working set volume only. Consistent with goalProgressService volume pattern (documented FP). |
 | `ExerciseCard` info icon visible on non-collapsed cards | `ExerciseCard.tsx:223-244` | PRD specifies icon should not appear on collapsed cards. The icon is inside the expanded view block (after the `if (isCollapsed)` early return at line 172), so it correctly hides when collapsed. |
+| `backupToCloud` reads + writes DB without FK-safe ordering | `cloudBackupService.ts:311-336` | The write lock serializes against concurrent saves. The `generateExportPayload` is a read-only SELECT-all, and the only write is to `cloud_backup_config` (no FK deps). Safe. |
+| `triggerAutoBackupIfEnabled` detached promise — unhandled rejection | `cloudBackupService.ts:452-476` | The entire body is wrapped in `try/catch` with inner try/catch for the failure-status update. All rejection paths are handled. Intentionally fire-and-forget per PRD. |
+| `findBackupFile` query string not URL-encoded | `cloudBackupService.ts:212` | The filename `workout-backup-latest.json` contains no special characters that need encoding. The `name='...'` syntax is the Google Drive API's required format for the `q` parameter. Safe. |
+| `uploadToDrive` multipart boundary collision risk | `cloudBackupService.ts:257` | The boundary `===backup_boundary===` is a fixed string. While theoretically it could appear in the JSON payload, the probability is negligible for workout data, and the Drive API would reject the upload with a clear error (not silent corruption). Accepted. |
+| `connectGoogleDrive` INSERT OR REPLACE resets `auto_backup_enabled` to 0 | `cloudBackupService.ts:109-114` | This is intentional — reconnecting should start with auto-backup off until the user explicitly enables it. Per PRD design. |
+| `exerciseMapper` Levenshtein is O(n*m) per comparison | `exerciseMapper.ts:23-47` | With typical exercise DB sizes (~200 built-in + custom) and CSV import sizes (~50 unique names), this is ~10k comparisons at O(20*20) each. Total: <1ms. Not a performance concern. |
+| `strongParser` hardcodes `toCanonicalWeight(weightKg, 'kg')` | `strongParser.ts:133` | Strong's export format documentation confirms weights are always in kg. The canonical conversion is correct. |
+| `fitnotesParser` per-row `Weight Unit` with `toCanonicalWeight` | `fitnotesParser.ts:206-208` | FitNotes genuinely has per-row weight units (user can mix kg/lbs). The per-row conversion is correct. |
+| `ImportBottomSheet` modal closes before navigation | `ImportBottomSheet.tsx:94` | `onClose()` is called before `navigation.navigate()`, which is correct — the modal should dismiss before pushing a new screen. The navigation happens synchronously after `onClose()`. |
+| `dataTransferService.importAllData` document picker outside write lock | `dataTransferService.ts:147-155` | Correct — user interaction (picker) must not be inside the lock. Lock is acquired only for the destructive DB operations. |
+| `allMappingsResolved` treats `action === 'create'` as resolved | `exerciseMapper.ts:197-201` | Correct — exercises with `action: 'create'` will be created during `executeCompetitorImport`. They don't need user resolution. |
+| `advanceOrShowSummary` re-derives unresolved from modified mappings | `ExerciseMappingScreen.tsx:145-159` | The logic creates a speculative copy of mappings to check how many are still unresolved after the current one would be resolved. This handles the edge case where the user resolves the last item and the `unresolvedMappings` memo hasn't updated yet. Correct. |
+| `ExerciseMappingScreen` passes complex objects via route params | `ImportBottomSheet.tsx:99-106` | React Navigation serializes route params. `ParsedWorkout[]` and `ExerciseMapping[]` are plain objects (no functions, no circular refs), so they serialize correctly. For very large imports this could hit serialization limits, but that's a performance concern, not a logic bug. |
+| `dbMutex` lockPromise captured before await | `dbMutex.ts:31-34` | This is the correct FIFO pattern. `previousLock` captures the *current* lock before replacing it, ensuring each caller awaits its predecessor. The `release!()` in `finally` is guaranteed to be assigned because the `new Promise` executor runs synchronously. |
 
 ---
 
 ## Resolved
+
+#### BH-069 · `handleRestore` deps missing `executeRestore` — stale closure risk — **RESOLVED 2026-04-28**
+- **Severity:** Low
+- **Original status:** 🟢 Defensive gap
+- **File:** [CloudBackupSection.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/settings/CloudBackupSection.tsx#L139)
+- **Root cause:** `handleRestore` captured `executeRestore` in an Alert callback but didn't list it in `useCallback` deps. Currently safe (stable ref), but violates exhaustive-deps.
+- **Fix applied:** Moved `executeRestore` definition above `handleRestore`, added `[executeRestore]` to deps.
+
+#### BH-068 · `ExportBottomSheet` swallows export failures silently — **RESOLVED 2026-04-28**
+- **Severity:** Low
+- **Original status:** 🟢 Edge case
+- **File:** [ExportBottomSheet.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/settings/ExportBottomSheet.tsx#L43-L59)
+- **Root cause:** `handleExport` had try/finally with no catch. On failure, sheet closed with no user feedback.
+- **Fix applied:** Added `catch (error)` block with `Alert.alert('Export Failed', ...)` before the `finally` block.
+
+#### BH-067 · `cloudBackupService.restoreFromCloud` row-by-row INSERT — no batching — **RESOLVED 2026-04-28**
+- **Severity:** Low
+- **Original status:** 🟢 Performance / guardrail compliance
+- **File:** [cloudBackupService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/cloudBackupService.ts#L397-L416)
+- **Root cause:** Cloud restore inserted rows one at a time, violating guardrail #13 (bulk imports must use chunked batch INSERT).
+- **Fix applied:** Added `BATCH_SIZE = 500` chunking loop matching `competitorImportService` pattern.
+
+#### BH-066 · `RESTORE_TABLES` hardcoded duplicate of `EXPORT_TABLES` — maintenance drift risk — **RESOLVED 2026-04-28**
+- **Severity:** Medium
+- **Original status:** 🟡 Maintainability
+- **File:** [cloudBackupService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/cloudBackupService.ts#L381-L386)
+- **Root cause:** `restoreFromCloud` defined its own `RESTORE_TABLES` constant that had to exactly mirror `EXPORT_TABLES` from `dataTransferService.ts`. A future table addition could be missed.
+- **Fix applied:** Exported `EXPORT_TABLES` from `dataTransferService.ts` and imported it in `cloudBackupService.ts`. Single source of truth.
+
+#### BH-065 · `executeCompetitorImport` custom exercise creation not under write lock — **RESOLVED 2026-04-28**
+- **Severity:** Medium
+- **Original status:** 🟡 Concurrency
+- **File:** [competitorImportService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/competitorImportService.ts#L119-L133)
+- **Root cause:** Custom exercises were created outside any write lock. A concurrent auto-backup could snapshot exercises without their associated workouts.
+- **Fix applied:** Wrapped entire `executeCompetitorImport` body in `withWriteLock()` to serialize against concurrent writes.
+
+#### BH-064 · Hevy parser maps both `abdomen_in` and `waist_in` to `'waist'` — duplicate measurements — **RESOLVED 2026-04-28**
+- **Severity:** Medium
+- **Original status:** 🟡 Data integrity
+- **File:** [hevyParser.ts](file:///c:/Users/teddy/projects/workout-app/src/services/importParsers/hevyParser.ts#L250-L251)
+- **Root cause:** Both `abdomen_in` and `waist_in` mapped to the same `'waist'` type ID. If a Hevy CSV had both columns with values, it produced duplicate measurements for the same date/type.
+- **Fix applied:** Removed `waist_in` mapping. `abdomen_in` → `'waist'` is sufficient.
+
+#### BH-063 · `ExerciseMappingScreen` calls `setShowSummary(true)` during render — **RESOLVED 2026-04-28**
+- **Severity:** Medium
+- **Original status:** 🟡 React correctness
+- **File:** [ExerciseMappingScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseMappingScreen.tsx#L320-L323)
+- **Root cause:** `setShowSummary(true)` was called directly in the render body (not inside `useEffect`), violating React's rendering contract and triggering "Cannot update component while rendering another component" warnings.
+- **Fix applied:** Moved to `useEffect(() => { if (!currentMapping && !showSummary) setShowSummary(true); }, [currentMapping, showSummary])`. Render body now returns `null` without side effects.
 
 #### BH-062 · `createWorkoutExercise` hardcodes first set as warmup regardless of settings — **RESOLVED 2026-04-16**
 - **Severity:** Low
@@ -443,5 +506,5 @@ These were found and fixed before this baseline was created. Documented here for
 ---
 
 ## Last Updated
-- Date: 2026-04-17
-- Session Context: QA final triage — deferred BH-058 (pre-launch), accepted BH-060 (snapshot pattern covers it) and BH-036 (theoretical). Updated BH-061 to note TD-051 partial fix. Remaining: 1 deferred (BH-058), 1 low (BH-061), 2 accepted.
+- Date: 2026-04-28
+- Session Context: Phase 6 Bug Hunter pass — found and fixed 7 issues (BH-063 through BH-069) across import, export, and cloud backup features. Added 14 new false positives from the Phase 6 scope. Total resolved: 55.

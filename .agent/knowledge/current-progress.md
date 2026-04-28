@@ -167,6 +167,35 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Session Log
 
+### 2026-04-27: Post-Phase 6 Tech Debt Cleanup (TD-047, TD-049, PP-075)
+
+**Duration:** Single session
+**Focus:** Resolving three deferred tech debt items whose trigger conditions arrived with Phase 6 completion.
+
+**What was done:**
+
+- **TD-049 — Workout Service Test Coverage:**
+  - Created `workoutService.test.ts` — 34 integration tests covering save/update/load/delete round-trips and previous-sets queries
+  - Follows established mock pattern from `analyticsService.test.ts`
+  - Validates guardrail compliance: transaction use (#14), UPDATE not delete-reinsert (#12), batch queries (#13)
+
+- **TD-047 — SQLite Write Concurrency Mutex:**
+  - Created `src/utils/dbMutex.ts` — ~40-line async mutex using promise-chaining (FIFO, no starvation)
+  - Wrapped 6 functions in `withWriteLock`: `saveWorkout`, `updateWorkout`, `backupToCloud`, `restoreFromCloud`, `clearAllData`, `importAllData`
+  - Prevents auto-backup (fire-and-forget from `handleFinishWorkout`) from racing with save/import operations
+
+- **PP-075 — Batch Previous Sets Query:**
+  - Replaced N+1 `Promise.all` loop in `getPreviousSetsForExercises` with single CTE query
+  - Uses `ROW_NUMBER() OVER (PARTITION BY exercise_id ORDER BY completed_at DESC)` to find latest workout per exercise
+  - Routed through `batchGetAll()` for guardrail #8 compliance (chunks at 500 IDs)
+
+**Files created:** 2 (`dbMutex.ts`, `workoutService.test.ts`)
+**Files modified:** `workoutService.ts`, `cloudBackupService.ts`, `database.ts`, `dataTransferService.ts`, `tech-debt-baseline.md`, `performance-baseline.md`
+
+**Verification:** 267/267 tests passing, TypeScript 0 errors. Tech debt baseline: 0 active, 2 latent, 4 accepted.
+
+---
+
 ### 2026-04-26: Phase 6 Cloud Backup — Google Drive (Code Complete)
 
 **Duration:** Single session

@@ -8,6 +8,7 @@
 
 import * as SQLite from 'expo-sqlite';
 import { runMigrations } from './migrations';
+import { withWriteLock } from '../utils/dbMutex';
 
 // Database state
 let db: SQLite.SQLiteDatabase | null = null;
@@ -93,6 +94,7 @@ export async function closeDatabase(): Promise<void> {
  * TD-022: Updated to cover all tables introduced through v7 migrations.
  */
 export async function clearAllData(): Promise<void> {
+    return withWriteLock(async () => {
     const database = await getDatabase();
     if (!database) return;
 
@@ -144,6 +146,7 @@ export async function clearAllData(): Promise<void> {
     } catch (error) {
         console.error('[DB] Error clearing data:', error);
     }
+    }); // withWriteLock
 }
 
 export default {

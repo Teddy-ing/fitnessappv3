@@ -12,6 +12,9 @@
 
 import { getDatabase } from './database';
 import { createCustomExercise } from './exerciseService';
+import { withWriteLock } from '../utils/dbMutex';
+import { batchInsert } from '../utils/batchInsert';
+import type { MuscleGroup, Equipment } from '../models/exercise';
 import { toLocalISOString } from '../utils/localDate';
 import { generateId } from '../utils/uuid';
 import type {
@@ -28,7 +31,28 @@ import type {
 // Constants
 // ============================================================
 
-const BATCH_SIZE = 500;
+const WORKOUT_COLUMNS = [
+    'id', 'name', 'status', 'started_at', 'completed_at', 'total_duration',
+    'total_volume', 'total_sets', 'muscle_groups_worked', 'location',
+    'note', 'template_id', 'day_of_week', 'created_at', 'updated_at',
+];
+
+const WORKOUT_EXERCISE_COLUMNS = [
+    'id', 'workout_id', 'exercise_id', 'exercise_name', 'exercise_category',
+    'exercise_muscle_groups', 'exercise_equipment', 'exercise_track_weight',
+    'exercise_track_reps', 'exercise_track_time', 'order_index',
+    'superset_group_id', 'note',
+];
+
+const WORKOUT_SET_COLUMNS = [
+    'id', 'workout_exercise_id', 'order_index', 'weight', 'reps',
+    'duration', 'distance', 'type', 'status', 'rpe', 'rir',
+    'suggested_weight', 'suggested_reps', 'note', 'completed_at', 'rest_duration',
+];
+
+const MEASUREMENT_COLUMNS = [
+    'id', 'measurement_type_id', 'value', 'recorded_at', 'note', 'created_at',
+];
 
 // ============================================================
 // Summary Generation
@@ -98,6 +122,9 @@ export async function executeCompetitorImport(
     mappings: ExerciseMapping[],
     measurements: ParsedMeasurement[],
 ): Promise<ImportResult> {
+    // BH-065: Wrap entire import (exercise creation + batch insert) in write lock
+    // to prevent auto-backup from snapshotting a partial state.
+    return withWriteLock(async () => {
     const db = await getDatabase();
     if (!db) throw new Error('Database not available');
 
@@ -117,11 +144,13 @@ export async function executeCompetitorImport(
 
     // Create custom exercises first (outside the main transaction)
     for (const m of exercisesToCreate) {
+        const muscleGroup = (m.customMuscleGroup ?? null) as MuscleGroup | null;
+        const equipment = (m.customEquipment ?? 'none') as Equipment;
         const created = await createCustomExercise(
             m.originalName,
             'strength', // Default category — user can edit later
-            [],         // No muscle groups
-            ['none'],   // No equipment
+            muscleGroup ? [muscleGroup] : [],
+            [equipment],
         );
         if (created) {
             exerciseIdMap.set(m.originalName, created.id);
@@ -244,66 +273,12 @@ export async function executeCompetitorImport(
         measurementsInserted++;
     }
 
-    // Execute all inserts in a single transaction, batched
+    // Execute all inserts in a single transaction, batched multi-value INSERT (PP-079)
     await db.withTransactionAsync(async () => {
-        // Insert workouts
-        for (let i = 0; i < workoutValues.length; i += BATCH_SIZE) {
-            const batch = workoutValues.slice(i, i + BATCH_SIZE);
-            for (const row of batch) {
-                await db.runAsync(
-                    `INSERT INTO workouts (
-                        id, name, status, started_at, completed_at, total_duration,
-                        total_volume, total_sets, muscle_groups_worked, location,
-                        note, template_id, day_of_week, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    row,
-                );
-            }
-        }
-
-        // Insert workout exercises
-        for (let i = 0; i < exerciseValues.length; i += BATCH_SIZE) {
-            const batch = exerciseValues.slice(i, i + BATCH_SIZE);
-            for (const row of batch) {
-                await db.runAsync(
-                    `INSERT INTO workout_exercises (
-                        id, workout_id, exercise_id, exercise_name, exercise_category,
-                        exercise_muscle_groups, exercise_equipment, exercise_track_weight,
-                        exercise_track_reps, exercise_track_time, order_index,
-                        superset_group_id, note
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    row,
-                );
-            }
-        }
-
-        // Insert workout sets
-        for (let i = 0; i < setValues.length; i += BATCH_SIZE) {
-            const batch = setValues.slice(i, i + BATCH_SIZE);
-            for (const row of batch) {
-                await db.runAsync(
-                    `INSERT INTO workout_sets (
-                        id, workout_exercise_id, order_index, weight, reps,
-                        duration, distance, type, status, rpe, rir,
-                        suggested_weight, suggested_reps, note, completed_at, rest_duration
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    row,
-                );
-            }
-        }
-
-        // Insert measurements
-        for (let i = 0; i < measurementValues.length; i += BATCH_SIZE) {
-            const batch = measurementValues.slice(i, i + BATCH_SIZE);
-            for (const row of batch) {
-                await db.runAsync(
-                    `INSERT INTO measurements (
-                        id, measurement_type_id, value, recorded_at, note, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?)`,
-                    row,
-                );
-            }
-        }
+        await batchInsert(db, 'workouts', WORKOUT_COLUMNS, workoutValues);
+        await batchInsert(db, 'workout_exercises', WORKOUT_EXERCISE_COLUMNS, exerciseValues);
+        await batchInsert(db, 'workout_sets', WORKOUT_SET_COLUMNS, setValues);
+        await batchInsert(db, 'measurements', MEASUREMENT_COLUMNS, measurementValues);
     });
 
     console.log(`[CompetitorImport] Imported ${workoutsInserted} workouts, ${setsInserted} sets, ${exercisesCreated} new exercises, ${measurementsInserted} measurements`);
@@ -314,4 +289,5 @@ export async function executeCompetitorImport(
         exercisesCreated,
         measurementsInserted,
     };
+    }); // withWriteLock
 }

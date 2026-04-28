@@ -248,7 +248,8 @@ const HEVY_MEASUREMENT_MAP: Record<string, { type: string; unit: string }> = {
     right_forearm_in: { type: 'right_forearm', unit: 'in' },
     left_forearm_in: { type: 'left_forearm', unit: 'in' },
     abdomen_in: { type: 'waist', unit: 'in' },  // abdomen → waist (closest match)
-    waist_in: { type: 'waist', unit: 'in' },
+    // BH-064: waist_in intentionally omitted — both abdomen_in and waist_in
+    // map to the same 'waist' type, producing duplicate measurements.
     hips_in: { type: 'hips', unit: 'in' },
     right_thigh_in: { type: 'right_thigh', unit: 'in' },
     left_thigh_in: { type: 'left_thigh', unit: 'in' },
