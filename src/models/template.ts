@@ -37,4 +37,5 @@ export interface TemplateExercise {
     orderIndex: number;
     defaultSets: number;
     note: string | null;
+    supersetGroupId: string | null;
 }

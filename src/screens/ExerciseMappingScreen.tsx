@@ -9,7 +9,7 @@
  * - Skip this exercise
  *
  * When all exercises are resolved (or skipToSummary is true),
- * shows the ImportSummaryModal.
+ * shows the ImportSummaryView.
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
@@ -21,8 +21,6 @@ import {
     Alert,
     ActivityIndicator,
     ScrollView,
-    Modal,
-    FlatList,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -34,6 +32,8 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import { getUnresolvedMappings } from '../services/importParsers/exerciseMapper';
 import { getImportSummary, executeCompetitorImport } from '../services/competitorImportService';
 import { ExercisePicker } from '../components';
+import ImportSummaryView from '../components/import/ImportSummaryView';
+import CustomExerciseConfigModal from '../components/import/CustomExerciseConfigModal';
 import type { Exercise, MuscleGroup, Equipment } from '../models/exercise';
 import type { ProfileStackParamList } from '../navigation/AppNavigator';
 import type {
@@ -60,41 +60,6 @@ type RouteType = RouteProp<ProfileStackParamList, 'ExerciseMapping'>;
 type NavigationType = NativeStackNavigationProp<ProfileStackParamList>;
 
 // ============================================================
-// Custom exercise config options
-// ============================================================
-
-const MUSCLE_GROUP_OPTIONS: { key: MuscleGroup; label: string }[] = [
-    { key: 'chest', label: 'Chest' },
-    { key: 'back', label: 'Back' },
-    { key: 'shoulders', label: 'Shoulders' },
-    { key: 'biceps', label: 'Biceps' },
-    { key: 'triceps', label: 'Triceps' },
-    { key: 'quads', label: 'Quads' },
-    { key: 'hamstrings', label: 'Hamstrings' },
-    { key: 'glutes', label: 'Glutes' },
-    { key: 'calves', label: 'Calves' },
-    { key: 'core', label: 'Core' },
-    { key: 'traps', label: 'Traps' },
-    { key: 'lats', label: 'Lats' },
-    { key: 'forearms', label: 'Forearms' },
-    { key: 'full_body', label: 'Full Body' },
-];
-
-const EQUIPMENT_OPTIONS: { key: Equipment; label: string }[] = [
-    { key: 'barbell', label: 'Barbell' },
-    { key: 'dumbbell', label: 'Dumbbell' },
-    { key: 'cable', label: 'Cable' },
-    { key: 'machine', label: 'Machine' },
-    { key: 'smith_machine', label: 'Smith Machine' },
-    { key: 'bodyweight', label: 'Bodyweight' },
-    { key: 'kettlebell', label: 'Kettlebell' },
-    { key: 'ez_bar', label: 'EZ Bar' },
-    { key: 'resistance_band', label: 'Band' },
-    { key: 'other', label: 'Other' },
-    { key: 'none', label: 'None' },
-];
-
-// ============================================================
 // Component
 // ============================================================
 
@@ -118,8 +83,6 @@ export default function ExerciseMappingScreen() {
     const [isImporting, setIsImporting] = useState(false);
     const [showExercisePicker, setShowExercisePicker] = useState(false);
     const [showCustomConfig, setShowCustomConfig] = useState(false);
-    const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | null>(null);
-    const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
     const importGuard = React.useRef(false);
 
     // Get only unresolved mappings for the step-through flow
@@ -179,23 +142,23 @@ export default function ExerciseMappingScreen() {
     }, [currentMapping, updateMapping, advanceOrShowSummary]);
 
     const handleCreateCustom = useCallback(() => {
-        // Show the muscle group + equipment picker
-        setSelectedMuscle(null);
-        setSelectedEquipment(null);
         setShowCustomConfig(true);
     }, []);
 
-    const handleConfirmCustom = useCallback(() => {
+    const handleConfirmCustom = useCallback((
+        muscleGroup: MuscleGroup | null,
+        equipment: Equipment | null,
+    ) => {
         if (!currentMapping) return;
         setShowCustomConfig(false);
         updateMapping(currentMapping.originalName, {
             action: 'create',
             resolvedExerciseId: null,
-            customMuscleGroup: selectedMuscle ?? undefined,
-            customEquipment: selectedEquipment ?? undefined,
+            customMuscleGroup: muscleGroup ?? undefined,
+            customEquipment: equipment ?? undefined,
         });
         advanceOrShowSummary();
-    }, [currentMapping, updateMapping, advanceOrShowSummary, selectedMuscle, selectedEquipment]);
+    }, [currentMapping, updateMapping, advanceOrShowSummary]);
 
     const handleSkip = useCallback(() => {
         if (!currentMapping) return;
@@ -243,73 +206,17 @@ export default function ExerciseMappingScreen() {
 
     if (showSummary) {
         const summary = getImportSummary(source, workouts, measurements, mappings);
-        const sourceNames: Record<CompetitorSource, string> = {
-            hevy: 'Hevy', strong: 'Strong', fitnotes: 'FitNotes',
-        };
 
         return (
-            <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <MaterialIcons name="close" size={24} color={colors.text.primary} />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Import Summary</Text>
-                    <View style={styles.backButton} />
-                </View>
-
-                <ScrollView style={styles.summaryScroll} contentContainerStyle={styles.summaryContent}>
-                    <View style={styles.sourceCard}>
-                        <MaterialIcons name="fitness-center" size={28} color={colors.accent.primary} />
-                        <Text style={styles.sourceName}>Importing from {sourceNames[source]}</Text>
-                    </View>
-
-                    <View style={styles.statsGrid}>
-                        <StatCard label="Workouts" value={summary.totalWorkouts} icon="event" />
-                        <StatCard label="Sets" value={summary.totalSets} icon="format-list-numbered" />
-                        <StatCard label="Exercises" value={summary.totalExercises} icon="fitness-center" />
-                        <StatCard label="Measurements" value={summary.totalMeasurements} icon="straighten" />
-                    </View>
-
-                    {summary.skippedExercises > 0 && (
-                        <View style={styles.warningCard}>
-                            <MaterialIcons name="warning" size={20} color={colors.accent.warning} />
-                            <Text style={styles.warningText}>
-                                {summary.skippedExercises} exercise(s) will be skipped
-                            </Text>
-                        </View>
-                    )}
-
-                    {warnings.length > 0 && (
-                        <View style={styles.warningCard}>
-                            <MaterialIcons name="info-outline" size={20} color={colors.text.secondary} />
-                            <Text style={styles.warningText}>{warnings.join('\n')}</Text>
-                        </View>
-                    )}
-
-                    <View style={styles.noticeCard}>
-                        <MaterialIcons name="add-circle-outline" size={18} color={colors.accent.primary} />
-                        <Text style={styles.noticeText}>
-                            Imported workouts will be added alongside your existing data. Nothing will be deleted.
-                        </Text>
-                    </View>
-                </ScrollView>
-
-                <TouchableOpacity
-                    style={[styles.importButton, isImporting && styles.importButtonDisabled]}
-                    onPress={handleExecuteImport}
-                    disabled={isImporting}
-                    activeOpacity={0.8}
-                >
-                    {isImporting ? (
-                        <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                        <>
-                            <MaterialIcons name="download" size={20} color="#fff" />
-                            <Text style={styles.importButtonText}>Import Data</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
-            </View>
+            <ImportSummaryView
+                source={source}
+                summary={summary}
+                warnings={warnings}
+                isImporting={isImporting}
+                onImport={handleExecuteImport}
+                onClose={() => navigation.goBack()}
+                bottomInset={insets.bottom}
+            />
         );
     }
 
@@ -444,90 +351,12 @@ export default function ExerciseMappingScreen() {
             />
 
             {/* Custom exercise config modal */}
-            <Modal
+            <CustomExerciseConfigModal
                 visible={showCustomConfig}
-                animationType="slide"
-                presentationStyle="pageSheet"
-                onRequestClose={() => setShowCustomConfig(false)}
-            >
-                <View style={styles.customConfigContainer}>
-                    <View style={styles.customConfigHeader}>
-                        <TouchableOpacity onPress={() => setShowCustomConfig(false)}>
-                            <Text style={styles.customConfigCancel}>Cancel</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.customConfigTitle}>New Exercise</Text>
-                        <TouchableOpacity onPress={handleConfirmCustom}>
-                            <Text style={styles.customConfigDone}>Create</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <ScrollView style={styles.customConfigScroll}>
-                        <Text style={styles.customConfigName}>
-                            "{currentMapping?.originalName}"
-                        </Text>
-
-                        <Text style={styles.customConfigSectionTitle}>MUSCLE GROUP</Text>
-                        <View style={styles.chipGrid}>
-                            {MUSCLE_GROUP_OPTIONS.map((opt) => (
-                                <TouchableOpacity
-                                    key={opt.key}
-                                    style={[
-                                        styles.chip,
-                                        selectedMuscle === opt.key && styles.chipSelected,
-                                    ]}
-                                    onPress={() => setSelectedMuscle(
-                                        selectedMuscle === opt.key ? null : opt.key,
-                                    )}
-                                >
-                                    <Text style={[
-                                        styles.chipText,
-                                        selectedMuscle === opt.key && styles.chipTextSelected,
-                                    ]}>
-                                        {opt.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <Text style={styles.customConfigSectionTitle}>EQUIPMENT</Text>
-                        <View style={styles.chipGrid}>
-                            {EQUIPMENT_OPTIONS.map((opt) => (
-                                <TouchableOpacity
-                                    key={opt.key}
-                                    style={[
-                                        styles.chip,
-                                        selectedEquipment === opt.key && styles.chipSelected,
-                                    ]}
-                                    onPress={() => setSelectedEquipment(
-                                        selectedEquipment === opt.key ? null : opt.key,
-                                    )}
-                                >
-                                    <Text style={[
-                                        styles.chipText,
-                                        selectedEquipment === opt.key && styles.chipTextSelected,
-                                    ]}>
-                                        {opt.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </ScrollView>
-                </View>
-            </Modal>
-        </View>
-    );
-}
-
-// ============================================================
-// Sub-components
-// ============================================================
-
-function StatCard({ label, value, icon }: { label: string; value: number; icon: keyof typeof MaterialIcons.glyphMap }) {
-    return (
-        <View style={styles.statCard}>
-            <MaterialIcons name={icon} size={20} color={colors.accent.primary} />
-            <Text style={styles.statValue}>{value}</Text>
-            <Text style={styles.statLabel}>{label}</Text>
+                exerciseName={currentMapping?.originalName ?? ''}
+                onClose={() => setShowCustomConfig(false)}
+                onConfirm={handleConfirmCustom}
+            />
         </View>
     );
 }
@@ -603,69 +432,4 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: borderRadius.md,
     },
     confirmAllText: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: '#fff' },
-
-    // Summary view
-    summaryScroll: { flex: 1 },
-    summaryContent: { padding: spacing.lg },
-    sourceCard: {
-        flexDirection: 'row', alignItems: 'center',
-        backgroundColor: colors.background.secondary, borderRadius: borderRadius.lg,
-        padding: spacing.lg, marginBottom: spacing.lg, gap: spacing.md,
-    },
-    sourceName: { fontSize: typography.size.lg, fontWeight: typography.weight.semibold, color: colors.text.primary },
-    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-    statCard: {
-        flex: 1, minWidth: '45%', backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.lg, padding: spacing.md, alignItems: 'center', gap: 4,
-    },
-    statValue: { fontSize: typography.size.xxl, fontWeight: typography.weight.bold, color: colors.text.primary },
-    statLabel: { fontSize: typography.size.xs, color: colors.text.secondary },
-    warningCard: {
-        flexDirection: 'row', alignItems: 'center',
-        backgroundColor: 'rgba(245, 158, 11, 0.1)', borderRadius: borderRadius.lg,
-        padding: spacing.md, marginBottom: spacing.sm, gap: spacing.sm,
-    },
-    warningText: { flex: 1, fontSize: typography.size.sm, color: colors.text.secondary },
-    noticeCard: {
-        flexDirection: 'row', alignItems: 'center',
-        backgroundColor: 'rgba(168, 85, 247, 0.08)', borderRadius: borderRadius.lg,
-        padding: spacing.md, marginTop: spacing.sm, gap: spacing.sm,
-    },
-    noticeText: { flex: 1, fontSize: typography.size.sm, color: colors.text.secondary },
-    importButton: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        backgroundColor: colors.accent.primary, marginHorizontal: spacing.lg,
-        paddingVertical: 14, borderRadius: borderRadius.lg, gap: spacing.sm,
-    },
-    importButtonDisabled: { opacity: 0.6 },
-    importButtonText: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: '#fff' },
-
-    // Custom exercise config modal
-    customConfigContainer: { flex: 1, backgroundColor: colors.background.primary },
-    customConfigHeader: {
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-        borderBottomWidth: 1, borderBottomColor: colors.border,
-    },
-    customConfigCancel: { fontSize: typography.size.md, color: colors.text.secondary },
-    customConfigTitle: { fontSize: typography.size.lg, fontWeight: typography.weight.semibold, color: colors.text.primary },
-    customConfigDone: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: colors.accent.primary },
-    customConfigScroll: { padding: spacing.lg },
-    customConfigName: {
-        fontSize: typography.size.lg, fontWeight: typography.weight.bold, color: colors.text.primary,
-        textAlign: 'center', marginBottom: spacing.xl,
-    },
-    customConfigSectionTitle: {
-        fontSize: typography.size.xs, fontWeight: typography.weight.semibold,
-        color: colors.text.secondary, letterSpacing: 0.5, marginBottom: spacing.sm, marginTop: spacing.md,
-    },
-    chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-    chip: {
-        paddingVertical: spacing.sm, paddingHorizontal: spacing.md,
-        borderRadius: borderRadius.full, backgroundColor: colors.background.secondary,
-        borderWidth: 1, borderColor: colors.border,
-    },
-    chipSelected: { backgroundColor: colors.accent.primary + '20', borderColor: colors.accent.primary },
-    chipText: { fontSize: typography.size.sm, color: colors.text.secondary },
-    chipTextSelected: { color: colors.accent.primary, fontWeight: typography.weight.semibold },
 });

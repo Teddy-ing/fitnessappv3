@@ -44,6 +44,7 @@ interface RenderableExerciseItemProps {
     onAddWarmupSets: (exerciseId: string, count: number) => void;
     onReplaceExercise: (exerciseId: string) => void;
     onToggleCollapse: (exerciseId: string) => void;
+    onRpeRirSelected?: () => void;
 }
 
 function RenderableExerciseItemInner({
@@ -68,6 +69,7 @@ function RenderableExerciseItemInner({
     onAddWarmupSets,
     onReplaceExercise,
     onToggleCollapse,
+    onRpeRirSelected,
 }: RenderableExerciseItemProps) {
     if (item.type === 'superset') {
         return (
@@ -93,6 +95,7 @@ function RenderableExerciseItemInner({
                 onAddWarmupSets={onAddWarmupSets}
                 onReplaceExercise={onReplaceExercise}
                 onToggleCollapse={onToggleCollapse}
+                onRpeRirSelected={onRpeRirSelected}
             />
         );
     }
@@ -133,6 +136,7 @@ function RenderableExerciseItemInner({
                 onAddWarmupSets={onAddWarmupSets}
                 onReplaceExercise={onReplaceExercise}
                 onToggleCollapse={onToggleCollapse}
+                onRpeRirSelected={onRpeRirSelected}
             />
         </ErrorBoundary>
     );

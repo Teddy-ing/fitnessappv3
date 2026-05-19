@@ -47,9 +47,13 @@ const EQUIPMENT: { value: Equipment; label: string }[] = [
     { value: 'kettlebell', label: 'Kettlebell' },
     { value: 'cable', label: 'Cable' },
     { value: 'machine', label: 'Machine' },
+    { value: 'smith_machine', label: 'Smith Machine' },
     { value: 'bodyweight', label: 'Bodyweight' },
     { value: 'resistance_band', label: 'Resistance Band' },
+    { value: 'ez_bar', label: 'EZ Bar' },
+    { value: 'trap_bar', label: 'Trap Bar' },
     { value: 'pull_up_bar', label: 'Pull-up Bar' },
+    { value: 'dip_bars', label: 'Dip Bars' },
     { value: 'bench', label: 'Bench' },
     { value: 'none', label: 'None' },
 ];

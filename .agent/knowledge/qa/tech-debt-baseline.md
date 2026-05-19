@@ -7,9 +7,9 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
-- **Last scoped pass:** 2026-04-27 (Post-Phase 6 implementation — TD-047, TD-049, PP-075 resolved)
-- **Open issues:** 2 (Active: 0, Latent: 2, Accepted: 4)
-- **Fixed since baseline:** 44
+- **Last scoped pass:** 2026-04-28 (Phase 6 tech debt audit — TD-052 resolved, TD-053/TD-054 added)
+- **Open issues:** 4 (Active: 0, Latent: 4, Accepted: 4)
+- **Fixed since baseline:** 45
 
 ---
 
@@ -38,6 +38,19 @@ These are foundational architectural decisions that predate the guardrail system
 - **Impact:** Cannot diagnose user-reported issues.
 - **Deferred to:** Pre-launch. Adding Sentry now creates noise during development without benefit. Do when preparing for real users.
 
+### TD-053 · `CloudBackupConfig` interface defined in service, not `src/models/`
+- **Guardrail:** #5 (Canonical types live in `src/models/`)
+- **Files:** `cloudBackupService.ts` (definition), `CloudBackupSection.tsx` (consumer)
+- **Description:** `CloudBackupConfig` is defined in `cloudBackupService.ts` and imported across the service boundary by `CloudBackupSection.tsx`. Per guardrail #5, cross-boundary types should live in `src/models/`.
+- **Current impact:** Low — only one consumer. The import is `type CloudBackupConfig` so it's type-only.
+- **Deferred to:** Pre-launch polish or when a second consumer appears (e.g., Phase 7 ML checking backup status).
+
+### TD-054 · Import parser `as unknown as` type casts bypass type safety
+- **Category:** Type safety
+- **Files:** `hevyParser.ts` (3 casts), `fitnotesParser.ts` (2 casts)
+- **Description:** PapaParse results are force-cast via `as unknown as HevyWorkoutRow[]` (double cast). If a CSV column name changes or a header doesn't match the interface, there's zero compile-time protection. Every field access already has null/empty guards, so the risk is low.
+- **Deferred to:** Pre-launch. The double casts are ugly but not dangerous because every field access already has null/empty guards.
+
 ---
 
 ## Accepted / Won’t Fix
@@ -61,6 +74,16 @@ These are foundational architectural decisions that predate the guardrail system
 ---
 
 ## Resolved
+
+### ~~TD-052~~ · `ExerciseMappingScreen.tsx` exceeds 600-line component guardrail — **RESOLVED 2026-04-28**
+
+- **Guardrail:** #1 (Component size limit)
+- **Original:** 672 lines (12% over limit)
+- **Fix applied:** Extracted two sub-components to `src/components/import/`:
+  - `ImportSummaryView.tsx` (190 lines) — summary stats, warnings, import button with StatCard sub-component
+  - `CustomExerciseConfigModal.tsx` (203 lines) — modal for muscle group + equipment selection during custom exercise creation
+- Also removed unused `FlatList` import and moved `selectedMuscle`/`selectedEquipment` state into the new modal (self-contained).
+- **Result:** `ExerciseMappingScreen.tsx` reduced to 435 lines (35% reduction). Both extracted files well under 600.
 
 ### ~~TD-043~~ · Dead `warmup`/`cooldown` fields on Workout model — **RESOLVED 2026-04-17**
 
@@ -416,7 +439,7 @@ These guardrails in `conventions.md` were created specifically to prevent tech d
 
 | # | Guardrail | Full-Project Status |
 |---|-----------|----------------------------|
-| 1 | Component size limit (600 lines) | ✅ `WorkoutScreen.tsx` at 617 lines (TD-038 resolved). `workoutStore.ts` at 656 (TD-034 accepted). `DailyWorkoutModal.tsx` at 604 (borderline, acceptable). All settings components well under limit (SettingsScreen 526, WorkoutSettingsMenu 482). |
+| 1 | Component size limit (600 lines) | ✅ `WorkoutScreen.tsx` at 617 lines (TD-038 resolved). `workoutStore.ts` at 656 (TD-034 accepted). `DailyWorkoutModal.tsx` at 604 (borderline, acceptable). All Phase 6 components under limit: `ExerciseMappingScreen` 435 (TD-052 resolved), `CloudBackupSection` 532, `ImportBottomSheet` 322, `ExportBottomSheet` 196. |
 | 2 | Avoid `any` types | ✅ Only in chart library callbacks (TD-A01 accepted), `SaveTemplateModal` Alert buttons, navigation ref casts, and `ExerciseCard` cross-stack nav (BH-041). New settings code uses no `any`. |
 | 3 | Database schema changes require versioned migrations | ✅ 13 versioned migrations. v13 (`settings_expansion`) correctly adds 6 new columns with `columnExists` guards. All columns have sensible defaults. |
 | 4 | Hook extraction signal: 3+ `useState` for one concern | ✅ `useWorkoutSettings` (12 `useState` → 1 hook call). `useWeightUnit` uses module-level cache + subscriber pattern for reactive updates. |
@@ -454,8 +477,11 @@ Areas to monitor as the app approaches later roadmap phases:
 | `WorkoutScreen` component size | ✅ Resolved (TD-030) — 603 lines after extracting 4 modules | — |
 | `workoutStore` size | ⚠️ 656 lines (TD-034 accepted) — cohesive, monitor only | Phase 7 ML additions |
 | `WorkoutScreen` size | ✅ Resolved (TD-038) — 617 lines after extracting live-apply to `useWorkoutSettings` | — |
-| `ExercisePicker` size | ❌ 619 lines (TD-040 active) — already over guardrail | Needs extraction now |
-| `SplitFormView` size | ⚠️ 605 lines (TD-041 active) — just over guardrail, mixed concerns | Next splits enhancement |
+| `ExercisePicker` size | ✅ Resolved (TD-040) — 468 lines after extracting `ExercisePickerItem` | — |
+| `SplitFormView` size | ✅ Resolved (TD-041) — 474 lines after extracting `SplitSchedulePreview` | — |
+| `ExerciseMappingScreen` size | ✅ Resolved (TD-052) — 435 lines after extracting `ImportSummaryView` + `CustomExerciseConfigModal` | — |
+| `CloudBackupConfig` type ownership | ⚠️ Latent (TD-053) — defined in service, not `src/models/` | Phase 7 or second consumer |
+| Import parser type casts | ⚠️ Latent (TD-054) — `as unknown as` double casts in Hevy/FitNotes parsers | Pre-launch polish |
 | Exercise data denormalization | ⚠️ Latent (TD-042) — snapshots in every workout/template row. Phase 6 import reconciles by name + category as accepted. | — |
 | Single-row settings pattern | ⚠️ Latent (TD-044) — 25+ columns, grows per feature | Cumulative — no hard break |
 | Date serialization consistency | ⚠️ Latent (TD-046) — 2 different strategies (`toLocalISOString` vs `.toISOString()`). Phase 6 did not widen. | DST edge cases near midnight |
@@ -478,5 +504,5 @@ Areas to monitor as the app approaches later roadmap phases:
 ---
 
 ## Last Updated
-- Date: 2026-04-27
-- Session Context: Resolved TD-047 (async write mutex via `withWriteLock`), TD-049 (34 workoutService tests), and PP-075 (batch CTE query for `getPreviousSetsForExercises`). All guardrails now fully compliant. Current tally: 0 active, 2 latent, 4 accepted.
+- Date: 2026-04-28
+- Session Context: Phase 6 tech debt audit. Resolved TD-052 (ExerciseMappingScreen extraction → 435 lines). Added TD-053 (CloudBackupConfig type ownership) and TD-054 (parser type casts) as latent. Current tally: 0 active, 4 latent, 4 accepted, 45 resolved.

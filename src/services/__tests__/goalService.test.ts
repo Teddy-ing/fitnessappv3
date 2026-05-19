@@ -393,7 +393,7 @@ describe('computeCurrentBest', () => {
 
         expect(result).toBe(290);
         const [sql] = mockGetFirstAsync.mock.calls[0];
-        expect(sql).toContain('MAX(ws.weight * (1.0 + ws.reps / 30.0))');
+        expect(sql).toContain('CASE WHEN ws.reps <= 10 THEN ws.weight * (1.0 + ws.reps / 30.0) ELSE NULL END');
         expect(sql).toContain("ws.type = 'working'");
     });
 

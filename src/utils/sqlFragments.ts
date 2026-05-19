@@ -35,17 +35,21 @@ export const COMPLETED_SET_FILTER = `ws.status = 'completed'`;
 
 /**
  * Epley formula for estimated 1-rep max.
- * Returns: estimated 1RM for a single set row.
+ * Returns: estimated 1RM for a single set row, NULL if reps > 10.
  * Assumes `ws.weight` and `ws.reps` are available columns.
  *
  * Formula: weight × (1 + reps / 30)
+ * Rep cap: Returns NULL for sets above 10 reps (unreliable at high rep ranges).
  * Reference: https://en.wikipedia.org/wiki/One-repetition_maximum#Epley_formula
  */
-export const EPLEY_1RM = `ws.weight * (1.0 + ws.reps / 30.0)`;
+export const EPLEY_REP_CAP = 10;
+
+export const EPLEY_1RM = `CASE WHEN ws.reps <= ${EPLEY_REP_CAP} THEN ws.weight * (1.0 + ws.reps / 30.0) ELSE NULL END`;
 
 /**
  * MAX of the Epley formula across all sets.
  * Use this when you want the best estimated 1RM from a group of sets.
+ * NULL values (from sets above rep cap) are automatically excluded by MAX().
  */
 export const MAX_EPLEY_1RM = `MAX(${EPLEY_1RM})`;
 

@@ -21,6 +21,9 @@ interface RestTimerState {
     restTimerActive: boolean;           // Is timer running?
     restTimerEndTime: number | null;    // Timestamp when timer ends
 
+    // Why the timer stopped (null while running or before first use)
+    timerCompletionReason: 'expired' | 'skipped' | null;
+
     // Per-exercise rest times (exerciseId -> seconds)
     exerciseRestTimes: Record<string, number>;
 
@@ -42,6 +45,7 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
     restTimerRemaining: 0,
     restTimerActive: false,
     restTimerEndTime: null,
+    timerCompletionReason: null,
     exerciseRestTimes: {},
     activeRestTimerExerciseId: null,
     activeRestTimerSetId: null,
@@ -55,6 +59,7 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
             restTimerRemaining: duration,
             restTimerActive: true,
             restTimerEndTime: endTime,
+            timerCompletionReason: null,
             activeRestTimerExerciseId: exerciseId ?? null,
             activeRestTimerSetId: setId ?? null,
         });
@@ -65,6 +70,7 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
             restTimerActive: false,
             restTimerRemaining: 0,
             restTimerEndTime: null,
+            timerCompletionReason: 'skipped',
             activeRestTimerExerciseId: null,
             activeRestTimerSetId: null,
         });
@@ -113,6 +119,7 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
                 restTimerActive: false,
                 restTimerRemaining: 0,
                 restTimerEndTime: null,
+                timerCompletionReason: 'expired',
                 activeRestTimerExerciseId: null,
                 activeRestTimerSetId: null,
             });

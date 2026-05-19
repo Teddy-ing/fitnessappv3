@@ -35,7 +35,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export interface FocusState {
     exerciseId: string;
     setId: string;
-    field: 'weight' | 'reps' | 'duration';
+    field: 'weight' | 'reps' | 'duration' | 'rpe' | 'rir';
 }
 
 interface ExerciseCardProps {
@@ -64,6 +64,7 @@ interface ExerciseCardProps {
     onAddWarmupSets?: (exerciseId: string, count: number) => void;
     onReplaceExercise?: (exerciseId: string) => void;
     onToggleCollapse?: (exerciseId: string) => void;
+    onRpeRirSelected?: () => void;
 }
 
 function ExerciseCardInner({
@@ -92,6 +93,7 @@ function ExerciseCardInner({
     onAddWarmupSets,
     onReplaceExercise,
     onToggleCollapse,
+    onRpeRirSelected,
 }: ExerciseCardProps) {
     const { exercise, sets } = workoutExercise;
 
@@ -332,6 +334,9 @@ function ExerciseCardInner({
                             onCompleteSet={onCompleteSet}
                             onRemoveSet={onRemoveSet}
                             onFocusField={onFocusField}
+                            isRpeFocused={focusState?.exerciseId === workoutExercise.id && focusState?.setId === set.id && focusState?.field === 'rpe'}
+                            isRirFocused={focusState?.exerciseId === workoutExercise.id && focusState?.setId === set.id && focusState?.field === 'rir'}
+                            onRpeRirSelected={onRpeRirSelected}
                         />
                         {isSetTimerActive(set.id) && (
                             <ActiveRestLine

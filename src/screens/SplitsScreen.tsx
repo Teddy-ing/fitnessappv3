@@ -124,14 +124,24 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
         setEditingSplit(null);
     };
 
-    const handleFormSaved = (options?: { deletedActiveSplit?: boolean }) => {
+    const handleFormSaved = async (options?: { deletedActiveSplit?: boolean }) => {
         if (options?.deletedActiveSplit) {
             setActiveSplitState(null);
             onSplitSelected?.(null);
         }
         setIsCreating(false);
         setEditingSplit(null);
-        loadData();
+        await loadData();
+
+        // If the active split was edited (schedule may have changed),
+        // notify the home screen to re-read split + clamp the index
+        if (!options?.deletedActiveSplit && activeSplitState) {
+            const refreshedSplit = await getActiveSplit();
+            if (refreshedSplit) {
+                setActiveSplitState(refreshedSplit);
+                onSplitSelected?.(refreshedSplit);
+            }
+        }
     };
 
     return (
@@ -170,6 +180,7 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
                         onOpenCreateTemplate={() => setShowCreateTemplateModal(true)}
                         onCancel={handleFormCancel}
                         onSaved={handleFormSaved}
+                        onTemplatesChanged={loadData}
                     />
                 ) : (
                     <SplitListView

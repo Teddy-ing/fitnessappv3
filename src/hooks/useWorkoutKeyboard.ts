@@ -22,8 +22,14 @@ import { useWorkoutStore } from '../stores';
 import { FocusState, KeyboardFieldType } from '../components';
 import { getWeightUnitSync } from '../hooks/useWeightUnit';
 import { convertWeight, toCanonicalWeight } from '../utils/unitConversion';
+import { getSettings } from '../services/preferencesService';
 
-type FieldType = 'weight' | 'reps' | 'duration';
+type FieldType = 'weight' | 'reps' | 'duration' | 'rpe' | 'rir';
+
+/** Fields that use the numeric keyboard. RPE/RIR use modal pickers instead. */
+export function isKeyboardField(field: FieldType): boolean {
+    return field === 'weight' || field === 'reps' || field === 'duration';
+}
 
 // ============================================================
 // Pure helpers — no closure dependencies, safe for useCallback
@@ -35,6 +41,8 @@ function getFieldValue(set: any, field: FieldType): string {
         case 'weight': return set?.weight?.toString() ?? '';
         case 'reps': return set?.reps?.toString() ?? '';
         case 'duration': return set?.duration?.toString() ?? '';
+        case 'rpe': return set?.rpe?.toString() ?? '';
+        case 'rir': return set?.rir?.toString() ?? '';
     }
 }
 
@@ -50,6 +58,8 @@ function buildUpdate(field: FieldType, value: number | null): Record<string, num
         }
         case 'reps': return { reps: value != null ? Math.floor(value) : null };
         case 'duration': return { duration: value != null ? Math.floor(value) : null };
+        case 'rpe': return { rpe: value != null ? Math.min(10, Math.max(1, value)) : null };
+        case 'rir': return { rir: value != null ? Math.max(0, Math.floor(value)) : null };
     }
 }
 
@@ -74,6 +84,8 @@ interface UseWorkoutKeyboardReturn {
     handleAdjust: (delta: number) => void;
     /** Advance from weight→reps/duration or reps/duration→complete */
     handleNext: () => void;
+    /** Called by SetRow when user selects/dismisses an RPE or RIR picker */
+    handleRpeRirSelected: () => void;
     /** Dismiss keyboard */
     handleHideKeyboard: () => void;
     /** Get the current field type for keyboard styling */
@@ -106,6 +118,16 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
 
     const keyboardValueRef = useRef(keyboardValue);
     keyboardValueRef.current = keyboardValue;
+
+    // RPE/RIR settings — loaded once on mount, stored in refs for stable callbacks
+    const showRpeRef = useRef(false);
+    const showRirRef = useRef(false);
+    useEffect(() => {
+        getSettings().then(settings => {
+            showRpeRef.current = settings.showRpe;
+            showRirRef.current = settings.showRir;
+        });
+    }, []);
 
     // Hide system keyboard when our custom keyboard is active
     useEffect(() => {
@@ -212,6 +234,9 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
             switch (focus.field) {
                 case 'reps': currentVal = set?.reps ?? 0; break;
                 case 'duration': currentVal = set?.duration ?? 0; break;
+                case 'rpe': currentVal = set?.rpe ?? 0; break;
+                case 'rir': currentVal = set?.rir ?? 0; break;
+                default: currentVal = 0;
             }
         }
 
@@ -240,16 +265,70 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
                 setFocusState({ ...focus, field: 'duration' });
                 setKeyboardValue(set?.duration?.toString() ?? '');
             } else {
-                // Weight-only exercise — complete
+                // Weight-only exercise — check RPE/RIR before completing
+                if (showRpeRef.current) {
+                    setFocusState({ ...focus, field: 'rpe' });
+                    setKeyboardValue('');
+                } else if (showRirRef.current) {
+                    setFocusState({ ...focus, field: 'rir' });
+                    setKeyboardValue('');
+                } else {
+                    completeSet(focus.exerciseId, focus.setId);
+                    setFocusState(null);
+                    setKeyboardValue('');
+                }
+            }
+        } else if (focus.field === 'reps' || focus.field === 'duration') {
+            // reps/duration → RPE if enabled, else RIR if enabled, else complete
+            if (showRpeRef.current) {
+                setFocusState({ ...focus, field: 'rpe' });
+                setKeyboardValue('');
+            } else if (showRirRef.current) {
+                setFocusState({ ...focus, field: 'rir' });
+                setKeyboardValue('');
+            } else {
+                completeSet(focus.exerciseId, focus.setId);
+                setFocusState(null);
+                setKeyboardValue('');
+            }
+        } else if (focus.field === 'rpe') {
+            // RPE → RIR if enabled, else complete
+            if (showRirRef.current) {
+                setFocusState({ ...focus, field: 'rir' });
+                setKeyboardValue('');
+            } else {
                 completeSet(focus.exerciseId, focus.setId);
                 setFocusState(null);
                 setKeyboardValue('');
             }
         } else {
-            // reps or duration → complete the set
+            // rir or any other → complete the set
             completeSet(focus.exerciseId, focus.setId);
             setFocusState(null);
             setKeyboardValue('');
+        }
+    }, [completeSet]);
+
+    /**
+     * Called by SetRow when the user selects or dismisses the RPE/RIR picker.
+     * Continues the Next chain: RPE → RIR (if enabled) → complete.
+     */
+    const handleRpeRirSelected = useCallback(() => {
+        const focus = focusStateRef.current;
+        if (!focus) return;
+
+        if (focus.field === 'rpe') {
+            // RPE done → RIR if enabled, else complete
+            if (showRirRef.current) {
+                setFocusState({ ...focus, field: 'rir' });
+            } else {
+                completeSet(focus.exerciseId, focus.setId);
+                setFocusState(null);
+            }
+        } else if (focus.field === 'rir') {
+            // RIR done → complete
+            completeSet(focus.exerciseId, focus.setId);
+            setFocusState(null);
         }
     }, [completeSet]);
 
@@ -269,6 +348,7 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         switch (focusState.field) {
             case 'weight': return 'weight';
             case 'duration': return 'duration';
+            // RPE and RIR use integer input (like reps)
             default: return 'reps';
         }
     };
@@ -286,6 +366,8 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
             weight: 'Weight',
             reps: 'Reps',
             duration: 'Duration',
+            rpe: 'RPE',
+            rir: 'RIR',
         };
 
         return `${exercise.exercise.name} - Set ${setNum} ${fieldNames[focusState.field]}`;
@@ -303,5 +385,6 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         handleHideKeyboard,
         getKeyboardFieldType,
         getFieldLabel,
+        handleRpeRirSelected,
     };
 }

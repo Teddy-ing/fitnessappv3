@@ -443,6 +443,14 @@ export const SEED_EXERCISES: Exercise[] = [
         [],
         ['dumbbell']
     ),
+    seedExercise(
+        'jm-press',
+        'JM Press',
+        'strength',
+        ['triceps'],
+        ['chest', 'shoulders'],
+        ['barbell', 'ez_bar', 'bench']
+    ),
 
     // ============================================
     // LEGS - QUADS

@@ -17,7 +17,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import BackgroundTimer from 'react-native-background-timer';
 import * as Haptics from 'expo-haptics';
-import { sendRestTimerNotification } from '../services/notificationService';
+import { sendRestTimerNotification, scheduleRestTimerNotification, cancelScheduledNotification } from '../services/notificationService';
 import { useWorkoutStore } from '../stores';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import { colors, spacing, borderRadius, typography } from '../theme';
@@ -40,6 +40,10 @@ export default function RestTimer({
     const tickRestTimer = useRestTimerStore(s => s.tickRestTimer);
     const startRestTimer = useRestTimerStore(s => s.startRestTimer);
     const getExerciseRestTime = useRestTimerStore(s => s.getExerciseRestTime);
+    const timerCompletionReason = useRestTimerStore(s => s.timerCompletionReason);
+
+    // Ref to track the scheduled OS notification identifier
+    const scheduledNotificationId = useRef<string | null>(null);
 
     // Watch the workout store's completion signal for auto-start
     const lastCompletedSet = useWorkoutStore(s => s.lastCompletedSet);
@@ -64,6 +68,11 @@ export default function RestTimer({
         const customTime = exerciseRestTimes[lastCompletedSet.exerciseId];
         const restDuration = customTime ?? defaultRestTime;
         startRestTimer(restDuration, lastCompletedSet.exerciseId, lastCompletedSet.setId);
+
+        // Schedule an OS-level notification so it fires even when JS thread is suspended
+        scheduleRestTimerNotification(restDuration).then(id => {
+            scheduledNotificationId.current = id;
+        });
     }, [lastCompletedSet]);
 
     // Stop timer when workout is finished or discarded
@@ -79,14 +88,28 @@ export default function RestTimer({
     // Fire side effects when timer finishes (restTimerActive transitions false)
     const wasActive = useRef(restTimerActive);
     useEffect(() => {
-        if (wasActive.current && !restTimerActive && restTimerRemaining === 0) {
-            // Timer just finished (not skipped — skip sets remaining to 0 too,
-            // but that's fine, we want feedback in both cases)
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            sendRestTimerNotification();
+        if (wasActive.current && !restTimerActive) {
+            if (timerCompletionReason === 'expired') {
+                // Timer finished naturally — fire haptics
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                // Cancel the scheduled OS notification (we're in foreground, it already fired
+                // or will fire redundantly — cancel to be safe)
+                if (scheduledNotificationId.current) {
+                    cancelScheduledNotification(scheduledNotificationId.current);
+                    scheduledNotificationId.current = null;
+                }
+                // If in foreground, send an immediate notification too
+                sendRestTimerNotification();
+            } else if (timerCompletionReason === 'skipped') {
+                // User skipped — cancel the scheduled OS notification, no haptics
+                if (scheduledNotificationId.current) {
+                    cancelScheduledNotification(scheduledNotificationId.current);
+                    scheduledNotificationId.current = null;
+                }
+            }
         }
         wasActive.current = restTimerActive;
-    }, [restTimerActive, restTimerRemaining]);
+    }, [restTimerActive, timerCompletionReason]);
 
     // Use background timer for ticking
     useEffect(() => {

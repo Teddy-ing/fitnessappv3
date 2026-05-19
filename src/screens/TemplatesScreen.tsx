@@ -37,7 +37,7 @@ export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: 
     // Edit mode state
     const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
     const [editName, setEditName] = useState('');
-    const [editExercises, setEditExercises] = useState<Array<{ exercise: Exercise; defaultSets: number }>>([]);
+    const [editExercises, setEditExercises] = useState<Array<{ exercise: Exercise; defaultSets: number; supersetGroupId: string | null }>>([]);
     const [editIsFavorite, setEditIsFavorite] = useState(false);
     const [showExercisePicker, setShowExercisePicker] = useState(false);
 
@@ -72,6 +72,7 @@ export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: 
             template.exercises.map(e => ({
                 exercise: e.exercise,
                 defaultSets: e.defaultSets || 3,
+                supersetGroupId: e.supersetGroupId ?? null,
             }))
         );
         setEditIsFavorite(template.isFavorite || false);
@@ -147,7 +148,7 @@ export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: 
 
     // Add exercise from picker
     const handleAddExercise = (exercise: Exercise) => {
-        setEditExercises(prev => [...prev, { exercise, defaultSets: 3 }]);
+        setEditExercises(prev => [...prev, { exercise, defaultSets: 3, supersetGroupId: null }]);
         setShowExercisePicker(false);
     };
 
@@ -180,6 +181,32 @@ export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: 
             const newList = [...prev];
             [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
             return newList;
+        });
+    };
+
+    const handleToggleSuperset = (index: number) => {
+        if (index >= editExercises.length - 1) return;
+        setEditExercises(prev => {
+            const current = prev[index];
+            const next = prev[index + 1];
+
+            if (current.supersetGroupId && current.supersetGroupId === next.supersetGroupId) {
+                const groupExercises = prev.filter(e => e.supersetGroupId === current.supersetGroupId);
+                if (groupExercises.length === 2) {
+                    return prev.map((e, i) =>
+                        (i === index || i === index + 1) ? { ...e, supersetGroupId: null } : e
+                    );
+                } else {
+                    return prev.map((e, i) =>
+                        i === index ? { ...e, supersetGroupId: null } : e
+                    );
+                }
+            } else {
+                const newGroupId = next.supersetGroupId || current.supersetGroupId || `superset-${Date.now()}`;
+                return prev.map((e, i) =>
+                    (i === index || i === index + 1) ? { ...e, supersetGroupId: newGroupId } : e
+                );
+            }
         });
     };
 
@@ -241,52 +268,81 @@ export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: 
                         </TouchableOpacity>
 
                         <Text style={styles.formLabel}>Exercises</Text>
-                        {editExercises.map((item, index) => (
-                            <View key={index} style={styles.exerciseRow}>
-                                {/* Reorder buttons */}
-                                <View style={styles.reorderButtons}>
-                                    <TouchableOpacity
-                                        style={[styles.reorderButton, index === 0 && styles.reorderButtonDisabled]}
-                                        onPress={() => handleMoveUp(index)}
-                                        disabled={index === 0}
-                                    >
-                                        <Text style={styles.reorderButtonText}>▲</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.reorderButton, index === editExercises.length - 1 && styles.reorderButtonDisabled]}
-                                        onPress={() => handleMoveDown(index)}
-                                        disabled={index === editExercises.length - 1}
-                                    >
-                                        <Text style={styles.reorderButtonText}>▼</Text>
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={styles.exerciseInfo}>
-                                    <Text style={styles.exerciseName}>{item.exercise.name}</Text>
-                                    <Text style={styles.exerciseMeta}>{item.exercise.category}</Text>
-                                </View>
-                                <View style={styles.setsControl}>
-                                    <TouchableOpacity
-                                        style={styles.setsButton}
-                                        onPress={() => handleUpdateSets(index, item.defaultSets - 1)}
-                                    >
-                                        <Text style={styles.setsButtonText}>−</Text>
-                                    </TouchableOpacity>
-                                    <Text style={styles.setsText}>{item.defaultSets}</Text>
-                                    <TouchableOpacity
-                                        style={styles.setsButton}
-                                        onPress={() => handleUpdateSets(index, item.defaultSets + 1)}
-                                    >
-                                        <Text style={styles.setsButtonText}>+</Text>
-                                    </TouchableOpacity>
-                                </View>
-                                <TouchableOpacity
-                                    style={styles.removeButton}
-                                    onPress={() => handleRemoveExercise(index)}
-                                >
-                                    <Text style={styles.removeButtonText}>✕</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ))}
+                        {editExercises.map((item, index) => {
+                            const isInSuperset = item.supersetGroupId !== null;
+                            const nextInSameGroup = index < editExercises.length - 1 &&
+                                item.supersetGroupId !== null &&
+                                item.supersetGroupId === editExercises[index + 1].supersetGroupId;
+
+                            return (
+                                <React.Fragment key={index}>
+                                    <View style={[
+                                        styles.exerciseRow,
+                                        isInSuperset && styles.supersetExerciseRow,
+                                    ]}>
+                                        {/* Reorder buttons */}
+                                        <View style={styles.reorderButtons}>
+                                            <TouchableOpacity
+                                                style={[styles.reorderButton, index === 0 && styles.reorderButtonDisabled]}
+                                                onPress={() => handleMoveUp(index)}
+                                                disabled={index === 0}
+                                            >
+                                                <Text style={styles.reorderButtonText}>▲</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[styles.reorderButton, index === editExercises.length - 1 && styles.reorderButtonDisabled]}
+                                                onPress={() => handleMoveDown(index)}
+                                                disabled={index === editExercises.length - 1}
+                                            >
+                                                <Text style={styles.reorderButtonText}>▼</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={styles.exerciseInfo}>
+                                            <Text style={styles.exerciseName}>{item.exercise.name}</Text>
+                                            <Text style={styles.exerciseMeta}>{item.exercise.category}</Text>
+                                        </View>
+                                        <View style={styles.setsControl}>
+                                            <TouchableOpacity
+                                                style={styles.setsButton}
+                                                onPress={() => handleUpdateSets(index, item.defaultSets - 1)}
+                                            >
+                                                <Text style={styles.setsButtonText}>−</Text>
+                                            </TouchableOpacity>
+                                            <Text style={styles.setsText}>{item.defaultSets}</Text>
+                                            <TouchableOpacity
+                                                style={styles.setsButton}
+                                                onPress={() => handleUpdateSets(index, item.defaultSets + 1)}
+                                            >
+                                                <Text style={styles.setsButtonText}>+</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <TouchableOpacity
+                                            style={styles.removeButton}
+                                            onPress={() => handleRemoveExercise(index)}
+                                        >
+                                            <Text style={styles.removeButtonText}>✕</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                    {/* Superset link button */}
+                                    {index < editExercises.length - 1 && (
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.supersetLinkButton,
+                                                nextInSameGroup && styles.supersetLinkActive,
+                                            ]}
+                                            onPress={() => handleToggleSuperset(index)}
+                                        >
+                                            <Text style={[
+                                                styles.supersetLinkText,
+                                                nextInSameGroup && styles.supersetLinkTextActive,
+                                            ]}>
+                                                {nextInSameGroup ? '🔗 Superset' : '➕ Link as Superset'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
 
                         <TouchableOpacity
                             style={styles.addExerciseButton}
@@ -613,5 +669,26 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
+    },
+    supersetExerciseRow: {
+        borderLeftWidth: 3,
+        borderLeftColor: colors.accent.warning,
+    },
+    supersetLinkButton: {
+        alignItems: 'center',
+        paddingVertical: spacing.xs,
+        marginBottom: spacing.xs,
+    },
+    supersetLinkActive: {
+        backgroundColor: colors.accent.warning + '15',
+        borderRadius: borderRadius.sm,
+    },
+    supersetLinkText: {
+        color: colors.text.disabled,
+        fontSize: typography.size.xs,
+    },
+    supersetLinkTextActive: {
+        color: colors.accent.warning,
+        fontWeight: typography.weight.medium,
     },
 });

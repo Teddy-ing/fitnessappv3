@@ -45,6 +45,8 @@ interface WorkoutKeyboardProps {
     onNext: () => void;
     onHide: () => void;
     showPlateCalc?: boolean;
+    /** Whether to show the +/− adjust buttons (default: true) */
+    showAdjustButtons?: boolean;
     /** Configurable step size for weight +/− buttons (default: 5) */
     weightIncrement?: number;
 }
@@ -62,6 +64,7 @@ export default function WorkoutKeyboard({
     onNext,
     onHide,
     showPlateCalc = true,
+    showAdjustButtons = true,
     weightIncrement = 5,
 }: WorkoutKeyboardProps) {
     const weightUnit = useWeightUnit();
@@ -186,6 +189,7 @@ export default function WorkoutKeyboard({
             {/* Keyboard layout */}
             <View style={styles.keyboardContainer}>
                 {/* Left side: +/- buttons */}
+                {showAdjustButtons && (
                 <View style={styles.adjustColumn}>
                     {renderKey(
                         `−${adjustAmount}`,
@@ -200,6 +204,7 @@ export default function WorkoutKeyboard({
                         styles.adjustKeyText
                     )}
                 </View>
+                )}
 
                 {/* Center: Number pad */}
                 <View style={styles.numpadContainer}>

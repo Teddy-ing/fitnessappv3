@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+
     View,
     Text,
     StyleSheet,
@@ -20,15 +21,9 @@ import { LineChart } from 'react-native-gifted-charts';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import {
     getMeasurementHistory,
-    getEstimated1RM,
-    getExercises,
 } from '../../services';
-import { getSettings, updateSettings } from '../../services/preferencesService';
 import type { MeasurementType } from '../../models';
-import type { Exercise } from '../../models/exercise';
-import type { ChartRange } from '../../models/analytics';
 import { formatISODate } from '../../utils/formatters';
-import OverlayExercisePicker from './OverlayExercisePicker';
 
 // ============================================================
 // Constants
@@ -68,56 +63,9 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
     const [data, setData] = useState<{ date: string; value: number }[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Relative strength overlay (bodyweight only)
-    const isBodyweight = type.id === 'bodyweight';
-    const [showOverlay, setShowOverlay] = useState(false);
-    const [overlayData, setOverlayData] = useState<{ date: string; value: number }[]>([]);
-    const [overlayExerciseId, setOverlayExerciseId] = useState<string | null>(null);
-    const [overlayExerciseName, setOverlayExerciseName] = useState('Bench Press');
-    const [showExercisePicker, setShowExercisePicker] = useState(false);
-    const [allExercises, setAllExercises] = useState<Exercise[]>([]);
+
 
     const unit = unitSystem === 'kg' ? type.unitMetric : type.unitImperial;
-
-    useEffect(() => {
-        loadData();
-    }, [range, type.id]);
-
-    // Load saved exercise preference for overlay (PP-026: single getExercises call)
-    useEffect(() => {
-        if (isBodyweight) {
-            (async () => {
-                const [settings, exercises] = await Promise.all([
-                    getSettings(),
-                    getExercises(false),
-                ]);
-                setAllExercises(exercises);
-
-                if (settings.relativeStrengthExercise) {
-                    setOverlayExerciseId(settings.relativeStrengthExercise);
-                    const ex = exercises.find(e => e.id === settings.relativeStrengthExercise);
-                    if (ex) setOverlayExerciseName(ex.name);
-                } else {
-                    // Default to first bench press found
-                    const bench = exercises.find(e => e.name.toLowerCase().includes('bench press'));
-                    if (bench) {
-                        setOverlayExerciseId(bench.id);
-                        setOverlayExerciseName(bench.name);
-                    } else if (exercises.length > 0) {
-                        setOverlayExerciseId(exercises[0].id);
-                        setOverlayExerciseName(exercises[0].name);
-                    }
-                }
-            })();
-        }
-    }, [isBodyweight]);
-
-    // Load overlay 1RM data when toggled on
-    useEffect(() => {
-        if (showOverlay && overlayExerciseId) {
-            loadOverlayData();
-        }
-    }, [showOverlay, overlayExerciseId, range]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -133,19 +81,9 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
         setLoading(false);
     }, [range, type.id]);
 
-    const loadOverlayData = useCallback(async () => {
-        if (!overlayExerciseId) return;
-        const chartRange = range as ChartRange;
-        const result = await getEstimated1RM(overlayExerciseId, chartRange);
-        setOverlayData(result.map(r => ({ date: r.date, value: r.value })));
-    }, [overlayExerciseId, range]);
-
-    const handleSelectExercise = async (exercise: Exercise) => {
-        setOverlayExerciseId(exercise.id);
-        setOverlayExerciseName(exercise.name);
-        setShowExercisePicker(false);
-        await updateSettings({ relativeStrengthExercise: exercise.id });
-    };
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     // PP-024: Memoize chart data transformations
     const chartData = useMemo(() => data.map((d, i) => {
@@ -158,39 +96,10 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
         };
     }), [data]);
 
-    // PP-030: Build Map for O(1) overlay date lookups (replaces O(n²) find)
-    const overlayChartData = useMemo(() => {
-        if (!showOverlay || overlayData.length === 0) return [];
-
-        const overlayMap = new Map<string, number>();
-        for (const o of overlayData) {
-            overlayMap.set(o.date, o.value);
-        }
-
-        const aligned = data.map((d) => {
-            const match = overlayMap.get(d.date);
-            return { value: match ?? 0 };
-        });
-
-        // Fill gaps with nearest non-zero neighbour
-        return aligned.map((d, i, arr) => {
-            if (d.value === 0) {
-                let prevVal = 0, nextVal = 0;
-                for (let j = i - 1; j >= 0; j--) { if (arr[j].value > 0) { prevVal = arr[j].value; break; } }
-                for (let j = i + 1; j < arr.length; j++) { if (arr[j].value > 0) { nextVal = arr[j].value; break; } }
-                return { value: prevVal || nextVal || 0 };
-            }
-            return d;
-        });
-    }, [data, overlayData, showOverlay]);
-
-    const hasAnyOverlay = useMemo(() => overlayChartData.some(d => d.value > 0), [overlayChartData]);
 
     const maxValue = useMemo(() => data.length > 0
         ? Math.max(...data.map((d) => d.value)) * 1.15
         : 100, [data]);
-
-    const overlayColor = '#3b82f6'; // Blue for 1RM line
 
     return (
         <View style={styles.container}>
@@ -218,31 +127,7 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
                 ))}
             </View>
 
-            {/* Overlay toggle for bodyweight */}
-            {isBodyweight && (
-                <View style={styles.overlayRow}>
-                    <TouchableOpacity
-                        style={[styles.overlayToggle, showOverlay && styles.overlayToggleActive]}
-                        onPress={() => setShowOverlay(prev => !prev)}
-                        activeOpacity={0.7}
-                    >
-                        <View style={[styles.overlayDot, { backgroundColor: overlayColor }]} />
-                        <Text style={[styles.overlayToggleText, showOverlay && styles.overlayToggleTextActive]}>
-                            Overlay 1RM
-                        </Text>
-                    </TouchableOpacity>
-                    {showOverlay && (
-                        <TouchableOpacity
-                            onPress={() => setShowExercisePicker(true)}
-                            style={styles.exercisePickerBtn}
-                        >
-                            <Text style={styles.exercisePickerText} numberOfLines={1}>
-                                {overlayExerciseName} ▾
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            )}
+
 
             {/* Chart */}
             {loading ? (
@@ -257,12 +142,6 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
                 <View style={styles.chartCard}>
                     <LineChart
                         data={chartData}
-                        {...(showOverlay && hasAnyOverlay ? {
-                            data2: overlayChartData,
-                            color2: overlayColor,
-                            dataPointsColor2: overlayColor,
-                            dataPointsRadius2: data.length > 20 ? 0 : 2,
-                        } : {})}
                         width={CHART_WIDTH}
                         height={200}
                         xAxisLabelsHeight={36}
@@ -302,7 +181,7 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
                             pointerColor: colors.accent.primary,
                             radius: 5,
                             pointerLabelWidth: 140,
-                            pointerLabelHeight: showOverlay ? 50 : 30,
+                            pointerLabelHeight: 30,
                             activatePointersOnLongPress: false,
                             autoAdjustPointerLabelPosition: true,
                             pointerLabelComponent: (items: { value?: number; fullLabel?: string; label?: string }[]) => {
@@ -312,30 +191,11 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
                                         <Text style={styles.tooltipText}>
                                             {pointLabel}: {Math.round((items[0]?.value ?? 0) * 10) / 10} {unit}
                                         </Text>
-                                        {showOverlay && items[1] && items[1].value !== undefined && items[1].value > 0 && (
-                                            <Text style={[styles.tooltipText, { color: overlayColor }]}>
-                                                1RM: {Math.round(items[1].value)} {unit}
-                                            </Text>
-                                        )}
                                     </View>
                                 );
                             },
                         }}
                     />
-
-                    {/* Legend when overlay active */}
-                    {showOverlay && hasAnyOverlay && (
-                        <View style={styles.legendRow}>
-                            <View style={styles.legendItem}>
-                                <View style={[styles.legendDot, { backgroundColor: colors.accent.primary }]} />
-                                <Text style={styles.legendText}>Bodyweight</Text>
-                            </View>
-                            <View style={styles.legendItem}>
-                                <View style={[styles.legendDot, { backgroundColor: overlayColor }]} />
-                                <Text style={styles.legendText}>Est. 1RM ({overlayExerciseName})</Text>
-                            </View>
-                        </View>
-                    )}
 
                     {/* Summary row */}
                     <View style={styles.summaryRow}>
@@ -363,44 +223,7 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
                             </View>
                         )}
                     </View>
-
-                    {/* 1RM summary when overlay active */}
-                    {showOverlay && overlayData.length >= 2 && (
-                        <View style={[styles.summaryRow, { borderTopColor: overlayColor + '40' }]}>
-                            <View>
-                                <Text style={[styles.summaryLabel, { color: overlayColor }]}>1RM Latest</Text>
-                                <Text style={[styles.summaryValue, { color: overlayColor }]}>
-                                    {Math.round(overlayData[overlayData.length - 1]?.value ?? 0)} {unit}
-                                </Text>
-                            </View>
-                            <View style={{ alignItems: 'flex-end' }}>
-                                <Text style={[styles.summaryLabel, { color: overlayColor }]}>1RM Change</Text>
-                                {(() => {
-                                    const first = overlayData[0].value;
-                                    const last = overlayData[overlayData.length - 1].value;
-                                    const diff = last - first;
-                                    const sign = diff >= 0 ? '+' : '';
-                                    const changeColor = diff >= 0 ? colors.accent.success : colors.accent.error;
-                                    return (
-                                        <Text style={[styles.summaryValue, { color: changeColor }]}>
-                                            {sign}{Math.round(diff)} {unit}
-                                        </Text>
-                                    );
-                                })()}
-                            </View>
-                        </View>
-                    )}
                 </View>
-            )}
-
-            {/* Exercise picker modal */}
-            {showExercisePicker && (
-                <OverlayExercisePicker
-                    exercises={allExercises}
-                    selectedId={overlayExerciseId}
-                    onSelect={handleSelectExercise}
-                    onClose={() => setShowExercisePicker(false)}
-                />
             )}
         </View>
     );
@@ -515,71 +338,4 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.bold as '700',
     },
 
-    // Overlay toggle
-    overlayRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: spacing.lg,
-        paddingBottom: spacing.sm,
-    },
-    overlayToggle: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: borderRadius.full,
-        backgroundColor: colors.background.tertiary,
-    },
-    overlayToggleActive: {
-        backgroundColor: '#3b82f6' + '25',
-    },
-    overlayDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-    },
-    overlayToggleText: {
-        color: colors.text.secondary,
-        fontSize: typography.size.xs,
-        fontWeight: typography.weight.medium as '500',
-    },
-    overlayToggleTextActive: {
-        color: '#3b82f6',
-    },
-    exercisePickerBtn: {
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        backgroundColor: colors.background.tertiary,
-        borderRadius: borderRadius.md,
-        maxWidth: 160,
-    },
-    exercisePickerText: {
-        color: colors.accent.primary,
-        fontSize: typography.size.xs,
-        fontWeight: typography.weight.medium as '500',
-    },
-
-    // Legend
-    legendRow: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: spacing.lg,
-        marginTop: spacing.sm,
-    },
-    legendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-    },
-    legendDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-    },
-    legendText: {
-        color: colors.text.secondary,
-        fontSize: 10,
-    },
 });

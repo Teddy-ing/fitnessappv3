@@ -309,6 +309,8 @@ export default function MeasurementsScreen() {
                 onAdjust={handleAdjust}
                 onNext={handleNext}
                 onHide={handleHideKeyboard}
+                showPlateCalc={false}
+                showAdjustButtons={false}
             />
         </SafeAreaView>
     );

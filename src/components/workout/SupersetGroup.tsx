@@ -44,6 +44,7 @@ interface SupersetGroupProps {
     onAddWarmupSets: (exerciseId: string, count: number) => void;
     onReplaceExercise: (exerciseId: string) => void;
     onToggleCollapse: (...args: any[]) => void;
+    onRpeRirSelected?: () => void;
 }
 
 export default function SupersetGroup({
@@ -68,6 +69,7 @@ export default function SupersetGroup({
     onAddWarmupSets,
     onReplaceExercise,
     onToggleCollapse,
+    onRpeRirSelected,
 }: SupersetGroupProps) {
     return (
         <View style={styles.container}>
@@ -113,6 +115,7 @@ export default function SupersetGroup({
                                 onAddWarmupSets={onAddWarmupSets}
                                 onReplaceExercise={onReplaceExercise}
                                 onToggleCollapse={onToggleCollapse}
+                                onRpeRirSelected={onRpeRirSelected}
                             />
                         </ErrorBoundary>
                     );

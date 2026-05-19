@@ -16,6 +16,8 @@ interface SplitSchedulePreviewProps {
     templates: Template[];
     onAddRestDay: () => void;
     onRemoveItem: (index: number) => void;
+    onMoveUp: (index: number) => void;
+    onMoveDown: (index: number) => void;
 }
 
 function SplitSchedulePreview({
@@ -23,6 +25,8 @@ function SplitSchedulePreview({
     templates,
     onAddRestDay,
     onRemoveItem,
+    onMoveUp,
+    onMoveDown,
 }: SplitSchedulePreviewProps) {
     return (
         <>
@@ -42,6 +46,23 @@ function SplitSchedulePreview({
                     <View style={styles.schedulePreview}>
                         {scheduleItems.map((item, index) => (
                             <View key={index} style={styles.scheduleItem}>
+                                {/* Reorder buttons */}
+                                <View style={styles.reorderButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.reorderButton, index === 0 && styles.reorderButtonDisabled]}
+                                        onPress={() => onMoveUp(index)}
+                                        disabled={index === 0}
+                                    >
+                                        <Text style={styles.reorderButtonText}>▲</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.reorderButton, index === scheduleItems.length - 1 && styles.reorderButtonDisabled]}
+                                        onPress={() => onMoveDown(index)}
+                                        disabled={index === scheduleItems.length - 1}
+                                    >
+                                        <Text style={styles.reorderButtonText}>▼</Text>
+                                    </TouchableOpacity>
+                                </View>
                                 <View style={styles.scheduleItemOrderBadge}>
                                     <Text style={styles.scheduleItemOrderText}>{index + 1}</Text>
                                 </View>
@@ -144,5 +165,18 @@ const styles = StyleSheet.create({
     scheduleItemRemoveText: {
         color: colors.text.disabled,
         fontSize: typography.size.md,
+    },
+    reorderButtons: {
+        marginRight: spacing.xs,
+    },
+    reorderButton: {
+        padding: 2,
+    },
+    reorderButtonDisabled: {
+        opacity: 0.3,
+    },
+    reorderButtonText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.xs,
     },
 });

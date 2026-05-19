@@ -33,6 +33,7 @@ import RenderableExerciseItem, { RenderableItem } from '../components/workout/Re
 import WorkoutNoteSection from '../components/workout/WorkoutNoteSection';
 import WorkoutHeader from '../components/workout/WorkoutHeader';
 import { useElapsedTimer, useWorkoutKeyboard, useHomeScreenData } from '../hooks';
+import { isKeyboardField } from '../hooks/useWorkoutKeyboard';
 import { useWorkoutSettings } from '../hooks/workout/useWorkoutSettings';
 import {
     saveWorkout,
@@ -180,6 +181,7 @@ export default function WorkoutScreen() {
         handleHideKeyboard,
         getKeyboardFieldType,
         getFieldLabel,
+        handleRpeRirSelected,
     } = useWorkoutKeyboard();
 
 
@@ -429,6 +431,7 @@ export default function WorkoutScreen() {
             onAddWarmupSets={addWarmupSets}
             onReplaceExercise={setReplaceExerciseId}
             onToggleCollapse={toggleCollapse}
+            onRpeRirSelected={handleRpeRirSelected}
         />
     ), [
         // Props that change between renders (all others are stable refs from getState/useState):
@@ -438,7 +441,7 @@ export default function WorkoutScreen() {
         // Stable refs — listed for completeness but won't cause re-creation:
         handleFocusField, updateSet, completeSet, addSet, removeSet,
         removeExercise, toggleSuperset, updateExerciseNote, addWarmupSets,
-        setReplaceExerciseId, toggleCollapse,
+        setReplaceExerciseId, toggleCollapse, handleRpeRirSelected,
     ]);
 
     // Render home view (no active workout) — WorkoutHomeView owns its own modals
@@ -561,7 +564,7 @@ export default function WorkoutScreen() {
 
             {/* Custom Workout Keyboard */}
             <WorkoutKeyboard
-                visible={focusState !== null}
+                visible={focusState !== null && isKeyboardField(focusState.field)}
                 currentValue={keyboardValue}
                 fieldType={getKeyboardFieldType()}
                 fieldLabel={getFieldLabel()}

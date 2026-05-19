@@ -115,6 +115,14 @@ export async function saveSplit(split: Split): Promise<Split | null> {
         }
     });
 
+    // Clamp currentTemplateIndex if this is the active split and schedule shrank
+    const settings = await getSettings();
+    if (settings.activeSplitId === split.id) {
+        if (settings.currentTemplateIndex >= split.schedule.length && split.schedule.length > 0) {
+            await updateSettings({ currentTemplateIndex: 0 });
+        }
+    }
+
     return { ...split, updatedAt: now };
 }
 
@@ -169,7 +177,17 @@ export async function setActiveSplit(splitId: string | null): Promise<void> {
  */
 export async function getCurrentTemplateIndex(): Promise<number> {
     const settings = await getSettings();
-    return settings.currentTemplateIndex;
+    const idx = settings.currentTemplateIndex;
+
+    // Safety clamp: if the active split's schedule shrank, reset to 0
+    if (settings.activeSplitId && idx > 0) {
+        const split = await getSplitById(settings.activeSplitId);
+        if (split && idx >= split.schedule.length) {
+            await updateSettings({ currentTemplateIndex: 0 });
+            return 0;
+        }
+    }
+    return idx;
 }
 
 /**
@@ -187,11 +205,14 @@ export async function advanceToNextTemplate(): Promise<void> {
     if (!split || split.schedule.length === 0) return;
 
     let currentIndex = await getCurrentTemplateIndex();
+    // Clamp in case schedule shrank
+    if (currentIndex >= split.schedule.length) currentIndex = 0;
+
     let nextIndex = (currentIndex + 1) % split.schedule.length;
 
     // Skip rest days (find next actual template)
     let attempts = 0;
-    while (split.schedule[nextIndex].type === 'rest' && attempts < split.schedule.length) {
+    while (split.schedule[nextIndex]?.type === 'rest' && attempts < split.schedule.length) {
         nextIndex = (nextIndex + 1) % split.schedule.length;
         attempts++;
     }
@@ -207,9 +228,11 @@ export async function getCurrentTemplate(): Promise<Template | null> {
     if (!split || split.schedule.length === 0) return null;
 
     const index = await getCurrentTemplateIndex();
-    const item = split.schedule[index];
+    // Bounds check — if index is somehow beyond schedule length, return null
+    if (index >= split.schedule.length) return null;
 
-    if (item.type === 'rest') return null;
+    const item = split.schedule[index];
+    if (!item || item.type === 'rest') return null;
 
     const templates = await getTemplates();
     return templates.find(t => t.id === item.templateId) || null;
@@ -231,23 +254,55 @@ export async function setLastWorkoutDate(date: string): Promise<void> {
 }
 
 /**
- * Check if we should advance template (called when app opens)
- * Only advances if a workout was completed and it's a new day
+ * Check if we should advance or reset template (called when app opens).
+ * - If a new WEEK has started (based on calendarStartDay), reset to Day 1.
+ * - If same week but new day, advance to next template.
+ * - If same day, do nothing.
  */
 export async function checkAndAdvanceIfNewDay(): Promise<boolean> {
     const lastDate = await getLastWorkoutDate();
     if (!lastDate) return false;
 
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    if (lastDate === today) return false;
 
-    if (lastDate !== today) {
-        // It's a new day - advance template and clear the flag
-        await advanceToNextTemplate();
+    // Parse dates for week comparison
+    const lastDateObj = new Date(lastDate + 'T12:00:00'); // noon to avoid TZ edge cases
+    const todayObj = new Date(today + 'T12:00:00');
+
+    // Determine if we crossed a week boundary
+    const settings = await getSettings();
+    const startDay = settings.calendarStartDay === 'monday' ? 1 : 0; // 0=Sun, 1=Mon
+
+    const lastWeekStart = getWeekStart(lastDateObj, startDay);
+    const todayWeekStart = getWeekStart(todayObj, startDay);
+
+    if (lastWeekStart.getTime() !== todayWeekStart.getTime()) {
+        // New week — reset split to Day 1
+        await setCurrentTemplateIndex(0);
         await setLastWorkoutDate(''); // Clear the flag
         return true;
     }
 
-    return false;
+    // Same week, different day — advance normally
+    await advanceToNextTemplate();
+    await setLastWorkoutDate(''); // Clear the flag
+    return true;
+}
+
+/**
+ * Get the start of the week (midnight) for a given date.
+ * @param date — The date to find the week start for
+ * @param startDay — 0 for Sunday, 1 for Monday
+ */
+function getWeekStart(date: Date, startDay: number): Date {
+    const d = new Date(date);
+    const day = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    // Calculate how many days back to go to reach the start of the week
+    const diff = (day - startDay + 7) % 7;
+    d.setDate(d.getDate() - diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
 }
 
 /**

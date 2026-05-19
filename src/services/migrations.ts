@@ -735,6 +735,22 @@ const MIGRATIONS: Migration[] = [
             `);
         },
     },
+
+    // ----------------------------------------------------------
+    // v16: Superset support in templates
+    // ----------------------------------------------------------
+    {
+        version: 16,
+        name: 'template_superset_group_id',
+        up: async (db) => {
+            const hasCol = await columnExists(db, 'template_exercises', 'superset_group_id');
+            if (!hasCol) {
+                await db.execAsync(
+                    `ALTER TABLE template_exercises ADD COLUMN superset_group_id TEXT;`,
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

@@ -1,9 +1,12 @@
 /**
  * SplitFormView Component
  *
- * The create/edit form for splits. Manages its own form state (name, schedule,
- * favorite toggle) and handles template selection, rest days, schedule preview,
+ * The create/edit form for splits. Manages its own form state (name, schedule)
+ * and handles template selection, rest days, schedule preview,
  * and save/create/delete operations.
+ *
+ * Templates are grouped by split membership with collapsible sections.
+ * Long-press a template to edit or delete it.
  *
  * Extracted from SplitsScreen to isolate form logic from list browsing.
  */
@@ -27,6 +30,7 @@ import {
 } from '../services';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import SplitSchedulePreview from './SplitSchedulePreview';
+import TemplateActionSheet from './TemplateActionSheet';
 
 interface SplitFormViewProps {
     /** If provided, the form is in edit mode for this split */
@@ -40,6 +44,8 @@ interface SplitFormViewProps {
     onCancel: () => void;
     /** Called after a successful save/create/delete so parent can reload and update state */
     onSaved: (options?: { deletedActiveSplit?: boolean }) => void;
+    /** Called when templates change (edit/delete) so parent can refresh */
+    onTemplatesChanged: () => void;
 }
 
 export default function SplitFormView({
@@ -52,21 +58,21 @@ export default function SplitFormView({
     onOpenCreateTemplate,
     onCancel,
     onSaved,
+    onTemplatesChanged,
 }: SplitFormViewProps) {
     const [splitName, setSplitName] = useState('');
     const [scheduleItems, setScheduleItems] = useState<SplitScheduleItem[]>([]);
-    const [isFavorite, setIsFavorite] = useState(false);
+    const [longPressTemplate, setLongPressTemplate] = useState<Template | null>(null);
+    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
     // Populate form when editing
     useEffect(() => {
         if (editingSplit) {
             setSplitName(editingSplit.name);
             setScheduleItems([...editingSplit.schedule]);
-            setIsFavorite(editingSplit.isFavorite || false);
         } else {
             setSplitName('');
             setScheduleItems([]);
-            setIsFavorite(false);
         }
     }, [editingSplit]);
 
@@ -91,6 +97,24 @@ export default function SplitFormView({
 
     const removeScheduleItem = (index: number) => {
         setScheduleItems(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const moveScheduleItemUp = (index: number) => {
+        if (index === 0) return;
+        setScheduleItems(prev => {
+            const newList = [...prev];
+            [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+            return newList;
+        });
+    };
+
+    const moveScheduleItemDown = (index: number) => {
+        setScheduleItems(prev => {
+            if (index >= prev.length - 1) return prev;
+            const newList = [...prev];
+            [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
+            return newList;
+        });
     };
 
     const getSelectionOrder = (templateId: string): number => {
@@ -147,7 +171,6 @@ export default function SplitFormView({
             name: splitName.trim(),
             templateIds,
             schedule: scheduleItems,
-            isFavorite,
             updatedAt: new Date(),
         };
         await saveSplit(updatedSplit);
@@ -180,7 +203,188 @@ export default function SplitFormView({
         );
     };
 
+    // --- Template grouping ---
+
+    const toggleGroupCollapsed = (groupKey: string) => {
+        setCollapsedGroups(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(groupKey)) {
+                newSet.delete(groupKey);
+            } else {
+                newSet.add(groupKey);
+            }
+            return newSet;
+        });
+    };
+
+    const renderTemplateCard = (template: Template) => {
+        const order = getSelectionOrder(template.id);
+        const isExpanded = expandedTemplateIds.has(template.id);
+        const isSelected = order > 0;
+
+        return (
+            <View key={template.id} style={[
+                styles.templateOption,
+                isSelected && styles.templateSelected
+            ]}>
+                <TouchableOpacity
+                    style={styles.templateMainRow}
+                    onPress={() => toggleTemplateSelection(template.id)}
+                    onLongPress={() => setLongPressTemplate(template)}
+                >
+                    {/* Order badge */}
+                    {isSelected && (
+                        <View style={styles.orderBadge}>
+                            <Text style={styles.orderBadgeText}>{order}</Text>
+                        </View>
+                    )}
+
+                    <View style={styles.templateInfo}>
+                        <Text style={styles.templateName}>{template.name}</Text>
+                        <Text style={styles.templateExercises}>
+                            {template.exerciseCount} exercises
+                        </Text>
+                    </View>
+
+                    {/* Expand button */}
+                    <TouchableOpacity
+                        style={styles.expandButton}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onToggleExpand(template.id);
+                        }}
+                    >
+                        <Text style={styles.expandButtonText}>
+                            {isExpanded ? '▲' : '▼'}
+                        </Text>
+                    </TouchableOpacity>
+                </TouchableOpacity>
+
+                {/* Expanded exercise details */}
+                {isExpanded && template.exercises && (
+                    <View style={styles.exerciseDetails}>
+                        {template.exercises.map((ex, idx) => (
+                            <Text key={idx} style={styles.exerciseDetailText}>
+                                • {ex.exercise.name} ({ex.defaultSets || 3} sets)
+                            </Text>
+                        ))}
+                        {(!template.exercises || template.exercises.length === 0) && (
+                            <Text style={styles.exerciseDetailText}>
+                                No exercises yet
+                            </Text>
+                        )}
+                    </View>
+                )}
+            </View>
+        );
+    };
+
+    const renderGroupedTemplates = () => {
+        // Build groups: ungrouped, current split, and other splits
+        const ungrouped: Template[] = [];
+        const splitGroups = new Map<string, { name: string; isBuiltIn: boolean; templates: Template[] }>();
+
+        for (const template of templates) {
+            const splits = templateSplitsMap.get(template.id) || [];
+            if (splits.length === 0) {
+                ungrouped.push(template);
+            } else {
+                // Add to each split group (a template can be in multiple splits)
+                for (const split of splits) {
+                    if (!splitGroups.has(split.id)) {
+                        splitGroups.set(split.id, {
+                            name: split.isBuiltIn ? `${split.name} (Pre-made)` : split.name,
+                            isBuiltIn: split.isBuiltIn,
+                            templates: [],
+                        });
+                    }
+                    const group = splitGroups.get(split.id)!;
+                    if (!group.templates.find(t => t.id === template.id)) {
+                        group.templates.push(template);
+                    }
+                }
+            }
+        }
+
+        // Order: current editing split first, then ungrouped, then other user splits, then pre-made
+        const sections: React.ReactNode[] = [];
+
+        // Current editing split's templates (if editing)
+        if (editingSplit) {
+            const currentGroup = splitGroups.get(editingSplit.id);
+            if (currentGroup && currentGroup.templates.length > 0) {
+                const groupKey = `split-${editingSplit.id}`;
+                const isCollapsed = collapsedGroups.has(groupKey);
+                sections.push(
+                    <View key={groupKey}>
+                        <TouchableOpacity
+                            style={styles.groupHeader}
+                            onPress={() => toggleGroupCollapsed(groupKey)}
+                        >
+                            <Text style={styles.groupHeaderText}>
+                                {isCollapsed ? '▶' : '▼'} {currentGroup.name}
+                            </Text>
+                            <Text style={styles.groupCount}>{currentGroup.templates.length}</Text>
+                        </TouchableOpacity>
+                        {!isCollapsed && currentGroup.templates.map(renderTemplateCard)}
+                    </View>
+                );
+                splitGroups.delete(editingSplit.id);
+            }
+        }
+
+        // Ungrouped templates (always expanded by default)
+        if (ungrouped.length > 0) {
+            const groupKey = 'ungrouped';
+            const isCollapsed = collapsedGroups.has(groupKey);
+            sections.push(
+                <View key={groupKey}>
+                    <TouchableOpacity
+                        style={styles.groupHeader}
+                        onPress={() => toggleGroupCollapsed(groupKey)}
+                    >
+                        <Text style={styles.groupHeaderText}>
+                            {isCollapsed ? '▶' : '▼'} Ungrouped
+                        </Text>
+                        <Text style={styles.groupCount}>{ungrouped.length}</Text>
+                    </TouchableOpacity>
+                    {!isCollapsed && ungrouped.map(renderTemplateCard)}
+                </View>
+            );
+        }
+
+        // Remaining split groups (user splits first, then pre-made)
+        const sortedGroups = Array.from(splitGroups.entries())
+            .sort(([, a], [, b]) => {
+                if (a.isBuiltIn !== b.isBuiltIn) return a.isBuiltIn ? 1 : -1;
+                return a.name.localeCompare(b.name);
+            });
+
+        for (const [splitId, group] of sortedGroups) {
+            const groupKey = `split-${splitId}`;
+            // Other split groups default to collapsed — expanded when toggled into the set
+            const isCollapsed = !collapsedGroups.has(groupKey);
+            sections.push(
+                <View key={groupKey}>
+                    <TouchableOpacity
+                        style={styles.groupHeader}
+                        onPress={() => toggleGroupCollapsed(groupKey)}
+                    >
+                        <Text style={styles.groupHeaderText}>
+                            {isCollapsed ? '▶' : '▼'} {group.name}
+                        </Text>
+                        <Text style={styles.groupCount}>{group.templates.length}</Text>
+                    </TouchableOpacity>
+                    {!isCollapsed && group.templates.map(renderTemplateCard)}
+                </View>
+            );
+        }
+
+        return <>{sections}</>;
+    };
+
     return (
+        <>
         <ScrollView style={styles.createForm}>
             <Text style={styles.formLabel}>Split Name</Text>
             <TextInput
@@ -191,18 +395,6 @@ export default function SplitFormView({
                 placeholderTextColor={colors.text.disabled}
             />
 
-            {/* Favorite toggle - only in edit mode */}
-            {editingSplit && (
-                <TouchableOpacity
-                    style={styles.favoriteToggle}
-                    onPress={() => setIsFavorite(!isFavorite)}
-                >
-                    <Text style={styles.favoriteIcon}>{isFavorite ? '★' : '☆'}</Text>
-                    <Text style={styles.favoriteText}>
-                        {isFavorite ? 'Favorited' : 'Add to Favorites'}
-                    </Text>
-                </TouchableOpacity>
-            )}
 
             <Text style={styles.formLabel}>Select Templates</Text>
 
@@ -220,85 +412,20 @@ export default function SplitFormView({
                     No templates yet. Tap above to create one, or save workouts as templates.
                 </Text>
             ) : (
-                templates.map(template => {
-                    const order = getSelectionOrder(template.id);
-                    const isExpanded = expandedTemplateIds.has(template.id);
-                    const isSelected = order > 0;
-
-                    return (
-                        <View key={template.id} style={[
-                            styles.templateOption,
-                            isSelected && styles.templateSelected
-                        ]}>
-                            <TouchableOpacity
-                                style={styles.templateMainRow}
-                                onPress={() => toggleTemplateSelection(template.id)}
-                            >
-                                {/* Order badge */}
-                                {isSelected && (
-                                    <View style={styles.orderBadge}>
-                                        <Text style={styles.orderBadgeText}>{order}</Text>
-                                    </View>
-                                )}
-
-                                <View style={styles.templateInfo}>
-                                    <Text style={styles.templateName}>{template.name}</Text>
-                                    <Text style={styles.templateExercises}>
-                                        {template.exerciseCount} exercises
-                                    </Text>
-                                    {/* Split membership */}
-                                    <Text style={styles.templateSplitInfo}>
-                                        {(() => {
-                                            const splits = templateSplitsMap.get(template.id) || [];
-                                            if (splits.length === 0) {
-                                                return 'No split yet';
-                                            }
-                                            return splits.map(s =>
-                                                s.isBuiltIn ? `${s.name} (Pre-made)` : s.name
-                                            ).join(', ');
-                                        })()}
-                                    </Text>
-                                </View>
-
-                                {/* Expand button */}
-                                <TouchableOpacity
-                                    style={styles.expandButton}
-                                    onPress={(e) => {
-                                        e.stopPropagation();
-                                        onToggleExpand(template.id);
-                                    }}
-                                >
-                                    <Text style={styles.expandButtonText}>
-                                        {isExpanded ? '▲' : '▼'}
-                                    </Text>
-                                </TouchableOpacity>
-                            </TouchableOpacity>
-
-                            {/* Expanded exercise details */}
-                            {isExpanded && template.exercises && (
-                                <View style={styles.exerciseDetails}>
-                                    {template.exercises.map((ex, idx) => (
-                                        <Text key={idx} style={styles.exerciseDetailText}>
-                                            • {ex.exercise.name} ({ex.defaultSets || 3} sets)
-                                        </Text>
-                                    ))}
-                                    {(!template.exercises || template.exercises.length === 0) && (
-                                        <Text style={styles.exerciseDetailText}>
-                                            No exercises yet
-                                        </Text>
-                                    )}
-                                </View>
-                            )}
-                        </View>
-                    );
-                })
+                renderGroupedTemplates()
             )}
+
+            <Text style={styles.hintText}>
+                Long-press a template to edit or delete it
+            </Text>
 
             <SplitSchedulePreview
                 scheduleItems={scheduleItems}
                 templates={templates}
                 onAddRestDay={addRestDay}
                 onRemoveItem={removeScheduleItem}
+                onMoveUp={moveScheduleItemUp}
+                onMoveDown={moveScheduleItemDown}
             />
 
             <View style={styles.formButtons}>
@@ -328,6 +455,15 @@ export default function SplitFormView({
                 </TouchableOpacity>
             )}
         </ScrollView>
+
+        {/* Template Edit/Delete Action Sheet */}
+        <TemplateActionSheet
+            template={longPressTemplate}
+            visible={longPressTemplate !== null}
+            onClose={() => setLongPressTemplate(null)}
+            onTemplateChanged={onTemplatesChanged}
+        />
+        </>
     );
 }
 
@@ -352,23 +488,7 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         fontSize: typography.size.md,
     },
-    favoriteToggle: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background.secondary,
-        borderRadius: borderRadius.md,
-        padding: spacing.md,
-        marginTop: spacing.md,
-    },
-    favoriteIcon: {
-        fontSize: 20,
-        marginRight: spacing.sm,
-        color: colors.accent.warning,
-    },
-    favoriteText: {
-        color: colors.text.primary,
-        fontSize: typography.size.md,
-    },
+
     createTemplateButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -504,5 +624,34 @@ const styles = StyleSheet.create({
         color: colors.accent.error,
         fontSize: typography.size.md,
         fontWeight: typography.weight.medium,
+    },
+    groupHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.xs,
+        marginTop: spacing.sm,
+        marginBottom: spacing.xs,
+    },
+    groupHeaderText: {
+        color: colors.text.secondary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.semibold,
+    },
+    groupCount: {
+        color: colors.text.disabled,
+        fontSize: typography.size.xs,
+        backgroundColor: colors.background.tertiary,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 2,
+        borderRadius: borderRadius.full,
+    },
+    hintText: {
+        color: colors.text.disabled,
+        fontSize: typography.size.xs,
+        textAlign: 'center',
+        marginTop: spacing.sm,
+        marginBottom: spacing.xs,
     },
 });

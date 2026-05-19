@@ -69,8 +69,9 @@ export async function createTemplateFromWorkout(
                 `INSERT INTO template_exercises (
                     id, template_id, exercise_id, exercise_name, exercise_category,
                     exercise_muscle_groups, exercise_equipment, exercise_track_weight,
-                    exercise_track_reps, exercise_track_time, order_index, default_sets, note
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    exercise_track_reps, exercise_track_time, order_index, default_sets, note,
+                    superset_group_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     exerciseId,
                     templateId,
@@ -85,6 +86,7 @@ export async function createTemplateFromWorkout(
                     workoutExercise.orderIndex,
                     workoutExercise.sets.length,
                     workoutExercise.note,
+                    workoutExercise.supersetGroupId ?? null,
                 ]
             );
         }
@@ -102,6 +104,7 @@ export async function createTemplateFromWorkout(
             orderIndex: index,
             defaultSets: we.sets.length,
             note: we.note,
+            supersetGroupId: we.supersetGroupId ?? null,
         })),
         lastUsedAt: null,
         useCount: 0,
@@ -158,6 +161,7 @@ export async function getTemplates(): Promise<Template[]> {
             orderIndex: exRow.order_index,
             defaultSets: exRow.default_sets ?? 3,
             note: exRow.note ?? null,
+            supersetGroupId: exRow.superset_group_id ?? null,
         }));
 
         return {
@@ -352,7 +356,7 @@ export async function overwriteTemplate(
 export async function updateTemplate(
     templateId: string,
     name: string,
-    exercises: Array<{ exercise: Exercise; defaultSets: number }>
+    exercises: Array<{ exercise: Exercise; defaultSets: number; supersetGroupId?: string | null }>
 ): Promise<Template | null> {
     const db = await getDatabase();
     if (!db) return null;
@@ -374,14 +378,15 @@ export async function updateTemplate(
 
         // Insert new exercises
         for (let i = 0; i < exercises.length; i++) {
-            const { exercise, defaultSets } = exercises[i];
+            const { exercise, defaultSets, supersetGroupId } = exercises[i];
             const exerciseId = Crypto.randomUUID();
             await db.runAsync(
                 `INSERT INTO template_exercises (
                     id, template_id, exercise_id, exercise_name, exercise_category,
                     exercise_muscle_groups, exercise_equipment, exercise_track_weight,
-                    exercise_track_reps, exercise_track_time, order_index, default_sets, note
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    exercise_track_reps, exercise_track_time, order_index, default_sets, note,
+                    superset_group_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     exerciseId,
                     templateId,
@@ -396,6 +401,7 @@ export async function updateTemplate(
                     i,
                     defaultSets,
                     null,
+                    supersetGroupId ?? null,
                 ]
             );
         }
@@ -435,6 +441,7 @@ export async function startWorkoutFromTemplate(templateId: string): Promise<Work
             templateExercise.defaultSets
         );
         workoutExercise.note = templateExercise.note;
+        workoutExercise.supersetGroupId = templateExercise.supersetGroupId ?? null;
         workout.main.exercises.push(workoutExercise);
     }
 
@@ -460,6 +467,7 @@ async function hydrateTemplate(row: TemplateRow): Promise<Template> {
         orderIndex: exRow.order_index,
         defaultSets: exRow.default_sets ?? 3,
         note: exRow.note ?? null,
+        supersetGroupId: exRow.superset_group_id ?? null,
     }));
 
     return {

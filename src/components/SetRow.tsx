@@ -13,7 +13,7 @@
  * Swipe left to reveal delete button.
  */
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { WorkoutSet, SetType } from '../models/workout';
@@ -49,6 +49,9 @@ interface SetRowProps {
     showPrevious?: boolean;
     showRpe?: boolean;
     showRir?: boolean;
+    isRpeFocused?: boolean;
+    isRirFocused?: boolean;
+    onRpeRirSelected?: () => void;
 }
 
 function SetRowInner({
@@ -73,6 +76,9 @@ function SetRowInner({
     showPrevious = true,
     showRpe = false,
     showRir = false,
+    isRpeFocused = false,
+    isRirFocused = false,
+    onRpeRirSelected,
 }: SetRowProps) {
     const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
@@ -86,6 +92,48 @@ function SetRowInner({
 
     // RIR selector visibility
     const [showRirSelector, setShowRirSelector] = useState(false);
+
+    // Auto-open RPE selector when focused via keyboard Next flow
+    useEffect(() => {
+        if (isRpeFocused && !showRpeSelector) {
+            setShowRpeSelector(true);
+        }
+    }, [isRpeFocused]);
+
+    // Auto-open RIR selector when focused via keyboard Next flow
+    useEffect(() => {
+        if (isRirFocused && !showRirSelector) {
+            setShowRirSelector(true);
+        }
+    }, [isRirFocused]);
+
+    // Callbacks for RPE/RIR selector that continue the Next chain
+    const handleRpeSelect = useCallback((val: number | null) => {
+        onUpdateSet(exerciseId, setId, { rpe: val });
+        setShowRpeSelector(false);
+        onRpeRirSelected?.();
+    }, [exerciseId, setId, onUpdateSet, onRpeRirSelected]);
+
+    const handleRpeClose = useCallback(() => {
+        setShowRpeSelector(false);
+        // Only continue the chain if this was triggered by the Next flow
+        if (isRpeFocused) {
+            onRpeRirSelected?.();
+        }
+    }, [isRpeFocused, onRpeRirSelected]);
+
+    const handleRirSelect = useCallback((val: number | null) => {
+        onUpdateSet(exerciseId, setId, { rir: val });
+        setShowRirSelector(false);
+        onRpeRirSelected?.();
+    }, [exerciseId, setId, onUpdateSet, onRpeRirSelected]);
+
+    const handleRirClose = useCallback(() => {
+        setShowRirSelector(false);
+        if (isRirFocused) {
+            onRpeRirSelected?.();
+        }
+    }, [isRirFocused, onRpeRirSelected]);
 
     // Pulsing animation for active set checkbox
     const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -380,16 +428,16 @@ function SetRowInner({
             <RpeSelector
                 visible={showRpeSelector}
                 currentValue={set.rpe}
-                onSelect={(val) => onUpdateSet(exerciseId, setId, { rpe: val })}
-                onClose={() => setShowRpeSelector(false)}
+                onSelect={handleRpeSelect}
+                onClose={handleRpeClose}
             />
 
             {/* RIR selector modal */}
             <RirSelector
                 visible={showRirSelector}
                 currentValue={set.rir}
-                onSelect={(val) => onUpdateSet(exerciseId, setId, { rir: val })}
-                onClose={() => setShowRirSelector(false)}
+                onSelect={handleRirSelect}
+                onClose={handleRirClose}
             />
         </Swipeable>
     );
