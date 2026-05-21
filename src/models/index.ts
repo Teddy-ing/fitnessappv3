@@ -23,3 +23,4 @@ export * from './calendar';
 export * from './widget';
 export * from './muscleGroups';
 export * from './exerciseDetails';
+export * from './smartSuggestions';

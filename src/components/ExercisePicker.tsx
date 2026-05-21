@@ -24,8 +24,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Exercise, MuscleGroup, ExerciseCategory } from '../models/exercise';
 import { INDIVIDUAL_MUSCLE_FILTERS } from '../models/muscleGroups';
-import { getExercises, toggleExerciseFavorite, toggleExerciseHidden } from '../services';
+import { getExercises, toggleExerciseFavorite, toggleExerciseHidden, getSettings, getSuggestedExercises } from '../services';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useWorkoutStore } from '../stores';
 import AddExerciseScreen from '../screens/AddExerciseScreen';
 import ExercisePickerItem from './ExercisePickerItem';
 
@@ -65,6 +66,8 @@ export default function ExercisePicker({
     const [hiddenExercises, setHiddenExercises] = useState<Exercise[]>([]);
     const [showAddExercise, setShowAddExercise] = useState(false);
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+    const [suggestedExercises, setSuggestedExercises] = useState<Exercise[]>([]);
+    const [smartSuggestionsEnabled, setSmartSuggestionsEnabled] = useState(false);
 
     // Load exercises from service
     const loadExercises = useCallback(async () => {
@@ -80,6 +83,31 @@ export default function ExercisePicker({
     useEffect(() => {
         if (visible) {
             loadExercises();
+            // Phase 7: Load suggested exercises if smart suggestions enabled
+            (async () => {
+                try {
+                    const settings = await getSettings();
+                    setSmartSuggestionsEnabled(settings.smartSuggestions);
+                    if (!settings.smartSuggestions) {
+                        setSuggestedExercises([]);
+                        return;
+                    }
+                    const workout = useWorkoutStore.getState().activeWorkout;
+                    if (!workout) {
+                        setSuggestedExercises([]);
+                        return;
+                    }
+                    const currentIds = workout.main.exercises.map(e => e.exerciseId);
+                    if (currentIds.length === 0) {
+                        setSuggestedExercises([]);
+                        return;
+                    }
+                    const suggested = await getSuggestedExercises('add', currentIds);
+                    setSuggestedExercises(suggested);
+                } catch {
+                    setSuggestedExercises([]);
+                }
+            })();
         }
     }, [visible, loadExercises]);
 
@@ -315,6 +343,28 @@ export default function ExercisePicker({
                     keyExtractor={(item) => item.id}
                     renderItem={renderExerciseItem}
                     contentContainerStyle={styles.listContent}
+                    ListHeaderComponent={
+                        smartSuggestionsEnabled && suggestedExercises.length > 0 && activeFilter === 'all' && activeCategory === 'all' && !searchQuery.trim() ? (
+                            <View style={styles.suggestedSection}>
+                                <View style={styles.suggestedHeader}>
+                                    <Text style={styles.suggestedIcon}>{'\u2728'}</Text>
+                                    <Text style={styles.suggestedTitle}>Suggested For You</Text>
+                                </View>
+                                {suggestedExercises.map(ex => (
+                                    <ExercisePickerItem
+                                        key={`suggested-${ex.id}`}
+                                        exercise={ex}
+                                        isHiddenView={false}
+                                        onSelect={handleSelect}
+                                        onToggleFavorite={handleToggleFavorite}
+                                        onLongPress={handleLongPress}
+                                        onUnhide={handleUnhide}
+                                    />
+                                ))}
+                                <View style={styles.suggestedDivider} />
+                            </View>
+                        ) : null
+                    }
                     ListEmptyComponent={
                         <View style={styles.emptyState}>
                             <Text style={styles.emptyText}>No exercises found</Text>
@@ -505,5 +555,31 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
         fontSize: typography.size.md,
         fontWeight: typography.weight.medium,
+    },
+
+    // Suggested section
+    suggestedSection: {
+        marginBottom: spacing.sm,
+    },
+    suggestedHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: spacing.sm,
+    },
+    suggestedIcon: {
+        fontSize: 16,
+        marginRight: spacing.xs,
+    },
+    suggestedTitle: {
+        color: colors.accent.primary,
+        fontSize: typography.size.sm,
+        fontWeight: typography.weight.semibold,
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
+    },
+    suggestedDivider: {
+        height: 1,
+        backgroundColor: colors.separator,
+        marginVertical: spacing.sm,
     },
 });

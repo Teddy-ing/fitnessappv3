@@ -19,6 +19,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { WorkoutExercise, WorkoutSet } from '../models/workout';
 import { PreviousSetData } from '../models/workout';
+import type { ExerciseSuggestion } from '../models/smartSuggestions';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import SetRow from './SetRow';
@@ -65,6 +66,8 @@ interface ExerciseCardProps {
     onReplaceExercise?: (exerciseId: string) => void;
     onToggleCollapse?: (exerciseId: string) => void;
     onRpeRirSelected?: () => void;
+    exerciseSuggestion?: ExerciseSuggestion | null;
+    showProgressionNudges?: boolean;
 }
 
 function ExerciseCardInner({
@@ -94,6 +97,8 @@ function ExerciseCardInner({
     onReplaceExercise,
     onToggleCollapse,
     onRpeRirSelected,
+    exerciseSuggestion,
+    showProgressionNudges = false,
 }: ExerciseCardProps) {
     const { exercise, sets } = workoutExercise;
 
@@ -287,6 +292,15 @@ function ExerciseCardInner({
                 </View>
             )}
 
+            {/* Phase 7: Progressive overload nudge banner */}
+            {showProgressionNudges && exerciseSuggestion?.progressionNudge && (
+                <View style={styles.nudgeBanner}>
+                    <Text style={styles.nudgeText}>
+                        {exerciseSuggestion.progressionNudge.currentWeight}{'\u00D7'}{exerciseSuggestion.progressionNudge.currentReps} for {exerciseSuggestion.progressionNudge.consecutiveSessions} sessions {'\u2014'} try {exerciseSuggestion.progressionNudge.suggestedWeight}!
+                    </Text>
+                </View>
+            )}
+
             {/* Sets header row */}
             <View style={styles.setsHeader}>
                 <Text style={[styles.columnHeader, styles.setColumn]}>SET</Text>
@@ -337,6 +351,7 @@ function ExerciseCardInner({
                             isRpeFocused={focusState?.exerciseId === workoutExercise.id && focusState?.setId === set.id && focusState?.field === 'rpe'}
                             isRirFocused={focusState?.exerciseId === workoutExercise.id && focusState?.setId === set.id && focusState?.field === 'rir'}
                             onRpeRirSelected={onRpeRirSelected}
+                            suggestion={exerciseSuggestion?.sets[index] ?? null}
                         />
                         {isSetTimerActive(set.id) && (
                             <ActiveRestLine
@@ -533,6 +548,26 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
         fontSize: typography.size.sm,
         fontWeight: typography.weight.semibold,
+    },
+
+    // Nudge banner
+    nudgeBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.accent.primary + '15',
+        borderLeftWidth: 3,
+        borderLeftColor: colors.accent.primary,
+        marginHorizontal: spacing.md,
+        marginBottom: spacing.sm,
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.sm,
+        borderRadius: borderRadius.sm,
+    },
+    nudgeText: {
+        flex: 1,
+        color: colors.accent.primary,
+        fontSize: typography.size.xs,
+        fontWeight: typography.weight.medium,
     },
 
     // Sets header

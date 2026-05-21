@@ -6,6 +6,7 @@
  */
 
 import { WidgetConfig } from './widget';
+import type { TrainingPhase, StrengthProfile } from './smartSuggestions';
 
 /** Row shape matching the user_settings table columns */
 export interface UserSettings {
@@ -37,4 +38,9 @@ export interface UserSettings {
     showExerciseInstructions: boolean;
     smartSuggestions: boolean;
     defaultWeightIncrement: number;
+
+    // Phase 7: Smart Personalization
+    trainingPhase: TrainingPhase;
+    strengthProfile: StrengthProfile | null;
+    showProgressionNudges: boolean;
 }

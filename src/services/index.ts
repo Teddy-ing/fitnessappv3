@@ -162,3 +162,22 @@ export {
     setAutoBackup,
     triggerAutoBackupIfEnabled,
 } from './cloudBackupService';
+export {
+    getSuggestionsForExercise,
+    getSuggestionsForExercises,
+    getSmartRestDuration,
+    getPredictedSetCount,
+    getProgressionNudge,
+} from './smartSuggestionsService';
+export {
+    computeStrengthProfile,
+    getCachedOrComputeProfile,
+    getBootstrapEstimate,
+} from './strengthProfileService';
+export {
+    getEstimatedWeight,
+    getRelatedExercises,
+} from './exerciseRelationships';
+export {
+    getSuggestedExercises,
+} from './exerciseSuggestionService';

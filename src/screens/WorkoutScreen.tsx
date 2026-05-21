@@ -60,6 +60,7 @@ export default function WorkoutScreen() {
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
     const isEditMode = useWorkoutStore(s => s.isEditMode);
     const previousSets = useWorkoutStore(s => s.previousSets);
+    const exerciseSuggestions = useWorkoutStore(s => s.exerciseSuggestions);
     const collapsedExercises = useWorkoutStore(s => s.collapsedExercises);
     const originalDuration = useWorkoutStore(s => s.originalDuration);
     const originalCompletedAt = useWorkoutStore(s => s.originalCompletedAt);
@@ -114,6 +115,7 @@ export default function WorkoutScreen() {
         autoStartRestTimer,
         defaultRestTime,
         smartSuggestions,
+        showProgressionNudges,
         weightUnit,
         keepAwakeDuringWorkout,
         settingsMenuVisible,
@@ -420,6 +422,7 @@ export default function WorkoutScreen() {
             showSwipeHint={showSwipeHint}
             defaultWarmupSets={defaultWarmupSets}
             previousSets={previousSets}
+            exerciseSuggestions={exerciseSuggestions}
             onUpdateSet={updateSet}
             onCompleteSet={completeSet}
             onAddSet={addSet}
@@ -432,12 +435,13 @@ export default function WorkoutScreen() {
             onReplaceExercise={setReplaceExerciseId}
             onToggleCollapse={toggleCollapse}
             onRpeRirSelected={handleRpeRirSelected}
+            showProgressionNudges={showProgressionNudges}
         />
     ), [
         // Props that change between renders (all others are stable refs from getState/useState):
         activeWorkout, focusState, collapsedExercises,
         showPrevious, showRpe, showRir, showSwipeHint,
-        defaultWarmupSets, previousSets,
+        defaultWarmupSets, previousSets, exerciseSuggestions, showProgressionNudges,
         // Stable refs — listed for completeness but won't cause re-creation:
         handleFocusField, updateSet, completeSet, addSet, removeSet,
         removeExercise, toggleSuperset, updateExerciseNote, addWarmupSets,
@@ -554,6 +558,7 @@ export default function WorkoutScreen() {
                 autoStartRestTimer={autoStartRestTimer}
                 defaultRestTime={defaultRestTime}
                 smartSuggestions={smartSuggestions}
+                showProgressionNudges={showProgressionNudges}
                 weightUnit={weightUnit}
                 onToggleSetting={handleToggleSetting}
                 onChangeWarmupSets={handleChangeWarmupSets}

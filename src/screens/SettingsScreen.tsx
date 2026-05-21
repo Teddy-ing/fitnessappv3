@@ -26,9 +26,9 @@ import Constants from 'expo-constants';
 
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { getSettings, updateSettings } from '../services/preferencesService';
+import type { UserSettings } from '../models/preferences';
 import { clearAllData, generateMockData, exportAllData, importAllData } from '../services';
 import { generateSpreadsheetExport } from '../services/exportService';
-import { UserSettings } from '../models/preferences';
 import { SettingToggleRow, SettingSegmentedRow, SettingNavigationRow } from '../components/settings';
 import ExportBottomSheet from '../components/settings/ExportBottomSheet';
 import ImportBottomSheet from '../components/settings/ImportBottomSheet';
@@ -62,6 +62,13 @@ const CALENDAR_START_OPTIONS = [
 const THEME_OPTIONS = [
     { key: 'dark', label: 'Dark' },
     { key: 'light', label: 'Light' },
+];
+
+const TRAINING_PHASE_OPTIONS = [
+    { key: 'bulk', label: 'Bulk' },
+    { key: 'cut', label: 'Cut' },
+    { key: 'maintain', label: 'Maintain' },
+    { key: 'recovery', label: 'Recovery' },
 ];
 
 // ============================================================
@@ -283,6 +290,14 @@ export default function SettingsScreen() {
                         subtitle="Prevent screen lock while training"
                         value={settings.keepAwakeDuringWorkout}
                         onValueChange={(val) => handleUpdate({ keepAwakeDuringWorkout: val })}
+                    />
+
+                    <SettingSegmentedRow
+                        icon="trending-up"
+                        label="Training Phase"
+                        options={TRAINING_PHASE_OPTIONS}
+                        selectedKey={settings.trainingPhase}
+                        onSelect={(key) => handleUpdate({ trainingPhase: key as UserSettings['trainingPhase'] })}
                     />
 
                     <SettingNavigationRow

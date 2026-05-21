@@ -28,7 +28,11 @@ import {
     getPreviousSetsForExercise,
     getPreviousSetsForExercises,
 } from '../services/workoutService';
+import { getSuggestionsForExercise } from '../services/smartSuggestionsService';
+import { getSettings } from '../services/preferencesService';
 import { type PreviousSetData } from '../models/workout';
+import type { ExerciseSuggestion } from '../models/smartSuggestions';
+import { useRestTimerStore } from './restTimerStore';
 
 /** Signal emitted when a set is completed, watched by RestTimer */
 export interface CompletedSetSignal {
@@ -46,6 +50,9 @@ interface WorkoutState {
 
     // Previous session data per exercise (runtime only, not persisted)
     previousSets: Map<string, PreviousSetData[]>;
+
+    // Smart suggestion data per exercise (runtime only, not persisted)
+    exerciseSuggestions: Map<string, ExerciseSuggestion>;
 
     // Auto-collapse state per exercise (runtime only, not persisted)
     collapsedExercises: Set<string>;
@@ -91,6 +98,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     activeWorkout: null,
     lastCompletedSet: null,
     previousSets: new Map(),
+    exerciseSuggestions: new Map(),
     collapsedExercises: new Set(),
     isEditMode: false,
     originalDuration: null,
@@ -104,7 +112,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
     startWorkout: (name?: string) => {
         const workout = createWorkout(name);
-        set({ activeWorkout: workout, previousSets: new Map(), collapsedExercises: new Set(), isEditMode: false, originalDuration: null, originalCompletedAt: null, originalStartedAt: null });
+        set({ activeWorkout: workout, previousSets: new Map(), exerciseSuggestions: new Map(), collapsedExercises: new Set(), isEditMode: false, originalDuration: null, originalCompletedAt: null, originalStartedAt: null });
     },
 
     loadWorkoutForEditing: (workout: Workout) => {
@@ -179,6 +187,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             activeWorkout: null,
             lastCompletedSet: null,
             previousSets: new Map(),
+            exerciseSuggestions: new Map(),
             collapsedExercises: new Set(),
             isEditMode: false,
             originalDuration: null,
@@ -197,6 +206,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             activeWorkout: null,
             lastCompletedSet: null,
             previousSets: new Map(),
+            exerciseSuggestions: new Map(),
             collapsedExercises: new Set(),
             isEditMode: false,
             originalDuration: null,
@@ -259,6 +269,30 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             set({ previousSets: updated });
         }).catch(err => {
             console.warn('[WorkoutStore] Failed to load previous sets:', err);
+        });
+
+        // Phase 7: Async fetch smart suggestions (gated by setting, non-blocking)
+        getSettings().then(settings => {
+            if (!settings.smartSuggestions) return;
+            return getSuggestionsForExercise(
+                exercise.id,
+                settings.trainingPhase,
+                settings.defaultWeightIncrement,
+            ).then(suggestion => {
+                const { exerciseSuggestions } = get();
+                const updated = new Map(exerciseSuggestions);
+                updated.set(exercise.id, suggestion);
+                set({ exerciseSuggestions: updated });
+
+                // Pre-populate rest timer with learned duration
+                if (suggestion.smartRestDuration) {
+                    useRestTimerStore.getState().setExerciseRestTime(
+                        exercise.id, suggestion.smartRestDuration,
+                    );
+                }
+            });
+        }).catch(err => {
+            console.warn('[WorkoutStore] Smart suggestions fetch failed:', err);
         });
     },
 
@@ -605,6 +639,30 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             set({ previousSets: updated });
         }).catch(err => {
             console.warn('[WorkoutStore] Failed to load previous sets for replaced exercise:', err);
+        });
+
+        // Phase 7: Fetch smart suggestions for replaced exercise
+        getSettings().then(settings => {
+            if (!settings.smartSuggestions) return;
+            return getSuggestionsForExercise(
+                newExercise.id,
+                settings.trainingPhase,
+                settings.defaultWeightIncrement,
+            ).then(suggestion => {
+                const { exerciseSuggestions } = get();
+                const updated = new Map(exerciseSuggestions);
+                updated.set(newExercise.id, suggestion);
+                set({ exerciseSuggestions: updated });
+
+                // Pre-populate rest timer with learned duration
+                if (suggestion.smartRestDuration) {
+                    useRestTimerStore.getState().setExerciseRestTime(
+                        newExercise.id, suggestion.smartRestDuration,
+                    );
+                }
+            });
+        }).catch(err => {
+            console.warn('[WorkoutStore] Smart suggestions fetch failed for replaced exercise:', err);
         });
     },
 

@@ -43,9 +43,10 @@ interface WorkoutSettingsMenuProps {
     autoStartRestTimer: boolean;
     defaultRestTime: number;
     smartSuggestions: boolean;
+    showProgressionNudges: boolean;
     weightUnit: string;
 
-    onToggleSetting: (key: 'showPrevious' | 'showRpe' | 'showRir' | 'showPlateCalc' | 'autoStartRestTimer' | 'smartSuggestions', value: boolean) => void;
+    onToggleSetting: (key: 'showPrevious' | 'showRpe' | 'showRir' | 'showPlateCalc' | 'autoStartRestTimer' | 'smartSuggestions' | 'showProgressionNudges', value: boolean) => void;
     onChangeWarmupSets: (count: number) => void;
     onChangeDefaultSets: (count: number) => void;
     onChangeWeightIncrement: (value: number) => void;
@@ -75,6 +76,7 @@ export default function WorkoutSettingsMenu({
     autoStartRestTimer,
     defaultRestTime,
     smartSuggestions,
+    showProgressionNudges,
     weightUnit,
     onToggleSetting,
     onChangeWarmupSets,
@@ -330,27 +332,39 @@ export default function WorkoutSettingsMenu({
                             </View>
                         </View>
 
-                        {/* Smart Suggestions (placeholder — disabled) */}
-                        <View style={[styles.settingRow, styles.disabledRow]}>
+                        {/* Smart Suggestions */}
+                        <View style={styles.settingRow}>
                             <View style={styles.rowIconContainer}>
-                                <MaterialIcons name="auto-awesome" size={20} color={colors.text.disabled} />
+                                <MaterialIcons name="auto-awesome" size={20} color={colors.accent.primary} />
                             </View>
                             <View style={styles.settingLabelContainer}>
-                                <Text style={[styles.settingLabel, styles.disabledText]}>Smart Suggestions 🔒</Text>
-                                <Text style={styles.settingSubLabel}>AI-powered predictions (coming soon)</Text>
+                                <Text style={styles.settingLabel}>Smart Suggestions</Text>
+                                <Text style={styles.settingSubLabel}>AI-powered weight & rep predictions</Text>
                             </View>
                             <Switch
-                                value={false}
-                                onValueChange={() => {
-                                    Alert.alert(
-                                        'Coming Soon',
-                                        'Smart suggestions are coming in a future update! This feature will use on-device ML to predict your next weight and rep targets.',
-                                    );
-                                }}
+                                value={smartSuggestions}
+                                onValueChange={(val) => onToggleSetting('smartSuggestions', val)}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
-                                disabled={true}
                             />
                         </View>
+
+                        {/* Progression Nudges — only shown when Smart Suggestions is ON */}
+                        {smartSuggestions && (
+                            <View style={styles.settingRow}>
+                                <View style={styles.rowIconContainer}>
+                                    <MaterialIcons name="trending-up" size={20} color={colors.accent.success} />
+                                </View>
+                                <View style={styles.settingLabelContainer}>
+                                    <Text style={styles.settingLabel}>Progression Nudges</Text>
+                                    <Text style={styles.settingSubLabel}>Suggest weight increases after consistent sets</Text>
+                                </View>
+                                <Switch
+                                    value={showProgressionNudges}
+                                    onValueChange={(val) => onToggleSetting('showProgressionNudges', val)}
+                                    trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
+                                />
+                            </View>
+                        )}
                     </View>
 
                     {/* Bottom spacer */}

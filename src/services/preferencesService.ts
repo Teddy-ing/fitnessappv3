@@ -11,6 +11,7 @@
 import { getDatabase } from './database';
 import { safeJsonParse } from './hydration';
 import { UserSettings } from '../models/preferences';
+import type { StrengthProfile } from '../models/smartSuggestions';
 import { WidgetConfig, DEFAULT_WIDGETS } from '../models/widget';
 
 // Re-export for barrel consumers
@@ -51,6 +52,9 @@ interface UserSettingsRow {
     show_exercise_instructions: number;
     smart_suggestions: number;
     default_weight_increment: number;
+    training_phase: string;
+    strength_profile: string | null;
+    show_progression_nudges: number;
 }
 
 /** Default settings — used if the row doesn't exist yet */
@@ -85,6 +89,9 @@ const DEFAULTS: UserSettings = {
     showExerciseInstructions: true,
     smartSuggestions: false,
     defaultWeightIncrement: 5,
+    trainingPhase: 'maintain',
+    strengthProfile: null,
+    showProgressionNudges: false,
 };
 
 // ============================================================
@@ -140,6 +147,12 @@ export async function getSettings(): Promise<UserSettings> {
         showExerciseInstructions: row.show_exercise_instructions === 1,
         smartSuggestions: row.smart_suggestions === 1,
         defaultWeightIncrement: row.default_weight_increment ?? 5,
+        trainingPhase: (row.training_phase as UserSettings['trainingPhase']) ?? 'maintain',
+        strengthProfile: safeJsonParse<StrengthProfile | null>(
+            row.strength_profile,
+            null,
+        ),
+        showProgressionNudges: row.show_progression_nudges === 1,
     };
 }
 
@@ -191,6 +204,9 @@ export async function updateSettings(
         showExerciseInstructions: 'show_exercise_instructions',
         smartSuggestions: 'smart_suggestions',
         defaultWeightIncrement: 'default_weight_increment',
+        trainingPhase: 'training_phase',
+        strengthProfile: 'strength_profile',
+        showProgressionNudges: 'show_progression_nudges',
     };
 
     const setClauses: string[] = [];
@@ -207,6 +223,9 @@ export async function updateSettings(
             values.push(value ? 1 : 0);
         } else if (Array.isArray(value)) {
             // JSON arrays (e.g., visibleMeasurements) → stringify
+            values.push(JSON.stringify(value));
+        } else if (typeof value === 'object' && value !== null) {
+            // JSON objects (e.g., strengthProfile) → stringify
             values.push(JSON.stringify(value));
         } else {
             values.push(value as string | number | null);

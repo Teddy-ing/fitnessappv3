@@ -11,6 +11,7 @@
 import React from 'react';
 import { WorkoutExercise, WorkoutSet } from '../../models/workout';
 import { PreviousSetData } from '../../models/workout';
+import type { ExerciseSuggestion } from '../../models/smartSuggestions';
 import { FocusState } from '../ExerciseCard';
 import { ExerciseCard, ErrorBoundary } from '../../components';
 import SupersetGroup from './SupersetGroup';
@@ -31,6 +32,7 @@ interface RenderableExerciseItemProps {
     showSwipeHint: boolean;
     defaultWarmupSets: number;
     previousSets: Map<string, PreviousSetData[]>;
+    exerciseSuggestions: Map<string, ExerciseSuggestion>;
 
     // Stable action refs (from getState() or useState setters)
     onUpdateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
@@ -45,6 +47,7 @@ interface RenderableExerciseItemProps {
     onReplaceExercise: (exerciseId: string) => void;
     onToggleCollapse: (exerciseId: string) => void;
     onRpeRirSelected?: () => void;
+    showProgressionNudges?: boolean;
 }
 
 function RenderableExerciseItemInner({
@@ -58,6 +61,7 @@ function RenderableExerciseItemInner({
     showSwipeHint,
     defaultWarmupSets,
     previousSets,
+    exerciseSuggestions,
     onUpdateSet,
     onCompleteSet,
     onAddSet,
@@ -70,6 +74,7 @@ function RenderableExerciseItemInner({
     onReplaceExercise,
     onToggleCollapse,
     onRpeRirSelected,
+    showProgressionNudges,
 }: RenderableExerciseItemProps) {
     if (item.type === 'superset') {
         return (
@@ -96,6 +101,8 @@ function RenderableExerciseItemInner({
                 onReplaceExercise={onReplaceExercise}
                 onToggleCollapse={onToggleCollapse}
                 onRpeRirSelected={onRpeRirSelected}
+                exerciseSuggestions={exerciseSuggestions}
+                showProgressionNudges={showProgressionNudges}
             />
         );
     }
@@ -137,6 +144,8 @@ function RenderableExerciseItemInner({
                 onReplaceExercise={onReplaceExercise}
                 onToggleCollapse={onToggleCollapse}
                 onRpeRirSelected={onRpeRirSelected}
+                exerciseSuggestion={exerciseSuggestions.get(workoutExercise.exerciseId) ?? null}
+                showProgressionNudges={showProgressionNudges}
             />
         </ErrorBoundary>
     );

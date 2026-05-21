@@ -751,6 +751,44 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v17: Smart Personalization — training phase & strength profile
+    // ----------------------------------------------------------
+    {
+        version: 17,
+        name: 'smart_personalization_columns',
+        up: async (db) => {
+            const hasPhase = await columnExists(db, 'user_settings', 'training_phase');
+            if (!hasPhase) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN training_phase TEXT DEFAULT 'maintain';`,
+                );
+            }
+            const hasProfile = await columnExists(db, 'user_settings', 'strength_profile');
+            if (!hasProfile) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN strength_profile TEXT;`,
+                );
+            }
+        },
+    },
+
+    // ----------------------------------------------------------
+    // v18: Smart Personalization — progression nudges toggle
+    // ----------------------------------------------------------
+    {
+        version: 18,
+        name: 'show_progression_nudges',
+        up: async (db) => {
+            const hasCol = await columnExists(db, 'user_settings', 'show_progression_nudges');
+            if (!hasCol) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN show_progression_nudges INTEGER DEFAULT 0;`,
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

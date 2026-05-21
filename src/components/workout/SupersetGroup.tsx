@@ -13,6 +13,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import { WorkoutExercise } from '../../models/workout';
 import { PreviousSetData } from '../../models/workout';
+import type { ExerciseSuggestion } from '../../models/smartSuggestions';
 import { FocusState } from '../ExerciseCard';
 import ExerciseCard from '../ExerciseCard';
 import ErrorBoundary from '../ErrorBoundary';
@@ -45,6 +46,8 @@ interface SupersetGroupProps {
     onReplaceExercise: (exerciseId: string) => void;
     onToggleCollapse: (...args: any[]) => void;
     onRpeRirSelected?: () => void;
+    exerciseSuggestions: Map<string, ExerciseSuggestion>;
+    showProgressionNudges?: boolean;
 }
 
 export default function SupersetGroup({
@@ -70,6 +73,8 @@ export default function SupersetGroup({
     onReplaceExercise,
     onToggleCollapse,
     onRpeRirSelected,
+    exerciseSuggestions,
+    showProgressionNudges,
 }: SupersetGroupProps) {
     return (
         <View style={styles.container}>
@@ -116,6 +121,8 @@ export default function SupersetGroup({
                                 onReplaceExercise={onReplaceExercise}
                                 onToggleCollapse={onToggleCollapse}
                                 onRpeRirSelected={onRpeRirSelected}
+                                exerciseSuggestion={exerciseSuggestions.get(ex.exerciseId) ?? null}
+                                showProgressionNudges={showProgressionNudges}
                             />
                         </ErrorBoundary>
                     );

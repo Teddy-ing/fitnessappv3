@@ -18,6 +18,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native
 import { Swipeable } from 'react-native-gesture-handler';
 import { WorkoutSet, SetType } from '../models/workout';
 import { PreviousSetData } from '../models/workout';
+import type { SetSuggestion } from '../models/smartSuggestions';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { getWeightUnitSync } from '../hooks/useWeightUnit';
 import { convertWeight, displayWeight } from '../utils/unitConversion';
@@ -52,6 +53,7 @@ interface SetRowProps {
     isRpeFocused?: boolean;
     isRirFocused?: boolean;
     onRpeRirSelected?: () => void;
+    suggestion?: SetSuggestion | null;
 }
 
 function SetRowInner({
@@ -79,6 +81,7 @@ function SetRowInner({
     isRpeFocused = false,
     isRirFocused = false,
     onRpeRirSelected,
+    suggestion = null,
 }: SetRowProps) {
     const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
@@ -306,12 +309,15 @@ function SetRowInner({
                             <Text style={[
                                 styles.dataText,
                                 isActiveSet && !isCompleted && styles.dataTextActive,
-                                !set.weight && styles.dataTextPlaceholder,
+                                !set.weight && !suggestion?.suggestedWeight && styles.dataTextPlaceholder,
+                                !set.weight && suggestion?.suggestedWeight != null && styles.dataTextGhost,
                                 { opacity: textOpacity },
                             ]}>
                                 {set.weight != null
                                     ? String(displayWeight(set.weight, weightUnit))
-                                    : '—'}
+                                    : suggestion?.suggestedWeight != null
+                                        ? String(displayWeight(suggestion.suggestedWeight, weightUnit))
+                                        : '—'}
                             </Text>
                         </View>
                     </TouchableOpacity>
@@ -331,10 +337,14 @@ function SetRowInner({
                             <Text style={[
                                 styles.dataText,
                                 isActiveSet && !isCompleted && styles.dataTextActive,
-                                !set.reps && styles.dataTextPlaceholder,
+                                !set.reps && !suggestion?.suggestedReps && styles.dataTextPlaceholder,
+                                !set.reps && suggestion?.suggestedReps != null && styles.dataTextGhost,
                                 { opacity: textOpacity },
                             ]}>
-                                {set.reps?.toString() ?? '—'}
+                                {set.reps?.toString()
+                                    ?? (suggestion?.suggestedReps != null
+                                        ? String(suggestion.suggestedReps)
+                                        : '—')}
                             </Text>
                         </View>
                     </TouchableOpacity>
@@ -521,6 +531,11 @@ const styles = StyleSheet.create({
     },
     dataTextPlaceholder: {
         color: colors.text.disabled,
+    },
+    dataTextGhost: {
+        color: colors.text.disabled,
+        opacity: 0.6,
+        fontStyle: 'italic',
     },
 
     // RPE cell
