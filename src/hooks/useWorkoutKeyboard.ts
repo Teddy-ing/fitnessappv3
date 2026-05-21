@@ -22,7 +22,6 @@ import { useWorkoutStore } from '../stores';
 import { FocusState, KeyboardFieldType } from '../components';
 import { getWeightUnitSync } from '../hooks/useWeightUnit';
 import { convertWeight, toCanonicalWeight } from '../utils/unitConversion';
-import { getSettings } from '../services/preferencesService';
 
 type FieldType = 'weight' | 'reps' | 'duration' | 'rpe' | 'rir';
 
@@ -94,7 +93,7 @@ interface UseWorkoutKeyboardReturn {
     getFieldLabel: () => string;
 }
 
-export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
+export function useWorkoutKeyboard(showRpe = false, showRir = false): UseWorkoutKeyboardReturn {
     // PP-002 fix: Fine-grained selector — only subscribe to activeWorkout.
     // Actions are stable references; access via getState() to avoid full-store subscription.
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
@@ -119,15 +118,11 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
     const keyboardValueRef = useRef(keyboardValue);
     keyboardValueRef.current = keyboardValue;
 
-    // RPE/RIR settings — loaded once on mount, stored in refs for stable callbacks
-    const showRpeRef = useRef(false);
-    const showRirRef = useRef(false);
-    useEffect(() => {
-        getSettings().then(settings => {
-            showRpeRef.current = settings.showRpe;
-            showRirRef.current = settings.showRir;
-        });
-    }, []);
+    // RPE/RIR settings — synced from parent via params for stable callback refs
+    const showRpeRef = useRef(showRpe);
+    showRpeRef.current = showRpe;
+    const showRirRef = useRef(showRir);
+    showRirRef.current = showRir;
 
     // Hide system keyboard when our custom keyboard is active
     useEffect(() => {
@@ -225,14 +220,51 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
         const exercise = workout.main.exercises.find(e => e.id === focus.exerciseId);
         const set = exercise?.sets.find(s => s.id === focus.setId);
 
+        // Helper: resolve ghost value for the current field when stored value is null
+        // Priority: smart suggestion > previous data
+        const resolveGhostBase = (): number => {
+            if (!exercise) return 0;
+            const state = useWorkoutStore.getState();
+            const setIndex = exercise.sets.findIndex(s => s.id === focus.setId);
+
+            // Smart suggestion (working sets only)
+            const exSugg = state.exerciseSuggestions.get(exercise.exerciseId);
+            const isWarmup = exercise.sets[setIndex]?.type === 'warmup';
+            if (exSugg && !isWarmup) {
+                let workingIdx = 0;
+                for (let i = 0; i < setIndex; i++) {
+                    if (exercise.sets[i].type !== 'warmup') workingIdx++;
+                }
+                const setSugg = exSugg.sets[workingIdx];
+                if (setSugg) {
+                    if (focus.field === 'weight' && setSugg.suggestedWeight != null) return setSugg.suggestedWeight;
+                    if (focus.field === 'reps' && setSugg.suggestedReps != null) return setSugg.suggestedReps;
+                }
+            }
+
+            // Previous data fallback
+            const prevSets = state.previousSets.get(exercise.exerciseId);
+            if (prevSets?.[setIndex]) {
+                if (focus.field === 'weight' && prevSets[setIndex].weight != null) return prevSets[setIndex].weight!;
+                if (focus.field === 'reps' && prevSets[setIndex].reps != null) return prevSets[setIndex].reps!;
+            }
+
+            return 0;
+        };
+
         let currentVal: number;
         if (focus.field === 'weight') {
-            // Read canonical value and convert to display unit for adjustment
-            const canonical = set?.weight ?? 0;
-            currentVal = convertWeight(canonical, getWeightUnitSync());
+            if (set?.weight != null) {
+                // Existing value — convert to display unit for adjustment
+                currentVal = convertWeight(set.weight, getWeightUnitSync());
+            } else {
+                // Ghost text — promote the ghost value (already canonical), convert to display
+                const ghostCanonical = resolveGhostBase();
+                currentVal = convertWeight(ghostCanonical, getWeightUnitSync());
+            }
         } else {
             switch (focus.field) {
-                case 'reps': currentVal = set?.reps ?? 0; break;
+                case 'reps': currentVal = set?.reps ?? resolveGhostBase(); break;
                 case 'duration': currentVal = set?.duration ?? 0; break;
                 case 'rpe': currentVal = set?.rpe ?? 0; break;
                 case 'rir': currentVal = set?.rir ?? 0; break;
@@ -255,6 +287,50 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
 
         const set = exercise.sets.find(s => s.id === focus.setId);
         const ex = exercise.exercise;
+
+        // Phase 7: Promote ghost text — if the field is empty and a ghost value exists,
+        // commit the value as if the user entered it.
+        // Priority: smart suggestion > previous data fallback.
+        if (keyboardValueRef.current === '') {
+            const state = useWorkoutStore.getState();
+            const suggestions = state.exerciseSuggestions;
+            const prevSets = state.previousSets.get(exercise.exerciseId);
+            const setIndex = exercise.sets.findIndex(s => s.id === focus.setId);
+
+            let ghostWeight: number | null = null;
+            let ghostReps: number | null = null;
+
+            // Try smart suggestion first (working sets only)
+            const exSuggestion = suggestions.get(exercise.exerciseId);
+            const isWarmup = exercise.sets[setIndex]?.type === 'warmup';
+            if (exSuggestion && !isWarmup) {
+                let workingIdx = 0;
+                for (let i = 0; i < setIndex; i++) {
+                    if (exercise.sets[i].type !== 'warmup') workingIdx++;
+                }
+                const setSuggestion = exSuggestion.sets[workingIdx];
+                if (setSuggestion) {
+                    ghostWeight = setSuggestion.suggestedWeight;
+                    ghostReps = setSuggestion.suggestedReps;
+                }
+            }
+
+            // Fallback: previous session data (all set types)
+            if (ghostWeight == null && prevSets?.[setIndex]?.weight != null) {
+                ghostWeight = prevSets[setIndex].weight;
+            }
+            if (ghostReps == null && prevSets?.[setIndex]?.reps != null) {
+                ghostReps = prevSets[setIndex].reps;
+            }
+
+            // Commit the ghost value
+            if (focus.field === 'weight' && set?.weight == null && ghostWeight != null) {
+                // ghostWeight is already in canonical (lbs) — bypass buildUpdate
+                updateSet(focus.exerciseId, focus.setId, { weight: ghostWeight });
+            } else if (focus.field === 'reps' && set?.reps == null && ghostReps != null) {
+                updateSet(focus.exerciseId, focus.setId, { reps: ghostReps });
+            }
+        }
 
         if (focus.field === 'weight') {
             // Weight → next trackable field (reps or duration)
@@ -307,7 +383,7 @@ export function useWorkoutKeyboard(): UseWorkoutKeyboardReturn {
             setFocusState(null);
             setKeyboardValue('');
         }
-    }, [completeSet]);
+    }, [completeSet, updateSet]);
 
     /**
      * Called by SetRow when the user selects or dismisses the RPE/RIR picker.

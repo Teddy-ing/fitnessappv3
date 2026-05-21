@@ -54,6 +54,7 @@ interface SetRowProps {
     isRirFocused?: boolean;
     onRpeRirSelected?: () => void;
     suggestion?: SetSuggestion | null;
+    prefillPrevious?: boolean;
 }
 
 function SetRowInner({
@@ -82,10 +83,17 @@ function SetRowInner({
     isRirFocused = false,
     onRpeRirSelected,
     suggestion = null,
+    prefillPrevious = true,
 }: SetRowProps) {
     const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
     const isWarmup = set.type === 'warmup';
+
+    // Compute effective ghost values: smart suggestion > previous data fallback
+    const ghostWeight = suggestion?.suggestedWeight
+        ?? (prefillPrevious && previousData?.weight != null ? previousData.weight : null);
+    const ghostReps = suggestion?.suggestedReps
+        ?? (prefillPrevious && previousData?.reps != null ? previousData.reps : null);
 
     // Set type menu visibility
     const [showTypeMenu, setShowTypeMenu] = useState(false);
@@ -110,32 +118,39 @@ function SetRowInner({
         }
     }, [isRirFocused]);
 
+    // Guard ref: NumericPillSelector fires onSelect then onClose synchronously.
+    // Without this, onRpeRirSelected would be called twice per selection.
+    const rpeRirHandledRef = useRef(false);
+
     // Callbacks for RPE/RIR selector that continue the Next chain
     const handleRpeSelect = useCallback((val: number | null) => {
         onUpdateSet(exerciseId, setId, { rpe: val });
-        setShowRpeSelector(false);
+        rpeRirHandledRef.current = true;
         onRpeRirSelected?.();
     }, [exerciseId, setId, onUpdateSet, onRpeRirSelected]);
 
     const handleRpeClose = useCallback(() => {
         setShowRpeSelector(false);
         // Only continue the chain if this was triggered by the Next flow
-        if (isRpeFocused) {
+        // and onSelect didn't already handle it
+        if (isRpeFocused && !rpeRirHandledRef.current) {
             onRpeRirSelected?.();
         }
+        rpeRirHandledRef.current = false;
     }, [isRpeFocused, onRpeRirSelected]);
 
     const handleRirSelect = useCallback((val: number | null) => {
         onUpdateSet(exerciseId, setId, { rir: val });
-        setShowRirSelector(false);
+        rpeRirHandledRef.current = true;
         onRpeRirSelected?.();
     }, [exerciseId, setId, onUpdateSet, onRpeRirSelected]);
 
     const handleRirClose = useCallback(() => {
         setShowRirSelector(false);
-        if (isRirFocused) {
+        if (isRirFocused && !rpeRirHandledRef.current) {
             onRpeRirSelected?.();
         }
+        rpeRirHandledRef.current = false;
     }, [isRirFocused, onRpeRirSelected]);
 
     // Pulsing animation for active set checkbox
@@ -309,14 +324,14 @@ function SetRowInner({
                             <Text style={[
                                 styles.dataText,
                                 isActiveSet && !isCompleted && styles.dataTextActive,
-                                !set.weight && !suggestion?.suggestedWeight && styles.dataTextPlaceholder,
-                                !set.weight && suggestion?.suggestedWeight != null && styles.dataTextGhost,
+                                !set.weight && !ghostWeight && styles.dataTextPlaceholder,
+                                !set.weight && ghostWeight != null && styles.dataTextGhost,
                                 { opacity: textOpacity },
                             ]}>
                                 {set.weight != null
                                     ? String(displayWeight(set.weight, weightUnit))
-                                    : suggestion?.suggestedWeight != null
-                                        ? String(displayWeight(suggestion.suggestedWeight, weightUnit))
+                                    : ghostWeight != null
+                                        ? String(displayWeight(ghostWeight, weightUnit))
                                         : '—'}
                             </Text>
                         </View>
@@ -337,13 +352,13 @@ function SetRowInner({
                             <Text style={[
                                 styles.dataText,
                                 isActiveSet && !isCompleted && styles.dataTextActive,
-                                !set.reps && !suggestion?.suggestedReps && styles.dataTextPlaceholder,
-                                !set.reps && suggestion?.suggestedReps != null && styles.dataTextGhost,
+                                !set.reps && !ghostReps && styles.dataTextPlaceholder,
+                                !set.reps && ghostReps != null && styles.dataTextGhost,
                                 { opacity: textOpacity },
                             ]}>
                                 {set.reps?.toString()
-                                    ?? (suggestion?.suggestedReps != null
-                                        ? String(suggestion.suggestedReps)
+                                    ?? (ghostReps != null
+                                        ? String(ghostReps)
                                         : '—')}
                             </Text>
                         </View>
@@ -503,7 +518,7 @@ const styles = StyleSheet.create({
     dataCell: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'stretch',
     },
     inlineInput: {
         paddingVertical: 2,
@@ -535,7 +550,6 @@ const styles = StyleSheet.create({
     dataTextGhost: {
         color: colors.text.disabled,
         opacity: 0.6,
-        fontStyle: 'italic',
     },
 
     // RPE cell

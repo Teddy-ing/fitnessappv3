@@ -43,4 +43,5 @@ export interface UserSettings {
     trainingPhase: TrainingPhase;
     strengthProfile: StrengthProfile | null;
     showProgressionNudges: boolean;
+    prefillPrevious: boolean;
 }

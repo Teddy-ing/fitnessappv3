@@ -3,7 +3,7 @@
  *
  * Full-screen overlay settings page for the Workout Screen.
  * Displays as a proper page with header, scroll, and sections:
- * - VISUAL COLUMNS: Previous, RPE, RIR (max 2)
+ * - VISUAL COLUMNS: Previous, RPE, RIR
  * - TOOLS: Plate Calculator, Warm-up Sets
  * - DEFAULTS: Default Sets, Weight Increment, Auto Timer, Timer Duration
  *
@@ -44,9 +44,10 @@ interface WorkoutSettingsMenuProps {
     defaultRestTime: number;
     smartSuggestions: boolean;
     showProgressionNudges: boolean;
+    prefillPrevious: boolean;
     weightUnit: string;
 
-    onToggleSetting: (key: 'showPrevious' | 'showRpe' | 'showRir' | 'showPlateCalc' | 'autoStartRestTimer' | 'smartSuggestions' | 'showProgressionNudges', value: boolean) => void;
+    onToggleSetting: (key: 'showPrevious' | 'showRpe' | 'showRir' | 'showPlateCalc' | 'autoStartRestTimer' | 'smartSuggestions' | 'showProgressionNudges' | 'prefillPrevious', value: boolean) => void;
     onChangeWarmupSets: (count: number) => void;
     onChangeDefaultSets: (count: number) => void;
     onChangeWeightIncrement: (value: number) => void;
@@ -77,6 +78,7 @@ export default function WorkoutSettingsMenu({
     defaultRestTime,
     smartSuggestions,
     showProgressionNudges,
+    prefillPrevious,
     weightUnit,
     onToggleSetting,
     onChangeWarmupSets,
@@ -85,17 +87,6 @@ export default function WorkoutSettingsMenu({
     onChangeRestTime,
 }: WorkoutSettingsMenuProps) {
     const insets = useSafeAreaInsets();
-
-    // Count active visual columns to enforce max 2 logic
-    const activeColumnsCount = [showPrevious, showRpe, showRir].filter(Boolean).length;
-
-    const handleToggle = (
-        key: 'showPrevious' | 'showRpe' | 'showRir',
-        currentValue: boolean
-    ) => {
-        if (!currentValue && activeColumnsCount >= 2) return;
-        onToggleSetting(key, !currentValue);
-    };
 
     return (
         <Modal
@@ -130,7 +121,7 @@ export default function WorkoutSettingsMenu({
 
                     {/* ═══════ VISUAL COLUMNS ═══════ */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>VISUAL COLUMNS (MAX 2)</Text>
+                        <Text style={styles.sectionTitle}>VISUAL COLUMNS</Text>
 
                         <View style={styles.settingRow}>
                             <View style={styles.rowIconContainer}>
@@ -142,9 +133,8 @@ export default function WorkoutSettingsMenu({
                             </View>
                             <Switch
                                 value={showPrevious}
-                                onValueChange={() => handleToggle('showPrevious', showPrevious)}
+                                onValueChange={(val) => onToggleSetting('showPrevious', val)}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
-                                disabled={!showPrevious && activeColumnsCount >= 2}
                             />
                         </View>
 
@@ -158,9 +148,8 @@ export default function WorkoutSettingsMenu({
                             </View>
                             <Switch
                                 value={showRpe}
-                                onValueChange={() => handleToggle('showRpe', showRpe)}
+                                onValueChange={(val) => onToggleSetting('showRpe', val)}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
-                                disabled={!showRpe && activeColumnsCount >= 2}
                             />
                         </View>
 
@@ -174,9 +163,8 @@ export default function WorkoutSettingsMenu({
                             </View>
                             <Switch
                                 value={showRir}
-                                onValueChange={() => handleToggle('showRir', showRir)}
+                                onValueChange={(val) => onToggleSetting('showRir', val)}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
-                                disabled={!showRir && activeColumnsCount >= 2}
                             />
                         </View>
                     </View>
@@ -330,6 +318,22 @@ export default function WorkoutSettingsMenu({
                                     <Text style={styles.stepperButtonText}>+</Text>
                                 </TouchableOpacity>
                             </View>
+                        </View>
+
+                        {/* Pre-fill Previous */}
+                        <View style={styles.settingRow}>
+                            <View style={styles.rowIconContainer}>
+                                <MaterialIcons name="history" size={20} color={colors.text.secondary} />
+                            </View>
+                            <View style={styles.settingLabelContainer}>
+                                <Text style={styles.settingLabel}>Pre-fill Previous</Text>
+                                <Text style={styles.settingSubLabel}>Auto-fill last session's weight & reps</Text>
+                            </View>
+                            <Switch
+                                value={prefillPrevious}
+                                onValueChange={(val) => onToggleSetting('prefillPrevious', val)}
+                                trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
+                            />
                         </View>
 
                         {/* Smart Suggestions */}

@@ -44,6 +44,9 @@ import {
     getPreviousSetsForExercises,
     Template,
 } from '../services';
+import { getSuggestionsForExercises } from '../services/smartSuggestionsService';
+import { getSettings } from '../services/preferencesService';
+import { useRestTimerStore } from '../stores/restTimerStore';
 import { triggerAutoBackupIfEnabled } from '../services/cloudBackupService';
 import { Workout } from '../models/workout';
 import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
@@ -116,6 +119,7 @@ export default function WorkoutScreen() {
         defaultRestTime,
         smartSuggestions,
         showProgressionNudges,
+        prefillPrevious,
         weightUnit,
         keepAwakeDuringWorkout,
         settingsMenuVisible,
@@ -184,8 +188,28 @@ export default function WorkoutScreen() {
         getKeyboardFieldType,
         getFieldLabel,
         handleRpeRirSelected,
-    } = useWorkoutKeyboard();
+    } = useWorkoutKeyboard(showRpe, showRir);
 
+    // Compute if custom keyboard is showing, to add list bottom padding
+    const isKeyboardVisible = focusState !== null && isKeyboardField(focusState.field);
+    const exercisesListStyle = useMemo(() => ({
+        ...styles.exercisesList,
+        paddingBottom: isKeyboardVisible ? 360 : 120,
+    }), [isKeyboardVisible]);
+
+    // Auto-scroll: bring focused exercise above the keyboard when it would obstruct
+    const flatListRef = useRef<FlatList>(null);
+    const scrollYRef = useRef(0);
+    const listHeightRef = useRef(0);
+    const itemLayoutsRef = useRef<Map<string, { y: number; height: number }>>(new Map());
+
+    const handleListScroll = useCallback((e: any) => {
+        scrollYRef.current = e.nativeEvent.contentOffset.y;
+    }, []);
+
+    const handleListLayout = useCallback((e: any) => {
+        listHeightRef.current = e.nativeEvent.layout.height;
+    }, []);
 
     // Handle start workout
     const handleStartWorkout = () => {
@@ -200,7 +224,7 @@ export default function WorkoutScreen() {
         try {
             const workout = await startWorkoutFromTemplate(template.id);
             if (workout) {
-                useWorkoutStore.setState({ activeWorkout: workout, previousSets: new Map() });
+                useWorkoutStore.setState({ activeWorkout: workout, previousSets: new Map(), exerciseSuggestions: new Map() });
                 // Fetch previous sets for all exercises in the template (non-blocking)
                 const exerciseIds = workout.main.exercises.map(e => e.exerciseId);
                 if (exerciseIds.length > 0) {
@@ -208,6 +232,23 @@ export default function WorkoutScreen() {
                         useWorkoutStore.setState({ previousSets: prevMap });
                     }).catch(err => {
                         console.warn('[WorkoutScreen] Failed to load previous sets:', err);
+                    });
+
+                    // Phase 7: Fetch smart suggestions for all template exercises
+                    getSettings().then(settings => {
+                        if (!settings.smartSuggestions) return;
+                        return getSuggestionsForExercises(
+                            exerciseIds, settings.trainingPhase, settings.defaultWeightIncrement,
+                        ).then(suggestionsMap => {
+                            useWorkoutStore.setState({ exerciseSuggestions: suggestionsMap });
+                            for (const [id, s] of suggestionsMap) {
+                                if (s.smartRestDuration) {
+                                    useRestTimerStore.getState().setExerciseRestTime(id, s.smartRestDuration);
+                                }
+                            }
+                        });
+                    }).catch(err => {
+                        console.warn('[WorkoutScreen] Smart suggestions fetch failed:', err);
                     });
                 }
             }
@@ -408,6 +449,60 @@ export default function WorkoutScreen() {
 
     const exerciseKeyExtractor = (item: RenderableItem) => item.id;
 
+    // CellRendererComponent tracks each item's position within the content
+    const CellRenderer = useCallback(({ children, index, style, ...rest }: any) => (
+        <View
+            {...rest}
+            style={style}
+            onLayout={(e: any) => {
+                const key = renderableItems[index]?.id;
+                if (key) {
+                    itemLayoutsRef.current.set(key, {
+                        y: e.nativeEvent.layout.y,
+                        height: e.nativeEvent.layout.height,
+                    });
+                }
+            }}
+        >
+            {children}
+        </View>
+    ), [renderableItems]);
+
+    // Auto-scroll when focused exercise would be behind the keyboard
+    useEffect(() => {
+        if (!focusState || !isKeyboardVisible) return;
+
+        // Find the renderableItem containing the focused exercise
+        const itemId = renderableItems.find(item =>
+            item.type === 'standalone'
+                ? item.exercise.id === focusState.exerciseId
+                : item.exercises.some(e => e.id === focusState.exerciseId)
+        )?.id;
+        if (!itemId) return;
+
+        // Small delay to let layout settle after keyboard opens
+        const timer = setTimeout(() => {
+            const layout = itemLayoutsRef.current.get(itemId);
+            if (!layout) return;
+
+            const KEYBOARD_HEIGHT = 340;
+            const scrollY = scrollYRef.current;
+            const listHeight = listHeightRef.current;
+            const visibleBottom = scrollY + listHeight - KEYBOARD_HEIGHT;
+
+            // Only scroll if the item's bottom edge is behind the keyboard
+            if (layout.y + layout.height > visibleBottom) {
+                const targetOffset = layout.y + layout.height - listHeight + KEYBOARD_HEIGHT + 40;
+                flatListRef.current?.scrollToOffset({
+                    offset: Math.max(0, targetOffset),
+                    animated: true,
+                });
+            }
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, [focusState, isKeyboardVisible, renderableItems]);
+
     // Stable renderItem — avoids creating a new closure on every render,
     // which would defeat React.memo on RenderableExerciseItem.
     const renderExerciseItem = useCallback(({ item }: { item: RenderableItem }) => (
@@ -436,12 +531,13 @@ export default function WorkoutScreen() {
             onToggleCollapse={toggleCollapse}
             onRpeRirSelected={handleRpeRirSelected}
             showProgressionNudges={showProgressionNudges}
+            prefillPrevious={prefillPrevious}
         />
     ), [
         // Props that change between renders (all others are stable refs from getState/useState):
         activeWorkout, focusState, collapsedExercises,
         showPrevious, showRpe, showRir, showSwipeHint,
-        defaultWarmupSets, previousSets, exerciseSuggestions, showProgressionNudges,
+        defaultWarmupSets, previousSets, exerciseSuggestions, showProgressionNudges, prefillPrevious,
         // Stable refs — listed for completeness but won't cause re-creation:
         handleFocusField, updateSet, completeSet, addSet, removeSet,
         removeExercise, toggleSuperset, updateExerciseNote, addWarmupSets,
@@ -492,11 +588,16 @@ export default function WorkoutScreen() {
 
             {/* Exercises list — PP-044: FlatList for virtualization */}
             <FlatList
+                ref={flatListRef}
                 data={renderableItems}
                 renderItem={renderExerciseItem}
                 keyExtractor={exerciseKeyExtractor}
                 style={styles.scrollView}
-                contentContainerStyle={styles.exercisesList}
+                contentContainerStyle={exercisesListStyle}
+                onScroll={handleListScroll}
+                onLayout={handleListLayout}
+                scrollEventThrottle={16}
+                CellRendererComponent={CellRenderer}
                 ListHeaderComponent={
                     <WorkoutNoteSection
                         isEditing={showWorkoutNote}
@@ -559,6 +660,7 @@ export default function WorkoutScreen() {
                 defaultRestTime={defaultRestTime}
                 smartSuggestions={smartSuggestions}
                 showProgressionNudges={showProgressionNudges}
+                prefillPrevious={prefillPrevious}
                 weightUnit={weightUnit}
                 onToggleSetting={handleToggleSetting}
                 onChangeWarmupSets={handleChangeWarmupSets}

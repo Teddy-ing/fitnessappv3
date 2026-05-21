@@ -68,6 +68,7 @@ interface ExerciseCardProps {
     onRpeRirSelected?: () => void;
     exerciseSuggestion?: ExerciseSuggestion | null;
     showProgressionNudges?: boolean;
+    prefillPrevious?: boolean;
 }
 
 function ExerciseCardInner({
@@ -99,6 +100,7 @@ function ExerciseCardInner({
     onRpeRirSelected,
     exerciseSuggestion,
     showProgressionNudges = false,
+    prefillPrevious = true,
 }: ExerciseCardProps) {
     const { exercise, sets } = workoutExercise;
 
@@ -351,7 +353,8 @@ function ExerciseCardInner({
                             isRpeFocused={focusState?.exerciseId === workoutExercise.id && focusState?.setId === set.id && focusState?.field === 'rpe'}
                             isRirFocused={focusState?.exerciseId === workoutExercise.id && focusState?.setId === set.id && focusState?.field === 'rir'}
                             onRpeRirSelected={onRpeRirSelected}
-                            suggestion={exerciseSuggestion?.sets[index] ?? null}
+                            suggestion={set.type === 'warmup' ? null : exerciseSuggestion?.sets[workingSetNumber(index) - 1] ?? null}
+                            prefillPrevious={prefillPrevious}
                         />
                         {isSetTimerActive(set.id) && (
                             <ActiveRestLine

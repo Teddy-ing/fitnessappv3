@@ -46,6 +46,7 @@ export function useWorkoutSettings() {
     const [defaultRestTime, setDefaultRestTime] = useState(90);
     const [smartSuggestions, setSmartSuggestions] = useState(false);
     const [showProgressionNudges, setShowProgressionNudges] = useState(false);
+    const [prefillPrevious, setPrefillPrevious] = useState(true);
     const weightUnit = useWeightUnit();
     const [keepAwakeDuringWorkout, setKeepAwakeDuringWorkout] = useState(true);
     const [settingsMenuVisible, setSettingsMenuVisible] = useState(false);
@@ -64,6 +65,7 @@ export function useWorkoutSettings() {
         setDefaultRestTime(settings.defaultRestTime ?? 90);
         setSmartSuggestions(settings.smartSuggestions ?? false);
         setShowProgressionNudges(settings.showProgressionNudges ?? false);
+        setPrefillPrevious(settings.prefillPrevious ?? true);
         // weightUnit is managed by useWeightUnit() subscriber — no local state needed
         setKeepAwakeDuringWorkout(settings.keepAwakeDuringWorkout ?? true);
     }, []);
@@ -74,7 +76,7 @@ export function useWorkoutSettings() {
     }, [refreshSettings]);
 
     const handleToggleSetting = async (
-        key: 'showPrevious' | 'showRpe' | 'showRir' | 'showPlateCalc' | 'autoStartRestTimer' | 'smartSuggestions' | 'showProgressionNudges',
+        key: 'showPrevious' | 'showRpe' | 'showRir' | 'showPlateCalc' | 'autoStartRestTimer' | 'smartSuggestions' | 'showProgressionNudges' | 'prefillPrevious',
         value: boolean,
     ) => {
         if (key === 'showPrevious') setShowPrevious(value);
@@ -84,6 +86,7 @@ export function useWorkoutSettings() {
         if (key === 'autoStartRestTimer') setAutoStartRestTimer(value);
         if (key === 'smartSuggestions') setSmartSuggestions(value);
         if (key === 'showProgressionNudges') setShowProgressionNudges(value);
+        if (key === 'prefillPrevious') setPrefillPrevious(value);
         await updateSettings({ [key]: value });
     };
 
@@ -212,6 +215,7 @@ export function useWorkoutSettings() {
         defaultRestTime,
         smartSuggestions,
         showProgressionNudges,
+        prefillPrevious,
         weightUnit,
         keepAwakeDuringWorkout,
         settingsMenuVisible,

@@ -55,6 +55,7 @@ interface UserSettingsRow {
     training_phase: string;
     strength_profile: string | null;
     show_progression_nudges: number;
+    prefill_previous: number;
 }
 
 /** Default settings — used if the row doesn't exist yet */
@@ -92,6 +93,7 @@ const DEFAULTS: UserSettings = {
     trainingPhase: 'maintain',
     strengthProfile: null,
     showProgressionNudges: false,
+    prefillPrevious: true,
 };
 
 // ============================================================
@@ -153,6 +155,7 @@ export async function getSettings(): Promise<UserSettings> {
             null,
         ),
         showProgressionNudges: row.show_progression_nudges === 1,
+        prefillPrevious: (row.prefill_previous ?? 1) === 1,
     };
 }
 
@@ -207,6 +210,7 @@ export async function updateSettings(
         trainingPhase: 'training_phase',
         strengthProfile: 'strength_profile',
         showProgressionNudges: 'show_progression_nudges',
+        prefillPrevious: 'prefill_previous',
     };
 
     const setClauses: string[] = [];

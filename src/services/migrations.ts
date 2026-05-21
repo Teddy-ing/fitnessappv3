@@ -789,6 +789,22 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+
+    // ----------------------------------------------------------
+    // v19: Pre-fill previous values as ghost text (default ON)
+    // ----------------------------------------------------------
+    {
+        version: 19,
+        name: 'prefill_previous',
+        up: async (db) => {
+            const hasCol = await columnExists(db, 'user_settings', 'prefill_previous');
+            if (!hasCol) {
+                await db.execAsync(
+                    `ALTER TABLE user_settings ADD COLUMN prefill_previous INTEGER DEFAULT 1;`,
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================

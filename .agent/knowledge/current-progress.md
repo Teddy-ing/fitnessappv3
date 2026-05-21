@@ -137,10 +137,16 @@ description: Living document tracking completed work, in-progress tasks, next st
 - iCloud backup deferred
 
 ### Phase 7: ML & Personalization
-- On-device ML for rep/weight autocomplete
-- Workout day suggestions based on patterns
-- Smart rest timer defaults per exercise
-- All processing on-device, no cloud dependency
+- [x] On-device statistical engine for weight/rep prediction (trend-aware regression)
+- [x] Smart rest timer defaults per exercise (learned from history)
+- [x] Exercise suggestions (co-occurrence analysis)
+- [x] Progressive overload nudge banners
+- [x] Ghost text autocomplete (suggestions appear as dimmed values)
+- [x] Ghost text tap-to-promote (Next/Complete commits suggestion values)
+- [x] Template/split workout suggestion loading (batch fetch on workout open)
+- [x] Pre-fill previous session values as ghost text fallback (prefillPrevious setting)
+- [x] Settings toggles: Smart Suggestions, Progression Nudges, Pre-fill Previous
+- [x] All processing on-device, no cloud dependency
 
 ### Phase 8: LLM Chatbot Feature
 - AI chatbot assistant (paid tier)

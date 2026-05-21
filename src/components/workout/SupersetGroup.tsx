@@ -48,6 +48,7 @@ interface SupersetGroupProps {
     onRpeRirSelected?: () => void;
     exerciseSuggestions: Map<string, ExerciseSuggestion>;
     showProgressionNudges?: boolean;
+    prefillPrevious?: boolean;
 }
 
 export default function SupersetGroup({
@@ -75,6 +76,7 @@ export default function SupersetGroup({
     onRpeRirSelected,
     exerciseSuggestions,
     showProgressionNudges,
+    prefillPrevious,
 }: SupersetGroupProps) {
     return (
         <View style={styles.container}>
@@ -123,6 +125,7 @@ export default function SupersetGroup({
                                 onRpeRirSelected={onRpeRirSelected}
                                 exerciseSuggestion={exerciseSuggestions.get(ex.exerciseId) ?? null}
                                 showProgressionNudges={showProgressionNudges}
+                                prefillPrevious={prefillPrevious}
                             />
                         </ErrorBoundary>
                     );

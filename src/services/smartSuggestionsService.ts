@@ -103,6 +103,14 @@ export async function getSuggestionsForExercise(
         const smartRestDuration = await getSmartRestDuration(exerciseId);
         const progressionNudge = detectNudge(sessions, weightIncrement);
 
+        // Debug: log suggestion values to diagnose ghost text display issues
+        if (setSuggestions.length > 0) {
+            console.log(`[SmartSuggestions] Exercise ${exerciseId}: ` +
+                `weight=${setSuggestions[0].suggestedWeight}, reps=${setSuggestions[0].suggestedReps}, ` +
+                `confidence=${setSuggestions[0].confidence}, source=${setSuggestions[0].source}, ` +
+                `sessions=${sessions.length}, maxWeights=[${sessions.map(s => s.maxWeight).join(',')}]`);
+        }
+
         return {
             exerciseId, sets: setSuggestions,
             predictedSetCount: predictedSetCount ?? 0,

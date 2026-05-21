@@ -48,6 +48,7 @@ interface RenderableExerciseItemProps {
     onToggleCollapse: (exerciseId: string) => void;
     onRpeRirSelected?: () => void;
     showProgressionNudges?: boolean;
+    prefillPrevious?: boolean;
 }
 
 function RenderableExerciseItemInner({
@@ -75,6 +76,7 @@ function RenderableExerciseItemInner({
     onToggleCollapse,
     onRpeRirSelected,
     showProgressionNudges,
+    prefillPrevious,
 }: RenderableExerciseItemProps) {
     if (item.type === 'superset') {
         return (
@@ -103,6 +105,7 @@ function RenderableExerciseItemInner({
                 onRpeRirSelected={onRpeRirSelected}
                 exerciseSuggestions={exerciseSuggestions}
                 showProgressionNudges={showProgressionNudges}
+                prefillPrevious={prefillPrevious}
             />
         );
     }
@@ -146,6 +149,7 @@ function RenderableExerciseItemInner({
                 onRpeRirSelected={onRpeRirSelected}
                 exerciseSuggestion={exerciseSuggestions.get(workoutExercise.exerciseId) ?? null}
                 showProgressionNudges={showProgressionNudges}
+                prefillPrevious={prefillPrevious}
             />
         </ErrorBoundary>
     );

@@ -28,7 +28,7 @@ import {
     getPreviousSetsForExercise,
     getPreviousSetsForExercises,
 } from '../services/workoutService';
-import { getSuggestionsForExercise } from '../services/smartSuggestionsService';
+import { getSuggestionsForExercise, getSuggestionsForExercises } from '../services/smartSuggestionsService';
 import { getSettings } from '../services/preferencesService';
 import { type PreviousSetData } from '../models/workout';
 import type { ExerciseSuggestion } from '../models/smartSuggestions';
@@ -39,6 +39,36 @@ export interface CompletedSetSignal {
     exerciseId: string;
     setId: string;
     timestamp: number;
+}
+
+/**
+ * Phase 7: Batch-fetch smart suggestions for all exercises in a workout.
+ * Used when starting from template, restoring, or editing a workout —
+ * any path where exercises are already present when the workout opens.
+ */
+function fetchSuggestionsForWorkoutExercises(
+    exerciseIds: string[],
+    set: (state: Partial<WorkoutState>) => void,
+): void {
+    getSettings().then(settings => {
+        if (!settings.smartSuggestions) return;
+        return getSuggestionsForExercises(
+            exerciseIds, settings.trainingPhase, settings.defaultWeightIncrement,
+        ).then(suggestionsMap => {
+            set({ exerciseSuggestions: suggestionsMap });
+
+            // Pre-populate rest timer with learned durations
+            for (const [id, suggestion] of suggestionsMap) {
+                if (suggestion.smartRestDuration) {
+                    useRestTimerStore.getState().setExerciseRestTime(
+                        id, suggestion.smartRestDuration,
+                    );
+                }
+            }
+        });
+    }).catch(err => {
+        console.warn('[WorkoutStore] Batch smart suggestions fetch failed:', err);
+    });
 }
 
 interface WorkoutState {
@@ -144,6 +174,9 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             }).catch(err => {
                 console.warn('[WorkoutStore] Failed to load previous sets for edit:', err);
             });
+
+            // Phase 7: Fetch smart suggestions for all exercises
+            fetchSuggestionsForWorkoutExercises(exerciseIds, set);
         }
     },
 
@@ -234,6 +267,18 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
             }
         } catch (err) {
             console.warn('[WorkoutStore] Failed to restore workout:', err);
+        }
+
+        // Phase 7: Fetch suggestions for restored workout exercises
+        const workout = get().activeWorkout;
+        if (workout) {
+            const exerciseIds = workout.main.exercises.map(e => e.exerciseId);
+            if (exerciseIds.length > 0) {
+                getPreviousSetsForExercises(exerciseIds).then(prevMap => {
+                    set({ previousSets: prevMap });
+                }).catch(() => {});
+                fetchSuggestionsForWorkoutExercises(exerciseIds, set);
+            }
         }
     },
 
@@ -490,14 +535,48 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
         let wasCompleted = false;
 
+        const { exerciseSuggestions, previousSets } = get();
+
         const exercises = activeWorkout.main.exercises.map(ex => {
             if (ex.id === exerciseId) {
-                const sets = ex.sets.map(s => {
+                const sets = ex.sets.map((s, sIdx) => {
                     if (s.id === setId) {
                         // Check if we're marking as completed (not uncompleting)
                         wasCompleted = s.status !== 'completed';
+
+                        // Phase 7: Promote ghost values on complete
+                        // Priority: smart suggestion > previous data fallback
+                        let weight = s.weight;
+                        let reps = s.reps;
+                        if (wasCompleted) {
+                            // Try smart suggestion first (working sets only)
+                            if (s.type !== 'warmup') {
+                                const exSugg = exerciseSuggestions.get(ex.exerciseId);
+                                if (exSugg) {
+                                    let workingIdx = 0;
+                                    for (let i = 0; i < sIdx; i++) {
+                                        if (ex.sets[i].type !== 'warmup') workingIdx++;
+                                    }
+                                    const setSugg = exSugg.sets[workingIdx];
+                                    if (setSugg) {
+                                        if (weight == null && setSugg.suggestedWeight != null) weight = setSugg.suggestedWeight;
+                                        if (reps == null && setSugg.suggestedReps != null) reps = setSugg.suggestedReps;
+                                    }
+                                }
+                            }
+
+                            // Fallback: previous session data (all set types)
+                            const prevSets = previousSets.get(ex.exerciseId);
+                            if (prevSets?.[sIdx]) {
+                                if (weight == null && prevSets[sIdx].weight != null) weight = prevSets[sIdx].weight;
+                                if (reps == null && prevSets[sIdx].reps != null) reps = prevSets[sIdx].reps;
+                            }
+                        }
+
                         return {
                             ...s,
+                            weight,
+                            reps,
                             status: s.status === 'completed' ? 'pending' : 'completed',
                             completedAt: s.status === 'completed' ? null : new Date(),
                         } as WorkoutSet;
