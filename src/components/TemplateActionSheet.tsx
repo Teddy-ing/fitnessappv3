@@ -6,7 +6,7 @@
  * Mirrors the editing capability of TemplatesScreen but inline in the split flow.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -59,8 +59,12 @@ export default function TemplateActionSheet({
         }
     }, [template]);
 
+    // BH-073: Double-tap guard for async save
+    const isSavingRef = useRef(false);
+
     const handleSave = async () => {
         if (!template) return;
+        if (isSavingRef.current) return;
 
         if (!editName.trim()) {
             Alert.alert('Error', 'Please enter a name for your template.');
@@ -71,9 +75,14 @@ export default function TemplateActionSheet({
             return;
         }
 
-        await updateTemplate(template.id, editName.trim(), editExercises);
-        onTemplateChanged();
-        onClose();
+        isSavingRef.current = true;
+        try {
+            await updateTemplate(template.id, editName.trim(), editExercises);
+            onTemplateChanged();
+            onClose();
+        } finally {
+            isSavingRef.current = false;
+        }
     };
 
     const handleDelete = () => {

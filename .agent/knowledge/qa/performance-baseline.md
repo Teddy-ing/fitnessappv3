@@ -7,10 +7,10 @@ description: Tracking document for performance regression findings from Performa
 ## Summary
 
 - **Last full pass:** 2026-04-13 (Settings Revamp — 20 files)
-- **Last scoped pass:** 2026-04-28 (Phase 6 Import/Export/Cloud Backup — 19 files)
+- **Last scoped pass:** 2026-05-21 (Phase 7 Smart Personalization + Polish — 54 files)
 - **Open issues:** 1 (0 confirmed, 0 likely, 1 latent)
-- **Fixed this session:** 1 (PP-079 row-level INSERT → batched multi-value INSERT)
-- **Accepted / Won't Fix:** 47
+- **Fixed this session:** 2 (PP-089 N+1 batch query, PP-090 code dedup)
+- **Accepted / Won't Fix:** 56
 - **Deferred:** 0
 
 ---
@@ -30,6 +30,7 @@ description: Tracking document for performance regression findings from Performa
 | ID | Area | File | Issue | Status |
 |----|------|------|-------|--------|
 | PP-078 | Startup overhead | `services/index.ts` | Barrel re-exports 80+ symbols from 22 service files. Metro doesn't tree-shake barrel files effectively. | Latent. Profile if startup >100ms on low-end devices. |
+| PP-091 | N+1 hydration | `splitService.ts` | `getSplits()` loops and calls `hydrateSplit()` per row (1-2 queries each). Only matters with >5 splits. | Latent. Defer until user telemetry shows >5 splits are common. |
 
 ### Accepted
 
@@ -40,6 +41,13 @@ description: Tracking document for performance regression findings from Performa
 *All deferred items resolved.*
 
 ---
+
+## Resolved (Session: 2026-05-21 — Phase 7 Smart Personalization + Polish)
+
+| ID | Area | File | Fix Applied |
+|----|------|------|--------------|
+| PP-089 | N+1 query pattern | `smartSuggestionsService.ts` | Replaced `Promise.all` + per-exercise `getSuggestionsForExercise()` (4N DB round-trips) with 4 batch SQL queries using `IN(...)` + `batchGetAll`. Each query uses `PARTITION BY exercise_id` in window functions. For a 6-exercise template: 24 queries → 4 queries. |
+| PP-090 | Code duplication | `WorkoutScreen.tsx`, `workoutStore.ts` | Moved template-start suggestion/previousSets fetch from `WorkoutScreen.handleStartFromTemplate()` into new `workoutStore.startFromTemplate()` action. All 3 workout entry paths (template start, edit, restore) now use the same `fetchSuggestionsForWorkoutExercises()` helper. |
 
 ## Resolved (Session: 2026-04-28 — Phase 6 Import/Export/Cloud Backup)
 
@@ -237,6 +245,24 @@ description: Tracking document for performance regression findings from Performa
 
 **PP-088** — `Uint8Array` conversion loop in `exportService.ts`. O(n) single-pass on ~500KB buffer. <10ms.
 
+**PP-092** — `console.log` debug logging in `smartSuggestionsService.ts`. ~6 calls per template start. Negligible; strip in production build.
+
+**PP-093** — `new Map()` spread in `workoutStore.addExercise`. Only fires on user tap. Max ~20 exercises.
+
+**PP-094** — Inline async IIFE in `ExercisePicker.tsx` `useEffect`. Fires once on modal open. Not render-path.
+
+**PP-095** — `renderRightActions` arrow in `SetRow.tsx`. Inside `React.memo`, only materializes on swipe.
+
+**PP-096** — `formatPrevious()` in `SetRow.tsx` render path. Simple formatting inside `React.memo`. ~30 calls max.
+
+**PP-097** — Regex matching in `exerciseRelationships.ts`. ~20 tests per call, fires once per exercise on suggestion fetch.
+
+**PP-098** — `TemplateActionSheet.tsx` handlers lack `useCallback`. ~10 rows in a modal, not a hot path.
+
+**PP-099** — `exerciseSuggestionService.ts` manual IN() placeholders. Max ~20 IDs, safe under 999 SQLite limit.
+
+**PP-100** — `WorkoutScreen.tsx` destructures `getState()` at render time. Stable action references. Established pattern since PP-001.
+
 ---
 
 ## Historical Performance Issues
@@ -251,5 +277,5 @@ description: Tracking document for performance regression findings from Performa
 ---
 
 ## Last Updated
-- Date: 2026-04-28
-- Session Context: Phase 6 Performance Profiler pass — 19 files reviewed. Resolved PP-079 (row-level INSERT → batched multi-value INSERT via new batchInsert utility). Added 9 negligible findings (PP-080–PP-088) to Accepted.
+- Date: 2026-05-21
+- Session Context: Phase 7 Smart Personalization + Polish pass — 54 files reviewed. Resolved PP-089 (N+1 batch query → 4 batch SQL queries) and PP-090 (code dedup into store). Added PP-091 latent finding and 9 negligible findings (PP-092–PP-100) to Accepted.

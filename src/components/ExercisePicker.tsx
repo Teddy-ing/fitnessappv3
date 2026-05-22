@@ -160,11 +160,11 @@ export default function ExercisePicker({
     }, [exercises, hiddenExercises, searchQuery, activeFilter, activeCategory]);
 
     // Handle exercise selection
-    const handleSelect = (exercise: Exercise) => {
+    const handleSelect = useCallback((exercise: Exercise) => {
         onSelect(exercise);
         setSearchQuery('');
         setActiveFilter('all');
-    };
+    }, [onSelect]);
 
     // Handle close
     const handleClose = () => {
@@ -175,20 +175,25 @@ export default function ExercisePicker({
     };
 
     // Toggle favorite (optimistic update)
-    const handleToggleFavorite = async (exercise: Exercise) => {
+    const handleToggleFavorite = useCallback(async (exercise: Exercise) => {
         setExercises(prev => prev.map(ex =>
             ex.id === exercise.id ? { ...ex, isFavorite: !ex.isFavorite } : ex
         ));
         await toggleExerciseFavorite(exercise.id);
-    };
+    }, []);
 
     // Handle long-press to show options (hide/edit)
-    const handleLongPress = (exercise: Exercise) => {
+    const handleLongPress = useCallback((exercise: Exercise) => {
         const buttons: { text: string; onPress?: () => void; style?: 'cancel' | 'default' | 'destructive' }[] = [
             { text: 'Cancel', style: 'cancel' },
             {
                 text: exercise.isFavorite ? 'Unfavorite' : 'Favorite',
-                onPress: () => handleToggleFavorite(exercise),
+                onPress: () => {
+                    setExercises(prev => prev.map(ex =>
+                        ex.id === exercise.id ? { ...ex, isFavorite: !ex.isFavorite } : ex
+                    ));
+                    toggleExerciseFavorite(exercise.id);
+                },
             },
             {
                 text: 'Hide Exercise',
@@ -220,7 +225,7 @@ export default function ExercisePicker({
         }
 
         Alert.alert(exercise.name, 'Choose an action', buttons);
-    };
+    }, [loadExercises]);
 
     // Handle unhide (from hidden tab)
     const handleUnhide = useCallback(async (exercise: Exercise) => {

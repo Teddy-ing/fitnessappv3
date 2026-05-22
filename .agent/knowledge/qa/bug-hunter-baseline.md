@@ -7,9 +7,9 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ## Summary
 
 - **Last full pass:** 2026-04-13 (Settings Revamp + Canonical Weight Storage — 24 files)
-- **Last scoped pass:** 2026-04-28 (Phase 6: Import, Export & Cloud Backup — 15 files)
+- **Last scoped pass:** 2026-05-21 (Phase 7: Smart Personalization + Polish/Bug Fix — 44 files)
 - **Open issues:** 2 (Critical: 0, High: 0, Medium: 0, Low: 1, Deferred: 1)
-- **Fixed since baseline:** 55
+- **Fixed since baseline:** 60
 
 ---
 
@@ -101,10 +101,48 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 | `advanceOrShowSummary` re-derives unresolved from modified mappings | `ExerciseMappingScreen.tsx:145-159` | The logic creates a speculative copy of mappings to check how many are still unresolved after the current one would be resolved. This handles the edge case where the user resolves the last item and the `unresolvedMappings` memo hasn't updated yet. Correct. |
 | `ExerciseMappingScreen` passes complex objects via route params | `ImportBottomSheet.tsx:99-106` | React Navigation serializes route params. `ParsedWorkout[]` and `ExerciseMapping[]` are plain objects (no functions, no circular refs), so they serialize correctly. For very large imports this could hit serialization limits, but that's a performance concern, not a logic bug. |
 | `dbMutex` lockPromise captured before await | `dbMutex.ts:31-34` | This is the correct FIFO pattern. `previousLock` captures the *current* lock before replacing it, ensuring each caller awaits its predecessor. The `release!()` in `finally` is guaranteed to be assigned because the `new Promise` executor runs synchronously. |
+| `groupBySession` sort direction (DESC) | `smartSuggestionsService.ts:414` | Sort `b-a` is correct: `DENSE_RANK(ORDER BY completed_at DESC)` assigns 1=newest, N=oldest. Descending sort places highest session_num (oldest) at index 0 for regression x-axis. |
+| `getSuggestionsForExercises` parallel Map writes | `smartSuggestionsService.ts:136-141` | JS single-threaded; `Promise.all` callbacks interleave at await boundaries; `Map.set()` is synchronous. No data race. |
+| `handleAdjust` ghost conversion chain | `useWorkoutKeyboard.ts:215-278` | canonical→display→delta→buildUpdate→canonical round-trip is correct for weight unit conversion. |
+| `handleNext` stale keyboardValue after ghost promote | `useWorkoutKeyboard.ts:327-332` | handleNext always advances to a different field or closes keyboard; promoted field's value is never re-displayed. |
+| `Alert.alert` modal blocking in `handleDelete` | `TemplateActionSheet.tsx:79-98` | Alert dialog is modal; prevents concurrent re-entry of `handleDelete`. |
+| `useWorkoutStore.getState()` in ExercisePicker effect | `ExercisePicker.tsx:95` | Standard Zustand pattern for non-reactive state reads inside effects. |
+| Week-reset logic in `checkAndAdvanceIfNewDay` | `splitService.ts:254-289` | Intentional design change to prevent Day X exceeding Day Y on template edits. |
+| Double `getSettings()` call in workoutStore | `workoutStore.ts:270-299` | Read-only, idempotent, cached in preferencesService. |
 
 ---
 
 ## Resolved
+
+#### BH-074 · ExercisePicker `renderExerciseItem` unstable callback deps — **RESOLVED 2026-05-21**
+- **Severity:** Low (Performance)
+- **File:** [ExercisePicker.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/ExercisePicker.tsx#L162-L241)
+- **Root cause:** `handleSelect`, `handleToggleFavorite`, and `handleLongPress` were plain functions recreated every render, defeating the `useCallback` memoization of `renderExerciseItem` and causing FlatList to re-render all items on every state change.
+- **Fix applied:** Wrapped all three handlers in `useCallback` with appropriate deps.
+
+#### BH-073 · `TemplateActionSheet.handleSave` missing double-tap guard — **RESOLVED 2026-05-21**
+- **Severity:** Medium
+- **File:** [TemplateActionSheet.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/TemplateActionSheet.tsx#L62-L77)
+- **Root cause:** `handleSave` was async with no synchronous guard. `updateTemplate` deletes all exercises then re-inserts them — a rapid double-tap could cause duplicate exercises.
+- **Fix applied:** Added `useRef(false)` double-tap guard with try/finally pattern.
+
+#### BH-072 · `getBootstrapEstimate` cross-exercise loop is dead code — **RESOLVED 2026-05-21**
+- **Severity:** Low
+- **File:** [strengthProfileService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/strengthProfileService.ts)
+- **Root cause:** Loop iterated over related exercises from ratio table but the inner query didn't use `rel.pattern`. Result was fetched but never used (comment: "for now, use muscle group estimate").
+- **Fix applied:** Removed dead loop, replaced with TODO comment. Fallback to 75% muscle-group 1RM works correctly.
+
+#### BH-071 · `strengthProfileService` Step 1 query is dead code — **RESOLVED 2026-05-21**
+- **Severity:** Medium
+- **File:** [strengthProfileService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/strengthProfileService.ts)
+- **Root cause:** `maxRows` query used broken `CROSS JOIN json_each` with identical CASE branches and a `LEFT JOIN` on empty array. Result was never read — muscle map was built entirely from `exerciseMaxRows` (Step 2).
+- **Fix applied:** Removed the dead query and unused `MuscleMaxRow`/`WeeklyProgressRow` types. Cleaned up `getEstimatedWeight`/`getRelatedExercises` imports.
+
+#### BH-070 · `rest_duration` column never populated — smart rest learning is a no-op — **RESOLVED 2026-05-21**
+- **Severity:** Medium-High
+- **File:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts) + [smartSuggestionsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/smartSuggestionsService.ts)
+- **Root cause:** `rest_duration` column existed in v1 schema and the model, but `completeSet` never computed or wrote a value. `getSmartRestDuration` always returned null (no rows with non-null `rest_duration`).
+- **Fix applied:** Added rest duration computation in `completeSet` — calculates elapsed seconds since the most recent previously-completed set in the same exercise, with sanity bounds (5s–30min).
 
 #### BH-069 · `handleRestore` deps missing `executeRestore` — stale closure risk — **RESOLVED 2026-04-28**
 - **Severity:** Low

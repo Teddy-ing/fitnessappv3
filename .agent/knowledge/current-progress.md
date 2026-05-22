@@ -93,6 +93,15 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 *Nothing currently in progress.*
 
+### QA Passes Completed (2026-05-21)
+- **Bug Hunter QA** on Phase 7 Smart Personalization + Polish/Bug Fix (44 files, BH-070 through BH-074)
+  - BH-070: Fixed smart rest timer learning (rest_duration now recorded on set completion)
+  - BH-071: Removed dead Step 1 query from strengthProfileService
+  - BH-072: Removed dead cross-exercise bootstrap loop
+  - BH-073: Added double-tap guard to TemplateActionSheet.handleSave
+  - BH-074: Wrapped ExercisePicker handlers in useCallback (performance)
+  - 8 false positives documented in baseline
+
 ### Phase 6: Cloud Backup — Blocked on GCP setup
 - Code complete: `cloudBackupService.ts`, `CloudBackupSection.tsx`, auto-backup hook in WorkoutScreen
 - **Blocked:** Requires Google Cloud project setup (OAuth client IDs)

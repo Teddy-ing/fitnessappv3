@@ -10,7 +10,7 @@
 
 import { getDatabase } from './database';
 import { getSettings, updateSettings } from './preferencesService';
-import { getEstimatedWeight, getRelatedExercises } from './exerciseRelationships';
+
 import { EPLEY_1RM } from '../utils/sqlFragments';
 import type { StrengthProfile, MuscleStrengthProfile } from '../models/smartSuggestions';
 
@@ -31,21 +31,7 @@ const GROWTH_WINDOW_WEEKS = 12;
 const PLATEAU_GROWTH_THRESHOLD = 0.01;
 const PLATEAU_WINDOW_WEEKS = 6;
 
-// ============================================================
-// Internal types
-// ============================================================
 
-interface MuscleMaxRow {
-    muscle_group: string;
-    estimated_1rm: number;
-    completed_at: string;
-}
-
-interface WeeklyProgressRow {
-    muscle_group: string;
-    week_start: string;
-    max_1rm: number;
-}
 
 // ============================================================
 // Public API
@@ -89,36 +75,7 @@ export async function computeStrengthProfile(): Promise<StrengthProfile | null> 
     if (!db) return null;
 
     try {
-        // ── Step 1: Get best estimated 1RM per muscle group ──
-        const maxRows = await db.getAllAsync<MuscleMaxRow>(
-            `SELECT
-                mg.muscle_group,
-                MAX(${EPLEY_1RM}) AS estimated_1rm,
-                w.completed_at
-             FROM workout_sets ws
-             JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-             JOIN workouts w ON we.workout_id = w.id
-             CROSS JOIN json_each(we.exercise_muscle_groups) AS mg_json
-             CROSS JOIN json_each(
-                 CASE WHEN json_type(mg_json.value) = 'object'
-                      THEN json_array(mg_json.value)
-                      ELSE json_array(mg_json.value)
-                 END
-             )
-             LEFT JOIN (
-                 SELECT
-                     json_extract(value, '$.muscle') AS muscle_group,
-                     json_extract(value, '$.isPrimary') AS is_primary
-                 FROM json_each('[]')
-             ) AS dummy ON 0
-             WHERE w.status = 'completed'
-               AND ws.status = 'completed'
-               AND ws.weight IS NOT NULL AND ws.reps IS NOT NULL
-               AND ws.reps > 0 AND ws.reps <= 10
-             GROUP BY mg.muscle_group`,
-        );
-
-        // Simplified fallback: query per-exercise, group by parsed muscle groups
+        // ── Step 1: Get best estimated 1RM per exercise, grouped by muscle in JS ──
         const exerciseMaxRows = await db.getAllAsync<{
             exercise_muscle_groups: string;
             max_1rm: number;
@@ -319,34 +276,8 @@ export async function getBootstrapEstimate(
         const muscleProfile = profile.muscles.find(m => m.muscleGroup === primaryMuscle);
         if (!muscleProfile) return null;
 
-        // Try to find a related exercise with a known ratio
-        const related = getRelatedExercises(weExercise.name);
-        if (related.length > 0) {
-            // Find a related exercise the user has data for
-            for (const rel of related) {
-                // Search exercises matching the pattern
-                const matchRow = await db.getFirstAsync<{
-                    exercise_name: string;
-                    max_weight: number;
-                }>(
-                    `SELECT we.exercise_name,
-                            MAX(ws.weight) AS max_weight
-                     FROM workout_sets ws
-                     JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                     JOIN workouts w ON we.workout_id = w.id
-                     WHERE w.status = 'completed'
-                       AND ws.status = 'completed'
-                       AND ws.weight IS NOT NULL
-                     GROUP BY we.exercise_id
-                     HAVING COUNT(DISTINCT w.id) >= 3
-                     ORDER BY max_weight DESC
-                     LIMIT 20`,
-                );
-
-                // This is a simplified approach — in practice we'd check name patterns
-                // against the query results. For now, use the muscle group estimate.
-            }
-        }
+        // TODO: Cross-exercise bootstrapping via ratio table (exerciseRelationships.ts)
+        // is not yet implemented. For now, fall back to muscle-group-based estimate.
 
         // Fallback: estimate from muscle group 1RM using a conservative factor
         // Working weight is typically 70-85% of 1RM

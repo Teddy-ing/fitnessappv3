@@ -96,6 +96,7 @@ interface WorkoutState {
 
     // Actions - Workout lifecycle
     startWorkout: (name?: string) => void;
+    startFromTemplate: (workout: Workout) => void;
     loadWorkoutForEditing: (workout: Workout) => void;
     finishWorkout: () => Promise<Workout | null>;
     discardWorkout: () => void;
@@ -143,6 +144,36 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     startWorkout: (name?: string) => {
         const workout = createWorkout(name);
         set({ activeWorkout: workout, previousSets: new Map(), exerciseSuggestions: new Map(), collapsedExercises: new Set(), isEditMode: false, originalDuration: null, originalCompletedAt: null, originalStartedAt: null });
+    },
+
+    /**
+     * PP-090: Consolidated template-start path.
+     * Sets the workout in the store and kicks off async fetches for
+     * previous sets + smart suggestions — same helper used by
+     * loadWorkoutForEditing and restoreWorkout.
+     */
+    startFromTemplate: (workout: Workout) => {
+        set({
+            activeWorkout: workout,
+            previousSets: new Map(),
+            exerciseSuggestions: new Map(),
+            collapsedExercises: new Set(),
+            isEditMode: false,
+            originalDuration: null,
+            originalCompletedAt: null,
+            originalStartedAt: null,
+        });
+
+        const exerciseIds = workout.main.exercises.map(e => e.exerciseId);
+        if (exerciseIds.length > 0) {
+            getPreviousSetsForExercises(exerciseIds).then(prevMap => {
+                set({ previousSets: prevMap });
+            }).catch(err => {
+                console.warn('[WorkoutStore] Failed to load previous sets for template:', err);
+            });
+
+            fetchSuggestionsForWorkoutExercises(exerciseIds, set);
+        }
     },
 
     loadWorkoutForEditing: (workout: Workout) => {
@@ -573,10 +604,34 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
                             }
                         }
 
+                        // BH-070: Compute rest duration from previous completed set
+                        // in the same exercise. This populates rest_duration in the DB
+                        // so getSmartRestDuration has data for learned rest times.
+                        let restDuration = s.restDuration;
+                        if (wasCompleted) {
+                            const completedBefore = ex.sets
+                                .filter(prev => prev.id !== setId && prev.status === 'completed' && prev.completedAt != null)
+                                .sort((a, b) => {
+                                    const ta = a.completedAt instanceof Date ? a.completedAt.getTime() : new Date(a.completedAt!).getTime();
+                                    const tb = b.completedAt instanceof Date ? b.completedAt.getTime() : new Date(b.completedAt!).getTime();
+                                    return tb - ta; // most recent first
+                                });
+                            if (completedBefore.length > 0) {
+                                const lastCompleted = completedBefore[0].completedAt!;
+                                const lastTime = lastCompleted instanceof Date ? lastCompleted.getTime() : new Date(lastCompleted).getTime();
+                                const elapsed = Math.round((Date.now() - lastTime) / 1000);
+                                // Only record sane rest durations (5s – 30min)
+                                if (elapsed >= 5 && elapsed <= 1800) {
+                                    restDuration = elapsed;
+                                }
+                            }
+                        }
+
                         return {
                             ...s,
                             weight,
                             reps,
+                            restDuration,
                             status: s.status === 'completed' ? 'pending' : 'completed',
                             completedAt: s.status === 'completed' ? null : new Date(),
                         } as WorkoutSet;

@@ -41,12 +41,8 @@ import {
     findMatchingTemplate,
     startWorkoutFromTemplate,
     markWorkoutCompletedToday,
-    getPreviousSetsForExercises,
     Template,
 } from '../services';
-import { getSuggestionsForExercises } from '../services/smartSuggestionsService';
-import { getSettings } from '../services/preferencesService';
-import { useRestTimerStore } from '../stores/restTimerStore';
 import { triggerAutoBackupIfEnabled } from '../services/cloudBackupService';
 import { Workout } from '../models/workout';
 import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
@@ -70,6 +66,7 @@ export default function WorkoutScreen() {
     const originalStartedAt = useWorkoutStore(s => s.originalStartedAt);
     const {
         startWorkout,
+        startFromTemplate,
         finishWorkout,
         discardWorkout,
         addExercise,
@@ -220,37 +217,12 @@ export default function WorkoutScreen() {
     };
 
     // Handle start from template
+    // PP-090: Delegates to store action which handles previousSets + suggestion fetching
     const handleStartFromTemplate = async (template: Template) => {
         try {
             const workout = await startWorkoutFromTemplate(template.id);
             if (workout) {
-                useWorkoutStore.setState({ activeWorkout: workout, previousSets: new Map(), exerciseSuggestions: new Map() });
-                // Fetch previous sets for all exercises in the template (non-blocking)
-                const exerciseIds = workout.main.exercises.map(e => e.exerciseId);
-                if (exerciseIds.length > 0) {
-                    getPreviousSetsForExercises(exerciseIds).then(prevMap => {
-                        useWorkoutStore.setState({ previousSets: prevMap });
-                    }).catch(err => {
-                        console.warn('[WorkoutScreen] Failed to load previous sets:', err);
-                    });
-
-                    // Phase 7: Fetch smart suggestions for all template exercises
-                    getSettings().then(settings => {
-                        if (!settings.smartSuggestions) return;
-                        return getSuggestionsForExercises(
-                            exerciseIds, settings.trainingPhase, settings.defaultWeightIncrement,
-                        ).then(suggestionsMap => {
-                            useWorkoutStore.setState({ exerciseSuggestions: suggestionsMap });
-                            for (const [id, s] of suggestionsMap) {
-                                if (s.smartRestDuration) {
-                                    useRestTimerStore.getState().setExerciseRestTime(id, s.smartRestDuration);
-                                }
-                            }
-                        });
-                    }).catch(err => {
-                        console.warn('[WorkoutScreen] Smart suggestions fetch failed:', err);
-                    });
-                }
+                startFromTemplate(workout);
             }
         } catch (error) {
             console.error('Error starting from template:', error);

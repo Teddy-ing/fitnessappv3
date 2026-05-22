@@ -7,6 +7,7 @@
  */
 
 import { getDatabase } from './database';
+import { batchGetAll } from '../utils/batchQuery';
 import type {
     TrainingPhase,
     SetSuggestion,
@@ -33,6 +34,7 @@ const NUDGE_THRESHOLD = 3;
 // ============================================================
 
 interface HistRow {
+    exercise_id: string;
     session_num: number;
     completed_at: string;
     set_index: number;
@@ -60,70 +62,27 @@ interface RegResult {
 
 /**
  * Get suggestions for a single exercise.
+ * Used when adding or replacing a single exercise mid-workout.
  */
 export async function getSuggestionsForExercise(
     exerciseId: string,
     trainingPhase: TrainingPhase,
     weightIncrement: number = 5,
 ): Promise<ExerciseSuggestion> {
-    const empty: ExerciseSuggestion = {
+    const map = await getSuggestionsForExercises([exerciseId], trainingPhase, weightIncrement);
+    return map.get(exerciseId) ?? {
         exerciseId, sets: [], predictedSetCount: 0,
         smartRestDuration: null, progressionNudge: null,
     };
-
-    const db = await getDatabase();
-    if (!db) return empty;
-
-    try {
-        const rows = await db.getAllAsync<HistRow>(
-            `WITH ranked AS (
-                SELECT we.exercise_id, w.completed_at,
-                    ws.order_index AS set_index, ws.weight, ws.reps, ws.type,
-                    DENSE_RANK() OVER (ORDER BY w.completed_at DESC) AS session_num
-                FROM workout_sets ws
-                JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                JOIN workouts w ON we.workout_id = w.id
-                WHERE we.exercise_id = ?
-                  AND w.status = 'completed' AND ws.status = 'completed'
-                  AND ws.type = 'working'
-            )
-            SELECT session_num, completed_at, set_index, weight, reps, type
-            FROM ranked WHERE session_num <= ?
-            ORDER BY session_num ASC, set_index ASC`,
-            [exerciseId, HISTORY_DEPTH],
-        );
-
-        if (rows.length === 0) return empty;
-
-        const sessions = groupBySession(rows);
-        if (sessions.length < MIN_SESSIONS) return empty;
-
-        const setSuggestions = predictSets(sessions, trainingPhase, weightIncrement);
-        const predictedSetCount = await getPredictedSetCount(exerciseId);
-        const smartRestDuration = await getSmartRestDuration(exerciseId);
-        const progressionNudge = detectNudge(sessions, weightIncrement);
-
-        // Debug: log suggestion values to diagnose ghost text display issues
-        if (setSuggestions.length > 0) {
-            console.log(`[SmartSuggestions] Exercise ${exerciseId}: ` +
-                `weight=${setSuggestions[0].suggestedWeight}, reps=${setSuggestions[0].suggestedReps}, ` +
-                `confidence=${setSuggestions[0].confidence}, source=${setSuggestions[0].source}, ` +
-                `sessions=${sessions.length}, maxWeights=[${sessions.map(s => s.maxWeight).join(',')}]`);
-        }
-
-        return {
-            exerciseId, sets: setSuggestions,
-            predictedSetCount: predictedSetCount ?? 0,
-            smartRestDuration, progressionNudge,
-        };
-    } catch (error) {
-        console.error('[SmartSuggestions] Failed:', error);
-        return empty;
-    }
 }
 
 /**
  * Batch-fetch suggestions for multiple exercises.
+ *
+ * PP-089 fix: Uses 4 batch SQL queries with IN(...) instead of
+ * 4N per-exercise queries via Promise.all. For a 6-exercise template,
+ * this reduces 24 DB round-trips to 4 (or chunked via batchGetAll
+ * for >500 exercises).
  */
 export async function getSuggestionsForExercises(
     exerciseIds: string[],
@@ -133,11 +92,182 @@ export async function getSuggestionsForExercises(
     const result = new Map<string, ExerciseSuggestion>();
     if (exerciseIds.length === 0) return result;
 
-    const promises = exerciseIds.map(async (id) => {
-        const s = await getSuggestionsForExercise(id, trainingPhase, weightIncrement);
-        result.set(id, s);
-    });
-    await Promise.all(promises);
+    const db = await getDatabase();
+    if (!db) {
+        // Populate empty suggestions for all exercises
+        for (const id of exerciseIds) {
+            result.set(id, {
+                exerciseId: id, sets: [], predictedSetCount: 0,
+                smartRestDuration: null, progressionNudge: null,
+            });
+        }
+        return result;
+    }
+
+    try {
+        // ── Query 1: Batch history rows ──
+        const histRows = await batchGetAll<HistRow>(
+            db, exerciseIds,
+            (placeholders, batch) => [
+                `WITH ranked AS (
+                    SELECT we.exercise_id, w.completed_at,
+                        ws.order_index AS set_index, ws.weight, ws.reps, ws.type,
+                        DENSE_RANK() OVER (
+                            PARTITION BY we.exercise_id
+                            ORDER BY w.completed_at DESC
+                        ) AS session_num
+                    FROM workout_sets ws
+                    JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                    JOIN workouts w ON we.workout_id = w.id
+                    WHERE we.exercise_id IN (${placeholders})
+                      AND w.status = 'completed' AND ws.status = 'completed'
+                      AND ws.type = 'working'
+                )
+                SELECT exercise_id, session_num, completed_at, set_index, weight, reps, type
+                FROM ranked WHERE session_num <= ${HISTORY_DEPTH}
+                ORDER BY exercise_id, session_num ASC, set_index ASC`,
+                batch,
+            ],
+        );
+
+        // ── Query 2: Batch rest durations ──
+        const restRows = await batchGetAll<{ exercise_id: string; rest_duration: number }>(
+            db, exerciseIds,
+            (placeholders, batch) => [
+                `SELECT we.exercise_id, ws.rest_duration
+                 FROM workout_sets ws
+                 JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                 JOIN workouts w ON we.workout_id = w.id
+                 WHERE we.exercise_id IN (${placeholders})
+                   AND w.status = 'completed' AND ws.status = 'completed'
+                   AND ws.rest_duration IS NOT NULL
+                   AND ws.rest_duration >= ${REST_MIN} AND ws.rest_duration <= ${REST_MAX}
+                 ORDER BY we.exercise_id, w.completed_at DESC, ws.order_index DESC`,
+                batch,
+            ],
+        );
+
+        // ── Query 3: Batch set counts ──
+        const setCountRows = await batchGetAll<{ exercise_id: string; set_count: number }>(
+            db, exerciseIds,
+            (placeholders, batch) => [
+                `WITH recent AS (
+                    SELECT we.exercise_id, we.id AS we_id,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY we.exercise_id
+                            ORDER BY w.completed_at DESC
+                        ) AS rn
+                    FROM workout_exercises we
+                    JOIN workouts w ON we.workout_id = w.id
+                    WHERE we.exercise_id IN (${placeholders}) AND w.status = 'completed'
+                )
+                SELECT r.exercise_id, COUNT(*) AS set_count
+                FROM workout_sets ws
+                JOIN recent r ON ws.workout_exercise_id = r.we_id
+                WHERE r.rn <= ${SET_COUNT_SESSIONS}
+                  AND ws.type = 'working' AND ws.status = 'completed'
+                GROUP BY r.exercise_id, r.we_id`,
+                batch,
+            ],
+        );
+
+        // ── Query 4: Batch nudge data ──
+        const nudgeRows = await batchGetAll<{
+            exercise_id: string; session_num: number;
+            max_weight: number; max_reps: number;
+        }>(
+            db, exerciseIds,
+            (placeholders, batch) => [
+                `WITH ranked AS (
+                    SELECT we.exercise_id,
+                        DENSE_RANK() OVER (
+                            PARTITION BY we.exercise_id
+                            ORDER BY w.completed_at DESC
+                        ) AS session_num,
+                        MAX(ws.weight) AS max_weight, MAX(ws.reps) AS max_reps
+                    FROM workout_sets ws
+                    JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+                    JOIN workouts w ON we.workout_id = w.id
+                    WHERE we.exercise_id IN (${placeholders}) AND w.status = 'completed'
+                      AND ws.status = 'completed' AND ws.type = 'working'
+                      AND ws.weight IS NOT NULL AND ws.reps IS NOT NULL
+                    GROUP BY we.exercise_id, w.id
+                )
+                SELECT exercise_id, session_num, max_weight, max_reps
+                FROM ranked WHERE session_num <= ${NUDGE_THRESHOLD + 2}
+                ORDER BY exercise_id, session_num ASC`,
+                batch,
+            ],
+        );
+
+        // ── Group batch results by exercise_id ──
+        const histByExercise = groupRowsByExercise(histRows);
+        const restByExercise = groupRowsByExercise(restRows);
+        const setCountByExercise = groupRowsByExercise(setCountRows);
+        const nudgeByExercise = groupRowsByExercise(nudgeRows);
+
+        // ── Process each exercise ──
+        for (const exerciseId of exerciseIds) {
+            const empty: ExerciseSuggestion = {
+                exerciseId, sets: [], predictedSetCount: 0,
+                smartRestDuration: null, progressionNudge: null,
+            };
+
+            // History → sessions → predictions
+            const exHistRows = histByExercise.get(exerciseId) ?? [];
+            if (exHistRows.length === 0) {
+                result.set(exerciseId, empty);
+                continue;
+            }
+            const sessions = groupBySession(exHistRows);
+            if (sessions.length < MIN_SESSIONS) {
+                result.set(exerciseId, empty);
+                continue;
+            }
+
+            const setSuggestions = predictSets(sessions, trainingPhase, weightIncrement);
+
+            // Rest duration: average of last 50 per exercise, rounded to 15s
+            const exRestRows = (restByExercise.get(exerciseId) ?? []).slice(0, 50);
+            let smartRestDuration: number | null = null;
+            if (exRestRows.length >= MIN_REST_POINTS) {
+                const avg = exRestRows.reduce((s, r) => s + r.rest_duration, 0) / exRestRows.length;
+                smartRestDuration = Math.round(avg / 15) * 15;
+            }
+
+            // Set count: mode of last N sessions
+            const exSetCountRows = setCountByExercise.get(exerciseId) ?? [];
+            let predictedSetCount: number = 0;
+            if (exSetCountRows.length >= 2) {
+                predictedSetCount = mode(exSetCountRows.map(r => r.set_count));
+            }
+
+            // Nudge detection
+            const exNudgeRows = nudgeByExercise.get(exerciseId) ?? [];
+            const nudgeSessions: SessionData[] = exNudgeRows.map(r => ({
+                sessionNum: r.session_num, maxWeight: r.max_weight,
+                maxReps: r.max_reps, sets: [],
+            }));
+            const progressionNudge = detectNudge(nudgeSessions, weightIncrement);
+
+            result.set(exerciseId, {
+                exerciseId, sets: setSuggestions,
+                predictedSetCount, smartRestDuration, progressionNudge,
+            });
+        }
+    } catch (error) {
+        console.error('[SmartSuggestions] Batch fetch failed:', error);
+        // Populate empty suggestions for any exercises that failed
+        for (const id of exerciseIds) {
+            if (!result.has(id)) {
+                result.set(id, {
+                    exerciseId: id, sets: [], predictedSetCount: 0,
+                    smartRestDuration: null, progressionNudge: null,
+                });
+            }
+        }
+    }
+
     return result;
 }
 
@@ -394,6 +524,25 @@ function detectNudge(sessions: SessionData[], weightIncrement: number): Progress
 // ============================================================
 // Helpers
 // ============================================================
+
+/**
+ * Group any row array with an exercise_id field into a Map keyed by exercise ID.
+ * Used for batch query result grouping (PP-089).
+ */
+function groupRowsByExercise<T extends { exercise_id: string }>(
+    rows: T[],
+): Map<string, T[]> {
+    const map = new Map<string, T[]>();
+    for (const row of rows) {
+        const arr = map.get(row.exercise_id);
+        if (arr) {
+            arr.push(row);
+        } else {
+            map.set(row.exercise_id, [row]);
+        }
+    }
+    return map;
+}
 
 function groupBySession(rows: HistRow[]): SessionData[] {
     const map = new Map<number, SessionData>();
