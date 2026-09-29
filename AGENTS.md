@@ -1,148 +1,60 @@
 # Agent Instructions
 
-## 🧠 Knowledge Persistence System
+## Working agreement
 
-This project uses a **dual-folder system** to maintain context across chat sessions:
+The user normally starts work with `/goal <desired change>`. The main chat owns the task from clarification through implementation, review, and verification. Keep the user involved in meaningful product decisions and let agents handle execution.
 
-- **`.agent/knowledge/`** — Reference documents, design decisions, project state
-- **`.agent/workflows/`** — Repeatable procedures and step-by-step checklists
+Subagent delegation is authorized for project work. Use available goal tracking for explicit goal requests; ordinary requests follow the same workflow without automatically creating a goal.
 
-### Core Principle
+This file supersedes older procedural requirements in `.agent/knowledge/` and `.agent/workflows/`. Those documents remain useful references for product decisions, architecture, and known issues. Required PRDs, three separate QA chats, mandatory size or hook-count refactors, exhaustive audit baselines, and a log entry for every exchange are retired.
 
-**Before ending a session or when the user indicates they want to change chats**, ensure all important discoveries, decisions, and context are saved to the appropriate files.
+## From request to finished change
 
----
+1. **Understand the task.** Inspect the current branch, working tree, relevant code, and current progress. Read only the supporting documents that help with this task. Confirm existing behavior from code when notes are stale.
+2. **Clarify consequential gaps.** Ask one concise batch of questions if the answers materially affect scope, user behavior, data safety, or an irreversible decision. Wait for required answers before dependent edits; continue independent inspection or work meanwhile. Choose sensible defaults for reversible implementation details and state significant assumptions. Do not require approval at each routine phase.
+3. **Define success and delegate.** Establish a short plan and observable acceptance criteria. Assign scoped implementation work to subagents; parallelize independent work. Small, trivial changes may stay with the main agent when delegation would add overhead.
+4. **Implement and integrate.** Complete the requested behavior, handle affected paths, and integrate the agents' work. Fix discovered issues within scope autonomously. Avoid unrelated redesigns or speculative cleanup.
+5. **Verify and review.** After the core change works, use a separate subagent to review substantive changes against the acceptance criteria, regression risks, and data safety. Run the relevant checks, resolve confirmed findings, and recheck affected behavior. Findings should identify a concrete defect or risk; style preferences and line counts alone do not justify churn.
+6. **Hand off the result.** Summarize what changed, what was verified, and any remaining limitations or user action. Update the project records as described below. The task is complete when the requested outcome is achieved and required checks are resolved; report blockers honestly when completion depends on unavailable access or a user decision.
 
-## 📖 Knowledge Files
+## Delegation and shared files
 
-Reference documents that capture *what* and *why*. These are read-heavy, edited when decisions change.
+- The main agent owns decomposition, integration, final verification, and the user-facing response. Delegate actual implementation for substantive work, as well as independent review.
+- Give each subagent a clear outcome, relevant context, acceptance criteria, and explicit file ownership. Check for dependencies before parallelizing.
+- All agents share the working tree. Give each file one writer at a time; sequence edits to shared files through their owner or the main agent. Never revert or overwrite another agent's or the user's work.
+- When another chat is editing the same checkout, coordinate overlapping work or use an isolated worktree through the available tools. Do not switch or reset a shared checkout to make room for a task.
+- Subagents report changes, checks, findings, and blockers to the parent. They do not each create another team or update progress documents unless the main agent explicitly assigns that work.
+- If delegation, device access, or another tool is unavailable, do feasible work directly and report the exact remaining gap. Never claim an unperformed review or test, and do not stop solely because a subagent cannot be started.
 
-| File | Purpose |
-|------|---------|
-| `app-vision.md` | Core goals, market positioning, design philosophy, disruption strategy |
-| `project-config.md` | Technical stack, dependencies, build commands, project structure |
-| `target-users.md` | User personas, audience prioritization, feature needs by user type |
-| `feature-design.md` | Feature specifications, UX decisions, competitive differentiators |
-| `monetization.md` | Pricing strategy, free vs premium features, anti-friction principles |
-| `current-progress.md` | What's done, in-progress, next steps, session log |
-| `conventions.md` | Coding patterns, naming conventions, project structure |
-| `code-audit-baseline.md` | Open issues, resolved items, patterns from code review |
-| `competitive-analysis.md` | Competitor breakdown, gaps in market, opportunities |
+## Product priorities
 
-*Add domain-specific knowledge files as needed (e.g., `/data-schema`, `/api-design`, `/analytics-specs`).*
+- Serve experienced lifters first: fast workout logging, minimal taps, optional beginner support, and no forced onboarding.
+- Deliver polished UI with an affordable or free core. Avoid adding payment or account friction to basic logging.
+- Preserve local and offline use, privacy, data ownership, and practical export. A user's workout history must survive upgrades and feature changes.
 
-### When to Update Knowledge
+## Architecture and data safety
 
-- Design decisions are made or changed
-- Project configuration changes
-- User personas or target audience evolves
-- Competitive landscape insights emerge
-- At end of session (update `/current-progress`)
+The app uses React Native, Expo, TypeScript, Zustand, and `expo-sqlite`.
 
----
+- Keep services independent of stores. Reuse the existing hydration, formulas, unit conversion, batching, and database coordination helpers where applicable.
+- Add schema changes through new versioned migrations in `src/services/migrations.ts`; never rewrite shipped migrations. Preserve existing records and verify both a fresh database and an upgrade when changing schema.
+- Weight is stored canonically in pounds. Use `src/utils/unitConversion.ts` at input and display boundaries; preserve the storage conventions for other measurements and import sources.
+- Keep related writes atomic and guard non-idempotent operations against concurrent invocation and double taps. Preserve parent identities and related history when updating records.
+- Carry new persisted fields through save/load, backup/restore, import/export, and data clearing as applicable. Maintain compatibility with existing backups and histories; verify round trips when these paths change.
+- Prefer clear, typed code and cohesive components. Extract code when responsibilities or reuse warrant it, rather than to satisfy a line or hook count.
 
-## 🔧 Workflows
+## Verification proportional to the change
 
-Procedures that capture *how*. Step-by-step instructions for repeatable tasks.
+- For code changes, run `npm run typecheck` and relevant Jest tests; use `npm test -- --runInBand` for the full suite when shared behavior or broad integration warrants it.
+- Add or update tests for meaningful behavior changes and regressions, especially persistence, calculations, and logging. Avoid tests that merely repeat the implementation or test documentation edits.
+- Run lint only if its tooling and configuration are available. A script name alone does not establish a working check.
+- Use device or emulator checks for affected mobile interactions, layout, permissions, lifecycle, and native behavior when access is available. Automated checks do not establish that a screen works on a phone.
+- Distinguish pre-existing failures from regressions and report unverified behavior. Stop expanding checks once the task's acceptance criteria and material risks are sufficiently covered.
 
-| Workflow | Purpose |
-|----------|---------|
-| `setup-project.md` | Commands to scaffold the project from scratch |
-| `add-feature.md` | Checklist for implementing new features (UI, logic, tests) |
-| `add-exercise.md` | Process for adding new exercises to the database |
-| `ui-guidelines.md` | Design system rules, component patterns, theming |
-| `release-checklist.md` | Build, test, and publish process |
-| `create-workflow.md` | How to create new workflow files |
-| `code-review.md` | Baseline + diff audit procedure for code quality |
-| `user-testing.md` | Process for gathering and incorporating user feedback |
+## Git and project memory
 
-*Add domain-specific workflows as needed (e.g., `/deploy-beta`, `/database-migration`, `/localization`).*
-
-### When to Create Workflows
-
-- A process has been repeated 2+ times
-- Steps are complex enough to forget
-- Future agents would benefit from documentation
-
-### When to Update Workflows
-
-- Steps change or improve
-- Troubleshooting info is discovered
-- Checklist items are missing
-
----
-
-## 📝 File Formats
-
-### Knowledge File Format
-
-```markdown
----
-description: [One-line description]
----
-
-# [Title]
-
-[Content organized with clear headers]
-
----
-
-## Last Updated
-- Date: [YYYY-MM-DD]
-- Session Context: [What prompted the update]
-```
-
-### Workflow File Format
-
-```markdown
----
-description: [One-line description of what this workflow accomplishes]
----
-
-# [Workflow Title]
-
-## Prerequisites
-- [Required tools, access, knowledge]
-
-## Steps
-
-1. **Step Name**
-   - Details
-   - Commands if applicable
-
-2. **Step Name**
-   - Details
-
-## Troubleshooting
-- [Common issues and solutions]
-
-## Notes
-- [Additional context]
-```
-
----
-
-## 🚨 Critical Reminders
-
-1. **Never lose design decisions** — If the user describes how something should work, save it
-2. **Knowledge ≠ Workflow** — Reference docs go in `/knowledge`, procedures go in `/workflows`
-3. **When in doubt, document it** — Better to have too much context than too little
-4. **Update before switching** — Always update progress before ending a session
-5. **Proactively suggest documentation** — When discussing features, architecture, or decisions, offer to save them
-6. **Capture the "why"** — Document rationale, not just what was decided
-
----
-
-## 🏋️ Fitness App Specific Guidance
-
-This project aims to disrupt the fitness app market by:
-- Being **free or extremely cheap** (not the typical $10+/month)
-- Having **modern, polished UI** (unlike Fitnotes)
-- Prioritizing **zero friction** (unlike premium apps with forced onboarding)
-- Being **veteran-friendly first**, with optional beginner support
-
-When making decisions, always weigh:
-1. Does this add friction for experienced users?
-2. Does this feel like a premium app charging $12/month?
-3. Would Fitnotes users switch to this?
-4. Does this respect user privacy and data ownership?
+- Work on the selected branch and preserve unrelated edits. Use an isolated checkout when concurrent work requires it, following the coordination rules above.
+- Do not commit, push, merge, publish, or release unless specifically authorized. The current standing preference is to leave changes uncommitted for review; a `/goal` request alone does not authorize those actions.
+- After substantive work, the main agent adds a short outcome to `.agent/knowledge/current-progress.md`: what changed, important verification, unresolved blockers, and the next useful step. Also save durable product or architecture decisions and their rationale in the relevant knowledge file.
+- Read reference documents as needed; do not rewrite historical logs or maintain exhaustive duplicate inventories. Create or update a workflow only when a reusable procedure actually needs documenting.
+- Before an explicit chat handoff, ensure another agent can resume from the recorded state without reconstructing the conversation.

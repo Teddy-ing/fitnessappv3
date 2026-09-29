@@ -9,6 +9,7 @@ description: Living document tracking completed work, in-progress tasks, next st
 - **Phase:** Post-MVP Development — Phase 7 Smart Personalization fully implemented
 - **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign + Exercise Details + Settings + Import/Export + Cloud Backup (Google Drive) + **Smart Personalization engine** all implemented.
 - **Next Milestone:** Phase 8 planning
+- **Development workflow:** Goal-driven orchestration and delegated implementation/QA, governed by root `AGENTS.md` (adopted 2026-09-29). Older workflow documents are references, not mandatory task gates.
 
 ---
 
@@ -181,6 +182,29 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Session Log
+
+### 2026-09-29: Adopted autonomous goal workflow
+
+- User chose `/goal <desired change>` as the normal entry point for future work. The main chat clarifies consequential missing requirements up front, then owns delivery through implementation, testing, review, and fixes.
+- Subagents are explicitly authorized for scoped implementation and independent review. The orchestrator coordinates file ownership, integrates results, verifies the final changes, and maintains the shared progress record.
+- Root `AGENTS.md` replaces mandatory multi-chat QA, exhaustive logging, and mechanical refactoring rules with focused checks based on the change's risks. Existing PRDs, conventions, workflows, and audit histories remain available as references.
+- Retained the product priorities and protections for workout history, migrations, stored units, offline use, privacy, and data transfer. Rationale: reduce the user's coordination work while preserving checks that protect real user data.
+- The rediscovery note below was already present and has been preserved. These documentation changes are on `NewCodexChanges`; committing and publishing still require explicit user authorization.
+- Verification: a separate subagent reviewed the new instructions against the user's request; its clarification-stage finding was incorporated. No app code changed, so app tests were not needed.
+
+---
+
+### 2026-09-29: Project rediscovery (documentation only)
+
+- Revisited the project after a break. `main` matches `origin/main` at `c0ff720` (2026-05-21); the working tree was clean before this note.
+- Confirmed in source: workout logging, templates/splits, analytics, calendar, measurements/photos, goals, profile widgets, settings, import/export, versioned SQLite migrations through v19, and on-device statistical personalization.
+- Phase 8 AI Assistant remains a placeholder screen. Google Drive backup code exists, but external OAuth setup and device behavior have not been reverified. The referenced `setup-gcp.md` guide is absent from the tracked workspace.
+- Current documentation has drift: README/project-config still describe implemented features as TBD; release checklist has scaffold-era commands; package metadata and README say MIT while `LICENSE` contains GPLv3. Resolve the license choice before distribution.
+- Historical notes report passing tests, but no dependencies were installed in this checkout during rediscovery, so typecheck, tests, and device behavior were not reverified. The tracked `test_output.txt` is an older failure log, not a current test result.
+- Workflow refresh recommended for discussion: retain data-safety and migration rules; replace mandatory multi-chat QA and exhaustive session logging with risk-based review, automated checks, focused manual testing, and short decision records.
+- No code or workflow changes and no commit were made during this rediscovery.
+
+---
 
 ### 2026-04-27: Post-Phase 6 Tech Debt Cleanup (TD-047, TD-049, PP-075)
 
@@ -1141,8 +1165,8 @@ description: Living document tracking completed work, in-progress tasks, next st
 ---
 
 ## Last Updated
-- Date: 2026-04-13
-- Session Context: Settings feature finalized — canonical weight storage, full-screen workout settings, RestTimer fixes, analytics conversion
+- Date: 2026-09-29
+- Session Context: Preserved rediscovery notes and adopted goal-driven orchestration with delegated implementation and QA
 
 ### 2026-03-16: Calendar Feature Development (Phase 1)
 
