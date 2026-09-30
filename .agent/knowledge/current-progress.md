@@ -183,6 +183,12 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Session Log
 
+### 2026-09-29: Samsung rest-alert follow-up
+
+- User reported intermittent 10–60+ second delays after installing the rebuilt app. Read-only diagnostics on the connected SM-S938U confirmed the new manifest permission and notification access, but exact-alarm app-op initially remained at its default state. Installed Expo code falls back to inexact scheduling when exact access is unavailable.
+- After the user opened Alarms & reminders, the phone reported `SCHEDULE_EXACT_ALARM: allow`; user said it had likely been off and alerts now appeared to work. No app code or phone settings were changed by the agent. Start a fresh rest after granting access; existing scheduled alarms retain their prior mode.
+- A separate read-only review found no ordinary start/adjust/skip race. Repeated background/screen-off reliability on this Samsung is not yet established. If delays recur with access allowed, inspect the pending native alarm and delivery timestamps before changing scheduling. The app currently provides settings guidance without directly reporting exact-alarm access, which is a future usability improvement.
+
 ### 2026-09-29: Android editor, rest alerts and workout completion
 
 - Fixed template editor safe areas for Android system bars. Selected exercises and picker results now open the existing exercise guide/notes in the same modal, preserving draft, sets, order, supersets, filters and scroll layout. Hardware Back returns to the originating view; routed exercise details only handle Back while focused.
