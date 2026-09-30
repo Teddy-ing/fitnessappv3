@@ -21,6 +21,8 @@ import {
     FlatList,
     Alert,
     BackHandler,
+    ActivityIndicator,
+    Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { File, Paths } from 'expo-file-system';
@@ -32,6 +34,7 @@ import { ExercisePicker, RestTimer, WorkoutKeyboard, SaveTemplateModal, WorkoutS
 import RenderableExerciseItem, { RenderableItem } from '../components/workout/RenderableExerciseItem';
 import WorkoutNoteSection from '../components/workout/WorkoutNoteSection';
 import WorkoutHeader from '../components/workout/WorkoutHeader';
+import WorkoutCompletion from '../components/workout/WorkoutCompletion';
 import { useElapsedTimer, useWorkoutKeyboard, useHomeScreenData } from '../hooks';
 import { isKeyboardField } from '../hooks/useWorkoutKeyboard';
 import { useWorkoutSettings } from '../hooks/workout/useWorkoutSettings';
@@ -62,8 +65,7 @@ export default function WorkoutScreen() {
     const exerciseSuggestions = useWorkoutStore(s => s.exerciseSuggestions);
     const collapsedExercises = useWorkoutStore(s => s.collapsedExercises);
     const originalDuration = useWorkoutStore(s => s.originalDuration);
-    const originalCompletedAt = useWorkoutStore(s => s.originalCompletedAt);
-    const originalStartedAt = useWorkoutStore(s => s.originalStartedAt);
+    const isFinishing = useWorkoutStore(s => s.isFinishing);
     const {
         startWorkout,
         startFromTemplate,
@@ -170,6 +172,19 @@ export default function WorkoutScreen() {
     // Save as template modal state
     const [showSaveTemplateModal, setSaveTemplateModal] = useState(false);
     const [pendingWorkout, setPendingWorkout] = useState<Workout | null>(null);
+    const [completedWorkout, setCompletedWorkout] = useState<Workout | null>(null);
+    const [offerSaveTemplate, setOfferSaveTemplate] = useState(false);
+    const completionIdRef = useRef<string | null>(null);
+
+    // Calendar edits and template starts can load a workout from outside this screen.
+    useEffect(() => {
+        if (!activeWorkout) return;
+        completionIdRef.current = null;
+        setCompletedWorkout(null);
+        setPendingWorkout(null);
+        setSaveTemplateModal(false);
+        setOfferSaveTemplate(false);
+    }, [activeWorkout?.id]);
 
     // Custom keyboard - extracted to useWorkoutKeyboard hook
     const {
@@ -213,6 +228,7 @@ export default function WorkoutScreen() {
         // Reset any pending template modal state
         setSaveTemplateModal(false);
         setPendingWorkout(null);
+        setCompletedWorkout(null);
         startWorkout();
     };
 
@@ -255,72 +271,42 @@ export default function WorkoutScreen() {
         } else {
             isSavingRef.current = true;
             try {
-                // BH-007 fix: Snapshot edit-mode state BEFORE finishWorkout() clears it.
-                // finishWorkout() resets isEditMode/original* to false/null in the store,
-                // so reading them after the await would see the cleared values.
                 const wasEditMode = isEditMode;
-                const savedDuration = originalDuration;
-                const savedCompletedAt = originalCompletedAt;
-                const savedStartedAt = originalStartedAt;
-
-                const workout = await finishWorkout();
+                handleHideKeyboard();
+                Keyboard.dismiss();
+                const workout = await finishWorkout(async (finishedWorkout, editing) => {
+                    const completedGoals = await (editing ? updateWorkout(finishedWorkout) : saveWorkout(finishedWorkout));
+                    if (completedGoals.length > 0) {
+                        useGoalCelebrationStore.getState().celebrate(completedGoals);
+                    }
+                });
                 if (workout) {
                     if (wasEditMode) {
-                        // Edit mode: restore original timestamps + duration,
-                        // skip template prompt, navigate back to calendar
-                        const editedWorkout = {
-                            ...workout,
-                            totalDuration: savedDuration ?? workout.totalDuration,
-                            completedAt: savedCompletedAt ?? workout.completedAt,
-                            startedAt: savedStartedAt ?? workout.startedAt,
-                        };
-                        console.log('[WorkoutScreen] Updating edited workout...');
-                        const completedGoals = await updateWorkout(editedWorkout);
-                        console.log('[WorkoutScreen] Workout updated!');
-                        if (completedGoals.length > 0) {
-                            useGoalCelebrationStore.getState().celebrate(completedGoals);
-                        }
-                        // Navigate back to the Profile tab (Calendar)
                         navigateToTab('Profile');
                     } else {
-                        // Normal mode: save + template prompt
-                        console.log('[WorkoutScreen] Saving workout...');
-                        const completedGoals = await saveWorkout(workout);
-                        console.log('[WorkoutScreen] Workout saved!');
-                        if (completedGoals.length > 0) {
-                            useGoalCelebrationStore.getState().celebrate(completedGoals);
-                        }
+                        completionIdRef.current = workout.id;
+                        setCompletedWorkout(workout);
+                        setOfferSaveTemplate(false);
 
-                        await markWorkoutCompletedToday();
-                        await loadData();
-
-                        // Fire-and-forget cloud backup (Option A: immediate)
+                        // These follow-ups must not turn a successful save into a retry prompt.
+                        void markWorkoutCompletedToday()
+                            .then(loadData)
+                            .catch(error => {
+                                console.warn('[WorkoutScreen] Split progress refresh failed:', error);
+                                Alert.alert('Workout saved', 'Your workout is in history, but split progress could not be refreshed. Check your next workout on the home screen.');
+                            });
                         triggerAutoBackupIfEnabled();
-
-                        const matchingTemplate = await findMatchingTemplate(workout);
-                        if (matchingTemplate) {
-                            console.log('[WorkoutScreen] Workout matches template:', matchingTemplate.name);
-                        } else {
-                            Alert.alert(
-                                'Workout Saved!',
-                                'This workout has different exercises than your templates. Save as a new template?',
-                                [
-                                    { text: 'No Thanks', style: 'cancel' },
-                                    {
-                                        text: 'Save Template',
-                                        onPress: () => {
-                                            setPendingWorkout(workout);
-                                            setSaveTemplateModal(true);
-                                        }
-                                    },
-                                ]
-                            );
-                        }
+                        void findMatchingTemplate(workout).then(template => {
+                            if (completionIdRef.current === workout.id) setOfferSaveTemplate(!template);
+                        }).catch(error => {
+                            console.warn('[WorkoutScreen] Template lookup failed:', error);
+                            if (completionIdRef.current === workout.id) setOfferSaveTemplate(true);
+                        });
                     }
                 }
             } catch (error) {
                 console.error('[WorkoutScreen] Error finishing workout:', error);
-                Alert.alert('Error', 'Failed to save workout. Please try again.');
+                Alert.alert('Could not save workout', 'Your workout is still here. Please try again.');
             } finally {
                 isSavingRef.current = false;
             }
@@ -329,6 +315,7 @@ export default function WorkoutScreen() {
 
     // Handle discard workout
     const handleDiscardWorkout = useCallback(() => {
+        if (useWorkoutStore.getState().isFinishing) return;
         Alert.alert(
             'Discard Workout',
             'Are you sure you want to discard this workout? All progress will be lost.',
@@ -344,9 +331,25 @@ export default function WorkoutScreen() {
         );
     }, [handleHideKeyboard, discardWorkout]);
 
+    const handleCompletionDone = useCallback(() => {
+        completionIdRef.current = null;
+        setCompletedWorkout(null);
+        setSaveTemplateModal(false);
+        setPendingWorkout(null);
+    }, []);
+
+    useEffect(() => {
+        if (!completedWorkout || !isFocused) return;
+        const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+            handleCompletionDone();
+            return true;
+        });
+        return () => sub.remove();
+    }, [completedWorkout, isFocused, handleCompletionDone]);
+
     // Intercept Android back button during active workout
     useEffect(() => {
-        if (!activeWorkout) return;
+        if (!activeWorkout || !isFocused) return;
 
         const onBackPress = () => {
             handleDiscardWorkout();
@@ -355,7 +358,7 @@ export default function WorkoutScreen() {
 
         const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
         return () => sub.remove();
-    }, [activeWorkout !== null, handleDiscardWorkout]);
+    }, [activeWorkout !== null, isFocused, handleDiscardWorkout]);
 
     // PP-008 fix: memoize workout stats so they only recompute when activeWorkout changes
     const stats = useMemo(() => {
@@ -519,6 +522,18 @@ export default function WorkoutScreen() {
     // Render home view (no active workout) — WorkoutHomeView owns its own modals
     if (!activeWorkout) {
         return (
+            <>
+            {completedWorkout ? (
+                <WorkoutCompletion
+                    workout={completedWorkout}
+                    weightUnit={weightUnit}
+                    onDone={handleCompletionDone}
+                    onSaveTemplate={offerSaveTemplate ? () => {
+                        setPendingWorkout(completedWorkout);
+                        setSaveTemplateModal(true);
+                    } : undefined}
+                />
+            ) : (
             <WorkoutHomeView
                 activeSplit={activeSplit}
                 currentTemplate={currentTemplate}
@@ -541,6 +556,18 @@ export default function WorkoutScreen() {
                     }
                 }}
             />
+            )}
+            <SaveTemplateModal
+                visible={showSaveTemplateModal}
+                pendingWorkout={pendingWorkout}
+                activeSplit={activeSplit}
+                onClose={() => {
+                    setSaveTemplateModal(false);
+                    setPendingWorkout(null);
+                }}
+                onSaved={loadData}
+            />
+            </>
         );
     }
 
@@ -690,22 +717,19 @@ export default function WorkoutScreen() {
                 }}
             />
 
-            {/* Save as template modal */}
-            <SaveTemplateModal
-                visible={showSaveTemplateModal}
-                pendingWorkout={pendingWorkout}
-                activeSplit={activeSplit}
-                onClose={() => {
-                    setSaveTemplateModal(false);
-                    setPendingWorkout(null);
-                }}
-                onSaved={loadData}
-            />
+            {isFinishing && (
+                <View style={styles.savingOverlay} accessibilityViewIsModal accessibilityLiveRegion="polite">
+                    <ActivityIndicator size="large" color={colors.accent.primary} />
+                    <Text style={styles.savingText}>Saving workout…</Text>
+                </View>
+            )}
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    savingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.overlay, alignItems: 'center', justifyContent: 'center', gap: spacing.md, zIndex: 100 },
+    savingText: { color: colors.text.primary, fontSize: typography.size.lg },
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,

@@ -15,6 +15,7 @@ beforeEach(() => {
         restTimerRemaining: 0,
         restTimerActive: false,
         restTimerEndTime: null,
+        timerCompletionReason: null,
         exerciseRestTimes: {},
         activeRestTimerExerciseId: null,
         activeRestTimerSetId: null,
@@ -154,6 +155,24 @@ describe('adjustRestTimer', () => {
         const restTime = useRestTimerStore.getState().getExerciseRestTime('ex-1');
         expect(restTime).toBe(90);
     });
+
+    it('adjusts the real deadline when the displayed countdown is stale after suspension', () => {
+        jest.useFakeTimers().setSystemTime(100000);
+        useRestTimerStore.getState().startRestTimer(120, 'ex-1', 'set-1');
+        jest.setSystemTime(180000);
+        useRestTimerStore.getState().adjustRestTimer(30);
+        expect(useRestTimerStore.getState().restTimerRemaining).toBe(70);
+        expect(useRestTimerStore.getState().restTimerEndTime).toBe(250000);
+        jest.useRealTimers();
+    });
+
+    it('ends and marks a rest as skipped when an adjustment removes all remaining time', () => {
+        useRestTimerStore.getState().startRestTimer(20);
+        useRestTimerStore.getState().adjustRestTimer(-30);
+        expect(useRestTimerStore.getState()).toMatchObject({
+            restTimerActive: false, restTimerEndTime: null, timerCompletionReason: 'skipped',
+        });
+    });
 });
 
 // ========================================
@@ -186,5 +205,12 @@ describe('exercise rest times', () => {
 
         // Timer should remain at 60
         expect(useRestTimerStore.getState().restTimerDuration).toBe(60);
+    });
+
+    it('cancels the active rest when its exercise rest time is set to zero', () => {
+        useRestTimerStore.getState().startRestTimer(60, 'ex-1', 'set-1');
+        useRestTimerStore.getState().setExerciseRestTime('ex-1', 0);
+        expect(useRestTimerStore.getState().restTimerActive).toBe(false);
+        expect(useRestTimerStore.getState().timerCompletionReason).toBe('skipped');
     });
 });

@@ -6,7 +6,10 @@
  */
 
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
+
+export const REST_TIMER_CHANNEL_ID = 'rest-timer';
+let permissionRequest: Promise<boolean> | null = null;
 
 // Configure notification behavior (show even when app is in foreground)
 Notifications.setNotificationHandler({
@@ -22,31 +25,35 @@ Notifications.setNotificationHandler({
 /**
  * Request notification permissions
  */
-export async function requestNotificationPermissions(): Promise<boolean> {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+export function requestNotificationPermissions(): Promise<boolean> {
+    // Startup and the first timer can reach this together. Share the prompt,
+    // but recheck on later calls in case permission changed in system settings.
+    if (permissionRequest) return permissionRequest;
+    permissionRequest = (async () => {
+        try {
+            // Android 13+ needs a channel before asking for notification access.
+            if (Platform.OS === 'android') {
+                await Notifications.setNotificationChannelAsync(REST_TIMER_CHANNEL_ID, {
+                    name: 'Rest Timer',
+                    importance: Notifications.AndroidImportance.HIGH,
+                    vibrationPattern: [0, 250, 250, 250],
+                    sound: 'default',
+                });
+            }
 
-    if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-    }
-
-    if (finalStatus !== 'granted') {
-        console.log('[Notifications] Permission not granted');
-        return false;
-    }
-
-    // Android needs a notification channel
-    if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('rest-timer', {
-            name: 'Rest Timer',
-            importance: Notifications.AndroidImportance.HIGH,
-            vibrationPattern: [0, 250, 250, 250],
-            sound: 'default',
-        });
-    }
-
-    return true;
+            const existing = await Notifications.getPermissionsAsync();
+            if (existing.granted) return true;
+            if (!existing.canAskAgain) return false;
+            const requested = await Notifications.requestPermissionsAsync();
+            return requested.granted;
+        } catch (error) {
+            console.error('[Notifications] Failed to request permissions:', error);
+            return false;
+        } finally {
+            permissionRequest = null;
+        }
+    })();
+    return permissionRequest;
 }
 
 /**
@@ -54,6 +61,7 @@ export async function requestNotificationPermissions(): Promise<boolean> {
  */
 export async function sendRestTimerNotification(): Promise<void> {
     try {
+        if (!await requestNotificationPermissions()) return;
         await Notifications.scheduleNotificationAsync({
             content: {
                 title: "Rest Over! 💪",
@@ -61,7 +69,7 @@ export async function sendRestTimerNotification(): Promise<void> {
                 sound: 'default',
                 priority: Notifications.AndroidNotificationPriority.HIGH,
             },
-            trigger: null, // Send immediately
+            trigger: Platform.OS === 'android' ? { channelId: REST_TIMER_CHANNEL_ID } : null,
         });
     } catch (error) {
         console.error('[Notifications] Failed to send notification:', error);
@@ -69,23 +77,31 @@ export async function sendRestTimerNotification(): Promise<void> {
 }
 
 /**
- * Schedule a notification for when rest timer will end
- * Used when app goes to background
+ * Schedule from the timer's absolute deadline, before JS can be suspended.
+ * Android uses an exact native alarm when Alarms & reminders is allowed;
+ * without that system permission Android may delay delivery.
  */
-export async function scheduleRestTimerNotification(secondsRemaining: number): Promise<string | null> {
-    if (secondsRemaining <= 0) return null;
-
+export async function scheduleRestTimerNotificationAt(
+    endTime: number,
+    isCurrent: () => boolean = () => true,
+): Promise<string | null> {
+    if (!Number.isFinite(endTime) || endTime <= Date.now()) return null;
     try {
+        if (!await requestNotificationPermissions()) return null;
+        // Permission prompts can outlast the rest or be followed by Skip/a new set.
+        if (!isCurrent() || endTime <= Date.now()) return null;
         const identifier = await Notifications.scheduleNotificationAsync({
             content: {
                 title: "Rest Over! 💪",
                 body: "Time for your next set",
                 sound: 'default',
                 priority: Notifications.AndroidNotificationPriority.HIGH,
+                data: { type: 'rest-timer', endTime },
             },
             trigger: {
-                seconds: secondsRemaining,
-                type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                type: Notifications.SchedulableTriggerInputTypes.DATE,
+                date: endTime,
+                channelId: REST_TIMER_CHANNEL_ID,
             },
         });
         return identifier;
@@ -93,6 +109,23 @@ export async function scheduleRestTimerNotification(secondsRemaining: number): P
         console.error('[Notifications] Failed to schedule notification:', error);
         return null;
     }
+}
+
+export function scheduleRestTimerNotification(secondsRemaining: number): Promise<string | null> {
+    return scheduleRestTimerNotificationAt(Date.now() + secondsRemaining * 1000);
+}
+
+/** Opens the system list; React Native's sendIntent cannot attach a package data URI. */
+export async function openRestTimerAlarmSettings(): Promise<void> {
+    if (Platform.OS === 'android' && Number(Platform.Version) >= 31) {
+        try {
+            await Linking.sendIntent('android.settings.REQUEST_SCHEDULE_EXACT_ALARM');
+            return;
+        } catch {
+            // Some Android vendors do not expose this settings activity.
+        }
+    }
+    await Linking.openSettings();
 }
 
 /**
@@ -122,6 +155,7 @@ export default {
     requestNotificationPermissions,
     sendRestTimerNotification,
     scheduleRestTimerNotification,
+    scheduleRestTimerNotificationAt,
     cancelScheduledNotification,
     clearAllNotifications,
 };

@@ -2,7 +2,7 @@
  * RestTimer Component
  * 
  * Floating overlay that displays the rest timer countdown.
- * Uses react-native-background-timer for background execution.
+ * Native alarm scheduling and the foreground clock live at the app root.
  * 
  * Features:
  * - Large countdown visible from arm's length
@@ -15,9 +15,6 @@
 
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, AppState, AppStateStatus } from 'react-native';
-import BackgroundTimer from 'react-native-background-timer';
-import * as Haptics from 'expo-haptics';
-import { sendRestTimerNotification, scheduleRestTimerNotification, cancelScheduledNotification } from '../services/notificationService';
 import { useWorkoutStore } from '../stores';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import { colors, spacing, borderRadius, typography } from '../theme';
@@ -37,23 +34,15 @@ export default function RestTimer({
     const restTimerDuration = useRestTimerStore(s => s.restTimerDuration);
     const stopRestTimer = useRestTimerStore(s => s.stopRestTimer);
     const adjustRestTimer = useRestTimerStore(s => s.adjustRestTimer);
-    const tickRestTimer = useRestTimerStore(s => s.tickRestTimer);
     const startRestTimer = useRestTimerStore(s => s.startRestTimer);
-    const getExerciseRestTime = useRestTimerStore(s => s.getExerciseRestTime);
-    const timerCompletionReason = useRestTimerStore(s => s.timerCompletionReason);
-
-    // Ref to track the scheduled OS notification identifier
-    const scheduledNotificationId = useRef<string | null>(null);
 
     // Watch the workout store's completion signal for auto-start
     const lastCompletedSet = useWorkoutStore(s => s.lastCompletedSet);
-    const activeWorkout = useWorkoutStore(s => s.activeWorkout);
-
-    const appState = useRef(AppState.currentState);
     const [isInForeground, setIsInForeground] = React.useState(AppState.currentState === 'active');
 
     // Auto-start timer when a set is completed (gated by setting)
-    const prevTimestamp = useRef<number | null>(null);
+    // Returning to the workout must not restart the last completed set's timer.
+    const prevTimestamp = useRef<number | null>(lastCompletedSet?.timestamp ?? null);
     useEffect(() => {
         if (!lastCompletedSet) return;
         if (lastCompletedSet.timestamp === prevTimestamp.current) return;
@@ -69,87 +58,18 @@ export default function RestTimer({
         const restDuration = customTime ?? defaultRestTime;
         startRestTimer(restDuration, lastCompletedSet.exerciseId, lastCompletedSet.setId);
 
-        // Schedule an OS-level notification so it fires even when JS thread is suspended
-        scheduleRestTimerNotification(restDuration).then(id => {
-            scheduledNotificationId.current = id;
-        });
-    }, [lastCompletedSet]);
-
-    // Stop timer when workout is finished or discarded
-    const prevWorkoutId = useRef(activeWorkout?.id);
-    useEffect(() => {
-        if (prevWorkoutId.current && !activeWorkout) {
-            // Workout was active and is now gone — stop timer
-            stopRestTimer();
-        }
-        prevWorkoutId.current = activeWorkout?.id;
-    }, [activeWorkout?.id]);
-
-    // Fire side effects when timer finishes (restTimerActive transitions false)
-    const wasActive = useRef(restTimerActive);
-    useEffect(() => {
-        if (wasActive.current && !restTimerActive) {
-            if (timerCompletionReason === 'expired') {
-                // Timer finished naturally — fire haptics
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                // Cancel the scheduled OS notification (we're in foreground, it already fired
-                // or will fire redundantly — cancel to be safe)
-                if (scheduledNotificationId.current) {
-                    cancelScheduledNotification(scheduledNotificationId.current);
-                    scheduledNotificationId.current = null;
-                }
-                // If in foreground, send an immediate notification too
-                sendRestTimerNotification();
-            } else if (timerCompletionReason === 'skipped') {
-                // User skipped — cancel the scheduled OS notification, no haptics
-                if (scheduledNotificationId.current) {
-                    cancelScheduledNotification(scheduledNotificationId.current);
-                    scheduledNotificationId.current = null;
-                }
-            }
-        }
-        wasActive.current = restTimerActive;
-    }, [restTimerActive, timerCompletionReason]);
-
-    // Use background timer for ticking
-    useEffect(() => {
-        if (!restTimerActive) {
-            // Stop the background timer when not active
-            BackgroundTimer.stopBackgroundTimer();
-            return;
-        }
-
-        // Start the background timer
-        BackgroundTimer.runBackgroundTimer(() => {
-            tickRestTimer();
-        }, 1000);
-
-        return () => {
-            BackgroundTimer.stopBackgroundTimer();
-        };
-    }, [restTimerActive]);
+    }, [lastCompletedSet, autoStartRestTimer, defaultRestTime, startRestTimer]);
 
     // Handle app state changes
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-            // Track foreground state
             setIsInForeground(nextAppState === 'active');
-
-            if (
-                appState.current.match(/inactive|background/) &&
-                nextAppState === 'active' &&
-                restTimerActive
-            ) {
-                // App has come to foreground - tick immediately to sync
-                tickRestTimer();
-            }
-            appState.current = nextAppState;
         });
 
         return () => {
             subscription.remove();
         };
-    }, [restTimerActive, tickRestTimer]);
+    }, []);
 
     // Don't render if timer is not active OR if app is in foreground
     // (inline timers handle the foreground display now)

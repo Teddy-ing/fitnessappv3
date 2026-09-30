@@ -15,13 +15,17 @@ import { requestNotificationPermissions, clearAllNotifications, seedPremadeSplit
 import { ErrorBoundary } from './src/components';
 import GoalCelebrationOverlay from './src/components/goals/GoalCelebrationOverlay';
 import { useWorkoutStore } from './src/stores/workoutStore';
+import { useRestTimerLifecycle } from './src/hooks/useRestTimerLifecycle';
 
 export default function App() {
   const appState = useRef(AppState.currentState);
+  useRestTimerLifecycle();
 
   // Request notification permissions, seed premade splits, and restore in-progress workout on app start
   useEffect(() => {
-    requestNotificationPermissions();
+    requestNotificationPermissions().catch(error => {
+      console.warn('[App] Notification setup failed:', error);
+    });
     seedPremadeSplits();
     useWorkoutStore.getState().restoreWorkout();
   }, []);

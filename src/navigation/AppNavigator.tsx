@@ -22,6 +22,7 @@ import { colors, spacing } from '../theme';
 import { useWorkoutStore } from '../stores';
 import { ErrorBoundary } from '../components';
 import { navigationRef, navigateToTab } from './navigationRef';
+import { shouldHideTabBar } from './tabBarVisibility';
 import SwipeableTabScreen from '../components/SwipeableTabScreen';
 
 // Screen imports
@@ -241,12 +242,8 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
     // Hide tab bar during active workout
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
-    if (activeWorkout) return null;
-
-    // Hide tab bar when navigated into profile sub-screens (Analytics, etc.)
-    const profileRoute = state.routes.find(r => r.name === 'Profile');
-    const profileChild = profileRoute?.state?.routes?.[profileRoute.state.index ?? 0];
-    if (profileChild && profileChild.name !== 'ProfileHome') return null;
+    // Retained routes in another tab must not hide the selected tab's navigation.
+    if (shouldHideTabBar(state, !!activeWorkout)) return null;
 
     return (
         <View style={styles.tabBarContainer}>

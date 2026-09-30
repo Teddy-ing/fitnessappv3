@@ -22,6 +22,7 @@
         "backgroundColor": "#1a1a1a"
       },
       "package": "com.workoutapp.app",
+      "permissions": ["android.permission.SCHEDULE_EXACT_ALARM"],
       "googleServicesFile": "./google-services.json"
     },
     "web": {
@@ -29,6 +30,7 @@
     },
     "plugins": [
       "expo-sqlite",
+      ["expo-notifications", { "defaultChannel": "rest-timer" }],
       [
         "@react-native-google-signin/google-signin",
         {

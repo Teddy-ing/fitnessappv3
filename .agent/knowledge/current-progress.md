@@ -183,6 +183,17 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## Session Log
 
+### 2026-09-29: Android editor, rest alerts and workout completion
+
+- Fixed template editor safe areas for Android system bars. Selected exercises and picker results now open the existing exercise guide/notes in the same modal, preserving draft, sets, order, supersets, filters and scroll layout. Hardware Back returns to the originating view; routed exercise details only handle Back while focused.
+- Moved rest alert ownership to an app-root lifecycle with native absolute-deadline notifications, race-safe replacement/cancellation and no duplicate alert on resume. Added the audible channel, exact-alarm permission/config and Android Settings → Rest Timer Alerts. Resume preserves an already scheduled alarm, including just before expiry.
+- Fixed bottom navigation using the selected tab's route. Added a saved-workout celebration with duration, completed exercise/set counts, preferred-unit volume, Done and Save as Template. Failed saves preserve the active workout/recovery state; duplicate finishes are guarded and history edits retain their timestamps.
+- Independent review found and resolved a near-expiry alarm cancellation race and a stale celebration after loading a history edit. Late template lookups are guarded by workout identity.
+- Verification: final TypeScript check passed; full Jest passed **18 suites/328 tests** after review fixes; `git diff --check` passed. Android debug build succeeded; merged manifest includes notification and exact-alarm permissions plus the rest-timer channel.
+- Android emulator checks passed: template Save clears the system bar and saves into the same split; exercise info/Back preserves edited sets and picker search. With exact-alarm access enabled, Android posted the rest notification while the emulator remained in forced deep idle, about 46 ms after its deadline, with an audible/vibrating channel. Finishing after routed exercise details showed the celebration, correct summary (1 exercise, 1 set, 864 lb volume), and bottom tabs; Done returned to workout home with tabs intact. Screenshots are saved in ignored `.expo/qa-template.png` and `.expo/qa-completion.png`.
+- Connected Samsung SM-S938U runs Android 16, target SDK 36 app installed, notifications granted, exact-alarm permission absent in installed build. No personal phone data changed. New native build and **Alarms & reminders → Workout App** access are required; exact access applies to the next scheduled rest.
+- Changes remain uncommitted on `NewCodexChanges`. Next step: rebuild/install for the Samsung phone, enable Alarms & reminders, and confirm its screen-off alert behavior. The verified debug APK targets the x86_64 emulator and was not installed on the phone.
+
 ### 2026-09-29: Adopted autonomous goal workflow
 
 - User chose `/goal <desired change>` as the normal entry point for future work. The main chat clarifies consequential missing requirements up front, then owns delivery through implementation, testing, review, and fixes.

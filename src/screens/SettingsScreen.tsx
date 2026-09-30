@@ -20,6 +20,7 @@ import {
     Alert,
     TouchableOpacity,
     Linking,
+    Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
@@ -34,6 +35,7 @@ import ExportBottomSheet from '../components/settings/ExportBottomSheet';
 import ImportBottomSheet from '../components/settings/ImportBottomSheet';
 import CloudBackupSection from '../components/settings/CloudBackupSection';
 import { invalidateWeightUnitCache } from '../hooks/useWeightUnit';
+import { openRestTimerAlarmSettings } from '../services/notificationService';
 
 // ============================================================
 // Segment options
@@ -320,6 +322,33 @@ export default function SettingsScreen() {
                         value={settings.showExerciseMedia}
                         onValueChange={(val) => handleUpdate({ showExerciseMedia: val })}
                     />
+
+                    {Platform.OS === 'android' && Number(Platform.Version) >= 31 && (
+                        <SettingNavigationRow
+                            icon="alarm"
+                            label="Rest Timer Alerts"
+                            subtitle="Allow alarms while your screen is off"
+                            onPress={() => Alert.alert(
+                                'Rest Timer Alerts',
+                                'For timely rest alerts, open Alarms & reminders, select Workout App, and allow alarms. Also allow notifications and sound in the app’s Android settings.',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    {
+                                        text: 'App Settings',
+                                        onPress: () => Linking.openSettings().catch(() => {
+                                            Alert.alert('Open Android Settings', 'Open Settings → Apps → Workout App → Notifications.');
+                                        }),
+                                    },
+                                    {
+                                        text: 'Alarms & Reminders',
+                                        onPress: () => openRestTimerAlarmSettings().catch(() => {
+                                            Alert.alert('Open Android Settings', 'Open Settings → Apps → Special access → Alarms and reminders, then choose Workout App.');
+                                        }),
+                                    },
+                                ],
+                            )}
+                        />
+                    )}
 
                     <SettingToggleRow
                         icon="description"

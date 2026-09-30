@@ -39,30 +39,18 @@ License: TBD (MIT, Apache 2.0, or GPL to consider)
 
 ---
 
-## ⚠️ Technical Consideration: Background Timers
+## Rest timer delivery (updated 2026-09-29)
 
-**Issue:** React Native JS execution pauses when phone is locked/screen off. This affects rest timers.
+JavaScript can pause when the app is backgrounded. The native notification scheduled for the absolute timer deadline owns the alert; the foreground interval only updates the display and haptics.
 
-**Solutions (in order of preference):**
+- `App.tsx` mounts `useRestTimerLifecycle` once. It observes the timer store independently of screen navigation.
+- Starting or changing a timer replaces the native alarm. Skip, discard and successful workout save cancel it. Returning to the app synchronizes the clock without sending a second alert.
+- `restTimerNotificationController` guards asynchronous scheduling so stale requests cannot leave alarms behind after Skip or a newer set.
+- Android creates the audible `rest-timer` channel before requesting notification permission. The Expo config declares `SCHEDULE_EXACT_ALARM` and the notifications plugin.
+- On Android 12+, allow **Alarms & reminders → Workout App**, as well as notifications and sound. Settings → **Rest Timer Alerts** opens the relevant system settings. Without exact-alarm access, installed Expo native code uses inexact delivery and Android may delay it.
+- Native permission/config changes require rebuilding the Android app; a JavaScript reload is insufficient. Timer delivery must be checked on-device, including screen-off/background use.
 
-1. **`react-native-background-timer`** — Keeps timers running in background
-   - Works well on Android
-   - iOS: Works when backgrounded, not when screen fully off
-   - Requires Expo custom dev client (not Expo Go)
-
-2. **Expo Notifications** — Schedule local notification for timer end
-   - Timer notification fires even if app is killed
-   - Visual countdown may pause but notification still arrives
-   - Best UX for actual timer functionality
-
-3. **Native module** — If above don't work, may need custom native code
-   - Last resort, increases complexity
-
-**Recommended approach:** Use `react-native-background-timer` + local notifications as backup. Scaffold with Expo dev client, not Expo Go.
-
-**Additional notes:**
-- Android: May need to guide users to disable battery optimization
-- iOS: Stricter background execution policies
+Keep notification services independent of stores. Do not reintroduce an immediate JavaScript notification on resume or depend on a background JS interval for delivery.
 
 ### Data Storage
 - [ ] SQLite (local, Fitnotes-compatible)
