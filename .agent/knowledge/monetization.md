@@ -21,7 +21,7 @@ This app exists to disrupt, not to maximize revenue. Monetization should:
 | Model | Pros | Cons | Fit |
 |-------|------|------|-----|
 | **Completely Free + Donations** | Max adoption, goodwill, indie ethos | Unpredictable income | ⭐⭐ **Chosen** |
-| **Free + Paid AI Tier** | Covers API costs, fair value exchange | Requires careful pricing | ⭐⭐ **Chosen** |
+| **Free + Paid AI Tier** | Covers API costs, fair value exchange | Requires careful pricing | Retired by owner, 2026-09-29 |
 | **One-Time Purchase** | Users prefer this | Doesn't cover ongoing AI costs | Partially fits |
 | **Subscription ($10+/mo)** | Recurring revenue | Against our positioning | ❌ Rejected |
 | **Ads** | Revenue without payment | Degrades experience | ❌ Rejected |
@@ -30,7 +30,9 @@ This app exists to disrupt, not to maximize revenue. Monetization should:
 
 ## Chosen Approach
 
-**Free Core + Donations + Optional Cheap AI Subscription**
+**Free Core + Optional Donations**
+
+The owner decided on 2026-09-29 to remove the AI assistant and abandon the cloud AI tier. Revenue is not a product priority. Onboarding must not include a paywall, trial, or account requirement.
 
 ### Free Tier (Fully Featured)
 Everything needed for a complete workout tracking experience:
@@ -43,19 +45,6 @@ Everything needed for a complete workout tracking experience:
 - ✅ Multiple export formats (CSV, JSON, etc.)
 - ✅ Import from competitors
 - ✅ Google Cloud / iCloud backup (optional)
-
-### AI Tier (Cheap Subscription)
-Cloud-based AI features that cost money to run:
-- 🤖 AI chatbot assistant
-- 🤖 Preformatted queries: "Detect weak points", "Give me optimizations"
-- 🤖 AI-generated workout templates
-- 🤖 Personalized training plans
-
-**Pricing Philosophy for AI Tier:**
-- Use lower-end model to minimize costs
-- Price slightly above average user's API cost
-- Goal: Break even or small margin, not profit maximization
-- Possible: $1-3/month or pay-per-use credits
 
 ### Donations
 - Optional "Buy me a coffee" style donations

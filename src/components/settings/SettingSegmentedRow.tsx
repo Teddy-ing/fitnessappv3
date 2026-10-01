@@ -35,18 +35,20 @@ export default function SettingSegmentedRow({
     selectedKey,
     onSelect,
 }: SettingSegmentedRowProps) {
+    const stacked = options.length > 2;
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, stacked && styles.stackedContainer]}>
             <View style={styles.iconContainer}>
                 <MaterialIcons name={icon} size={20} color={iconColor} />
             </View>
             <Text style={styles.label}>{label}</Text>
-            <View style={styles.segmentedControl}>
+            <View style={[styles.segmentedControl, stacked && styles.stackedControl]}>
                 {options.map((opt) => (
                     <TouchableOpacity
                         key={opt.key}
                         style={[
                             styles.segment,
+                            stacked && styles.stackedSegment,
                             selectedKey === opt.key && styles.segmentActive,
                         ]}
                         onPress={() => onSelect(opt.key)}
@@ -84,6 +86,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: spacing.md,
+    },
+    stackedContainer: {
+        flexWrap: 'wrap',
+    },
+    stackedControl: {
+        width: '100%',
+        marginTop: spacing.md,
+        flexWrap: 'wrap',
+    },
+    stackedSegment: {
+        flexGrow: 1,
+        alignItems: 'center',
     },
     label: {
         flex: 1,

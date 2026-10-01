@@ -11,22 +11,29 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppNavigator } from './src/navigation';
-import { requestNotificationPermissions, clearAllNotifications, seedPremadeSplits } from './src/services';
+import { requestNotificationPermissions, clearAllNotifications } from './src/services';
 import { ErrorBoundary } from './src/components';
 import GoalCelebrationOverlay from './src/components/goals/GoalCelebrationOverlay';
 import { useWorkoutStore } from './src/stores/workoutStore';
 import { useRestTimerLifecycle } from './src/hooks/useRestTimerLifecycle';
+import OnboardingGate from './src/components/onboarding/OnboardingGate';
+
+function ReadyApp() {
+  useEffect(() => {
+    requestNotificationPermissions().catch(error => {
+      console.warn('[App] Notification setup failed:', error);
+    });
+  }, []);
+
+  return <><AppNavigator /><GoalCelebrationOverlay /></>;
+}
 
 export default function App() {
   const appState = useRef(AppState.currentState);
   useRestTimerLifecycle();
 
-  // Request notification permissions, seed premade splits, and restore in-progress workout on app start
+  // Restore in-progress workout on app start. OnboardingGate prepares the starter library.
   useEffect(() => {
-    requestNotificationPermissions().catch(error => {
-      console.warn('[App] Notification setup failed:', error);
-    });
-    seedPremadeSplits();
     useWorkoutStore.getState().restoreWorkout();
   }, []);
 
@@ -53,8 +60,7 @@ export default function App() {
       <SafeAreaProvider>
         <StatusBar style="light" />
         <ErrorBoundary fallback="screen" label="App">
-          <AppNavigator />
-          <GoalCelebrationOverlay />
+          <OnboardingGate><ReadyApp /></OnboardingGate>
         </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>

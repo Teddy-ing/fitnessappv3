@@ -4,6 +4,15 @@ description: Core goals, market positioning, design philosophy, and disruption s
 
 # App Vision
 
+## Current product decisions — 2026-09-30
+
+- The owner retired the AI assistant and optional cloud AI tier. Remove its tab, placeholder, and promotional copy; do not plan a replacement assistant. Existing on-device workout-history suggestions remain in scope.
+- Onboarding is optional, private, and focused on collecting preferences. No account, payment, or Google sign-in is required. Google Drive sign-in remains optional for backups.
+- Completed onboarding now applies selected units and training phase and uses experience, goal, available days, location, and home equipment to propose a starting routine. Drafts and skipped setup do not apply choices. Blank answers keep existing defaults.
+- Automatically offer setup to new installs, with skip and resume. The owner approved the original flow and requested removal of its Settings shortcut; normal settings remain editable in Settings.
+- Beginners receive a manageable starting-plan suggestion selected by default, intermediate lifters can opt in, and experienced lifters receive no assigned plan. Preserve any routine already selected. A completed setup applies once, including previously collected responses, without repeatedly overriding later changes.
+- The next requested task is an optional tutorial. For experienced users, it should guide them to creating their own split. The tutorial is not part of the current implementation.
+
 ## Mission Statement
 
 Create the best weight training app that disrupts the fitness app market by combining:

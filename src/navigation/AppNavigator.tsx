@@ -1,9 +1,8 @@
 /**
  * Main Navigation Configuration
  * 
- * Bottom tab navigation with 3 tabs:
- * - AI Assistant (left)
- * - Workout (center, primary - raised icon)
+ * Bottom tab navigation with 2 tabs:
+ * - Workout (primary)
  * - Profile/Stats (right) — contains a stack navigator for sub-screens
  * 
  * Following the Thumb Zone rule: navigation at bottom 30% of screen
@@ -27,7 +26,6 @@ import SwipeableTabScreen from '../components/SwipeableTabScreen';
 
 // Screen imports
 import WorkoutScreen from '../screens/WorkoutScreen';
-import AssistantScreen from '../screens/AssistantScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
 import ExerciseDetailsScreen from '../screens/ExerciseDetailsScreen';
@@ -39,13 +37,12 @@ import ExerciseMappingScreen from '../screens/ExerciseMappingScreen';
 import type { ExerciseMappingParams } from '../screens/ExerciseMappingScreen';
 
 // Wrap each screen in its own error boundary + swipe navigation
-// Tab order: Assistant (left) → Workout (center) → Profile (right)
+// Tab order: Workout → Profile
 const WorkoutScreenWithBoundary = () => {
     // Disable swipe navigation during an active workout
     const hasActiveWorkout = useWorkoutStore(s => !!s.activeWorkout);
     return (
         <SwipeableTabScreen
-            onSwipeRight={hasActiveWorkout ? undefined : () => navigateToTab('Assistant')}
             onSwipeLeft={hasActiveWorkout ? undefined : () => navigateToTab('Profile')}
         >
             <ErrorBoundary fallback="screen" label="WorkoutScreen">
@@ -54,15 +51,6 @@ const WorkoutScreenWithBoundary = () => {
         </SwipeableTabScreen>
     );
 };
-const AssistantScreenWithBoundary = () => (
-    <SwipeableTabScreen
-        onSwipeLeft={() => navigateToTab('Workout')}
-    >
-        <ErrorBoundary fallback="screen" label="AssistantScreen">
-            <AssistantScreen />
-        </ErrorBoundary>
-    </SwipeableTabScreen>
-);
 
 // Profile uses a stack navigator — only enable swipe on the home screen
 // Sub-screens (Analytics, Calendar, etc.) should not swipe to change tabs
@@ -220,7 +208,6 @@ function ProfileStackNavigator() {
 
 // Tab navigator type definitions
 export type RootTabParamList = {
-    Assistant: undefined;
     Workout: undefined;
     Profile: undefined;
 };
@@ -228,13 +215,12 @@ export type RootTabParamList = {
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
-    Assistant: 'smart-toy',
     Workout: 'fitness-center',
     Profile: 'person',
 };
 
 /**
- * Custom Tab Bar with raised center icon and purple gradient separator
+ * Matching tab icons with a purple gradient separator
  */
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const insets = useSafeAreaInsets();
@@ -265,7 +251,6 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                             : route.name;
 
                     const isFocused = state.index === index;
-                    const isWorkout = route.name === 'Workout';
 
                     const onPress = () => {
                         const event = navigation.emit({
@@ -279,42 +264,13 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                         }
                     };
 
-                    if (isWorkout) {
-                        // Raised center button - grey when not focused, purple when focused
-                        return (
-                            <TouchableOpacity
-                                key={route.key}
-                                onPress={onPress}
-                                style={styles.centerTabButton}
-                                activeOpacity={0.9}
-                            >
-                                <View style={[
-                                    styles.raisedIconContainer,
-                                    !isFocused && styles.raisedIconContainerInactive
-                                ]}>
-                                    <MaterialIcons
-                                        name={TAB_ICONS[route.name]}
-                                        size={26}
-                                        color="#fff"
-                                    />
-                                </View>
-                                <Text style={[
-                                    styles.tabLabel,
-                                    {
-                                        color: isFocused ? colors.accent.primary : colors.text.secondary,
-                                        fontWeight: isFocused ? '700' : '500'
-                                    }
-                                ]}>
-                                    {typeof label === 'string' ? label : route.name}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    }
-
                     // Regular tab buttons
                     return (
                         <TouchableOpacity
                             key={route.key}
+                            accessibilityRole="button"
+                            accessibilityLabel={typeof label === 'string' ? label : route.name}
+                            accessibilityState={{ selected: isFocused }}
                             onPress={onPress}
                             style={styles.tabButton}
                             activeOpacity={0.7}
@@ -360,16 +316,7 @@ export default function AppNavigator() {
                     headerShadowVisible: false,
                 }}
             >
-                {/* Left tab: AI Assistant */}
-                <Tab.Screen
-                    name="Assistant"
-                    component={AssistantScreenWithBoundary}
-                    options={{
-                        title: 'Assistant',
-                    }}
-                />
-
-                {/* Center tab: Workout (primary) */}
+                {/* Workout (primary) */}
                 <Tab.Screen
                     name="Workout"
                     component={WorkoutScreenWithBoundary}
@@ -413,36 +360,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: spacing.xs,
         gap: 4,
-    },
-    centerTabButton: {
-        flex: 1,
-        alignItems: 'center',
-        paddingVertical: spacing.xs,
-        gap: 4,
-    },
-    raisedIconContainer: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: colors.accent.primary,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: -28,
-        borderWidth: 4,
-        borderColor: colors.background.primary,
-        shadowColor: colors.accent.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    raisedIconContainerInactive: {
-        backgroundColor: '#404040', // Grey when not focused
-        shadowOpacity: 0,
-        elevation: 0,
-    },
-    raisedIcon: {
-        // Kept for potential future use, MaterialIcons handles sizing via props
     },
     tabLabel: {
         fontSize: 10,

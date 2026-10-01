@@ -8,8 +8,29 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 - **Phase:** Post-MVP Development — Phase 7 Smart Personalization fully implemented
 - **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign + Exercise Details + Settings + Import/Export + Cloud Backup (Google Drive) + **Smart Personalization engine** all implemented.
-- **Next Milestone:** Phase 8 planning
+- **Next Milestone:** Optional tutorial, including guidance for experienced lifters to create their own split.
 - **Development workflow:** Goal-driven orchestration and delegated implementation/QA, governed by root `AGENTS.md` (adopted 2026-09-29). Older workflow documents are references, not mandatory task gates.
+
+## Latest outcome — 2026-09-30: Apply onboarding preferences and choose starting routines
+
+- The owner tested and approved the original onboarding flow. Removed its Settings shortcut and changed the Workout bottom tab to the same flat icon treatment as Profile. Native verification exposed an existing compressed Training Phase label; its four options now sit beneath the label, with binary settings unchanged.
+- Expanded the built-in library to ten plans / 35 workouts: updated PPL and Arnold, plus full body, upper/lower, five-day muscle building, home dumbbells, calisthenics, strength/cardio, aerobic, and mobility routines. Added 17 exercise variants. Research sources and selection rationale are in `feature-design.md`.
+- Completed setup now applies chosen weight/distance/measurement units and training phase once. Blank answers and unsure phase preserve settings; drafts/skips apply nothing. Previously completed collection-only profiles apply once on startup. Canonical workout weights and existing active routines are preserved.
+- Recommendations use experience, goal, days, phase, location, and confirmed home equipment. Beginners receive a default suggestion with an opt-out; intermediate lifters opt in; experienced lifters receive no assigned split. Every suggestion has exactly the requested 1–7 sessions, balanced lifting where appropriate, and easier sessions at higher beginner frequencies. Home/both equipment substitutions require all necessary items.
+- Accepted routines are personal copies saved atomically with preferences. Version 2 profiles, application markers, templates and schedules survive local/cloud backup round trips. Library seeding preserves IDs, history, favorites, usage, edited legacy templates, and active position.
+- Verification: TypeScript passed; full sequential Jest passed **23 suites / 429 tests**, including real SQLite fresh/upgrade/rollback, once-only application, backup round trips, and all 4,096 equipment subsets for PPL/Arnold. Independent review found no remaining functional issues. Android x86 debug build passed. A disposable Android emulator verified metric selection, beginner/home/dumbbell setup, five-session preview, completion, the active plan, matching tabs, settings, and cold restart. Its database contained ten built-ins and one personal plan with five workouts/two rest positions; a later manual phase change survived restart without being overwritten. The final style-only settings correction passed another typecheck, independent review, and visual inspection. ESLint remains unavailable; iOS is unverified. The user's phone/data were not changed.
+- Existing behavior: the weekly plan is a suggested sequence; “Up next” skips rest entries and follows existing week handling. Cardio templates support timed logging; existing template hydration does not expose distance entry. Neither behavior was redesigned in this task.
+- **Next task requested by the owner:** build an optional tutorial. Experienced lifters should be guided to creating their own split. The tutorial has not been implemented. Changes remain uncommitted on `NewCodexChanges`.
+
+## Previous outcome — 2026-09-29: Retire assistant and add optional onboarding
+
+- Removed the assistant tab, screen, export, and AI promotional wording from app source. Workout and Profile remain; existing local workout suggestions are retained. The owner no longer wants the assistant or cloud AI tier. Current decisions in `app-vision.md`, `feature-design.md`, and `monetization.md` supersede historical assistant plans below.
+- Added a skippable flow: welcome, units, experience, training phase, primary goal, routine, and review. All answers are optional; no account or sign-in is requested. Google Drive backup remains optional. Research references and rationale are in `feature-design.md`.
+- New installs see setup automatically. Existing installs are marked skipped on upgrade; anyone can use Profile → Settings → Onboarding preferences. Drafts resume after relaunch, skip/completion dismiss automatic setup, and editing can be canceled without changing saved answers.
+- Versioned `onboarding_profile` JSON is stored separately from active settings through migration v20. This task does not apply answers to units, training behavior, layout, templates, widgets, or initial content. Full JSON/cloud backups preserve the profile; older restores remain compatible; Clear All Data removes it.
+- Verification: TypeScript passed; full sequential Jest run passed **21 suites / 362 tests**, including real SQLite fresh/upgrade/rollback and backup round-trip checks. Metro successfully built the Android development bundle (HTTP 200). Independent code review found no actionable issues; `git diff --check` passed. ESLint has no installed/configured project tooling, so lint was not run.
+- Remaining verification: Android visual/interactions check awaits the connected phone being unlocked; iOS was not tested. No workout data was cleared. Changes are uncommitted on `NewCodexChanges`.
+- Next useful step: verify the flow on the phone, then separately define how saved onboarding answers should affect the initial app experience.
 
 ---
 

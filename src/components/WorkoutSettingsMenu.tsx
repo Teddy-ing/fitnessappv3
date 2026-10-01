@@ -343,7 +343,7 @@ export default function WorkoutSettingsMenu({
                             </View>
                             <View style={styles.settingLabelContainer}>
                                 <Text style={styles.settingLabel}>Smart Suggestions</Text>
-                                <Text style={styles.settingSubLabel}>AI-powered weight & rep predictions</Text>
+                                <Text style={styles.settingSubLabel}>Weight & rep suggestions from your workout history</Text>
                             </View>
                             <Switch
                                 value={smartSuggestions}

@@ -37,28 +37,63 @@ description: Feature specifications, on-device ML concepts, and UX decisions
 
 ## Onboarding Personalization
 
-**Goal:** Tailor the app experience to what the user actually needs.
+**Current decision (2026-09-30):** The owner approved the flow. Completion now applies preferences and can choose a starting plan. This supersedes the collection-only first release.
 
-**Onboarding Questions (Optional):**
-1. What are you here to track?
-   - [ ] Strength/weight training
-   - [ ] Stretching/mobility
-   - [ ] Cardio
-   - [ ] All of the above
+**Flow:** Welcome → units → experience → training phase → primary goal → routine → review.
 
-2. How experienced are you?
-   - [ ] New to the gym (show guidance)
-   - [ ] Intermediate (some guidance)
-   - [ ] Veteran (just let me track)
+- Units: weight, distance, body measurements, each independently selectable.
+- Experience: beginner, intermediate, advanced.
+- Phase: bulk, cut, maintain, recovery, or unsure.
+- Goal: strength, muscle, general fitness, or endurance.
+- Routine: training days per week and gym/home/both. Home and both reveal an equipment checklist; bodyweight-only is an explicit answer and differs from unanswered.
+- Every answer is optional. Empty answers remain unanswered, never inferred as user choices.
+- Explain local storage, account-free use, and optional Google Drive backup. No sign-in, paywall, personal identifiers, or body measurements are requested.
+- New installs see setup; skip suppresses automatic reopening, drafts resume, and review allows correction before completion. There is no onboarding entry in Settings, per the owner's request.
+- Completion applies selected weight/distance/measurement units and a specified training phase; blank answers and unsure phase preserve current values. Weight records stay canonical pounds; this changes input/display preferences, not stored workout numbers.
+- Version 2 of the profile retains experience, goal, frequency, location and equipment for plan selection. An application timestamp prevents repeat application after relaunch or backup restore. Version 1 profiles still load, and completed collection-only profiles are applied once on startup. Drafts/skips never apply.
+- Create a personal copy of the accepted plan in the same transaction as preference application and completion. Preserve any active split already selected. Failure rolls back all plan and preference writes, and repeated completion cannot duplicate a routine.
+- Include the profile in full JSON and optional cloud backups; preserve compatibility with older backups and clear it with user data.
 
-3. What equipment do you have access to?
-   - [ ] Full gym
-   - [ ] Home gym (select equipment)
-   - [ ] Bodyweight only
+**Research (official product guides, reviewed 2026-09-29):**
 
-**Result:** Adjust UI defaults, show/hide features, customize exercise suggestions.
+- [Fitbod getting started](https://help.fitbod.me/hc/en-us/articles/30721771750039-Getting-Started-with-Fitbod-A-New-User-s-Guide): first-use questions cover experience, goals, and equipment; skipped preferences can be set later. This informed optional questions. The owner subsequently removed this app's onboarding shortcut from Settings.
+- [Hevy Trainer overview](https://www.hevyapp.com/announcing-hevy-trainer/): onboarding collects goals, experience, equipment, frequency, and time constraints to create a program. This informed the training and routine questions; the current release adapts a curated starting plan from these answers.
+- Product choice for this app: keep a short questionnaire with visible progress, back/skip controls, and a review step. Home equipment is now collected because the initial plan needs it; session duration remains deferred. These are design decisions, not claims that competing apps use the same flow.
 
-**Critical:** Must be skippable with sensible defaults. Never block access.
+### Starter-plan selection (2026-09-30)
+
+| Answers | Starting plan |
+|---|---|
+| Experienced lifter | No automatic plan; create or choose a routine independently |
+| Beginner | Suggest a plan by default; review allows opting out |
+| Intermediate | Preview a suggestion; use only after opting in |
+| Missing experience, goal, days, location, or required home equipment | Save chosen preferences; do not guess a plan |
+| Strength/muscle, 1–3 days | Full body, with both upper and lower body each session |
+| Beginner choosing 4–7 days | At most three lifting sessions, plus easier cardio/mobility sessions |
+| Intermediate, 4 days | Upper/lower twice |
+| Intermediate, 5 days | Upper/lower plus push/pull/legs; legs are retained twice |
+| Intermediate, 6 days | PPL for strength; Arnold-style for muscle |
+| Intermediate, 7 days | Six lifting sessions plus gentle mobility |
+| General fitness | Full body plus cardio, with easy sessions for higher frequency |
+| Endurance | Cardio emphasis; no heavy lifting added |
+| Recovery phase | Easy movement and mobility, not an injury rehabilitation prescription |
+
+- Bulk/maintain do not determine a split alone; goal, consistency and available days matter more. Cut retains resistance work and manageable effort. There is no calorie prescription.
+- Every generated schedule has seven positions with exactly the selected number of sessions. It is a suggested weekly sequence, not an enforced calendar: existing “Up next” behavior advances through workout entries and allows users to move their training days.
+- Gym assumes full gym access. Home and both use only confirmed home equipment. Bench means adjustable bench, rack includes safeties, cable means an adjustable station, and machines means a full upper/lower collection. Substitutions require every necessary item; duplicate substitutions are consolidated. Bodyweight pulling limitations are explained rather than claiming a prone raise replaces a row.
+- The library includes PPL, Arnold, Full Body Foundations, Upper/Lower, Five-Day Muscle Builder, Home Dumbbell Full Body, Calisthenics Foundations, Strength + Cardio, Aerobic Base, and Stretch & Move. Programs include working sets, rep/time guidance, progression notes and rest positions.
+- Seeding adds missing programs independently and updates recognizable untouched legacy PPL/Arnold content in place. It retains parent identities, favorites, usage counts, history and user modifications. Shared write coordination and a transaction protect startup and completion from partial writes.
+
+### Training research and rationale
+
+- [ACSM's 2026 resistance-training update](https://acsm.org/resistance-training-guidelines-update-2026/) emphasizes regular participation and individual goals, with all major muscle groups trained repeatedly. Its findings support moderate starting volumes, gradual progression and practical home equipment. It does not establish one named split as best for everyone.
+- [2024 split versus full-body meta-analysis](https://pubmed.ncbi.nlm.nih.gov/38595233/) found comparable strength and muscle outcomes when volume was matched. We therefore use available days and equipment to choose structure. The exact schedules and substitution rules above are app design decisions.
+- [WHO physical-activity guidance](https://www.who.int/news-room/fact-sheets/detail/physical-activity) informs the aerobic and mixed options. Starting sessions build gradually; a short starter plan is not advertised as already meeting the full recommended weekly activity target.
+- [ACSM flexibility guidance](https://pubmed.ncbi.nlm.nih.gov/21694556/) supports regular flexibility work and gradual individual progression. Stretch templates use short comfortable holds, repeated across the week, rather than maximal or painful stretching.
+
+### Next task: optional tutorial
+
+The owner requested a tutorial as the next task. Experienced users should be led to the option for creating their own split, since onboarding deliberately does not assign one to them. Keep the tutorial optional and preserve fast logging.
 
 ---
 
@@ -120,26 +155,9 @@ description: Feature specifications, on-device ML concepts, and UX decisions
 
 ---
 
-## Cloud AI Features (Paid Tier)
+## Retired AI Assistant
 
-### AI Chatbot Assistant
-
-**Interface:**
-- Dedicated chat page in app
-- Preformatted query buttons for common requests
-- Free-form text input for custom questions
-
-**Preformatted Queries:**
-- "Detect my weak points" — Analyze workout history for imbalances
-- "Give me optimizations" — Suggest improvements to current routine
-- "Create a template for [goal]" — Generate workout templates
-- "Build me a 4-week plan" — Create periodized training plan
-
-**Implementation Considerations:**
-- Use cost-effective model (GPT-3.5, Claude Haiku, Llama, etc.)
-- Rate limiting per user
-- Caching common queries
-- Context: Send workout history summary, not full raw data
+The owner removed this feature from the product on 2026-09-29. The assistant tab, placeholder screen, and in-app AI promotional copy are removed. The former cloud chatbot, generated-plan, and paid AI tier proposals are no longer planned. Existing local statistical suggestions are retained.
 
 ---
 

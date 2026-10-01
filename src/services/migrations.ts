@@ -13,6 +13,7 @@
  */
 
 import * as SQLite from 'expo-sqlite';
+import { createSkippedOnboardingProfile } from '../models/onboarding';
 
 // ============================================================
 // Types
@@ -24,7 +25,7 @@ interface Migration {
     /** Human-readable name for logging (e.g., "add_is_favorite_columns"). */
     name: string;
     /** Forward migration function. Throw on failure — never swallow errors. */
-    up: (db: SQLite.SQLiteDatabase) => Promise<void>;
+    up: (db: SQLite.SQLiteDatabase, context: { startingVersion: number }) => Promise<void>;
 }
 
 // ============================================================
@@ -805,6 +806,26 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+    // ----------------------------------------------------------
+    // v20: Optional onboarding answers, separate from active settings
+    // ----------------------------------------------------------
+    {
+        version: 20,
+        name: 'onboarding_profile',
+        up: async (db, { startingVersion }) => {
+            const hasProfile = await columnExists(db, 'user_settings', 'onboarding_profile');
+            if (!hasProfile) {
+                await db.execAsync('ALTER TABLE user_settings ADD COLUMN onboarding_profile TEXT;');
+            }
+            // Fresh installs see onboarding. Upgrades keep their existing launch experience.
+            if (startingVersion > 0) {
+                await db.runAsync(
+                    'UPDATE user_settings SET onboarding_profile = ?, has_completed_onboarding = 1 WHERE id = 1 AND onboarding_profile IS NULL',
+                    [JSON.stringify(createSkippedOnboardingProfile())],
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================
@@ -852,7 +873,7 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
 
         try {
             await db.execAsync('BEGIN;');
-            await migration.up(db);
+            await migration.up(db, { startingVersion: currentVersion });
             // Stamp version inside the transaction — only persists on commit
             await db.execAsync(`PRAGMA user_version = ${migration.version};`);
             await db.execAsync('COMMIT;');

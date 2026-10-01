@@ -22,6 +22,7 @@ import { getDatabase } from './database';
 import { generateExportPayload, EXPORT_TABLES } from './dataTransferService';
 import { withWriteLock } from '../utils/dbMutex';
 import { batchInsert, normalizeRowValues } from '../utils/batchInsert';
+import { restoreOnboardingCompatibility } from './onboardingService';
 
 // ============================================================
 // Configuration
@@ -400,6 +401,7 @@ export async function restoreFromCloud(): Promise<boolean> {
             );
             await batchInsert(db, table, columns, normalizedRows);
         }
+        await restoreOnboardingCompatibility(db, payload.meta.schemaVersion);
     });
 
     console.log(`[CloudBackup] Restore complete from ${payload.meta.exportedAt}`);
