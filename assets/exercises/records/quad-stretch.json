@@ -1,0 +1,28 @@
+{
+  "id": "quad-stretch",
+  "name": "Quad Stretch",
+  "pose": "Standing quadriceps stretch holding one ankle behind",
+  "highlight": [
+    "quadriceps of bent leg"
+  ],
+  "accessibilityLabel": "Standing quadriceps stretch holding one ankle behind the body with knees close together.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: STANDING QUADRICEPS STRETCH. Upright figure standing on one whole planted foot with knee softly unlocked; other knee bends so heel approaches buttock. Same-side hand holds that ankle just above shoe behind body with a natural grip; knees close together and bent thigh pointing down parallel to standing thigh. Pelvis neutral, no exaggerated lumbar arch; chest tall, shoulders relaxed. Free arm extends slightly sideways for balance. Side-front three-quarter camera shows bent knee, grasped ankle, whole supporting foot and head. Coral ONLY quadriceps of the bent-leg anterior thigh above kneecap and below shorts. Stretch TARGET region only, not activation. No calves, other thigh, clothing or arms highlighted. No equipment.",
+  "file": "quad-stretch.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "techniqueSources": [
+    "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848"
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Knees close, one support sole planted, bent ankle held by same-side hand behind and trunk upright. Only bent thigh quadriceps target coral; full figure and two hands visible. Balance is represented in one still.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: upright one-leg stance, same-side hand holding raised ankle behind body and flexed knee pointing down; exposed quadriceps target highlighted."
+  },
+  "output": {
+    "bytes": 1344046,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7bce74d2f2a92dc7b21216d034476c4b7fe5ddedbbfe95b845c4fbffe69bd55c"
+  }
+}

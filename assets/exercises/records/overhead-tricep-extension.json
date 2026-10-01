@@ -1,0 +1,25 @@
+{
+  "id": "overhead-tricep-extension",
+  "name": "Overhead Tricep Extension",
+  "file": "overhead-tricep-extension.png",
+  "reference": "barbell-curl.png",
+  "pose": "Standing two-hand overhead dumbbell triceps extension with elbows bent",
+  "highlight": [
+    "triceps"
+  ],
+  "accessibilityLabel": "Grey mannequin holding one dumbbell behind the head during an overhead triceps extension, with triceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: STANDING TWO-HAND OVERHEAD DUMBBELL TRICEPS EXTENSION, bottom. Equipment override: ONLY one vertical dumbbell with two equal graphite heads, no barbell or bench. Stand feet hip-width planted, ribs controlled, neutral spine. Upper arms raised nearly vertical beside ears; elbows bend so forearms point behind head. Both hands securely cup inner surface of the UPPER dumbbell head with fingers wrapping grip/head edge, supporting the SAME vertical dumbbell behind crown of head; lower dumbbell head hangs clear of upper back, no penetration. Rear-side three-quarter camera reveals both hands, dumbbell behind head and posterior upper arms, with enough face profile to match master. Highlight visible triceps only, neck/shoulders grey. Whole dumbbell, hands, head and feet comfortably inside frame.\nRender square 1024x1024 PNG. Preserve master clothing.",
+  "revisions": [],
+  "output": {
+    "bytes": 1353472,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "17efef7991d969dc247652e5b46a70b0382c1e43b3e4f057eccbd073a2603ce0"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Upright standing posture, both feet planted, two hands on one vertical dumbbell behind head, flexed elbows and raised upper arms visible. Triceps overlay stays on upper arms; overlapped far hand surface not fully visible.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: both hands support one vertical dumbbell behind head, raised upper arms and flexed elbows; triceps cue stays on exposed muscle."
+  }
+}

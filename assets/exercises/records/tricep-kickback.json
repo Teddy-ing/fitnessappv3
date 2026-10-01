@@ -1,0 +1,25 @@
+{
+  "id": "tricep-kickback",
+  "name": "Tricep Kickback",
+  "file": "tricep-kickback.png",
+  "reference": "barbell-curl.png",
+  "pose": "Standing bent-over two-dumbbell triceps kickback near full extension",
+  "highlight": [
+    "triceps"
+  ],
+  "accessibilityLabel": "Grey mannequin hinged forward extending two dumbbells behind the hips, with triceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: TWO-DUMBBELL TRICEPS KICKBACK at near full extension. Equipment override ONLY two modest dumbbells; no bench/barbell. Feet hip width whole soles planted, knees gently bent, hip hinge brings neutral torso about 35 degrees above horizontal. Upper arms held beside torso and approximately parallel to it, elbows high behind ribs. Both elbows almost straight so both dumbbells extend rearward past hips, one per closed neutral grip; wrists straight, no shoulder swing. Rear-side three-quarter view looking diagonally across the model shows head profile, both arms, hips and planted feet. Highlight visible posterior triceps bellies only. No coral on latissimus/torso/forearms. Shorts cover glutes; no overlay through fabric.\nRender square 1024x1024 PNG.",
+  "revisions": [],
+  "output": {
+    "bytes": 1437751,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9194ee5e3644f9aadfedc9f544cb8b24d42e914e48fc43e661e75a91dc7b8142"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Two dumbbells held behind hips, extended elbows, upper arms aligned beside hinged torso, softly flexed knees and planted feet visible. Posterior triceps overlay isolated from back. Torso somewhat more upright than brief; exercise remains legible.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: two dumbbells behind hips with extended elbows, soft knees and a moderate hip hinge. Torso is above horizontal; pose is a representative extension, not a prescription of exact torso angle."
+  }
+}

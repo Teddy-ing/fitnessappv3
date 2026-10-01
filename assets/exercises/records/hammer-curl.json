@@ -1,0 +1,26 @@
+{
+  "id": "hammer-curl",
+  "name": "Hammer Curl",
+  "pose": "Standing bilateral neutral-grip hammer curl midway",
+  "highlight": [
+    "biceps",
+    "brachioradialis"
+  ],
+  "accessibilityLabel": "Standing hammer curl with neutral grips, biceps and outer forearms highlighted.",
+  "file": "hammer-curl.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STANDING DUMBBELL HAMMER CURL midway up. Both elbows next to ribs, flexed90degrees, forearms horizontal forward. Two separate dumbbells held vertically like hammers: palms face one another toward centerline, thumbs point upward, closed NEUTRAL grips, wrists straight. Upright torso stable hip-width feet. Front-side three-quarter camera clearly shows vertical axes of both dumbbells. Coral biceps and brachioradialis on outer upper forearms only, hands and wrist joints grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Both dumbbell axes vertical, closed neutral grips, forearms horizontal and elbows beside torso. Biceps and visible outer upper forearm bellies coral, wrists/hands grey.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: neutral grips, vertical dumbbells, elbows near torso and upright posture. Biceps and visible brachioradialis target overlay."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1378837,
+    "sha256": "f996201d0085ea69e63bb3b8eb3fdf2a0687c39be6b56e723504d8e4f0457554"
+  }
+}

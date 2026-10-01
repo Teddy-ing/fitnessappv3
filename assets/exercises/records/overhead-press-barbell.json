@@ -1,0 +1,25 @@
+{
+  "id": "overhead-press-barbell",
+  "name": "Overhead Press",
+  "pose": "Standing barbell overhead press at near lockout",
+  "highlight": [
+    "deltoids"
+  ],
+  "accessibilityLabel": "Standing barbell overhead press with the bar above the head and shoulders highlighted.",
+  "file": "overhead-press-barbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STANDING BARBELL OVERHEAD PRESS near lockout. One straight barbell with modest identical plates and collars overhead directly above shoulders and midfoot. Closed OVERHAND grips just wider than shoulders, elbows almost extended, wrists stacked over forearms, head gently forward beneath bar. Torso upright with ribs stacked over pelvis, no exaggerated backbend. Stable hip-width feet planted. Front-side three-quarter view full bar and figure. Coral anterior and lateral deltoid shoulders only; triceps/biceps/chest grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Continuous overhead bar with closed pronated grips, near-extended elbows, upright torso and planted feet. Whole bar and plates visible, narrow top margin. Deltoid overlay limited to shoulders.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: upright stance, closed grip with bar overhead and arms extended, complete continuous bar/plates; shoulders and triceps cues."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1320493,
+    "sha256": "a5750382b524fa3fd0e45e7c555ea4f59542b821df1507329c6e56f7c1fceb10"
+  }
+}

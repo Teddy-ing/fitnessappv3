@@ -1,0 +1,25 @@
+{
+  "id": "russian-twist",
+  "name": "Russian Twist",
+  "file": "russian-twist.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated bodyweight Russian twist with grounded heels",
+  "highlight": [
+    "abdominals"
+  ],
+  "accessibilityLabel": "Grey mannequin leaning back and rotating the torso in a seated Russian twist, with abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: BODYWEIGHT RUSSIAN TWIST, rotated position. Seated on buttocks, knees bent in front, both HEELS grounded lightly shoulder-width. Torso leans back roughly35degrees from vertical, spine neutral and chest open. Turn ribcage and shoulders moderately to subject's RIGHT while pelvis and knees remain facing forward; both hands clasped together in front of right lower ribs, clearly to one side of knees. Arms bent softly and move with torso. No dumbbell or medicine ball. FRONT three-quarter slightly elevated view makes moderate trunk rotation and static legs legible, no extreme spinal twist. Highlight exposed rectus abdominis and OBLIQUES ONLY. Whole figure and floor contacts inside square.",
+  "revisions": [],
+  "output": {
+    "bytes": 1494590,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "cdc617ab90ddaaac76d69f8a7b421406c5bcc43bc5751279579b9be77b902809"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Seated with bent knees and grounded heels; hands clasped beside torso, ribcage rotated moderately relative to forward-facing thighs. Torso leans back modestly, with abdominal and oblique overlay. Static still does not establish alternating rotation.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: bent knees and grounded heels support a slightly reclined, rotated torso; clasped hands held beside the hip. Coral is confined to the visible core."
+  }
+}

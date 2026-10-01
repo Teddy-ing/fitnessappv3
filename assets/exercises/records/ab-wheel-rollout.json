@@ -1,0 +1,25 @@
+{
+  "id": "ab-wheel-rollout",
+  "name": "Ab Wheel Rollout",
+  "file": "ab-wheel-rollout.png",
+  "reference": "barbell-curl.png",
+  "pose": "Kneeling ab wheel rollout partway extended",
+  "highlight": [
+    "abdominals"
+  ],
+  "accessibilityLabel": "Grey mannequin kneeling and extending forward while holding an ab wheel, with abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: KNEELING AB WHEEL ROLLOUT mid-extended position. Knees on floor hip-width, lower legs behind with toes resting naturally. Both hands wrap opposite handles of ONE simple black ab wheel on floor in front of body, wheel axle continuous across center and vertical wheel faces side. Arms straight reaching forward diagonally and wheel about one torso length ahead of knees; shoulders open, hips extended forward so knees-hips-shoulders form near-straight diagonal line from grounded knees, no sagging lumbar arch and no butt high over knees. Neck neutral eyes floor. SIDE-front three-quarter camera shows wheel-ground contact, two grips, knee contacts and long controlled torso. Highlight only exposed rectus abdominis/obliques. No second wheel device, no barbell or other equipment.",
+  "revisions": [],
+  "output": {
+    "bytes": 1425560,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "588d52d097960e10e81b05a1aa4c77541fec9c1399070dabdcee42a02f6a9d6c"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Both hands grasp opposite axle handles on one wheel contacting floor; knees grounded, arms straight, hips extended forward and long neutral torso. Mid-range rather than fully extended endpoint; abdominal-only overlay.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: knees and wheel contact the floor, extended arms and controlled trunk show a mid-range kneeling rollout. The full figure and wheel remain in frame."
+  }
+}

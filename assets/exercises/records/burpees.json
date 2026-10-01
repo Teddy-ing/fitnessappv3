@@ -1,0 +1,29 @@
+{
+  "id": "burpees",
+  "name": "Burpees",
+  "pose": "Crouched transition with hands planted and feet drawn under hips",
+  "highlight": [
+    "deltoids",
+    "pectoralis major",
+    "abdominal wall",
+    "visible quadriceps",
+    "calves"
+  ],
+  "accessibilityLabel": "Burpee shown in the crouched transition, hands on the floor and feet drawn toward the hands.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BURPEE, one representative CROUCHED TRANSITION after bringing feet forward from plank, before standing. Hands flat shoulder width on floor, fingers forward, wrists under shoulders. Both feet planted near behind hands at shoulder width, hips and knees deeply bent with knees outside arms, heels allowed slightly raised naturally. Chest lifted enough to show one natural neutral neck and clear anatomy, no contortion, spine modestly inclined and long. One coherent crouched figure only; do not render several phases. Three-quarter front-side view. Full-body seed target is represented by restrained coral on visible pectoral chest bellies, deltoids, exposed abdominal wall, quadriceps above knees, and calf bellies only, never entire skin solid red and no color on joints or shorts. No equipment. This single transition alone does not demonstrate the jump or whole burpee.",
+  "file": "burpees.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Clear crouched transition with both palms and feet supported, knees outside arms and full figure; separate coral regions show selected exposed muscles for broad full-body target. Clothing opaque. Does not show plank or jump phases.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: coherent low crouch with both palms grounded ahead of feet. This represents the crouched transition, not the complete multistage exercise."
+  },
+  "output": {
+    "bytes": 1447808,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "49ea3dbaaa2a82e604c5f7a2460bda8684fdc8f3185ff6e03065c4eccf41312c"
+  }
+}

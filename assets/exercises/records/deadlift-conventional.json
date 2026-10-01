@@ -1,0 +1,31 @@
+{
+  "id": "deadlift-conventional",
+  "name": "Deadlift",
+  "pose": "Conventional deadlift setup with bar near shins, hips above knees and back neutral",
+  "highlight": [
+    "spinal erectors",
+    "visible hamstrings"
+  ],
+  "accessibilityLabel": "Conventional deadlift setup with the bar near the shins and back and hamstrings highlighted.",
+  "file": "deadlift-conventional.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: CONVENTIONAL BARBELL DEADLIFT, setup just before lifting. Feet hip width under single continuous straight bar; standard full-diameter graphite lifting plate and collar each end resting on floor so shaft at mid-shin. Bar over midfoot very close to shins, knees bent, hips higher than knees and below shoulders, torso inclines forward with natural neutral spine and neck. Arms straight outside knees, closed double-overhand shoulder-width grips, hands around SAME bar, no bent elbows. Both whole feet flat. Camera rear-side three-quarter, predominantly side, shows hip hinge, bar/hand contact and unobscured spinal erector/hamstring regions. Coral spinal erector muscle regions either side of spine and exposed posterior thigh hamstrings only. Glutes covered by charcoal shorts, never colored through clothing. No rack.",
+  "revisions": [
+    {
+      "reason": "Knees too straight and hips too high for conventional deadlift setup",
+      "prompt": "Use case: precise-object-edit/scientific-educational. Image 1 is current deadlift EDIT TARGET; image 2 canonical model identity/style. Change only setup mechanics: lower hips noticeably by bending knees more, creating approximately 65-80 degrees of knee flexion, while keeping hips ABOVE knees and shoulders above hips. Knees move forward toward the straight bar, bar almost touches SHIN FRONTS; both shoulders slightly ahead of bar. Neutral straight back, arms straight, closed DOUBLE-OVERHAND hands just outside knees, feet hip-width and flat. Standard conventional deadlift beginning on floor, NOT a stiff-leg/Romanian deadlift and NOT a squat. Keep full continuous bar/plates planted, exact grey model, shorts/shoes, coral spinal erectors and exposed hamstrings, camera, lighting and background. Show both hands if possible by rotating view slightly more side-on. No other changes."
+    }
+  ],
+  "output": {
+    "sha256": "bbac1575d7757bc3a6f9873b30544699bdc661233161c4d2c0e42e4e746a5f14",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1509764
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Revised knees visibly more flexed with hips above knees; full-diameter plates on floor, straight arms and planted feet. Back and exposed hamstrings highlighted; clothing uncolored. Far grip partly occluded and hidden bar-shin contact cannot be fully verified.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed corrected image: grounded plates, bent knees, hip hinge, straight arms and bar close to shins. Far grip is partly occluded; no visible broken equipment or extra limb."
+  }
+}

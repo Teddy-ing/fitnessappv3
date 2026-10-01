@@ -1,0 +1,26 @@
+{
+  "id": "t-bar-row",
+  "name": "T-Bar Row",
+  "pose": "Landmine T-bar row with neutral handle pulled near lower torso",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "T-bar row over an anchored bar with back muscles highlighted.",
+  "file": "t-bar-row.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: LANDMINE T-BAR ROW, top of pull. Mannequin straddles ONE barbell shaft that runs front-to-back between legs; its REAR end secured in a visible small floor landmine pivot behind feet, FRONT end loaded with modest graphite plate/collar in front of torso. Feet planted shoulder-width on floor, knees bent, hips hinged deeply, torso around 30 degrees above horizontal and back neutral. Both hands closed neutral grip on a compact V row handle fitted around shaft just behind loaded plate; elbows bent back, handle near lower ribs. No transverse barbell and no bench. Side-rear three-quarter camera shows continuous angled shaft, rear floor pivot, loaded front end and hand contact. Coral lats and mid-back only.",
+  "revisions": [],
+  "output": {
+    "sha256": "424a12b11a3b972baa2753baa9ea73f5de92a1c25828bf65dd876cb8798b2fb8",
+    "bytes": 1512627,
+    "height": 1254,
+    "width": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Loaded forward end, attached neutral row handle and rear floor pivot visible on same shaft; bent elbows, hips hinged and feet planted. Rear-side angle hides part of shaft between legs; torso more upright than brief.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: continuous landmine shaft, attached neutral handle and plate, bent elbows and moderate hip hinge. The torso is above horizontal; representative contracted phase."
+  }
+}

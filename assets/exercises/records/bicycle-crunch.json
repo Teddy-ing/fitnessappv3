@@ -1,0 +1,25 @@
+{
+  "id": "bicycle-crunch",
+  "name": "Bicycle Crunch",
+  "file": "bicycle-crunch.png",
+  "reference": "barbell-curl.png",
+  "pose": "Alternating bicycle crunch with one knee tucked and opposite elbow rotating toward it",
+  "highlight": [
+    "abdominals"
+  ],
+  "accessibilityLabel": "Grey mannequin performing a bicycle crunch with one knee drawn in and the opposite elbow rotated toward it, with abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: BICYCLE CRUNCH one representative alternating phase. Lying supine with lower back/pelvis supported on floor, shoulder blades elevated. LEFT knee bent and drawn toward torso, RIGHT leg extends diagonally forward above floor with soft knee. Rotate ribcage so RIGHT shoulder/elbow approaches LEFT bent knee, they need not touch; opposite LEFT elbow opens wide. Fingers lightly beside temples, never hands pulling behind neck. Chin softly tucked, pelvis stable. SIDE-front elevated three-quarter view makes right-elbow to left-knee diagonal unmistakable, both hands and feet visible and anatomically correct. Highlight rectus abdominis/obliques only. No equipment, no duplicated limbs, whole figure within square.",
+  "revisions": [],
+  "output": {
+    "bytes": 1406722,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "6c3d87622a4718225bd528bc3cfc6f41ba0f1767c50e8290defb07b8207abd1d"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "One knee drawn inward, opposite leg extended above floor, torso rotated toward raised knee with opposite elbow nearer it. Hands lightly at temples, lower back/pelvis supported; abdominal overlay only. Does not establish alternating motion.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: shoulders lifted, hands lightly beside the head, one knee flexed and opposite leg extended above ground. Transitional rotated crunch pose, not a claim of elbow-to-knee contact."
+  }
+}

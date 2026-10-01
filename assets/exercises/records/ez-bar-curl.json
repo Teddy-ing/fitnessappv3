@@ -1,0 +1,25 @@
+{
+  "id": "ez-bar-curl",
+  "name": "EZ-Bar Curl",
+  "pose": "Standing EZ-bar curl midway with angled grips",
+  "highlight": [
+    "biceps"
+  ],
+  "accessibilityLabel": "Standing EZ-bar curl with angled grips and biceps highlighted.",
+  "file": "ez-bar-curl.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STANDING EZ-BAR CURL midway upward. Same stable upright posture as master curl; elbows at sides, flexed90degrees, forearms near horizontal. Replace straight bar with ONE unmistakable continuous EZ-bar with modest symmetric zigzag bends and matching plates/collars. Both CLOSED semi-supinated hands grip the angled sections at shoulder width, palms angled upward toward center, neutral wrists. Front three-quarter view, all bar ends/figure visible. Coral biceps only. No excessive zigzags or broken bar.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Coherent symmetric bent EZ-bar with matching plates, closed angled grips, elbows beside torso and horizontal forearms. Upright stance, biceps-only coral.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: angled underhand grips on continuous EZ bar, elbows near torso and forearms around horizontal. Balanced plates and biceps target overlay."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1322281,
+    "sha256": "4bbd541cef72f79b157ddf24ff15343157c8cee8bb61f3dd6d136907c7c374e5"
+  }
+}

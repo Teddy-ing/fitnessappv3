@@ -1,0 +1,29 @@
+{
+  "id": "thoracic-rotation",
+  "name": "Side-Lying Thoracic Rotation",
+  "pose": "Side-lying open-book rotation with knees stacked and top arm opening behind",
+  "highlight": [],
+  "accessibilityLabel": "Side-lying thoracic rotation with hips and knees bent together, lower arm forward and upper arm opened behind as the chest turns upward.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: SIDE-LYING THORACIC ROTATION, open-book phase. Lie on RIGHT side on floor with right side pelvis and right outer thigh supported. BOTH hips and knees bent roughly90degrees with KNEES STACKED TOGETHER on floor in front of pelvis; legs remain stacked while chest rotates. Lower RIGHT arm straight out on floor in front at shoulder height, palm up. Top LEFT arm opens in opposite direction behind body and rests near floor at shoulder height, palm up. Chest turns gently upward toward ceiling, head follows left hand without strained neck, hips remain side-lying. No forced shoulder range; top arm can hover slightly if needed. Elevated side-three-quarter view from foot side shows both arms, chest rotation and stacked knees clearly. Coral only visible thoracic back musculature if exposed; chest/abdomen/arms grey; do not color hidden muscles through torso. Highlights represent mobilized region. Full figure with all limbs, no equipment.",
+  "file": "thoracic-rotation.png",
+  "reference": "barbell-curl.png",
+  "revisions": [
+    {
+      "reason": "Head initially held elevated and non-target lateral ribs colored",
+      "prompt": "Use case: precise-object-edit / scientific-educational.\nImage1 edit target side-lying open-book. Image2 canonical identity.\nTwo corrections: HEAD SUPPORT and HIGHLIGHT. Head currently held raised like a crunch; lower head so back/side of skull comfortably contacts the floor or a small thin neutral grey folded towel directly beneath head. Neck follows relaxed torso line without lifting head. Gaze follows upper open hand, no straining. Keep chest gently rotated and pelvis/knees stacked together. Remove ALL coral from visible lateral rib/serratus/abdomen: target back is occluded by this camera, so make entire visible figure grey. Do not invent a visible back highlight. Preserve exact rest of pose, all limbs, shorts/shoes, identity, lighting, square framing and background. Upper arm can remain partly lifted in comfortable range.",
+      "result": "Head supported on floor; all visible anatomy grey because back target is occluded."
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Corrected head now supported on floor, knees/feet remain stacked and bent while chest opens with opposite arms separated. Upper arm remains partly elevated, representing comfortable partial opening. Removed visible lateral-rib coral because target back is occluded; no painted-through anatomy.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: side-lying bent knees remain stacked as torso and arms open, head supported on floor. Grey torso is appropriate because the primary back region is hidden."
+  },
+  "output": {
+    "bytes": 1361061,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "e31e4046bd0953ef59b288f45922aa2d01bd694194772de59ad16eab41d3cfa1"
+  }
+}

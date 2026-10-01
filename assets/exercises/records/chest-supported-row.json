@@ -1,0 +1,26 @@
+{
+  "id": "chest-supported-row",
+  "name": "Chest-Supported Row",
+  "pose": "Seated machine row with torso supported on chest pad and handles pulled toward ribs",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "Seated chest-supported machine row with bent elbows and back muscles highlighted.",
+  "file": "chest-supported-row.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: CHEST-SUPPORTED ROW on a simple plate-loaded row machine. Seated facing inclined chest support, sternum rests on pad, back straight, feet flat on floor. Two closed NEUTRAL grips on paired handles pulled toward lower ribs, elbows bent and behind torso, wrists straight. Each handle connects to one coherent pivoting lever attached to graphite machine frame and modest plate load. Show rear-side three-quarter view with chest contact, full machine, hands and back visible. Coral only broad lats and mid-back muscle bellies, arms grey. No free dumbbells.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Seated chest pad support, bent elbows and neutral handle grips, full plate-loaded machine and planted feet. Front chest contact partly occluded by rear view; levers schematically represented.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: machine variant matches seed equipment, torso against chest pad, elbows drawn backward and both hands on connected lever handles; feet planted."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1645287,
+    "sha256": "27f23568aa0019b0462d62f5f0ef3e4454995e2ff80709ab49973861cbc1dfa5"
+  }
+}

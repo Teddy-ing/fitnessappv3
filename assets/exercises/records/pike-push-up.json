@@ -1,0 +1,25 @@
+{
+  "id": "pike-push-up",
+  "name": "Pike Push-Up",
+  "pose": "Pike push-up lowered with hips high and elbows bent",
+  "highlight": [
+    "deltoids"
+  ],
+  "accessibilityLabel": "Pike push-up with hips raised, elbows bent and head lowered toward the floor between the hands.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: PIKE PUSH-UP, LOWERED position. Both open palms flat on floor shoulderwidth, fingers forward/splayed, feet on forefeet hipwidth behind, knees softly unlocked. Hips lifted HIGH as apex of inverted V. Torso slopes steeply DOWN toward hands, legs slope down toward feet. Elbows bent around90degrees and track diagonally backward, head hovering just above floor slightly IN FRONT of line between hands. Crown points toward floor; neck follows torso, no head weight support. Hand-and-feet four-point support. Side three-quarter camera shows high hips and bent elbows, both hands and feet. Coral ONLY deltoid shoulder caps, arms/chest/legs/trunk grey. No bench or other equipment. Full figure framed.",
+  "file": "pike-push-up.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "High hips create inverted-V silhouette, palms and forefeet support figure; elbows flexed and head remains just clear of floor. Complete hands/feet, shoulder overlays confined to deltoids.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: hips raised in inverted V, hands/forefeet grounded, elbows bent and head hovering above floor; complete limbs coherent."
+  },
+  "output": {
+    "bytes": 1175285,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "75a9e5e4617982b8af809c2f8403cc62895443cc0d792f403dfd4fb39fe73ad2"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "hanging-leg-raise",
+  "name": "Hanging Leg Raise",
+  "file": "hanging-leg-raise.png",
+  "reference": "barbell-curl.png",
+  "pose": "Hanging straight-leg raise with legs around horizontal",
+  "highlight": [
+    "abdominals"
+  ],
+  "accessibilityLabel": "Grey mannequin hanging from a pull-up bar with straight legs raised forward and abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: HANGING LEG RAISE at around horizontal legs. Full freestanding pullup frame: two upright posts outside hands and connected horizontal bar/top support and broad stable feet. Both hands closed OVERHAND shoulder-width on top bar, arms straight overhead, shoulders engaged naturally, torso almost vertical with mild pelvic tuck. Both straight legs together raise forward to about hip height, knees softly unlocked, shoes side by side, feet off ground. No supported armrests and no bent-knee tuck. SIDE-front three-quarter view clearly shows L-shaped hanging pose and both grips, full frame. Highlight exposed rectus abdominis/obliques ONLY; hip flexors under shorts not shown. Keep balanced normal body proportions, no exaggerated swing.",
+  "revisions": [],
+  "output": {
+    "bytes": 1369542,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9032b9221fedee1a460dc3073cec33e3950d6cf9db6046fdeadd561e7e6512a3"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Both hands grip overhead bar and arms extended; torso vertical with legs lifted near horizontal and no external body support. Complete freestanding frame, visible feet and abdominal-only overlay. Far leg partly overlapped.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: full suspension frame, closed overhead grips and straight arms; both legs raised approximately horizontal. Visible abdominal target overlay and complete framing."
+  }
+}

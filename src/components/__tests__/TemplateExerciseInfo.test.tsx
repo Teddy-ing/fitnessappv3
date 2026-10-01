@@ -41,6 +41,9 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('@expo/vector-icons', () => ({ MaterialIcons: 'MaterialIcons' }));
 jest.mock('../../../assets/exercise-placeholder.png', () => 1);
+jest.mock('../../../assets/exercises/optimized/bench-press-barbell.jpg', () => 101, { virtual: true });
+jest.mock('../../../assets/exercises/optimized/squat-barbell.jpg', () => 102, { virtual: true });
+jest.mock('../../../assets/exercises/optimized/barbell-curl.jpg', () => 103, { virtual: true });
 jest.mock('../../screens/AddExerciseScreen', () => () => null);
 jest.mock('../../stores', () => ({ useWorkoutStore: { getState: () => ({ activeWorkout: null }) } }));
 jest.mock('../../services', () => ({

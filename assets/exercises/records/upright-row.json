@@ -1,0 +1,26 @@
+{
+  "id": "upright-row",
+  "name": "Upright Row",
+  "pose": "Standing wide-grip barbell upright row at lower chest",
+  "highlight": [
+    "deltoids",
+    "upper trapezius"
+  ],
+  "accessibilityLabel": "Standing barbell upright row with elbows near shoulder height and shoulders and traps highlighted.",
+  "file": "upright-row.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: BARBELL UPRIGHT ROW representative top at lower chest. Upright torso stable hip-width feet, bar held with CLOSED OVERHAND grips moderately wide about1.5shoulderwidth. Continuous shaft in front of lower chest, elbows bent and leading outward, elbows at or slightly BELOW shoulder height and higher than wrists, forearms slope downward inward from elbows to bar, neutral wrists. Do not raise elbows toward ears. Matching modest plates/collars, full bar in frame. Front three-quarter view. Coral lateral deltoids and upper trapezius only.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Continuous bar held in closed overhand grips around lower chest, elbows outward near shoulder height above wrists, upright stance. Deltoids and upper traps coral. No visible wrist discontinuity.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: overhand bar held before lower chest, elbows above hands near shoulder height, torso upright. Deltoid and upper-trapezius target overlay."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1394658,
+    "sha256": "d298190d33d3cfa55e0278305d59d6262cc4ebda44202452ac37c49252ca3c04"
+  }
+}

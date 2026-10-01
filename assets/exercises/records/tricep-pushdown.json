@@ -1,0 +1,30 @@
+{
+  "id": "tricep-pushdown",
+  "name": "Tricep Pushdown",
+  "file": "tricep-pushdown.png",
+  "reference": "barbell-curl.png",
+  "pose": "Standing straight-bar cable triceps pushdown near full elbow extension",
+  "highlight": [
+    "triceps"
+  ],
+  "accessibilityLabel": "Grey mannequin pressing a cable bar down in front of the thighs, with triceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: CABLE TRICEPS PUSHDOWN with a short straight-bar attachment, near the bottom position. Equipment override: ONLY a simple complete single-stack cable tower and its short straight handle; no free barbell or bench. Subject faces the tower. One continuous taut cable descends from a visible HIGH pulley to the center of the short bar held just in front of thighs. Feet hip width planted, torso upright with slight forward lean at hips, neutral spine. Both elbows close to ribs, upper arms vertical; elbows almost straight without hyperextension. Closed palms-down grip about shoulder width on short attachment, straight wrists. Rear-side three-quarter camera that shows triceps, both grips and uninterrupted cable attachment. Compact graphite tower with credible base, upright, top pulley, selector stack and cable, no labels. Highlight only visible posterior upper-arm triceps; biceps and shoulders grey.\nRender one square 1024x1024 PNG. Preserve charcoal shorts and shoes exactly; never highlight muscles through clothing.",
+  "revisions": [
+    {
+      "reason": "Initial cable connector appeared detached and tower top cropped",
+      "prompt": "Use case: precise-object-edit / scientific-educational. Input 1 is edit target; input 2 canonical identity reference. Preserve character identity, grey/coral colors, shorts, shoes, limb pose and lighting. Correct ONLY cable attachment and full equipment framing: the hanging carabiner must visibly connect directly to a metal center eyelet on the short pushdown handle, making one uninterrupted taut cable-pulley-carabiner-eyelet-bar chain. Currently a gap appears between carabiner and handle. Also pull camera back just enough to include the complete top end of the cable tower with 7 percent background margin above it; maintain complete feet and base. The torso and upper arms remain positioned correctly; preserve them. No new text or additional figures."
+    }
+  ],
+  "output": {
+    "bytes": 1372652,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "638626e0bbccbbe93c34f5167ca8d1d27ba1ef93143221bdef94d642d33ee323"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Visible straight elbows, planted feet, posterior triceps highlights, high pulley and full tower. Corrected initial crop and attachment gap; lower connector is partly behind near hand, preventing full inspection of eyelet. Motion unverified.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: elbows beside torso and nearly extended, both hands grip straight attachment, grounded stance, continuous overhead cable; central bar connector partly obscured by near hand."
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "leg-curl-seated",
+  "name": "Seated Leg Curl",
+  "file": "leg-curl-seated.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated machine leg curl with knees flexed",
+  "highlight": [
+    "hamstrings"
+  ],
+  "accessibilityLabel": "Grey mannequin bending the knees against a seated leg curl machine roller, with exposed hamstrings highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: SEATED LEG CURL mid-curl. Whole compact weight-stack machine, torso upright against slightly reclined backrest, buttocks on seat. Seat edge behind knees; pivot at knee axis. A broad restraint pad lies across FRONT TOP of distal thighs just ABOVE knees. Separate moving roller presses against BACK of lower calves just ABOVE heels; knees flexed roughly75degrees so feet are under and slightly ahead of seat. Hands grasp side handles; spine neutral. Crucial roller contacts back of ankles, not front shins. Both feet point naturally. Side-biased three-quarter view showing distinct thigh restraint and ankle roller with mechanically attached side lever and weight stack. Highlight only small exposed back-of-thigh hamstring regions if visible; never through pad or clothing. No quadriceps or calves highlighted.",
+  "revisions": [
+    {
+      "reason": "Lower roller incorrectly appeared across front shins instead of behind ankles",
+      "prompt": "Use case: precise-object-edit. Input1 is seated leg curl EDIT TARGET, input2 canonical identity. Correct the ankle roller placement ONLY: the single lower roller must contact BACKS OF ANKLES/ACHILLES, behind the lower legs nearer the seat, never across FRONT SHINS as now. Remove the front shin roller and rebuild the attached side lever to carry the roller BEHIND BOTH ankles. Turn camera to a clear SIDE THREE-QUARTER view if necessary so viewer plainly sees the shins in front of the roller and calves touching roller behind them. Keep upright back-supported torso, hands on handles, broad thigh-restraint pad on top of thighs, knees bent about90deg, charcoal clothes, grey body, small hamstring highlights, complete machine base and stack. No extra rollers; no stray coral on quads or calves. Full square, consistent background and light."
+    }
+  ],
+  "output": {
+    "bytes": 1656059,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "5ccb55a059771b39fe38415863a90fe8ec05d7855c3e7f253aba4730598aba68"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Corrected roller now clearly behind lower calves/ankles while thigh restraint is on top of distal thighs. Upright back support, handgrip, bent knees and full machine visible; partly occluded hamstrings small coral regions only.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed corrected image: roller behind lower legs, thigh restraint on thighs, seated torso supported and knees bent; continuous lever reaches roller."
+  }
+}

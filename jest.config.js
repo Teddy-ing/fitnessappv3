@@ -2,6 +2,7 @@ module.exports = {
     // No preset — we configure everything manually to avoid
     // conflicts between react-native's Babel transform and ts-jest
     transform: {
+        '\\.(png|jpe?g|webp)$': '<rootDir>/test/assetTransformer.cjs',
         '^.+\\.tsx?$': [
             'ts-jest',
             {

@@ -1,0 +1,31 @@
+{
+  "id": "face-pull",
+  "name": "Face Pull",
+  "pose": "Standing high cable rope face pull with hands beside face",
+  "highlight": [
+    "posterior deltoids",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "Standing rope face pull with hands beside the face and rear shoulders and mid-back highlighted.",
+  "file": "face-pull.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: CABLE ROPE FACE PULL at pulled position. Standing upright in small staggered stance facing one cable tower with pulley at eye height. One two-ended rope handle connected centrally to taut cable, two CLOSED neutral hands grasp ends at either side of face near temples. Elbows bent about90degrees, flared outward at shoulder height, wrists aligned, rope visibly forks from central junction IN FRONT of face toward hands. Cable runs from junction straight toward tower pulley, never through head. Rear-side three-quarter view showing both hands, face-side rope, shoulder blades and full tower. Coral posterior deltoids and mid-back muscle bellies only. No barbell.",
+  "revisions": [
+    {
+      "reason": "Cable tower top clipped",
+      "prompt": "Use case: precise-object-edit. Image1 edit target face-pull; image2 canonical identity. Correct FRAMING ONLY: pull camera back enough to fit the ENTIRE cable tower including its TOP CROSSBAR above existing edge and all base legs inside square canvas, at least5percent padding on every side. Mannequin scales down uniformly with apparatus, retains identical face-pull pose, two closed rope grips beside temples, elbows near shoulder height, taut center cable, rear deltoid and mid-back highlights. Do not alter anatomy or hand/rope contact. Show light background above tower top. Preserve style, clothes and lighting."
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Reframed to include full tower. Bent elbows near shoulder height, hands by temples with rope contact, taut cable toward eye-height pulley. Rear view partly occludes far rope branch before face; no visible penetration.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed corrected image: complete tower, cable and split rope reaching both hands beside head, raised bent elbows and posterior shoulder cues."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1356253,
+    "sha256": "0314ac12a8952aef0bf080eb79173d7f5be510929c66073e1cf47ca5a8bb40dd"
+  }
+}

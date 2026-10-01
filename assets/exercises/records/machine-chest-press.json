@@ -1,0 +1,25 @@
+{
+  "id": "machine-chest-press",
+  "name": "Machine Chest Press",
+  "pose": "Seated machine chest press midway with handles in front of chest",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Seated machine chest press with supported back and chest highlighted.",
+  "file": "machine-chest-press.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: SEATED MACHINE CHEST PRESS, mid-press. Simple graphite selectorized seated chest-press machine, full floor-supported frame and coherent two pivoted lever arms extending from structural uprights to grip handles. Mannequin upright seated, head and back against vertical charcoal pad, buttocks on seat, knees bent, feet flat on floor. Closed overhand grips on two horizontal handles at mid-chest height; wrists straight, elbows moderately bent and below shoulder height, forearms pointing forward. Hands push forward away from chest; neither arms nor machine pass through body. Camera front-side three-quarter shows body, hand-handle contact and machine linkage. Chest coral only, arms grey.",
+  "revisions": [],
+  "output": {
+    "bytes": 1527017,
+    "sha256": "48ceaa12337fc4d080011efe82cd5e93ff47568458806317104f0c1487882f88",
+    "width": 1254,
+    "height": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Supported upright torso, planted feet and both overhand grips visible; separate handles connect to lever arms; chest-only overlay. Internal machine transmission is schematic.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: supported seated pressing stance with both feet grounded, two gripped handles, bent elbows and plausible lever attachments; internals schematic."
+  }
+}

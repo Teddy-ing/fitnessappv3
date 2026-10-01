@@ -1,0 +1,25 @@
+{
+  "id": "pec-deck",
+  "name": "Pec Deck (Machine Fly)",
+  "pose": "Seated pec-deck fly with forearms supported on pads, arms partly closed",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Seated pec-deck fly with elbows bent against pads and chest highlighted.",
+  "file": "pec-deck.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: PEC DECK MACHINE FLY, classic bent-elbow forearm-pad machine, mid-contraction. Full graphite machine with upright back pad/seat, overhead pivoting paired lever arms connected to two vertical forearm pads. Mannequin sits upright supported against backrest, feet flat. Upper arms forward and slightly out to sides at chest/shoulder height; elbows bent approximately 90 degrees, FOREARMS VERTICAL pressing against the inner surfaces of pads; closed grips on short handles above pads. Pads move inward in an arc toward each other, not a forward chest press. Show coherent machine pivots and full foot-supported frame. Front three-quarter camera makes both elbows/forearms, pad contacts, seated support visible. Highlight pectoralis major coral only; arms grey.",
+  "revisions": [],
+  "output": {
+    "height": 1254,
+    "width": 1254,
+    "bytes": 1631712,
+    "sha256": "eecd4b0c00a76ff409c0fe9db2dca68874966bc05ce751d005d3669da83d6894"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Both forearms contact vertical pads with elbows bent; seated back support and planted feet; coherent overhead pivots and chest-only overlay. Lever arms remain relatively open; internal resistance linkage schematic. Top frame margin narrow but uncropped.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: supported seated fly with bent elbows against pads and hands on vertical grips, grounded feet, connected overhead pivots and chest targets. Top frame has narrow but complete margin."
+  }
+}

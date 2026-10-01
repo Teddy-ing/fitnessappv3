@@ -1,0 +1,25 @@
+{
+  "id": "dumbbell-curl",
+  "name": "Dumbbell Curl",
+  "pose": "Standing bilateral supinated dumbbell curl midway",
+  "highlight": [
+    "biceps"
+  ],
+  "accessibilityLabel": "Standing dumbbell curl with palms up and biceps highlighted.",
+  "file": "dumbbell-curl.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STANDING DUMBBELL CURL midway upward. Two separate matching dumbbells, one per CLOSED SUPINATED hand with palms up; elbows at sides, forearms almost horizontal in front of body. Dumbbell handles horizontal across each palm, wrists straight. Upright torso, feet hip width grounded, shoulders relaxed. Front three-quarter view. Coral biceps muscle bellies only. Same character as master but replace single bar with two SEPARATE matching dumbbells.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Two separate supinated dumbbell grips, elbows near ribs, forearms roughly horizontal and wrists straight, stable upright stance. Biceps-only overlay.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: supinated grips with horizontal forearms, elbows near torso and upright body. Visible biceps highlighted, complete dumbbells in frame."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1313544,
+    "sha256": "6aa0151f40fedb10e3c5006909156887db4326439f2923fefbb1042fa3d7a04a"
+  }
+}

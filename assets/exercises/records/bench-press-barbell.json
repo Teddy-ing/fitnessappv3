@@ -1,0 +1,32 @@
+{
+  "id": "bench-press-barbell",
+  "file": "bench-press-barbell.png",
+  "pose": "Flat bench press, controlled bottom position",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: FLAT BARBELL BENCH PRESS, controlled bottom position.\nPose and equipment: mannequin lies face-up on a HORIZONTAL level narrow charcoal padded flat bench. Head, upper back/shoulders, and buttocks are supported on the pad. Mild natural lumbar arch, not a dramatic powerlifting bridge. Both knees bent and feet placed on the floor either side of the bench, whole soles flat; feet do not rest on bench. Neck neutral.\nBoth hands have a closed OVERHAND grip slightly wider than shoulders, thumbs visibly wrapped around the SAME straight bar. Lowered bar lightly contacts the lower sternum/lower chest, clearly in front of and never penetrating the body. Wrists nearly straight and stacked over elbows, forearms approximately vertical when viewed from the side. Elbows are bent roughly 90 degrees and are comfortably tucked about 45-60 degrees from the torso, not flared straight sideways. Both shoulders remain against the bench.\nCamera: front-side three-quarter view from slightly above the bench, enough side view to show the bench is level, torso support and bar at the chest, enough foot-end angle to distinguish both arms and both planted feet. Head towards image upper left and feet toward image lower right. Plate sizes modest so hands and arm mechanics stay visible.\nHighlight ONLY the two pectoralis major chest muscle regions in coral. Arms, shoulders, forearms and all other regions grey. Show the complete simple bench with credible legs and floor contact. No rack or spotter in this isolated exercise illustration.",
+  "output": {
+    "file": "bench-press-barbell.png",
+    "bytes": 1463101,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "d38ebcad4ab3eae814f103e89fe6395cd3b3543bef571ae0e9cbf02fb3fdc8e2"
+  },
+  "revisions": [
+    {
+      "reason": "Initial bar touchpoint was too high on chest",
+      "prompt": "Use case: precise-object-edit / scientific-educational.\nInput image 1 is the EDIT TARGET: original grey mannequin flat barbell bench press illustration. Input image 2 is the canonical IDENTITY/STYLE REFERENCE: original grey mannequin curl illustration.\nCorrect ONLY the bench-press bar touch point and corresponding arm position in image 1. Keep the exact same character identity, size/proportions, pose of legs and planted feet, flat bench geometry, bench support/contact of head/shoulders/buttocks, camera, framing, grey materials, charcoal shorts/shoes, coral pectoral highlight, equipment and background.\nRequired correction: the lowered bar currently crosses too high on the chest. Move the entire barbell TOWARD THE FEET along the torso until the shaft gently touches the LOWER STERNUM AT THE BOTTOM EDGE OF THE PECTORAL MUSCLES, just below the nipple line and immediately above the grey upper-abdominal area. The shaft should visibly cross the lower border of both coral chest regions, not their upper halves. Do not simply lower the bar into the torso. Reposition both arms coherently: elbows move toward hips and tuck to approximately 45–60 degrees from torso, wrists directly above elbows so forearms are approximately vertical relative to the floor. Both hands maintain closed overhand grip slightly wider than shoulder width, thumbs wrapped, near-straight wrists. Keep shoulders resting on bench. Hands each grip the same straight bar with matching plates outside hands.\nMake this one concrete mechanical correction, no redesign. Exactly one full mannequin, no extra limbs or bars, no labels or arrows or new objects. Keep full equipment comfortably within square frame.",
+      "result": "Bar lowered toward lower pectoral/sternal region; elbows shifted toward hips; independent visual recheck passed."
+    }
+  ],
+  "name": "bench-press-barbell",
+  "accessibilityLabel": "Flat barbell bench press at the bottom of the movement, with chest muscles highlighted.",
+  "review": {
+    "status": "reviewed",
+    "notes": "Pilot independently reviewed in preceding task; user approved all three and the model direction.",
+    "independentReviewer": "pose_spec",
+    "ownerApproved": true
+  }
+}

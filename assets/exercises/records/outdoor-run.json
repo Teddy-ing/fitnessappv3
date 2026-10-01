@@ -1,0 +1,27 @@
+{
+  "id": "outdoor-run",
+  "name": "Outdoor Running",
+  "pose": "Single mid-stride running stance with opposite arm and leg swing",
+  "highlight": [
+    "visible quadriceps",
+    "visible hamstrings",
+    "calves"
+  ],
+  "accessibilityLabel": "Outdoor running shown in a single stride, with opposite arm and leg swing.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: OUTDOOR RUNNING, a single representative running stride on level ground, no treadmill or other equipment. Side-biased three-quarter view facing right. Upright torso slightly inclined as a whole, relaxed shoulders, neutral neck. One leg forward with softly bent knee and foot landing under the body; opposite leg extending behind with rear heel raised. Opposite arm forward, elbows bent around 90 degrees, hands relaxed; anatomically plausible natural jogging stride, not exaggerated sprinting or marching. Complete figure isolated in the same studio background; no scenery. Highlight visible quadriceps above kneecaps, visible posterior hamstrings below shorts, and calf muscle bellies only. This is a still phase, not all mechanics or measured activation.",
+  "file": "outdoor-run.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Complete figure visible; opposite arm/leg stride, rear heel raised, coherent feet and hands, grey model and charcoal clothing retained. Coral targets exposed thigh and calf regions. A single stance cannot establish running cadence.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: coherent running support phase and opposite arm/leg positions, complete limbs/shoes, leg target highlights; motion is represented by a single stance."
+  },
+  "output": {
+    "bytes": 1386123,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "566726aee019b62aeeaa9d5ec0534d4f167f50a123e2babfc356979d1de1dde1"
+  }
+}

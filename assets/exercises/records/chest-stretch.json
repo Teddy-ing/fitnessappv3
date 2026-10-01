@@ -1,0 +1,25 @@
+{
+  "id": "chest-stretch",
+  "name": "Chest Stretch",
+  "pose": "Standing hands-clasped-behind chest stretch",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Standing chest stretch with hands clasped behind the hips and the chest gently opened.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: STANDING CHEST STRETCH with hands clasped behind hips; no wall or equipment. Feet hip width, soles planted, knees softly unlocked, torso upright without lumbar overextension, shoulders gently back and down. Both hands clasp together behind pelvis with arms gently straightening slightly away from torso at low hip level; fingers and wrists coherent, no painful extreme shoulder extension. Chest comfortably open and chin level. Front-side three-quarter camera sees both coral pectoralis major target regions and enough side view to see joined hands behind hips. Coral only chest muscle bellies; this marks STRETCH TARGET, not activation. All shoulders, biceps, legs and clothing remain original grey/charcoal. Full body in frame.",
+  "file": "chest-stretch.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Hands clasped behind low hips, shoulders gently retracted, upright trunk and planted feet; chest target coral only. Far arm mostly occluded by torso; clasp visible. No forced extreme range.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: hands clasped behind hips, elbows extended and chest open; pectoral highlight denotes stretch target."
+  },
+  "output": {
+    "bytes": 1361366,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4e4101aa9be852d3905232420e598fce31b65ab8ccfde9ee113713e48b3ebbbb"
+  }
+}

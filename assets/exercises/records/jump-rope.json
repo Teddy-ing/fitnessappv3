@@ -1,0 +1,25 @@
+{
+  "id": "jump-rope",
+  "name": "Jump Rope",
+  "pose": "Small two-foot jump with rope arcing overhead",
+  "highlight": [
+    "calves"
+  ],
+  "accessibilityLabel": "Jump rope shown in a small two-foot hop with the rope arcing overhead.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: JUMP ROPE, single small two-foot hop. Figure upright, feet together nearly, both shoes just a few centimeters clear of the floor, knees softly flexed, elbows close to sides and forearms a little outward at waist height. Each relaxed closed hand holds one small charcoal jump-rope handle. ONE thin dark rope continuously joins the two handles in a broad clean overhead arch outside the figure; rope currently overhead, no second rope and no impossible rope threading through body. Full overhead rope arch, both hands and feet within square with margin, slightly front-side near-orthographic view. Coral ONLY on visible calf muscle bellies, stopping before achilles tendons and knees; torso, thighs, shoulders and arms grey. No barbell.",
+  "file": "jump-rope.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "One continuous overhead rope joining two held handles, both shoes slightly airborne, full rope and figure visible. Coral limited to calves; no equipment/body intersections. Single hop does not establish timing.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: low airborne jump with slightly flexed knees, two gripped handles and a continuous overhead rope arc, no crossing through body; calf regions highlighted."
+  },
+  "output": {
+    "bytes": 1242760,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "f0f2be95023cdf5aff86aae2e2ccc5fd40be13204907a7492090ad8967cc53b6"
+  }
+}

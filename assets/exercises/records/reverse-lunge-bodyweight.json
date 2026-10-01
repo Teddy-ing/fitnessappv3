@@ -1,0 +1,25 @@
+{
+  "id": "reverse-lunge-bodyweight",
+  "name": "Bodyweight Reverse Lunge",
+  "pose": "Reverse lunge at bottom with rear knee hovering",
+  "highlight": [
+    "visible quadriceps"
+  ],
+  "accessibilityLabel": "Bodyweight reverse lunge at the bottom, with the front foot planted, rear heel lifted and rear knee hovering above the floor.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BODYWEIGHT REVERSE LUNGE at bottom after stepping back. Left leg forward: whole left sole flat, knee bent90degrees aligned toes, shin nearly vertical, thigh nearhorizontal. Right leg steps BACK: ball of right foot on floor, heel lifted, right knee bent90degrees and hovering just above floor behind pelvis. Stance hipwidth laterally, not tightrope. Torso mostly upright, neutral neck/spine, both hands lightly resting hips. Side-biased front three-quarter view with near foot forward makes both legs clear. No weights/equipment. Coral only visible quadriceps above kneecaps; shorts opaque and all other anatomy grey. Entire body and feet visible.",
+  "file": "reverse-lunge-bodyweight.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Front sole planted and front knee flexed; rear heel lifted, ball/toes contact floor and knee hovering. Upright trunk/hands at hips and two coherent legs; quad overlay stays above knees. Still does not establish direction of stepping.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: front foot planted and rear forefoot supported with knee lowered, upright torso and hands on hips; still depicts lowered phase only."
+  },
+  "output": {
+    "bytes": 1411588,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "110dc9d043fe21fc528572c3586ad8d04a29d9ba51486e11c51da315aa141ee4"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "front-raise",
+  "name": "Front Raise",
+  "pose": "Standing bilateral dumbbell front raise at shoulder height",
+  "highlight": [
+    "anterior deltoids"
+  ],
+  "accessibilityLabel": "Standing front raise with two dumbbells ahead at shoulder height and front shoulders highlighted.",
+  "file": "front-raise.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: DUMBBELL FRONT RAISE top position. Standing with both feet hip width, upright neutral torso. BOTH arms raised straight forward at shoulder height with soft15degree elbow bends. Palms face downward holding two separate horizontal dumbbell handles in CLOSED pronated grips; weights separated shoulder width, wrists neutral. Side-front three-quarter camera shows arms projecting FORWARD, distinct from lateral raise. Coral anterior deltoid caps only, chest/biceps/traps grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Both arms extend forward at shoulder height with two separate dumbbells and overhand grips. Torso upright, wrists roughly aligned. Near and far dumbbell plates differ in apparent size from perspective.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: dumbbells held forward at shoulder height, arms extended with soft elbows and upright torso; full hands/weights visible."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1376816,
+    "sha256": "bb2b0aaaf9e44e2beec49d7a7a569778cb7f534be0bbcc80a891ed1744f4339d"
+  }
+}

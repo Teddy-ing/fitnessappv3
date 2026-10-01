@@ -1,0 +1,31 @@
+{
+  "id": "bent-over-row-barbell",
+  "name": "Barbell Bent-Over Row",
+  "pose": "Hip-hinged bent-over barbell row at the top with bar near lower ribs",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "Bent-over barbell row with the bar near the lower ribs and back muscles highlighted.",
+  "file": "bent-over-row-barbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: BARBELL BENT-OVER ROW, top position. Standing feet hip width, knees softly bent, hips hinged, torso about 35 degrees above horizontal, spine/neck neutral, eyes toward floor ahead. One straight bar with matching modest graphite plates and collars. Closed shoulder-width OVERHAND grips, elbows bent and traveling behind torso, bar gently near lower ribs/upper abdomen and NEVER through body. Wrists straight, forearms under bar, feet planted. Rear-side three-quarter camera shows back plane and near hand-bar contact, full bar and both feet. Coral broad latissimus dorsi and mid-back muscle regions only; spine itself, shoulders, arms grey.",
+  "revisions": [
+    {
+      "reason": "Torso too upright to communicate bent-over row",
+      "prompt": "Use case: precise-object-edit/scientific-educational. Image 1 is current barbell row EDIT TARGET; image 2 canonical model. Correct pose only: HINGE FORWARD MUCH MORE AT HIPS so torso is approximately 25-35 degrees ABOVE HORIZONTAL, almost parallel to floor. Push hips backward, flex knees moderately, maintain straight neutral back/neck; face looks down toward floor ahead rather than forward. Preserve top of row: same bar in FRONT of body at LOWER RIBS, not behind hips; both hands closed overhand, elbows bent pointing back past torso. Use more side-on rear three-quarter camera so hip hinge and front-of-body bar position are unambiguous. Keep identical character, charcoal shorts/shoes, coral back/lats overlay, continuous barbell/plates, planted feet, lighting and backdrop. No extra equipment."
+    }
+  ],
+  "output": {
+    "sha256": "f12e2eb1560fea64e3b0380f5fea2c43ff89445eb109580bf6494d04da7a2ce6",
+    "bytes": 1499989,
+    "height": 1254,
+    "width": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Revised hip hinge visibly deeper; bent elbows pull continuous bar close in front of lower torso, both feet planted, back/lats coral. Rear view partly occludes far grip and bar contact.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed corrected image: moderate forward hinge, soft knees, elbows behind torso and bar drawn toward lower abdomen. Far hand is partly occluded."
+  }
+}

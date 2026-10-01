@@ -1,0 +1,26 @@
+{
+  "id": "back-extension",
+  "name": "Back Extension",
+  "pose": "45-degree back extension at neutral torso alignment",
+  "highlight": [
+    "spinal erectors",
+    "hamstrings"
+  ],
+  "accessibilityLabel": "Back extension on an angled bench, with the torso aligned with the legs and lower back and hamstrings highlighted.",
+  "file": "back-extension.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: 45-DEGREE BACK EXTENSION top position, BODYWEIGHT. Roman-chair bench with two hip pads supporting upper thighs BELOW hip crease; feet firmly on angled footplate and ankles secured by roller behind lower legs. Full body forms straight diagonal from heels through hips to head, torso aligns with legs without hyperextension. Arms crossed loosely over chest. Near-side rear three-quarter view shows spine/hip alignment and all support contacts. Neutral head, small natural knee softness. Coral spinal erector bands either side of lower spine and visible hamstring backs of thighs only; shorts obscure glutes, no coloring through shorts. Complete simple graphite bench.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Whole angled Roman chair, ankle restraint and footplate visible; hips supported below waist, extended torso roughly aligned with legs, crossed arms. Coral limited to erector bands and visible hamstrings, glutes remain covered.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: thighs supported on angled pad, feet braced against plate beneath ankle rollers, torso aligned near raised phase, crossed arms; complete support frame."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1494214,
+    "sha256": "abf63400dbd6742387eb26cacda7a4d11aec1d8072c83e1d5f2169e7a0d5c546"
+  }
+}

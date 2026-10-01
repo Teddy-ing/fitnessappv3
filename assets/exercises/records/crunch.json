@@ -1,0 +1,25 @@
+{
+  "id": "crunch",
+  "name": "Crunch",
+  "file": "crunch.png",
+  "reference": "barbell-curl.png",
+  "pose": "Floor abdominal crunch with shoulder blades raised",
+  "highlight": [
+    "abdominals"
+  ],
+  "accessibilityLabel": "Grey mannequin curling the shoulders off the floor in a crunch, with abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: FLOOR ABDOMINAL CRUNCH at modest raised position. Lie supine with bent knees roughly90deg, feet flat hip-width. Pelvis/lower back remain grounded, only head and shoulder blades lifted a modest amount by curling ribs toward pelvis. Chin gently tucked, gap under chin, no pulling neck. Both arms crossed over chest, each hand touching opposite upper chest. SIDE-front three-quarter view clearly separates grounded lower back and hips from slightly raised shoulder blades; both feet and hands visible. Highlight exposed rectus abdominis and obliques ONLY. No equipment; no sit-up upright torso; whole figure square.",
+  "revisions": [],
+  "output": {
+    "bytes": 1461724,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "616969e3eb445e6f2c8370a9f33f53af2e7850118712050780fc3e8b4db527bb"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Bent knees and flat feet, pelvis and lower back grounded, shoulder blades curled upward with crossed arms. Abdominal overlay avoids chest; whole figure visible.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: feet planted, knees bent and upper torso curled upward with lower back/pelvis near floor, arms crossed; distinct from full sit-up."
+  }
+}

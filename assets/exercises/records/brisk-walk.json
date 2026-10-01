@@ -1,0 +1,32 @@
+{
+  "id": "brisk-walk",
+  "name": "Brisk Walking",
+  "pose": "Brisk walking during double support with forward heel and rear forefoot contact",
+  "highlight": [
+    "visible quadriceps",
+    "visible calves"
+  ],
+  "accessibilityLabel": "Brisk walking with the front heel touching down, rear forefoot pushing off and arms swinging opposite the legs.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BRISK WALKING, clear walking stride during DOUBLE SUPPORT, not running. Upright trunk with small natural forward lean, relaxed shoulders/head level. Left leg forward with heel contacting floor and toes slightly raised, left knee nearly straight but unlocked. Right leg trailing behind, rear heel raised and forefoot still on floor. There is NO airborne phase: forward heel and rear forefoot both visibly touch floor. Natural moderate stride, not extreme split. Right arm swings forward with elbow modestly bent, left arm swings backward, opposed to legs. Front-side three-quarter view. Coral only visible quads above knees and calf muscle bellies, all joints/shins/arms/trunk grey. No scenery/equipment.",
+  "file": "brisk-walk.png",
+  "reference": "barbell-curl.png",
+  "revisions": [
+    {
+      "reason": "Unwanted front shin highlight",
+      "prompt": "Use case: precise-object-edit / scientific-educational.\nImage1 edit target brisk walking. Image2 canonical identity.\nChange ONLY lower-leg muscle overlays: currently coral runs down FRONT SHIN of the forward leg (tibialis anterior). Remove that coral and make entire FRONT shin grey. Calf highlights must be limited to POSTERIOR/lateral gastrocnemius/soleus muscle belly on BACK of lower leg, stop above Achilles, don't color shin bone. Keep existing rear calf overlay and thigh quadriceps overlays if anatomically on muscles. Keep exact walking pose, heel/forefoot floor contacts, proportions, face, clothing, camera and background. No other change.",
+      "result": "Front shin restored to grey."
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Walking double-support phase: front heel contacting floor and rear forefoot grounded, opposite arm swing. Corrected front-shin coral back to grey; quads and visible rear calf remain highlighted. Complete figure.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: forward heel contact and rear forefoot contact, opposed arm swing and upright torso. Corrected shins remain grey; complete figure visible."
+  },
+  "output": {
+    "bytes": 1378599,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "ff6a0572c8858419deb38ccd30dc7ecfcebdffc8b437b85de55192e80c7a7f3f"
+  }
+}

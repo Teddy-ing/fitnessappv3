@@ -1,0 +1,25 @@
+{
+  "id": "calf-stretch",
+  "name": "Calf Stretch",
+  "pose": "Standing split-stance calf stretch with rear heel grounded",
+  "highlight": [
+    "rear calf"
+  ],
+  "accessibilityLabel": "Standing calf stretch with the rear leg straight and heel planted, the front knee bent and hands resting on the front thigh.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: STANDING CALF STRETCH, unsupported split stance with hands resting on FRONT THIGH (no wall needed). Left foot forward, left knee moderately bent, both palms rest lightly on front thigh above knee. Right foot behind with right knee straight but not locked, rear toes point forward and WHOLE rear sole including HEEL planted firmly. Hips/trunk lean gently forward in same plane to stretch rear calf, back and neck neutral. Side-biased rear three-quarter view shows straight rear leg, grounded heel and exposed calf. Coral ONLY calf muscle bellies of rear RIGHT lower leg, no color on front leg/arms/trunk. Highlights indicate STRETCHED region, not contraction. No weights, box or other equipment. Entire figure and feet framed.",
+  "file": "calf-stretch.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Rear knee extended and heel firmly down, front knee bent with hands braced above it. Coral on rear calf only, highlights stretched region. Full feet/body and neutral-looking spine.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: front knee bent and rear leg straight with rear heel grounded, hands supported on front thigh. Coral marks the rear calf stretch target."
+  },
+  "output": {
+    "bytes": 1355145,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "f6a68d94c0db39dd9b6baf7ab6f78ab9b014b5d449a925466e4ebd6ffc3597d1"
+  }
+}

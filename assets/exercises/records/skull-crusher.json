@@ -1,0 +1,25 @@
+{
+  "id": "skull-crusher",
+  "name": "Skull Crusher",
+  "file": "skull-crusher.png",
+  "reference": "barbell-curl.png",
+  "pose": "Supine EZ-bar triceps extension during lowering, with upper arms raised and bar above forehead",
+  "highlight": [
+    "triceps"
+  ],
+  "accessibilityLabel": "Grey mannequin lying on a flat bench lowering an EZ bar toward the forehead, with triceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: EZ-BAR SKULL CRUSHER, bottom of a lying triceps extension. Equipment override: ONE short undulating EZ curl bar with equal modest plates and one horizontal flat charcoal bench; replace generic straight-bar requirement with EZ bar. Head, back and buttocks supported on bench, both feet planted. Both upper arms point nearly vertically toward ceiling and stay roughly shoulder-width apart, elbows flexed around 90 degrees so forearms angle toward head. Bar is held a few centimeters above forehead, visibly clear of face, not on chest. Both hands hold inner angled grips with closed grip and wrists aligned. Side-biased three-quarter camera shows elbow geometry, bar-to-forehead clearance and all support contacts. Highlight only posterior upper-arm triceps in coral; chest, biceps, shoulders grey.\nRender one square 1024x1024 PNG; whole figure and bench visible.",
+  "revisions": [],
+  "output": {
+    "bytes": 1464801,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "b0eb07312f8636c48a9f257bfdce5a82a12b1254092aff816e125734d569e2c8"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Supported head/back/hips and planted feet, continuous EZ bar, two grips, elevated upper arms and flexed elbows visible. Pose is mid-lowering rather than deepest bottom; bar remains clear of face. Motion unverified.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: lying EZ-bar elbow extension at mid-lowering, upper arms raised, elbows flexed, bar clear of face, head/back/hips supported and feet grounded."
+  }
+}

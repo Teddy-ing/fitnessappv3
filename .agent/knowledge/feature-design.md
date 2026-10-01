@@ -4,6 +4,14 @@ description: Feature specifications, on-device ML concepts, and UX decisions
 
 # Feature Design
 
+## Exercise illustration library — 2026-10-01
+
+- The owner approved the original grey humanoid and coral muscle treatment in the bench/squat/curl pilot, then requested expansion to every built-in exercise. Coverage is tracked in `assets/exercises/library-manifest.json`; the target is all 114 current seed IDs.
+- Use the original curl image as the fixed model/style reference. The pilot prompts live in `assets/exercises/generation-spec.json`; each production image has its exact prompt, corrections, hash and review in `assets/exercises/records/<id>.json`. The reusable process is in `../workflows/exercise-illustrations.md`. Each new pose needs independent visual review because image generation can drift or produce plausible mechanical errors.
+- Render reviewed assets in exercise information's shared About tab as a responsive square card capped at 380 layout units. Static assets keyed by stable built-in exercise ID support existing installations and offline builds without schema changes. Explicit image URLs take precedence; custom or unknown exercises retain their supplied image or category icon.
+- Preserve full-size source PNGs for future work and bundle quality-90 JPEG copies at the same dimensions. This substantially reduces the offline library size. `scripts/exercise-art.cjs` creates the registry and verifies exact ID coverage and source/output hashes; package only independently reviewed records.
+- Coral denotes visible primary target muscles, not measured activation. For stretches it marks target regions. Deep or clothing-covered muscles remain uncolored. These are representative stills with descriptions naming the visible phase; motion demonstrations would need additional reviewed poses or a rig.
+
 ## Workout Type Support (Beyond Weightlifting)
 
 **Problem:** Most apps are weight-lifting focused. Users want to track:

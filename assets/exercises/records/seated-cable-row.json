@@ -1,0 +1,26 @@
+{
+  "id": "seated-cable-row",
+  "name": "Seated Cable Row",
+  "pose": "Seated neutral-grip cable row with handle at lower ribs",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "Seated cable row with the handle pulled toward the torso and back muscles highlighted.",
+  "file": "seated-cable-row.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: SEATED CABLE ROW near top of pull. Simple bench and low-pulley weight-stack tower, full tower top and base in frame with8percent padding. Mannequin sits upright with knees slightly bent and both feet braced on separate angled footplates. Closed neutral grips on one triangular dual-grip row handle, pulled toward lower ribs, elbows bent alongside torso and slightly behind it, wrists straight. One taut continuous cable from handle center to tower low pulley, no cable through body. Rear-side three-quarter view shows back, both hands, full apparatus and bench. Coral lats and mid-back bellies only; central spine, arms and shoulders grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Upright seated neutral-grip row, bent elbows alongside torso, taut center cable and planted feet on footplates. Entire tower visible with narrow top margin. Far hand partly hidden by handle. Original unrecorded candidate replaced with newly recorded generation.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed regenerated image: connected low cable and neutral handle, supported seat, braced feet and bent knees, upright torso; whole tower fits frame."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1517279,
+    "sha256": "d0e16288627774e0233b532546e130cc53aad1897fc8ba7438bd7fbff3b8b5dc"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "dumbbell-floor-press",
+  "name": "Dumbbell Floor Press",
+  "pose": "Floor press bottom with upper arms supported on floor",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Dumbbell floor press at the bottom, with knees bent, feet planted and upper arms on the floor.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: DUMBBELL FLOOR PRESS, controlled bottom. Lie face-up directly on floor, head/upper back/buttocks supported, knees bent and both soles planted. One moderate graphite dumbbell in EACH closed overhand hand, dumbbells beside lower chest, wrists stacked vertically above elbows. Upper arms gently touch floor and tuck 45 degrees to torso, elbows roughly90 degrees. Neutral neck, mild natural lumbar space. Front-side three-quarter slightly above view shows both arms/weights and floor contact. Coral only pectoralis major chest, arms grey. No bench or barbell.",
+  "file": "dumbbell-floor-press.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Two independent dumbbells in closed grips; near forearm vertical with upper arm contacting floor, far upper arm naturally obscured; head/back/buttocks and both soles supported. Chest overlays stay on pectorals.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: head/back/pelvis and upper arms supported by floor, feet planted, dumbbells above elbows in bottom phase."
+  },
+  "output": {
+    "bytes": 1417305,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "830f46566264aa5de4acd6bae555ce0c553854ce5a6b4cae9baf30ba58ac3fe0"
+  }
+}

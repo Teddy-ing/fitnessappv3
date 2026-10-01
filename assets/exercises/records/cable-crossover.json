@@ -1,0 +1,25 @@
+{
+  "id": "cable-crossover",
+  "name": "Cable Crossover",
+  "pose": "Standing high-to-low cable crossover with handles together in front of lower torso",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Standing cable crossover with hands meeting in front and chest highlighted.",
+  "file": "cable-crossover.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: CABLE CROSSOVER, high-to-low cable fly at near-contracted position. Staggered stance, planted feet, modest forward lean from ankles/hips, spine neutral. Both arms curve in front of lower chest with soft elbow bend; two small single-hand D handles almost meet, one each closed neutral grip. Two taut cables run distinctly outward/upward from handles to high pulleys on the left and right uprights of a simple full cable station. Full stable station, overhead crossmember, weight stacks and both cable routes visible; cables do not pass through arms or torso. Front three-quarter camera showing both chest and machinery contacts. Chest coral only; arms grey.",
+  "revisions": [],
+  "output": {
+    "height": 1254,
+    "bytes": 1526449,
+    "sha256": "fc964d4a79aed09fadf6e951082dfb1e1a9f2b638dd9a5f6dff980a9ad5e9afe",
+    "width": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Two handles visibly connected to high pulleys by separate taut cables; staggered planted stance and soft elbows; coral chest only. Handles finish in front of lower torso. Frame visible, with schematic weight-stack routing.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: staggered stance, lightly bent arms finishing toward lower torso, two separate gripped handles and continuous cables to high pulleys; chest highlights."
+  }
+}

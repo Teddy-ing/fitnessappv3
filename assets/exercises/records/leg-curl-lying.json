@@ -1,0 +1,25 @@
+{
+  "id": "leg-curl-lying",
+  "name": "Lying Leg Curl",
+  "file": "leg-curl-lying.png",
+  "reference": "barbell-curl.png",
+  "pose": "Prone machine leg curl with knees flexed",
+  "highlight": [
+    "hamstrings"
+  ],
+  "accessibilityLabel": "Grey mannequin lying face down and curling the heels upward against a leg curl machine roller, with hamstrings highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: LYING LEG CURL mid-curl. Whole compact prone leg-curl machine: mannequin lies FACE DOWN on gently angled charcoal bench, chest hips and thighs supported. Knees at bench end and flexed about80degrees so both shoes lift upward toward buttocks. Single padded ankle roller rests across BACKS of lower calves just ABOVE heels, supported by a connected lever pivot aligned with knees, modest plate-loaded mechanism at side. Hands grip front handles next to head; neutral neck gazes down. Rear-side three-quarter view makes full body, both bent knees, roller behind ankles and complete machine base visible. Highlight exposed HAMSTRINGS on backs of thighs below shorts only. Feet/ankles/calf muscles grey.",
+  "revisions": [],
+  "output": {
+    "bytes": 1590858,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "3cdabfbe049bce0819f541d25689696b712a0b6047ff6e8cdc754e72051b8f5b"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Prone chest, hips and thighs supported; knees flexed with ankle roller on rear lower calves near heels; lever connects roller to weight mechanism. Hamstring overlay stays below shorts and above knee. Far hand partly hidden by body.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: prone supported torso/hips, flexed knees, roller contacting posterior ankles and connected plate-loaded lever; near hand grips support handle."
+  }
+}

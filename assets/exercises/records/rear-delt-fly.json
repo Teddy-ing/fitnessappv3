@@ -1,0 +1,26 @@
+{
+  "id": "rear-delt-fly",
+  "name": "Rear Delt Fly",
+  "pose": "Hip-hinged rear delt fly with arms spread to sides",
+  "highlight": [
+    "posterior deltoids",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "Bent-over dumbbell rear delt fly with arms spread and rear shoulders and mid-back highlighted.",
+  "file": "rear-delt-fly.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: BENT-OVER DUMBBELL REAR DELT FLY at top. Standing feet hip width, soft knees, deep hip hinge with straight torso about25degrees above horizontal, neutral head looks toward floor. Both arms spread outward near shoulder level relative to torso, elbows slightly bent15degrees, closed neutral grips holding separate matching dumbbells, no row-like deep elbow bend. Rear-side three-quarter camera exposes posterior shoulders/back and hinge, both weights/feet. Coral posterior deltoid bellies and mid-back between shoulder blades only. Lats, spine and upper traps grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Visible hip hinge and bent knees, arms spread outward with soft elbows and two closed dumbbell grips. Neutral head follows torso inclination; posterior deltoids and mid-back coral, spine grey.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: forward hip hinge with soft knees, arms opened to sides holding dumbbells; posterior shoulder/upper-back cues."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1443224,
+    "sha256": "0826dc49bceab58b4223bb30198063aaf164bca4c98107d36bd7fc3e94962bfa"
+  }
+}

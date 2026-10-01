@@ -1,0 +1,25 @@
+{
+  "id": "box-jumps",
+  "name": "Box Jumps",
+  "pose": "Landing phase on a low plyometric box with both feet supported",
+  "highlight": [
+    "visible quadriceps"
+  ],
+  "accessibilityLabel": "Box jump shown at landing on a low box, with both feet supported and knees bent.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BOX JUMPS, single representative LANDING phase, not takeoff or full sequence. One low sturdy plain charcoal rectangular plyometric box about mid-shin height with broad level nonslip top and credible four-side geometry. Figure has just landed ON the box with both entire shoe soles planted shoulder width on its top, hips and knees comfortably flexed to absorb landing, knees align with toes, torso slightly inclined with neutral back, arms extended forward naturally for balance at chest height. Feet fully contained well away from edges; moderate shallow squat, no excessive knees to chest. Side-biased front three-quarter camera shows top surface, feet contact, bent knees and full figure/equipment. Coral only exposed quadriceps above kneecaps; glutes covered under shorts, arms and calves grey. No arrows, ghost poses or airborne feet.",
+  "file": "box-jumps.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Both entire soles on broad box top; hips and knees bent in landing posture, arms forward for balance; full box and body visible. Quads coral above knees and shorts opaque. Representative landing does not show takeoff or full jump.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: supported landing on complete box, both feet fully on surface with flexed hips/knees and balanced arms; quadriceps target regions; label describes landing phase."
+  },
+  "output": {
+    "bytes": 1463420,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "59c91335edb935e176a3bf822bc2872d3610d877f1f8009c1f7aaa6d5e70af6d"
+  }
+}

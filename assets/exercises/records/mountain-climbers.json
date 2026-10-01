@@ -1,0 +1,26 @@
+{
+  "id": "mountain-climbers",
+  "name": "Mountain Climbers",
+  "pose": "High plank with one knee drawn toward chest",
+  "highlight": [
+    "deltoids",
+    "abdominal wall"
+  ],
+  "accessibilityLabel": "Mountain climber shown with hands planted in a high plank and one knee drawn toward the chest.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: MOUNTAIN CLIMBERS, one representative knee drive from HIGH PLANK. Two palms flat shoulder width on floor, fingers spread forward, wrists directly under shoulders, straight supporting arms without hyperextension. One leg extended behind with toes on ground, the other hip and knee flexed bringing knee toward chest under torso with foot clear of floor. Hips level near shoulder height rather than pike, long neutral back and neck, gaze down slightly in front. Side-biased front three-quarter view with both arms, driven knee and extended leg distinguishable. Coral ONLY deltoid shoulder regions and visible abdominal wall/obliques, all thighs and arms below shoulders grey. Full hands, head and shoes visible. No equipment or arrows, single figure and phase.",
+  "file": "mountain-climbers.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Two planted palms under shoulders, coherent high-plank body and one bent knee driven underneath; opposite foot supported. Deltoid/abdominal coral only. The bent knee is partly occluded by nearer arm as expected.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: supported palms below shoulders, one leg extended and opposite knee forward; anatomy and ground contacts coherent."
+  },
+  "output": {
+    "bytes": 1402851,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "0fac531db43abafd7d8ce554ed6b7a166986c28b316a76a22b514bf118bfad3e"
+  }
+}

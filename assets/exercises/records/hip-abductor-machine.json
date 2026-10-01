@@ -1,0 +1,23 @@
+{
+  "id": "hip-abductor-machine",
+  "name": "Hip Abductor Machine",
+  "file": "hip-abductor-machine.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated hip abduction with knees apart against outer-thigh pads",
+  "highlight": [],
+  "accessibilityLabel": "Grey mannequin seated in a hip abductor machine with knees pressing outward against pads.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: SEATED HIP ABDUCTOR MACHINE, knees spread in abducted position. Whole compact weight-stack machine, upright torso on backrest, butt on seat, knees90deg and thighs spread symmetrically about35deg each side. TWO vertical padded blocks press OUTER SIDES of thighs just above knees, so knees push OUTWARD against pads. Pads sit OUTSIDE legs, not between knees. Each connected side arm supports matching footpeg/platform below pad; both shoes on those supports, hands on seat-side handles. Front three-quarter view clearly shows outward knees and outside pad placement, full frame/back weight stack. Glute medius/abductors covered by unchanged charcoal shorts, so NO CORAL at all. No quad or inner-thigh highlights.",
+  "revisions": [],
+  "output": {
+    "bytes": 1658074,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "96cd33cc630e681d49354776b068c1b9947d2f26ab3fdb23aaba6a0ed60c1a0b"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Knees apart against pads on outer distal thighs, back supported and feet on platforms; hands grasp handles. Covered abductors/glutes intentionally have no overlay. Machine linkage is schematic.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: outer-thigh pads beside spread knees, supported seat/back, hands on handles and feet on platforms; covered target glutes left grey."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "leg-extension",
+  "name": "Leg Extension",
+  "file": "leg-extension.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated machine leg extension with knees nearly straight",
+  "highlight": [
+    "quadriceps"
+  ],
+  "accessibilityLabel": "Grey mannequin extending both legs against the shin roller of a seated leg-extension machine, with quadriceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: SEATED LEG EXTENSION MACHINE near top. Equipment override only one simple selectorized leg-extension machine. Sit upright back/pelvis against padded seat and backrest, thighs supported seat, knees just beyond front seat edge. Machine rotation pivot aligned with knee axis. Both lower legs lifted near horizontal, knees slightly soft. A SINGLE horizontal padded roller rests against FRONT OF BOTH LOWER SHINS just above ankles, resisting knee extension; not behind heels. Feet neutral. Hands grip seat handles beside hips. Roller attached to coherent lever leading to visible knee pivot, with simple resistance stack and base. Front-side three-quarter camera shows roller/shin contacts and both knees, entire machine. Highlight visible quadriceps only, knees/shins grey.\nRender square 1024x1024 PNG. Complete machine fits inside canvas, no cropped parts.",
+  "revisions": [],
+  "output": {
+    "bytes": 1653608,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "6c13708e495acfc2f69a4d667c634d5aa645168d02efe8e8edc639815e0e6e49"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Seated support, thigh placement, hands on side handles, both lower shins against anterior roller and nearly extended knees visible. Full machine, lever and stack coherent; exact mechanical pivot alignment not established from front-biased view.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: supported seated pelvis, paired legs partially extended with roller across lower shins and connected linkage. Machine is schematic; exact pivot-axis alignment is not established from this view."
+  }
+}

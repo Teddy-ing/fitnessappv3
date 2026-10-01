@@ -1,0 +1,25 @@
+{
+  "id": "goblet-squat",
+  "name": "Goblet Squat",
+  "file": "goblet-squat.png",
+  "reference": "barbell-curl.png",
+  "pose": "Dumbbell goblet squat near parallel holding one vertical dumbbell at chest",
+  "highlight": [
+    "quadriceps"
+  ],
+  "accessibilityLabel": "Grey mannequin holding a dumbbell at the chest while squatting, with quadriceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: DUMBBELL GOBLET SQUAT bottom near parallel. Equipment override ONLY ONE vertical dumbbell held close at upper chest, no barbell or bench. Both palms cup underside of top dumbbell head, fingers wrap securely; lower head hangs in front of sternum clear of body. Elbows point down inside knees. Feet slightly wider than hips, toes slightly outward, whole soles planted. Hips between heels, thighs near horizontal, knees follow toes, upright neutral torso. Side-biased front three-quarter shows hand support and squat depth. Highlight only visible quadriceps above kneecaps; glutes covered by shorts.\nRender square 1024x1024 PNG. Full figure and all equipment.",
+  "revisions": [],
+  "output": {
+    "bytes": 1425865,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "f3f1207f7e4ba2b42a3af5d01dc868e1e86ce2f585fe2094269499cd83490eb8"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "One vertical dumbbell supported by both hands at chest, squat stance with planted soles, aligned knees and upright torso visible. Quadriceps overlays remain above knees. Depth judged from front-biased perspective.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: two hands support upper dumbbell end near chest, elbows inside knees, hips lowered and feet planted."
+  }
+}

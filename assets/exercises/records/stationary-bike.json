@@ -1,0 +1,32 @@
+{
+  "id": "stationary-bike",
+  "name": "Stationary Bike",
+  "pose": "Seated upright stationary cycling with one pedal lower and the opposite higher",
+  "highlight": [
+    "visible quadriceps",
+    "visible hamstrings"
+  ],
+  "accessibilityLabel": "Seated stationary cycling with both hands on the handlebars and feet on opposite pedals.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: STATIONARY BIKE. Seated cycling posture on one plain charcoal upright indoor exercise bicycle. Complete stable base supports, flywheel housing, saddle, pedals connected by a coherent crank with opposite pedals 180 degrees apart, and handlebar stem. Seat supports buttocks, torso comfortably inclined forward, neutral neck, shoulders relaxed. Closed relaxed hands on both handlebars, elbows softly bent. Both shoes contact their respective pedals, one knee near the low-pedal position but slightly bent, opposite knee flexed with high pedal; natural saddle height. Side three-quarter camera making crank, knee bends and contacts legible. Highlight only visible quadriceps and visible hamstrings below shorts, with no coral calves or arms. No outdoor wheels, scenery or barbell.",
+  "file": "stationary-bike.png",
+  "reference": "barbell-curl.png",
+  "revisions": [
+    {
+      "reason": "Initial highlight extended below knee",
+      "prompt": "Use case: precise-object-edit. Input image 1 is the stationary cycling EDIT TARGET; image 2 is the canonical mannequin STYLE/IDENTITY reference. Make one correction only: REMOVE every coral-colored mark BELOW BOTH KNEES, especially the long thin coral stripe down the nearer outer shin. Every knee, calf, shin and ankle must be entirely matte grey. Retain coral only on exposed quadriceps and hamstring regions of the THIGHS ABOVE the kneecaps. Keep the same character identity, pose, clothing, charcoal stationary bike geometry, hands gripping handlebars, both feet on pedals, camera, framing, background and lighting exactly. No other changes.",
+      "result": "Removed lower-leg coral while retaining thigh targets"
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Complete supported indoor bike and full figure visible; hands on handlebars and shoes on opposing pedals, seated posture and knee flexion coherent. Targeted revision removed stray shin color; lower legs remain grey. Far crank is occluded by housing.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: seated rider, both hands on bars, shoes on opposing strapped pedals, complete stable frame; corrected grey lower legs with thigh targets."
+  },
+  "output": {
+    "bytes": 1488014,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9a92406e756444abec4f15c087a42a3ab4be6c48ce4984b1583a21dbae7613d3"
+  }
+}

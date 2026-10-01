@@ -1,0 +1,25 @@
+{
+  "id": "side-plank",
+  "name": "Side Plank",
+  "file": "side-plank.png",
+  "reference": "barbell-curl.png",
+  "pose": "Forearm side plank with stacked feet",
+  "highlight": [
+    "obliques"
+  ],
+  "accessibilityLabel": "Grey mannequin holding a side plank on one forearm with feet stacked and side abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: FOREARM SIDE PLANK. Body on LEFT side, left elbow directly below left shoulder, left forearm on floor perpendicular to body with palm flat. Both legs straight, right foot stacked atop left foot; outer edge of left shoe supports lower end. Lift hips to straight shoulder-hip-ankle line, torso faces CAMERA and shoulders/hips stacked, no sag. Right hand rests on right hip with elbow pointing upward. Neutral head aligned spine looking forward. LOW front-side near-orthographic view revealing full body, elbow contact, stacked shoes and exposed flank. Highlight visible OBLIQUES and adjacent abdominal region only, no shoulder/arm/leg overlay. No mat/equipment.",
+  "revisions": [],
+  "output": {
+    "bytes": 1369781,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9212a257dc38412fd3298952801bbebacecd4b81fa023382f64923a5709fb75d"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "One forearm and outer edge of stacked feet support body; supporting elbow under shoulder and free hand on hip. Legs straight, hips elevated near shoulder-to-ankle line. Visible flank overlay only.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: forearm and stacked feet support raised hips, shoulder near supporting elbow and broadly aligned trunk. Visible oblique target overlay; hidden supporting-side anatomy is not illustrated."
+  }
+}

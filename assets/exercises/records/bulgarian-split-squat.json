@@ -1,0 +1,25 @@
+{
+  "id": "bulgarian-split-squat",
+  "name": "Bulgarian Split Squat",
+  "file": "bulgarian-split-squat.png",
+  "reference": "barbell-curl.png",
+  "pose": "Dumbbell rear-foot-elevated split squat in lowered position",
+  "highlight": [
+    "quadriceps"
+  ],
+  "accessibilityLabel": "Grey mannequin performing a split squat with rear foot supported on a bench, holding dumbbells, with quadriceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BULGARIAN SPLIT SQUAT, rear-foot-elevated lowered position. Equipment override two dumbbells one in each hand plus one flat charcoal bench behind body. Front whole foot planted far enough forward for knee to bend around90 degrees; rear foot TOP/instep rests securely on bench pad, rear knee bent and hovering over floor. Both legs in hip-width tracks; torso modest forward lean with neutral spine. Arms hang straight with neutral dumbbell grips either side of hips, no weight touching knee. Side-biased three-quarter camera clearly shows rear shoe contact on bench and front foot flat, full bench legs stable. Highlight exposed quadriceps only; glutes remain behind shorts uncolored.\nRender square 1024x1024 PNG; entire figure/equipment inside frame.",
+  "revisions": [],
+  "output": {
+    "bytes": 1454648,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "c72ec3d4f47be8124ab19f89f6ff866108299453564654d2ecd989fca08775c0"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Rear instep rests on bench, front sole planted, two hanging dumbbells, bent front/rear knees and coherent squat posture visible. Exposed quadriceps highlighted; bench complete and stable. Motion unverified.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: rear instep supported on bench, front foot planted and both knees flexed; hanging dumbbells and complete bench are coherent."
+  }
+}

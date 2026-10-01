@@ -1,0 +1,30 @@
+{
+  "id": "tricep-dip",
+  "name": "Tricep Dip",
+  "file": "tricep-dip.png",
+  "reference": "barbell-curl.png",
+  "pose": "Parallel-bar bodyweight dip near the bottom with upright torso and elbows bent around 90 degrees",
+  "highlight": [
+    "triceps"
+  ],
+  "accessibilityLabel": "Grey mannequin lowering between parallel dip bars, with triceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: PARALLEL-BAR TRICEPS DIP, controlled lower position. Equipment override: ONLY a stable freestanding pair of parallel waist-height charcoal dip rails connected to a credible floor base, no barbell, no bench. Both palms grasp rails with neutral wrists; each hand on a separate rail, elbows bent near 90 degrees and directed behind torso. Shoulders no lower than elbows. Upright torso with only mild natural forward angle; body suspended between rails, knees bent with feet behind and off ground. No chest-dip exaggerated forward lean. Side-biased front three-quarter view shows hands bearing on the two rails, elbow bend and feet hanging clear. Highlight visible posterior triceps only, chest and deltoids grey. Entire stand fits 7-9 percent inside canvas.\nRender one square 1024x1024 PNG. Highlight no muscles through charcoal shorts.",
+  "revisions": [
+    {
+      "reason": "Removed coral patch from lateral torso",
+      "prompt": "Use case: precise-object-edit / scientific-educational. Input 1 EDIT TARGET, input 2 canonical identity reference. Keep all pose, rails, hands, face, body, charcoal shorts and shoes, framing and background unchanged. Correct ONLY the muscle overlay. The coral patch on the SIDE OF THE RIBCAGE / LATISSIMUS just below the left-image armpit must become grey matching surrounding torso. Retain the coral triceps patch on the BACK OF THE UPPER ARM above the elbow. Only actual visible posterior upper-arm triceps muscle may be coral. No coral on ribcage, chest, latissimus or shoulder. Do not invent a visible far arm highlight when hidden by torso."
+    }
+  ],
+  "output": {
+    "bytes": 1349847,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "2ea98b8a195519acf0395d480a4a6fc5e76a4d22e1f8fc7284e98e0e31cd3e64"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Both hands bear on separate parallel rails; elbows bent, torso upright, feet suspended. Corrected spurious torso highlight. Far upper arm partially occluded; visible near triceps follows posterior upper arm.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: upright suspended dip, bent elbows and knees, two coherent grips on grounded parallel bars, visible triceps highlight with corrected grey torso."
+  }
+}

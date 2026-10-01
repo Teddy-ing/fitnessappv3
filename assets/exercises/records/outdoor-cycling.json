@@ -1,0 +1,26 @@
+{
+  "id": "outdoor-cycling",
+  "name": "Outdoor Cycling",
+  "file": "outdoor-cycling.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated pedaling position on a complete bicycle",
+  "highlight": [
+    "visible quadriceps",
+    "visible hamstrings"
+  ],
+  "accessibilityLabel": "Outdoor cycling in a seated pedaling position, wearing a helmet and holding the handlebars.",
+  "revisions": [],
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: OUTDOOR CYCLING, one representative pedaling position on a plain unbranded charcoal hybrid bicycle. Although app equipment metadata is none, this activity requires a bicycle. Two equal round wheels, complete coherent diamond frame, front fork, saddle, chain drivetrain and opposing crank pedals. Both tires touch level ground. Rider seated on saddle, mild forward torso inclination, soft elbows, hands on flat handlebars, feet on opposite pedals with one knee bent and other leg extended but knee unlocked. Fit bike to natural body proportions. Add a plain charcoal correctly fitted cycle helmet with chin strap for this outdoor activity, preserving head identity below helmet and the SAME shorts and shoes. Side-biased three-quarter camera with complete bike and figure, crank and contacts legible, plain studio backdrop without scenery. Coral ONLY on exposed thigh quadriceps and posterior hamstrings; all skin below knees remains grey. No calf or shin highlight, no colors painted on shorts. No barbell.",
+  "review": {
+    "status": "reviewed",
+    "notes": "Complete bicycle with coherent frame, wheels, chain and opposing pedals; seated rider, both hands on bars, feet on pedals and fitted helmet. Highlights limited to visible thighs, no clothing overlay. Single phase does not demonstrate balance or motion.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: seated cyclist with helmet, hands on grips and feet on opposing pedals; complete bicycle, connected cranks/chain/wheels and plausible posture."
+  },
+  "output": {
+    "bytes": 1729169,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "a71b718c26a488c5a3e474837dca3de8f4a042885c4b3c876e793312b857fc41"
+  }
+}

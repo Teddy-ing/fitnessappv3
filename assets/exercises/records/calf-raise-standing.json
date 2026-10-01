@@ -1,0 +1,25 @@
+{
+  "id": "calf-raise-standing",
+  "name": "Standing Calf Raise",
+  "file": "calf-raise-standing.png",
+  "reference": "barbell-curl.png",
+  "pose": "Standing machine calf raise with heels elevated",
+  "highlight": [
+    "calves"
+  ],
+  "accessibilityLabel": "Grey mannequin lifting the heels in a standing calf raise machine, with calf muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: STANDING MACHINE CALF RAISE, top position. Whole compact shoulder-pad calf machine. Upright torso, knees straight without hyperextension, feet hip-width, balls of both feet resting securely on raised narrow footblock. BOTH HEELS visibly raised and free beyond rear edge of block, ankles plantarflexed. Two padded shoulder rests on trapezius from connected lever or guided carriage; hands lightly hold handles in front shoulders. REAR-side three-quarter view makes heels elevated, forefoot contact and bilateral calf bellies clearly visible. Highlight exposed CALVES ONLY below knees above Achilles tendons. Machine whole base and connected modest weight stack included; no barbell, no cropped parts.",
+  "revisions": [],
+  "output": {
+    "bytes": 1426348,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "fcfea54d0b068ce7c55c24a226eff472260e0511c9f8b3765fe6b3cff8507978"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Standing under shoulder pads with hands holding handles; forefeet on block and both heels visibly raised, knees straight. Calf overlays below knee and above Achilles; full connected machine visible.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: forefeet on raised platform and heels elevated, straight legs, shoulder pads and hand grips on complete machine."
+  }
+}

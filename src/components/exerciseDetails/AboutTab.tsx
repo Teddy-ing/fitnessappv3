@@ -1,7 +1,7 @@
 /**
  * About Tab — Exercise Details
  *
- * Form guide with exercise icon placeholder, metadata pills,
+ * Form guide with exercise illustration, metadata pills,
  * numbered instructions, and multi-note exercise notes with Save button.
  */
 
@@ -24,22 +24,11 @@ import { getExerciseById } from '../../services/exerciseService';
 import { Exercise } from '../../models/exercise';
 import { ExerciseNote } from '../../models/exerciseDetails';
 import { MUSCLE_LABELS } from '../../models/muscleGroups';
+import ExerciseIllustration from './ExerciseIllustration';
 
 // ============================================================
 // Helpers
 // ============================================================
-
-/** Map category to a MaterialIcons name */
-function getCategoryIcon(category: string): keyof typeof MaterialIcons.glyphMap {
-    switch (category) {
-        case 'cardio': return 'directions-run';
-        case 'stretch':
-        case 'mobility':
-        case 'warmup': return 'self-improvement';
-        case 'plyometric': return 'sports-gymnastics';
-        default: return 'fitness-center';
-    }
-}
 
 /** Format equipment name for display */
 function formatEquipment(eq: string): string {
@@ -202,14 +191,7 @@ export default function AboutTab({ exerciseId }: AboutTabProps) {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
         >
-            {/* Icon placeholder */}
-            <View style={styles.iconContainer}>
-                <MaterialIcons
-                    name={getCategoryIcon(exercise.category)}
-                    size={48}
-                    color={colors.accent.primary}
-                />
-            </View>
+            <ExerciseIllustration exercise={exercise} />
 
             {/* Metadata pills */}
             <View style={styles.pillRow}>
@@ -306,18 +288,6 @@ const styles = StyleSheet.create({
     loadingText: {
         fontSize: typography.size.sm,
         color: colors.text.secondary,
-    },
-
-    // Icon
-    iconContainer: {
-        width: 96,
-        height: 96,
-        borderRadius: borderRadius.xl,
-        backgroundColor: colors.background.secondary,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        marginBottom: spacing.md,
     },
 
     // Metadata pills

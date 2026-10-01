@@ -1,0 +1,26 @@
+{
+  "id": "bent-over-row-dumbbell",
+  "name": "Dumbbell Bent-Over Row",
+  "pose": "Two-dumbbell bent-over row with hip hinge and bent elbows",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "Bent-over row with two dumbbells beside the lower ribs and back highlighted.",
+  "file": "bent-over-row-dumbbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: TWO-ARM DUMBBELL BENT-OVER ROW, top of row, no bench. Both feet planted hip width, knees moderately bent, hips pushed back, torso NEAR HORIZONTAL about 25 degrees above floor, neutral flat back/neck. Two separate equal graphite dumbbells held in neutral palms-facing grips beside lower ribs; elbows bent behind torso and wrists straight. No single-arm bench-supported variation. Camera rear-side three-quarter, slightly more side than rear, clearly shows deep hinge and near hand holding dumbbell; far dumbbell visible beyond body. Coral lats and mid-back muscle regions only. All arms/legs grey; shorts uncolored.",
+  "revisions": [],
+  "output": {
+    "height": 1254,
+    "sha256": "5dbdb803e9d1dd7de266650b52988e15a4927159b20697da7aabe7addd32fb0c",
+    "bytes": 1508594,
+    "width": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Two distinct dumbbells at lower torso, neutral near grip, bent elbows and visible hip hinge; planted feet and back/lats overlay. Rear angle partly occludes far dumbbell/grip; torso angle less horizontal than brief.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: paired dumbbells at sides of torso, elbows drawn back, moderate hinge and soft knees. Far hand contact is hidden by torso."
+  }
+}

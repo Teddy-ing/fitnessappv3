@@ -1,0 +1,25 @@
+{
+  "id": "calf-raise-seated",
+  "name": "Seated Calf Raise",
+  "file": "calf-raise-seated.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated machine calf raise with heels elevated",
+  "highlight": [
+    "calves"
+  ],
+  "accessibilityLabel": "Grey mannequin seated with knees beneath pads and heels raised in a calf machine, with calf muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: SEATED CALF RAISE machine, heels raised top. Whole compact plate-loaded calf machine. Torso upright seated on padded stool, knees90deg, TWO thigh pads press onto lower thighs just ABOVE knees, mounted on connected horizontal lever with small weight plates. Both forefeet on narrow raised footblock, heels elevated behind block and unsupported. Hands hold handles atop thigh-pad assembly, knees remain bent. Side-biased REAR three-quarter view clearly shows bent knees, thigh pads, toe contact and elevated heels, calf bellies. Highlight exposed calf muscle bellies only, ankles and Achilles grey. Complete machine and feet within square.",
+  "revisions": [],
+  "output": {
+    "bytes": 1462463,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "3712ed702e01a6deadb367decc105e8ef6be27696337e71e79d52a8b40815b62"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Seated with thigh pads above knees and hands holding handles; knees bent, forefeet contact block with heels slightly raised. Calf overlays isolated below knees. Mechanism depicted schematically.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: bent knees beneath thigh pads, forefeet supported and heels elevated, connected plate-loaded lever."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "rowing-machine",
+  "name": "Rowing Machine",
+  "pose": "Rowing machine finish with legs extended and handle at lower ribs",
+  "highlight": [
+    "visible quadriceps",
+    "visible back"
+  ],
+  "accessibilityLabel": "Rowing machine shown at the finish, legs extended and handle drawn toward the lower ribs.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: ROWING MACHINE, one representative FINISH position. A complete plain charcoal indoor rower has front flywheel housing, single sliding-seat rail, supported floor-contact legs, two angled footplates with straps, and one horizontal handle connected by a taut chain into the flywheel. Person seated near rear of rail, legs extended but knees not forcefully locked, feet secured on footplates, pelvis on seat. Torso modestly reclined about 10 degrees from vertical, natural long neutral back, handle drawn to lower ribs/upper abdomen with both closed overhand hands, straight wrists and elbows behind torso. Chain straight from handle to flywheel outlet, no slack or disconnected chain. Camera side-biased rear three-quarter, full equipment and body with visible back/side and both arms coherent. Coral only visible quadriceps above knees and broad back muscle bellies; no arms, lower legs or clothes highlighted. This still represents the finish, not whole rowing sequence.",
+  "file": "rowing-machine.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Seated row finish has extended legs, strapped feet, handle at lower ribs and connected taut chain; back and thigh highlights remain above knees and outside shorts. Full machine and figure visible. Far hand contact is partly occluded by nearer grip; still cannot establish stroke sequence.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: finish position with extended legs, elbows behind torso, hands holding handle with taut chain to flywheel, strapped feet and supported sliding seat."
+  },
+  "output": {
+    "bytes": 1473454,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "339b21268a2578c6e8dd9c7d35bc9172098b15118e13a5323b20a3f82c7139d1"
+  }
+}
