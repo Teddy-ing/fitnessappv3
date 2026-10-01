@@ -91,9 +91,26 @@ description: Feature specifications, on-device ML concepts, and UX decisions
 - [WHO physical-activity guidance](https://www.who.int/news-room/fact-sheets/detail/physical-activity) informs the aerobic and mixed options. Starting sessions build gradually; a short starter plan is not advertised as already meeting the full recommended weekly activity target.
 - [ACSM flexibility guidance](https://pubmed.ncbi.nlm.nih.gov/21694556/) supports regular flexibility work and gradual individual progression. Stretch templates use short comfortable holds, repeated across the week, rather than maximal or painful stretching.
 
-### Next task: optional tutorial
+### Optional quick-start tutorial (2026-09-30)
 
-The owner requested a tutorial as the next task. Experienced users should be led to the option for creating their own split, since onboarding deliberately does not assign one to them. Keep the tutorial optional and preserve fast logging.
+The tutorial teaches the first workout in three short pages: start, log a set, finish and find history. It is separate from setup and never blocks logging.
+
+- Fresh installs get a compact, dismissible Quick start card on Workout home after completing or skipping setup. Existing installs are marked skipped on upgrade. Profile → Settings → Quick start tutorial reopens it at any time.
+- Skip and Back to app are always available. Done closes the guide without starting anything. The sample set is an illustration in the selected weight unit; viewing the guide never creates exercises, sessions, splits, or history.
+- Experienced lifters see a split-building explanation first, with an immediate Create my split action. A template is a reusable workout; a split orders workouts and rest days. The action opens the existing builder. Creating a split does not activate it: the guide explicitly asks the user to select it from the list after saving.
+- Start guided workout starts the current planned workout or an empty session when no current template exists. If a workout or history edit is already open, it is preserved. Contextual tips appear only after this explicit choice, follow actual exercise/set state, and can be skipped. They are hidden during keyboard entry, exercise picking, settings, and historical edits. No spotlight overlays or forced practice sets.
+- Completing a saved workout ends guidance. Failed saves retain the workout and guidance. The existing swipe hint is suppressed while the tutorial is available or active to avoid competing instructions.
+- Version 1 tutorial progress has available/active/skipped/completed states, stored separately in `user_settings.tutorial_progress` through migration v21. Writes use the existing database lock. Full local/cloud backups preserve progress, pre-v21 restores suppress the invitation, malformed values fail closed, and Clear All Data resets it. Preferences, routine selection, and workout history remain owned by their existing flows.
+- On iOS, navigation or opening the split builder waits for the guide's native dismissal. Android dispatches immediately. Repeated action taps are guarded.
+
+**Research (official public guides, reviewed 2026-09-30):**
+
+- [Strong: first workout](https://help.strongapp.io/article/229-my-first-workout) organizes instruction around starting empty or from a template, logging/checking sets, then finishing. This informed the tutorial's short task sequence.
+- [Hevy: workouts versus routines](https://help.hevyapp.com/hc/en-us/articles/33703513582871-Workouts-vs-Routines-in-Hevy-What-They-Mean-and-How-to-Use-Them) distinguishes saved plans from live sessions and offers both planned and empty starts. This informed the brief template/split definitions and keeping both starting paths available.
+- [Hevy: logging guide](https://www.hevyapp.com/features/track-workouts/) documents adding exercises, entering values, marking sets complete, and optional advanced controls. This supports deferring advanced features until the user needs them.
+- [Fitbod: new-user guide](https://help.fitbod.me/hc/en-us/articles/30721771750039-Getting-Started-with-Fitbod-A-New-User-s-Guide) starts with personalized setup and offers exercise instructions when needed. This app already has optional preference setup; the tutorial focuses on using its interface.
+
+These sources document supported workflows and help content. They do not establish whether every current app/platform version presents an in-app tutorial. The optional invitation, three-page design, and opt-in live tips are this app's product decisions.
 
 ---
 

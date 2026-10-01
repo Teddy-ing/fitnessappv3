@@ -17,6 +17,7 @@ import GoalCelebrationOverlay from './src/components/goals/GoalCelebrationOverla
 import { useWorkoutStore } from './src/stores/workoutStore';
 import { useRestTimerLifecycle } from './src/hooks/useRestTimerLifecycle';
 import OnboardingGate from './src/components/onboarding/OnboardingGate';
+import TutorialProvider from './src/components/tutorial/TutorialProvider';
 
 function ReadyApp() {
   useEffect(() => {
@@ -25,7 +26,7 @@ function ReadyApp() {
     });
   }, []);
 
-  return <><AppNavigator /><GoalCelebrationOverlay /></>;
+  return <TutorialProvider><AppNavigator /><GoalCelebrationOverlay /></TutorialProvider>;
 }
 
 export default function App() {

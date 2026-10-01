@@ -36,6 +36,7 @@ import ImportBottomSheet from '../components/settings/ImportBottomSheet';
 import CloudBackupSection from '../components/settings/CloudBackupSection';
 import { invalidateWeightUnitCache } from '../hooks/useWeightUnit';
 import { openRestTimerAlarmSettings } from '../services/notificationService';
+import { useTutorial } from '../components/tutorial/TutorialProvider';
 
 // ============================================================
 // Segment options
@@ -78,6 +79,7 @@ const TRAINING_PHASE_OPTIONS = [
 // ============================================================
 
 export default function SettingsScreen() {
+    const tutorial = useTutorial();
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [showExportSheet, setShowExportSheet] = useState(false);
@@ -382,6 +384,12 @@ export default function SettingsScreen() {
                 {/* ═══════════════ SUPPORT ═══════════════ */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>SUPPORT</Text>
+
+                    <SettingNavigationRow
+                        icon="help-outline"
+                        label="Quick start tutorial"
+                        onPress={tutorial.openGuide}
+                    />
 
                     <SettingNavigationRow
                         icon="star-outline"

@@ -91,7 +91,7 @@ afterEach(async () => {
 
 describe('onboarding migration and persistence', () => {
     it('leaves a fresh database eligible for optional onboarding', async () => {
-        expect(sqlite.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 20 });
+        expect(sqlite.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 21 });
         expect(await getOnboardingProfile()).toBeNull();
         expect(shouldShowOnboarding(await getOnboardingProfile())).toBe(true);
         expect(sqlite.prepare('SELECT has_completed_onboarding FROM user_settings').get()).toMatchObject({ has_completed_onboarding: 0 });

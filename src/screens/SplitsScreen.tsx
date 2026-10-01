@@ -31,11 +31,13 @@ import { Split } from '../models/split';
 
 interface SplitsScreenProps {
     visible: boolean;
+    /** Open the real builder from the optional quick-start guide. */
+    startCreating?: boolean;
     onClose: () => void;
     onSplitSelected?: (split: Split | null) => void;
 }
 
-export default function SplitsScreen({ visible, onClose, onSplitSelected }: SplitsScreenProps) {
+export default function SplitsScreen({ visible, startCreating = false, onClose, onSplitSelected }: SplitsScreenProps) {
     const [splits, setSplits] = useState<Split[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [activeSplitState, setActiveSplitState] = useState<Split | null>(null);
@@ -79,9 +81,11 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
 
     useEffect(() => {
         if (visible) {
+            setEditingSplit(null);
+            setIsCreating(startCreating);
             loadData();
         }
-    }, [visible, loadData]);
+    }, [visible, startCreating, loadData]);
 
     const handleSelectSplit = async (split: Split | null) => {
         try {

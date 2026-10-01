@@ -32,6 +32,8 @@ import WeeklyTracker from '../components/WeeklyTracker';
 import { TemplatePickerModal } from '../components';
 import SplitsScreen from './SplitsScreen';
 import TemplatesScreen from './TemplatesScreen';
+import { useTutorial } from '../components/tutorial/TutorialProvider';
+import TutorialInvitation from '../components/tutorial/TutorialInvitation';
 
 interface WorkoutHomeViewProps {
     // Data
@@ -69,6 +71,7 @@ export default function WorkoutHomeView({
     onDataRefresh,
     onSettingsPress,
 }: WorkoutHomeViewProps) {
+    const tutorial = useTutorial();
     // Modal visibility — owned locally, not passed from parent
     const [showSplitsModal, setShowSplitsModal] = useState(false);
     const [showTemplatesModal, setShowTemplatesModal] = useState(false);
@@ -105,6 +108,10 @@ export default function WorkoutHomeView({
                     splitSchedule={activeSplit?.schedule ?? []}
                     currentScheduleIndex={currentTemplateIndex}
                 />
+
+                {tutorial.status === 'available' && (
+                    <TutorialInvitation experienced={tutorial.experienced} onOpen={tutorial.openGuide} onSkip={tutorial.skip} />
+                )}
 
                 {/* Current Split Card */}
                 <View style={styles.splitCard}>
@@ -164,7 +171,7 @@ export default function WorkoutHomeView({
                     ) : (
                         <View style={styles.upNextRow}>
                             <Text style={styles.upNextLabel}>
-                                {activeSplit ? 'No templates in split' : 'Select a split to get started'}
+                                {activeSplit ? 'No templates in split' : 'Start empty or choose a split'}
                             </Text>
                         </View>
                     )}

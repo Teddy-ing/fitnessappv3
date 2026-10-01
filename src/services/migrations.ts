@@ -14,6 +14,7 @@
 
 import * as SQLite from 'expo-sqlite';
 import { createSkippedOnboardingProfile } from '../models/onboarding';
+import { createTutorialProgress } from '../models/tutorial';
 
 // ============================================================
 // Types
@@ -822,6 +823,26 @@ const MIGRATIONS: Migration[] = [
                 await db.runAsync(
                     'UPDATE user_settings SET onboarding_profile = ?, has_completed_onboarding = 1 WHERE id = 1 AND onboarding_profile IS NULL',
                     [JSON.stringify(createSkippedOnboardingProfile())],
+                );
+            }
+        },
+    },
+    // ----------------------------------------------------------
+    // v21: Optional tutorial invitation and contextual guidance
+    // ----------------------------------------------------------
+    {
+        version: 21,
+        name: 'tutorial_progress',
+        up: async (db, { startingVersion }) => {
+            const hasProgress = await columnExists(db, 'user_settings', 'tutorial_progress');
+            if (!hasProgress) {
+                await db.execAsync('ALTER TABLE user_settings ADD COLUMN tutorial_progress TEXT;');
+            }
+            // Fresh installs get an invitation. Existing users can open the guide from Settings.
+            if (startingVersion > 0) {
+                await db.runAsync(
+                    'UPDATE user_settings SET tutorial_progress = ? WHERE id = 1 AND tutorial_progress IS NULL',
+                    [JSON.stringify(createTutorialProgress('skipped'))],
                 );
             }
         },

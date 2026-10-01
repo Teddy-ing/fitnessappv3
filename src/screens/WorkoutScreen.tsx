@@ -52,11 +52,17 @@ import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import WorkoutHomeView from './WorkoutHomeView';
 import { navigateToTab, navigationRef } from '../navigation/navigationRef';
 import { useIsFocused } from '@react-navigation/native';
+import { useTutorial } from '../components/tutorial/TutorialProvider';
+import WorkoutTutorialTip from '../components/tutorial/WorkoutTutorialTip';
+import SplitsScreen from './SplitsScreen';
 
 // Swipe hint persistence key
 const SWIPE_HINT_FILE = new File(Paths.document, '.swipe_hint_seen');
 
 export default function WorkoutScreen() {
+    const tutorial = useTutorial();
+    const [showTutorialSplit, setShowTutorialSplit] = useState(false);
+    const handledTutorialAction = useRef<string | null>(null);
     // PP-001 fix: Fine-grained selector — only re-render when activeWorkout changes.
     // Actions are stable references; access via getState() to avoid subscribing to them.
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
@@ -93,6 +99,7 @@ export default function WorkoutScreen() {
         currentTemplateIndex,
         workoutDatesThisWeek,
         refreshing,
+        isLoading: isHomeLoading,
         loadData,
         onRefresh,
         handleChangeTemplateIndex,
@@ -158,13 +165,15 @@ export default function WorkoutScreen() {
 
     useEffect(() => {
         // Swipe hint check
-        if (SWIPE_HINT_FILE.exists) {
+        if (tutorial.status === null || tutorial.status === 'available' || tutorial.status === 'active') {
+            setShowSwipeHint(false);
+        } else if (SWIPE_HINT_FILE.exists) {
             setShowSwipeHint(false);
         } else {
             setShowSwipeHint(true);
             SWIPE_HINT_FILE.write('1');
         }
-    }, []);
+    }, [tutorial.status]);
 
     // Live timer - extracted to useElapsedTimer hook
     const { elapsedTime } = useElapsedTimer(activeWorkout?.startedAt ?? null);
@@ -246,6 +255,31 @@ export default function WorkoutScreen() {
         }
     };
 
+    // Reopening help must preserve active workouts, including historical edits.
+    useEffect(() => {
+        const action = tutorial.requestedAction;
+        if (!action) {
+            handledTutorialAction.current = null;
+            return;
+        }
+        if (!isFocused || isHomeLoading || handledTutorialAction.current === action) return;
+        handledTutorialAction.current = action;
+        tutorial.consumeAction();
+        if (action === 'split') {
+            handleHideKeyboard();
+            setShowTutorialSplit(true);
+        } else if (!useWorkoutStore.getState().activeWorkout) {
+            if (currentTemplate) {
+                // A workout restored or started during this read takes precedence.
+                void startWorkoutFromTemplate(currentTemplate.id).then(workout => {
+                    if (workout && !useWorkoutStore.getState().activeWorkout) startFromTemplate(workout);
+                }).catch(() => Alert.alert('Could not start workout', 'Try Start Workout again. Your plan is unchanged.'));
+            } else {
+                handleStartWorkout();
+            }
+        }
+    }, [tutorial.requestedAction, tutorial.consumeAction, isFocused, isHomeLoading, currentTemplate]);
+
     // BH-059: Guard against double-tap on finish (guardrail #14).
     // Set synchronously before first await, cleared in finally.
     const isSavingRef = useRef(false);
@@ -284,6 +318,7 @@ export default function WorkoutScreen() {
                     if (wasEditMode) {
                         navigateToTab('Profile');
                     } else {
+                        tutorial.complete();
                         completionIdRef.current = workout.id;
                         setCompletedWorkout(workout);
                         setOfferSaveTemplate(false);
@@ -489,7 +524,7 @@ export default function WorkoutScreen() {
             showPrevious={showPrevious}
             showRpe={showRpe}
             showRir={showRir}
-            showSwipeHint={showSwipeHint}
+            showSwipeHint={showSwipeHint && tutorial.status !== 'active'}
             defaultWarmupSets={defaultWarmupSets}
             previousSets={previousSets}
             exerciseSuggestions={exerciseSuggestions}
@@ -511,7 +546,7 @@ export default function WorkoutScreen() {
     ), [
         // Props that change between renders (all others are stable refs from getState/useState):
         activeWorkout, focusState, collapsedExercises,
-        showPrevious, showRpe, showRir, showSwipeHint,
+        showPrevious, showRpe, showRir, showSwipeHint, tutorial.status,
         defaultWarmupSets, previousSets, exerciseSuggestions, showProgressionNudges, prefillPrevious,
         // Stable refs — listed for completeness but won't cause re-creation:
         handleFocusField, updateSet, completeSet, addSet, removeSet,
@@ -519,10 +554,27 @@ export default function WorkoutScreen() {
         setReplaceExerciseId, toggleCollapse, handleRpeRirSelected,
     ]);
 
+    const showWorkoutTutorial = tutorial.status === 'active' && !isEditMode && !isKeyboardVisible && !isExercisePickerOpen && !settingsMenuVisible && !showTutorialSplit;
+    const tutorialSplit = (
+        <SplitsScreen
+            visible={showTutorialSplit}
+            startCreating
+            onClose={() => {
+                setShowTutorialSplit(false);
+                void loadData();
+            }}
+            onSplitSelected={(split) => {
+                setActiveSplit(split);
+                void loadData();
+            }}
+        />
+    );
+
     // Render home view (no active workout) — WorkoutHomeView owns its own modals
     if (!activeWorkout) {
         return (
             <>
+            {tutorialSplit}
             {completedWorkout ? (
                 <WorkoutCompletion
                     workout={completedWorkout}
@@ -573,6 +625,7 @@ export default function WorkoutScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+            {tutorialSplit}
             {/* Workout header */}
             <WorkoutHeader
                 title={activeWorkout.name}
@@ -598,6 +651,14 @@ export default function WorkoutScreen() {
                 scrollEventThrottle={16}
                 CellRendererComponent={CellRenderer}
                 ListHeaderComponent={
+                    <>
+                    {showWorkoutTutorial && (
+                        <WorkoutTutorialTip
+                            stage={activeWorkout.main.exercises.length === 0 ? 'add' : stats.sets === 0 ? 'log' : 'finish'}
+                            onSkip={tutorial.skip}
+                            onAddExercise={() => setExercisePickerOpen(true)}
+                        />
+                    )}
                     <WorkoutNoteSection
                         isEditing={showWorkoutNote}
                         inputValue={workoutNoteInput}
@@ -613,15 +674,16 @@ export default function WorkoutScreen() {
                             setShowWorkoutNote(true);
                         }}
                     />
+                    </>
                 }
-                ListEmptyComponent={
+                ListEmptyComponent={showWorkoutTutorial ? null :
                     <View style={styles.emptyExercises}>
                         <Text style={styles.emptyExercisesText}>
                             Tap "Add Exercise" to start building your workout
                         </Text>
                     </View>
                 }
-                ListFooterComponent={
+                ListFooterComponent={showWorkoutTutorial && activeWorkout.main.exercises.length === 0 ? null :
                     <TouchableOpacity
                         style={styles.addExerciseButton}
                         onPress={() => setExercisePickerOpen(true)}

@@ -8,10 +8,22 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 - **Phase:** Post-MVP Development — Phase 7 Smart Personalization fully implemented
 - **Status:** Core features + analytics + calendar + measurements + goals + widgets + workout logging redesign + Exercise Details + Settings + Import/Export + Cloud Backup (Google Drive) + **Smart Personalization engine** all implemented.
-- **Next Milestone:** Optional tutorial, including guidance for experienced lifters to create their own split.
+- **Next Milestone:** Owner review of the optional tutorial and iOS device verification.
 - **Development workflow:** Goal-driven orchestration and delegated implementation/QA, governed by root `AGENTS.md` (adopted 2026-09-29). Older workflow documents are references, not mandatory task gates.
 
-## Latest outcome — 2026-09-30: Apply onboarding preferences and choose starting routines
+## Latest outcome — 2026-09-30: Optional quick-start tutorial
+
+- Researched official Strong, Hevy and Fitbod guides; references and product rationale are in `feature-design.md`. Public documentation supports task-focused help, but does not prove which in-app tutorials every current version displays.
+- Fresh installs receive a dismissible Quick start card after setup. The three-page guide explains starting, logging/checking a set, and finishing/finding history. Skip/Back are always available; Done exits without starting a session. Existing installs are marked skipped on upgrade. Replay is in Profile → Settings → Quick start tutorial.
+- Experienced lifters see template/split definitions and instructions, with an immediate Create my split action opening the real builder. The guide explains selecting the split after creating it. Viewing or replaying help creates no sample workouts or plans.
+- Explicit guided logging uses the current template or starts empty, preserves an existing workout/history edit, and adds one skippable tip at a time based on live exercise/set state. Tips hide while entering values and in other dialogs/history edits. Successful workout saves complete guidance; failed saves retain it. Empty guided sessions now show one Add exercise action, and home copy makes the empty-workout option clear.
+- Added migration v21 and validated tutorial progress separate from onboarding/preferences. Coordinated writes, fresh/upgrade behavior, malformed data, clear-data reset, and local/cloud/older-backup round trips are covered. Repeated actions are guarded; iOS launches wait for modal dismissal.
+- Verification: TypeScript passed. Full sequential Jest passed 26 suites / 510 tests; final targeted UI/provider and workout-flow checks passed 45 + 16 tests, including two additional regressions (512 unique tests now covered). Independent review and final follow-up found no blocking issues; `git diff --check` passed. Android x86_64 debug build succeeded.
+- Disposable Android emulator verified fresh invitation, all three pages, real guided add/input/check/save, tips hidden during keyboard entry, Settings replay, kg example, split-builder launch, larger text wrapping, and cold restart after completion/skip. Read-only database inspection found skipped progress, exactly the one explicitly logged test workout, no custom splits, and canonical 45 lb / 8 reps preserved after changing display units to kg. Local screenshots and the emulator inspection helper are under ignored `.expo/tutorial-*`. The connected phone was not used.
+- Limitations: iOS/device verification remains; ESLint is not installed/configured. During emulator font-scale/activity recreation and development reload, an existing Profile analytics path logged an SQLite released-shared-object warning; tutorial actions and persistence subsequently passed, but that lifecycle warning was not investigated in this scope.
+- Changes remain uncommitted on `NewCodexChanges`. Next useful step: owner review via Settings → Quick start tutorial, then iOS validation of dismissal/navigation and layout.
+
+## Previous outcome — 2026-09-30: Apply onboarding preferences and choose starting routines
 
 - The owner tested and approved the original onboarding flow. Removed its Settings shortcut and changed the Workout bottom tab to the same flat icon treatment as Profile. Native verification exposed an existing compressed Training Phase label; its four options now sit beneath the label, with binary settings unchanged.
 - Expanded the built-in library to ten plans / 35 workouts: updated PPL and Arnold, plus full body, upper/lower, five-day muscle building, home dumbbells, calisthenics, strength/cardio, aerobic, and mobility routines. Added 17 exercise variants. Research sources and selection rationale are in `feature-design.md`.
@@ -113,7 +125,7 @@ description: Living document tracking completed work, in-progress tasks, next st
 
 ## In Progress
 
-*Nothing currently in progress.*
+*No implementation currently in progress. Tutorial is ready for owner review; iOS verification remains.*
 
 ### QA Passes Completed (2026-05-21)
 - **Bug Hunter QA** on Phase 7 Smart Personalization + Polish/Bug Fix (44 files, BH-070 through BH-074)

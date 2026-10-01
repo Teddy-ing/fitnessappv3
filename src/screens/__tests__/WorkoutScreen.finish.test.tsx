@@ -3,6 +3,12 @@ const { act, create } = require('react-test-renderer');
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
+const mockTutorial = { status: 'skipped', requestedAction: null as string | null, consumeAction: jest.fn(), complete: jest.fn(), skip: jest.fn() };
+const mockHomeData = { templates: [], currentTemplate: null as any, isLoading: false, loadData: jest.fn().mockResolvedValue(undefined) };
+jest.mock('../../components/tutorial/TutorialProvider', () => ({ useTutorial: () => mockTutorial }));
+jest.mock('../../components/tutorial/WorkoutTutorialTip', () => ({ __esModule: true, default: 'WorkoutTutorialTip' }));
+jest.mock('../SplitsScreen', () => ({ __esModule: true, default: 'SplitsScreen' }));
+
 jest.mock('react-native', () => ({
     View: 'View', Text: 'Text', TouchableOpacity: 'TouchableOpacity', FlatList: 'FlatList', ActivityIndicator: 'ActivityIndicator',
     StyleSheet: { create: (styles: unknown) => styles, absoluteFillObject: {} },
@@ -27,7 +33,7 @@ jest.mock('../../services/cloudBackupService', () => ({ triggerAutoBackupIfEnabl
 jest.mock('../../navigation/navigationRef', () => ({ navigateToTab: jest.fn(), navigationRef: { isReady: () => true } }));
 jest.mock('../../hooks', () => ({
     useElapsedTimer: () => ({ elapsedTime: 120 }),
-    useHomeScreenData: () => ({ templates: [], loadData: jest.fn().mockResolvedValue(undefined) }),
+    useHomeScreenData: () => mockHomeData,
     useWorkoutKeyboard: () => ({ focusState: null, handleHideKeyboard: jest.fn(), getKeyboardFieldType: () => 'weight', getFieldLabel: () => 'Weight' }),
 }));
 jest.mock('../../hooks/useWorkoutKeyboard', () => ({ isKeyboardField: () => true }));
@@ -48,7 +54,7 @@ import WorkoutScreen from '../WorkoutScreen';
 import { useWorkoutStore } from '../../stores/workoutStore';
 import { createWorkout, createWorkoutExercise, createSet } from '../../models/workout';
 import { createExercise } from '../../models/exercise';
-import { saveWorkout, updateWorkout, markWorkoutCompletedToday, findMatchingTemplate } from '../../services';
+import { saveWorkout, updateWorkout, markWorkoutCompletedToday, findMatchingTemplate, startWorkoutFromTemplate } from '../../services';
 import { navigateToTab } from '../../navigation/navigationRef';
 import { Alert } from 'react-native';
 
@@ -58,6 +64,11 @@ describe('workout finish flow', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockTutorial.status = 'skipped';
+        mockTutorial.requestedAction = null;
+        mockTutorial.consumeAction.mockImplementation(() => { mockTutorial.requestedAction = null; });
+        mockHomeData.currentTemplate = null;
+        mockHomeData.isLoading = false;
         const workout = createWorkout('Push day');
         const exercise = createWorkoutExercise(createExercise({ name: 'Bench press' }), 0);
         exercise.sets = [{ ...createSet(0), weight: 100, reps: 8, status: 'completed' }];
@@ -79,6 +90,7 @@ describe('workout finish flow', () => {
         await act(async () => { await renderer.root.findByType('WorkoutHeader').props.onFinish(); });
         const completion = renderer.root.findByType('WorkoutCompletion');
         expect(mockSave).toHaveBeenCalledTimes(1);
+        expect(mockTutorial.complete).toHaveBeenCalledTimes(1);
         expect(completion.props.workout).toMatchObject({ name: 'Push day', status: 'completed', totalSets: 1, totalVolume: 800 });
         expect(completion.props.weightUnit).toBe('kg');
 
@@ -99,6 +111,7 @@ describe('workout finish flow', () => {
         await act(async () => { await renderer.root.findByType('WorkoutHeader').props.onFinish(); });
         expect(renderer.root.findAllByType('WorkoutCompletion')).toHaveLength(0);
         expect(renderer.root.findAllByType('WorkoutHeader')).toHaveLength(1);
+        expect(mockTutorial.complete).not.toHaveBeenCalled();
         expect(Alert.alert).toHaveBeenCalledWith('Could not save workout', 'Your workout is still here. Please try again.');
         warning.mockRestore();
     });
@@ -122,6 +135,7 @@ describe('workout finish flow', () => {
         expect(navigateToTab).toHaveBeenCalledWith('Profile');
         expect(renderer.root.findAllByType('WorkoutCompletion')).toHaveLength(0);
         expect(markWorkoutCompletedToday).not.toHaveBeenCalled();
+        expect(mockTutorial.complete).not.toHaveBeenCalled();
     });
 
     it('returns home without celebrating when a workout is discarded', async () => {
@@ -162,5 +176,89 @@ describe('workout finish flow', () => {
         const completion = renderer.root.findByType('WorkoutCompletion');
         expect(completion.props.workout.id).toBe('second-workout');
         expect(completion.props.onSaveTemplate).toBeUndefined();
+    });
+
+    function tutorialTip() {
+        const header = renderer.root.findByType('FlatList').props.ListHeaderComponent;
+        return React.Children.toArray(header.props.children).find((child: any) => child.type === 'WorkoutTutorialTip') as React.ReactElement<any> | undefined;
+    }
+
+    it('derives optional tips from real workout actions and leaves unguided workouts alone', async () => {
+        await render();
+        expect(tutorialTip()).toBeUndefined();
+        mockTutorial.status = 'active';
+        const workout = createWorkout('Guided workout');
+        await act(async () => useWorkoutStore.setState({ activeWorkout: workout }));
+        expect(tutorialTip()?.props.stage).toBe('add');
+        await act(async () => tutorialTip()?.props.onAddExercise());
+        expect(renderer.root.findAllByType('ExercisePicker')[0].props.visible).toBe(true);
+        expect(tutorialTip()).toBeUndefined();
+        await act(async () => renderer.root.findAllByType('ExercisePicker')[0].props.onClose());
+        await act(async () => useWorkoutStore.getState().addExercise(createExercise({ name: 'Squat' })));
+        expect(tutorialTip()?.props.stage).toBe('log');
+        const logged = useWorkoutStore.getState().activeWorkout!;
+        logged.main.exercises[0].sets[0].status = 'completed';
+        await act(async () => useWorkoutStore.setState({ activeWorkout: { ...logged } }));
+        expect(tutorialTip()?.props.stage).toBe('finish');
+        await act(async () => tutorialTip()?.props.onSkip());
+        expect(mockTutorial.skip).toHaveBeenCalledTimes(1);
+        expect(useWorkoutStore.getState().activeWorkout?.id).toBe(workout.id);
+    });
+
+    it('hides logging tips while editing history', async () => {
+        mockTutorial.status = 'active';
+        useWorkoutStore.setState({ isEditMode: true });
+        await render();
+        expect(tutorialTip()).toBeUndefined();
+    });
+
+    it.each([false, true])('preserves an existing workout when guided logging is requested (edit=%s)', async editing => {
+        const workout = useWorkoutStore.getState().activeWorkout;
+        useWorkoutStore.setState({ isEditMode: editing });
+        mockTutorial.requestedAction = 'workout';
+        await render();
+        expect(useWorkoutStore.getState().activeWorkout).toBe(workout);
+        expect(startWorkoutFromTemplate).not.toHaveBeenCalled();
+        expect(mockTutorial.consumeAction).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts an empty workout only after an explicit guided request', async () => {
+        useWorkoutStore.setState({ activeWorkout: null });
+        mockTutorial.requestedAction = 'workout';
+        await render();
+        expect(useWorkoutStore.getState().activeWorkout?.main.exercises).toEqual([]);
+        expect(mockSave).not.toHaveBeenCalled();
+    });
+
+    it('loads the current template for an explicit guided request', async () => {
+        const workout = createWorkout('Planned workout');
+        useWorkoutStore.setState({ activeWorkout: null });
+        mockHomeData.currentTemplate = { id: 'plan' };
+        (startWorkoutFromTemplate as jest.Mock).mockResolvedValueOnce(workout);
+        mockTutorial.requestedAction = 'workout';
+        await render();
+        expect(startWorkoutFromTemplate).toHaveBeenCalledWith('plan');
+        expect(useWorkoutStore.getState().activeWorkout?.id).toBe(workout.id);
+    });
+
+    it('does not overwrite a workout restored while loading the guided template', async () => {
+        let resolve!: (value: unknown) => void;
+        (startWorkoutFromTemplate as jest.Mock).mockReturnValueOnce(new Promise(done => { resolve = done; }));
+        useWorkoutStore.setState({ activeWorkout: null });
+        mockHomeData.currentTemplate = { id: 'plan' };
+        mockTutorial.requestedAction = 'workout';
+        await render();
+        const restored = createWorkout('Restored workout');
+        await act(async () => { useWorkoutStore.setState({ activeWorkout: restored }); resolve(createWorkout('Late template')); });
+        expect(useWorkoutStore.getState().activeWorkout?.id).toBe(restored.id);
+    });
+
+    it('opens the split builder without changing an active workout', async () => {
+        const workout = useWorkoutStore.getState().activeWorkout;
+        mockTutorial.requestedAction = 'split';
+        await render();
+        expect(renderer.root.findByType('SplitsScreen').props).toMatchObject({ visible: true, startCreating: true });
+        expect(useWorkoutStore.getState().activeWorkout).toBe(workout);
+        expect(mockSave).not.toHaveBeenCalled();
     });
 });
