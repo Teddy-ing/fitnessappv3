@@ -88,7 +88,7 @@ export default function PhotoViewer({ visible, photos, initialIndex, onClose, on
     };
 
     return (
-        <Modal visible={visible} animationType="fade" presentationStyle="fullScreen">
+        <Modal visible={visible} animationType="fade" presentationStyle="fullScreen" onRequestClose={onClose}>
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>

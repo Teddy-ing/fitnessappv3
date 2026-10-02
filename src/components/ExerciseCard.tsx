@@ -25,7 +25,7 @@ import { useRestTimerStore } from '../stores/restTimerStore';
 import SetRow from './SetRow';
 import ActiveRestLine from './ActiveRestLine';
 import ExerciseMenu from './ExerciseMenu';
-import { navigationRef } from '../navigation/navigationRef';
+import { openWorkoutExerciseDetails } from '../navigation/navigationRef';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -151,17 +151,11 @@ function ExerciseCardInner({
 
     // Navigate to Exercise Details screen (info icon)
     const handleInfoPress = useCallback(() => {
-        navigationRef.navigate('Profile', {
-            screen: 'ExerciseDetails',
-            params: {
-                exerciseId: exercise.id,
-                exerciseName: exercise.name,
-                initialTab: 'about',
-                source: 'workout',
-            },
-            initial: false,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any — cross-stack navigation requires untyped nested params (BH-041)
-        } as any);
+        openWorkoutExerciseDetails({
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            initialTab: 'about',
+        });
     }, [exercise.id, exercise.name]);
 
     // Note handlers
@@ -248,6 +242,8 @@ function ExerciseCardInner({
                     style={styles.infoButton}
                     onPress={handleInfoPress}
                     activeOpacity={0.6}
+                    accessibilityRole="button"
+                    accessibilityLabel={`About ${exercise.name}`}
                 >
                     <MaterialIcons
                         name="info-outline"

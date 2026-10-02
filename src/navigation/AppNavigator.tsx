@@ -2,8 +2,8 @@
  * Main Navigation Configuration
  * 
  * Bottom tab navigation with 2 tabs:
- * - Workout (primary)
- * - Profile/Stats (right) — contains a stack navigator for sub-screens
+ * - Workout (primary) — workout and its exercise information
+ * - Profile/Stats (right) — profile and its sub-screens
  * 
  * Following the Thumb Zone rule: navigation at bottom 30% of screen
  */
@@ -12,7 +12,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -34,7 +34,8 @@ import MeasurementsScreen from '../screens/MeasurementsScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ExerciseMappingScreen from '../screens/ExerciseMappingScreen';
-import type { ExerciseMappingParams } from '../screens/ExerciseMappingScreen';
+import type { ProfileStackParamList, RootTabParamList, WorkoutStackParamList } from './types';
+export type { ProfileStackParamList, RootTabParamList, WorkoutStackParamList, SharedStackParamList } from './types';
 
 // Wrap each screen in its own error boundary + swipe navigation
 // Tab order: Workout → Profile
@@ -66,21 +67,16 @@ const ProfileSwipeWrapper = ({ children }: { children: React.ReactNode }) => (
 // Profile Stack Navigator
 // ============================================================
 
-export type ProfileStackParamList = {
-    ProfileHome: undefined;
-    Analytics: { initialTab?: 'workouts' | 'breakdown' | 'exercises' } | undefined;
-    ExerciseDetails: { exerciseId: string; exerciseName: string; initialTab?: 'about' | 'history' | 'charts' | 'records'; source?: 'workout' };
-    Calendar: undefined;
-    Measurements: { initialTab?: 'track' | 'trends' | 'gallery'; autoSelectTypeId?: string } | undefined;
-    Goals: undefined;
-    Settings: undefined;
-    ExerciseMapping: ExerciseMappingParams;
-};
-
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+const WorkoutStack = createNativeStackNavigator<WorkoutStackParamList>();
 
-// On web, jump straight to the exercise analytics screen for chart debugging
-const IS_WEB = Platform.OS === 'web';
+const stackScreenOptions = {
+    headerStyle: { backgroundColor: colors.background.primary },
+    headerTintColor: colors.text.primary,
+    headerTitleStyle: { fontWeight: '600' as const },
+    headerShadowVisible: false,
+    contentStyle: { backgroundColor: colors.background.primary },
+};
 
 // Wrap analytics screens in their own error boundaries so a chart library
 // crash shows a screen-level fallback instead of taking down the profile stack
@@ -89,7 +85,7 @@ const AnalyticsScreenWithBoundary = () => (
         <AnalyticsScreen />
     </ErrorBoundary>
 );
-const ExerciseDetailsScreenWithBoundary = (props: any) => (
+const ExerciseDetailsScreenWithBoundary = (props: React.ComponentProps<typeof ExerciseDetailsScreen>) => (
     <ErrorBoundary fallback="screen" label="ExerciseDetailsScreen">
         <ExerciseDetailsScreen {...props} />
     </ErrorBoundary>
@@ -125,20 +121,8 @@ function ProfileStackNavigator() {
     return (
         <ErrorBoundary fallback="screen" label="ProfileStack">
             <ProfileStack.Navigator
-                initialRouteName={IS_WEB ? 'ExerciseDetails' : 'ProfileHome'}
-                screenOptions={{
-                    headerStyle: {
-                        backgroundColor: colors.background.primary,
-                    },
-                    headerTintColor: colors.text.primary,
-                    headerTitleStyle: {
-                        fontWeight: '600',
-                    },
-                    headerShadowVisible: false,
-                    contentStyle: {
-                        backgroundColor: colors.background.primary,
-                    },
-                }}
+                initialRouteName="ProfileHome"
+                screenOptions={stackScreenOptions}
             >
                 <ProfileStack.Screen
                     name="ProfileHome"
@@ -158,7 +142,6 @@ function ProfileStackNavigator() {
                     options={({ route }) => ({
                         title: route.params.exerciseName,
                     })}
-                    initialParams={IS_WEB ? { exerciseId: 'mock', exerciseName: 'Mock Bench Press' } : undefined}
                 />
                 <ProfileStack.Screen
                     name="Calendar"
@@ -202,15 +185,38 @@ function ProfileStackNavigator() {
     );
 }
 
+function WorkoutStackNavigator() {
+    return (
+        <ErrorBoundary fallback="screen" label="WorkoutStack">
+            <WorkoutStack.Navigator initialRouteName="WorkoutHome" screenOptions={stackScreenOptions}>
+                <WorkoutStack.Screen
+                    name="WorkoutHome"
+                    component={WorkoutScreenWithBoundary}
+                    options={{ headerShown: false }}
+                />
+                <WorkoutStack.Screen
+                    name="ExerciseDetails"
+                    component={ExerciseDetailsScreenWithBoundary}
+                    options={({ route }) => ({ title: route.params.exerciseName })}
+                />
+                <WorkoutStack.Screen
+                    name="Settings"
+                    component={SettingsScreenWithBoundary}
+                    options={{ title: 'Settings' }}
+                />
+                <WorkoutStack.Screen
+                    name="ExerciseMapping"
+                    component={ExerciseMappingScreen}
+                    options={{ title: 'Import', presentation: 'fullScreenModal', headerShown: false }}
+                />
+            </WorkoutStack.Navigator>
+        </ErrorBoundary>
+    );
+}
+
 // ============================================================
 // Bottom Tab Navigator
 // ============================================================
-
-// Tab navigator type definitions
-export type RootTabParamList = {
-    Workout: undefined;
-    Profile: undefined;
-};
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
@@ -319,7 +325,7 @@ export default function AppNavigator() {
                 {/* Workout (primary) */}
                 <Tab.Screen
                     name="Workout"
-                    component={WorkoutScreenWithBoundary}
+                    component={WorkoutStackNavigator}
                     options={{
                         title: 'Workout',
                         headerShown: false,

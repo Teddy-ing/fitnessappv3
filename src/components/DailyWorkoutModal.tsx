@@ -23,7 +23,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { getWorkoutsForDate, getPRSetIdsForDate, type PRSetIds } from '../services';
 import { useWorkoutStore } from '../stores';
-import { navigateToTab } from '../navigation/navigationRef';
+import { navigateToWorkoutHome } from '../navigation/navigationRef';
 import { formatDuration, formatVolume } from '../utils/formatters';
 import { convertWeight, displayWeight } from '../utils/unitConversion';
 import { useWeightUnit } from '../hooks/useWeightUnit';
@@ -231,7 +231,7 @@ export default function DailyWorkoutModal({ date, onClose }: DailyWorkoutModalPr
             loadWorkoutForEditing(workout);
             onClose();
             // Small delay to let modal close animation start
-            setTimeout(() => navigateToTab('Workout'), 150);
+            setTimeout(navigateToWorkoutHome, 150);
         };
 
         if (activeWorkout) {

@@ -57,6 +57,12 @@ export default function CreateTemplateWizard({
         onClose();
     };
 
+    const handleBack = () => {
+        if (showExercisePicker) setShowExercisePicker(false);
+        else if (step === 'exercises') setStep('name');
+        else reset();
+    };
+
     const handleCreate = async () => {
         if (!templateName.trim()) return;
 
@@ -151,7 +157,7 @@ export default function CreateTemplateWizard({
             visible={visible}
             transparent={true}
             animationType="fade"
-            onRequestClose={reset}
+            onRequestClose={handleBack}
         >
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>

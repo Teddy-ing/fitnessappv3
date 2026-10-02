@@ -5,6 +5,8 @@ const { act, create } = require('react-test-renderer');
 
 const mockTutorial = { status: 'skipped', requestedAction: null as string | null, consumeAction: jest.fn(), complete: jest.fn(), skip: jest.fn() };
 const mockHomeData = { templates: [], currentTemplate: null as any, isLoading: false, loadData: jest.fn().mockResolvedValue(undefined) };
+let mockIsFocused = true;
+let mockKeyboardFocus: any = null;
 jest.mock('../../components/tutorial/TutorialProvider', () => ({ useTutorial: () => mockTutorial }));
 jest.mock('../../components/tutorial/WorkoutTutorialTip', () => ({ __esModule: true, default: 'WorkoutTutorialTip' }));
 jest.mock('../SplitsScreen', () => ({ __esModule: true, default: 'SplitsScreen' }));
@@ -18,7 +20,7 @@ jest.mock('react-native', () => ({
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 jest.mock('expo-file-system', () => ({ File: class { exists = true; write() {} }, Paths: { document: 'test' } }));
 jest.mock('expo-keep-awake', () => ({ activateKeepAwakeAsync: jest.fn().mockResolvedValue(undefined), deactivateKeepAwake: jest.fn() }));
-jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }));
+jest.mock('@react-navigation/native', () => ({ useIsFocused: () => mockIsFocused }));
 jest.mock('../../stores/workoutPersistence', () => ({ persistWorkoutState: jest.fn(), loadPersistedWorkout: jest.fn(), clearPersistedWorkout: jest.fn() }));
 jest.mock('../../services/workoutService', () => ({ getPreviousSetsForExercise: jest.fn().mockResolvedValue([]), getPreviousSetsForExercises: jest.fn().mockResolvedValue(new Map()) }));
 jest.mock('../../services/smartSuggestionsService', () => ({ getSuggestionsForExercise: jest.fn(), getSuggestionsForExercises: jest.fn() }));
@@ -30,11 +32,11 @@ jest.mock('../../services', () => ({
     startWorkoutFromTemplate: jest.fn(),
 }));
 jest.mock('../../services/cloudBackupService', () => ({ triggerAutoBackupIfEnabled: jest.fn() }));
-jest.mock('../../navigation/navigationRef', () => ({ navigateToTab: jest.fn(), navigationRef: { isReady: () => true } }));
+jest.mock('../../navigation/navigationRef', () => ({ navigateToTab: jest.fn(), navigationRef: { isReady: () => true, navigate: jest.fn() } }));
 jest.mock('../../hooks', () => ({
     useElapsedTimer: () => ({ elapsedTime: 120 }),
     useHomeScreenData: () => mockHomeData,
-    useWorkoutKeyboard: () => ({ focusState: null, handleHideKeyboard: jest.fn(), getKeyboardFieldType: () => 'weight', getFieldLabel: () => 'Weight' }),
+    useWorkoutKeyboard: () => ({ focusState: mockKeyboardFocus, handleHideKeyboard: jest.fn(), getKeyboardFieldType: () => 'weight', getFieldLabel: () => 'Weight' }),
 }));
 jest.mock('../../hooks/useWorkoutKeyboard', () => ({ isKeyboardField: () => true }));
 jest.mock('../../hooks/workout/useWorkoutSettings', () => {
@@ -55,7 +57,7 @@ import { useWorkoutStore } from '../../stores/workoutStore';
 import { createWorkout, createWorkoutExercise, createSet } from '../../models/workout';
 import { createExercise } from '../../models/exercise';
 import { saveWorkout, updateWorkout, markWorkoutCompletedToday, findMatchingTemplate, startWorkoutFromTemplate } from '../../services';
-import { navigateToTab } from '../../navigation/navigationRef';
+import { navigateToTab, navigationRef } from '../../navigation/navigationRef';
 import { Alert } from 'react-native';
 
 describe('workout finish flow', () => {
@@ -64,6 +66,8 @@ describe('workout finish flow', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockIsFocused = true;
+        mockKeyboardFocus = null;
         mockTutorial.status = 'skipped';
         mockTutorial.requestedAction = null;
         mockTutorial.consumeAction.mockImplementation(() => { mockTutorial.requestedAction = null; });
@@ -84,6 +88,27 @@ describe('workout finish flow', () => {
     async function render() {
         await act(async () => { renderer = create(<WorkoutScreen />); });
     }
+
+    it('deactivates the workout keyboard while a child screen is focused, preserving the workout', async () => {
+        const workout = useWorkoutStore.getState().activeWorkout;
+        mockKeyboardFocus = { exerciseId: workout!.main.exercises[0].id, setIndex: 0, field: 'weight' };
+        await render();
+        expect(renderer.root.findByType('WorkoutKeyboard').props.visible).toBe(true);
+        mockIsFocused = false;
+        await act(async () => renderer.update(<WorkoutScreen />));
+        expect(renderer.root.findByType('WorkoutKeyboard').props.visible).toBe(false);
+        expect(useWorkoutStore.getState().activeWorkout).toBe(workout);
+        mockIsFocused = true;
+        await act(async () => renderer.update(<WorkoutScreen />));
+        expect(renderer.root.findByType('WorkoutKeyboard').props.visible).toBe(true);
+    });
+
+    it('opens home settings in the Workout stack', async () => {
+        useWorkoutStore.setState({ activeWorkout: null });
+        await render();
+        await act(async () => renderer.root.findByType('WorkoutHomeView').props.onSettingsPress());
+        expect(navigationRef.navigate).toHaveBeenCalledWith('Workout', { screen: 'Settings', initial: false });
+    });
 
     it('shows a saved summary, opens the template modal, and returns home on Done', async () => {
         await render();

@@ -32,7 +32,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import { parseFile, generateExerciseMappings, getUnresolvedMappings } from '../../services/importParsers';
 import type { CompetitorSource } from '../../services/importParsers';
-import type { ProfileStackParamList } from '../../navigation/AppNavigator';
+import type { SharedStackParamList } from '../../navigation/types';
 
 interface ImportBottomSheetProps {
     isOpen: boolean;
@@ -40,7 +40,7 @@ interface ImportBottomSheetProps {
     onImportJSON: () => void; // Triggers existing destructive import flow
 }
 
-type Navigation = NativeStackNavigationProp<ProfileStackParamList>;
+type Navigation = NativeStackNavigationProp<SharedStackParamList>;
 
 export default function ImportBottomSheet({
     isOpen,
@@ -51,6 +51,10 @@ export default function ImportBottomSheet({
     const [loadingSource, setLoadingSource] = useState<CompetitorSource | null>(null);
     const navigation = useNavigation<Navigation>();
     const insets = useSafeAreaInsets();
+
+    const handleClose = useCallback(() => {
+        if (!isRunning.current) onClose();
+    }, [onClose]);
 
     const handleCompetitorImport = useCallback(async (source: CompetitorSource) => {
         // Guardrail #14: concurrent invocation guard
@@ -127,6 +131,7 @@ export default function ImportBottomSheet({
     }, [navigation, onClose]);
 
     const handleJSONImport = useCallback(() => {
+        if (isRunning.current) return;
         onClose();
         // Small delay to let modal close before showing alert
         setTimeout(() => onImportJSON(), 300);
@@ -139,9 +144,9 @@ export default function ImportBottomSheet({
             visible={isOpen}
             transparent
             animationType="slide"
-            onRequestClose={onClose}
+            onRequestClose={handleClose}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
+            <TouchableWithoutFeedback onPress={handleClose}>
                 <View style={styles.overlay}>
                     <TouchableWithoutFeedback>
                         <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>

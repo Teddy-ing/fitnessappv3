@@ -63,7 +63,7 @@ export default function ImportSummaryView({
     return (
         <View style={[styles.container, { paddingBottom: bottomInset + spacing.lg }]}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={onClose} style={styles.backButton}>
+                <TouchableOpacity onPress={onClose} style={styles.backButton} disabled={isImporting} accessibilityLabel="Close import summary">
                     <MaterialIcons name="close" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Import Summary</Text>

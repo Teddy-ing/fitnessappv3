@@ -19,4 +19,22 @@ describe('tab visibility after a workout', () => {
         expect(shouldHideTabBar({ index: 0, routes: [{ name: 'Profile' }] }, false)).toBe(false);
         expect(shouldHideTabBar({ index: 0, routes: [{ name: 'Profile', state: { routes: [{ name: 'ProfileHome' }] } }] }, false)).toBe(false);
     });
+
+    it('hides tabs on Workout detail/settings and restores them on Workout home', () => {
+        for (const name of ['ExerciseDetails', 'Settings', 'ExerciseMapping']) {
+            expect(shouldHideTabBar({ index: 0, routes: [
+                { name: 'Workout', state: { index: 1, routes: [{ name: 'WorkoutHome' }, { name }] } },
+            ] }, false)).toBe(true);
+        }
+        expect(shouldHideTabBar({ index: 0, routes: [
+            { name: 'Workout', state: { index: 0, routes: [{ name: 'WorkoutHome' }] } },
+        ] }, false)).toBe(false);
+    });
+
+    it('ignores retained Workout details while Profile home is selected', () => {
+        expect(shouldHideTabBar({ index: 1, routes: [
+            { name: 'Workout', state: { index: 1, routes: [{ name: 'WorkoutHome' }, { name: 'ExerciseDetails' }] } },
+            { name: 'Profile', state: { index: 0, routes: [{ name: 'ProfileHome' }] } },
+        ] }, false)).toBe(false);
+    });
 });

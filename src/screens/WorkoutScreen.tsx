@@ -604,7 +604,7 @@ export default function WorkoutScreen() {
                 onDataRefresh={loadData}
                 onSettingsPress={() => {
                     if (navigationRef.isReady()) {
-                        (navigationRef as any).navigate('Profile', { screen: 'Settings', initial: false });
+                        navigationRef.navigate('Workout', { screen: 'Settings', initial: false });
                     }
                 }}
             />
@@ -732,7 +732,7 @@ export default function WorkoutScreen() {
 
             {/* Custom Workout Keyboard */}
             <WorkoutKeyboard
-                visible={focusState !== null && isKeyboardField(focusState.field)}
+                visible={isFocused && isKeyboardVisible}
                 currentValue={keyboardValue}
                 fieldType={getKeyboardFieldType()}
                 fieldLabel={getFieldLabel()}

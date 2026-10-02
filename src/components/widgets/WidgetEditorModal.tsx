@@ -177,6 +177,12 @@ export default function WidgetEditorModal({
         onClose();
     }, [onClose]);
 
+    const handleBack = () => {
+        if (showExercisePicker) setShowExercisePicker(false);
+        else if (showCatalog) setShowCatalog(false);
+        else handleClose();
+    };
+
     // Get display info for a widget type
     const getWidgetLabel = (type: string): string => {
         const entry = WIDGET_CATALOG.find((e) => e.type === type);
@@ -195,7 +201,7 @@ export default function WidgetEditorModal({
             visible={visible}
             transparent
             animationType="slide"
-            onRequestClose={handleClose}
+            onRequestClose={handleBack}
         >
             <View style={styles.overlay}>
                 <View style={[styles.sheet, { paddingBottom: insets.bottom }]}>

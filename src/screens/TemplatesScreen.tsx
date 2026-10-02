@@ -222,7 +222,7 @@ export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: 
             visible={visible}
             animationType="slide"
             presentationStyle="pageSheet"
-            onRequestClose={onClose}
+            onRequestClose={editingTemplate ? handleCancelEdit : onClose}
         >
             <SafeAreaView style={styles.container}>
                 {/* Header */}

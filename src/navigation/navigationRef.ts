@@ -7,7 +7,7 @@
  */
 
 import { createNavigationContainerRef } from '@react-navigation/native';
-import type { RootTabParamList } from './AppNavigator';
+import type { ExerciseDetailsParams, RootTabParamList } from './types';
 
 export const navigationRef = createNavigationContainerRef<RootTabParamList>();
 
@@ -18,5 +18,23 @@ export const navigationRef = createNavigationContainerRef<RootTabParamList>();
 export function navigateToTab(tabName: keyof RootTabParamList) {
     if (navigationRef.isReady()) {
         navigationRef.navigate(tabName);
+    }
+}
+
+/** Entry points that start or edit a workout must reveal the existing home screen. */
+export function navigateToWorkoutHome() {
+    if (navigationRef.isReady()) {
+        navigationRef.navigate('Workout', { screen: 'WorkoutHome', initial: false, pop: true });
+    }
+}
+
+/** Keep workout information in the Workout stack so Back pops to the same session. */
+export function openWorkoutExerciseDetails(params: ExerciseDetailsParams) {
+    if (navigationRef.isReady()) {
+        navigationRef.navigate('Workout', {
+            screen: 'ExerciseDetails',
+            params,
+            initial: false,
+        });
     }
 }

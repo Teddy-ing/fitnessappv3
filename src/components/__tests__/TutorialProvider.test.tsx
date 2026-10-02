@@ -6,7 +6,7 @@ import { getOnboardingProfile } from '../../services/onboardingService';
 import { getSettings, type UserSettings } from '../../services/preferencesService';
 import { saveWorkout, updateWorkout } from '../../services/workoutService';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
-import { navigateToTab } from '../../navigation/navigationRef';
+import { navigateToWorkoutHome } from '../../navigation/navigationRef';
 import { createOnboardingProfile } from '../../models/onboarding';
 import { createTutorialProgress, type TutorialProgress } from '../../models/tutorial';
 
@@ -17,7 +17,7 @@ jest.mock('../../services/onboardingService', () => ({ getOnboardingProfile: jes
 jest.mock('../../services/preferencesService', () => ({ getSettings: jest.fn() }));
 jest.mock('../../services/workoutService', () => ({ saveWorkout: jest.fn(), updateWorkout: jest.fn() }));
 jest.mock('../../hooks/useWeightUnit', () => ({ useWeightUnit: jest.fn() }));
-jest.mock('../../navigation/navigationRef', () => ({ navigateToTab: jest.fn() }));
+jest.mock('../../navigation/navigationRef', () => ({ navigateToWorkoutHome: jest.fn() }));
 
 const { create } = require('react-test-renderer');
 const { act } = React;
@@ -73,7 +73,7 @@ it.each(['available', 'active', 'skipped', 'completed'] as const)('loads %s with
     expect(tutorial.status).toBe(status);
     expect(guide().visible).toBe(false);
     expect(saveTutorialProgress).not.toHaveBeenCalled();
-    expect(navigateToTab).not.toHaveBeenCalled();
+    expect(navigateToWorkoutHome).not.toHaveBeenCalled();
 });
 
 it('opens the overview without changing progress or creating a workout', async () => {
@@ -85,7 +85,7 @@ it('opens the overview without changing progress or creating a workout', async (
     expect(saveTutorialProgress).not.toHaveBeenCalled();
     expect(saveWorkout).not.toHaveBeenCalled();
     expect(updateWorkout).not.toHaveBeenCalled();
-    expect(navigateToTab).not.toHaveBeenCalled();
+    expect(navigateToWorkoutHome).not.toHaveBeenCalled();
 });
 
 it('persists Skip, closes the overview, and leaves app content usable', async () => {
@@ -96,7 +96,7 @@ it('persists Skip, closes the overview, and leaves app content usable', async ()
     expect(tutorial.status).toBe('skipped');
     expect(jest.mocked(saveTutorialProgress).mock.calls).toEqual([['skipped']]);
     expect(tutorial.requestedAction).toBeNull();
-    expect(navigateToTab).not.toHaveBeenCalled();
+    expect(navigateToWorkoutHome).not.toHaveBeenCalled();
     expect(JSON.stringify(renderer.toJSON())).toContain('App content');
 });
 
@@ -110,7 +110,7 @@ it('can replay a completed guide without immediately reenabling contextual tips'
     await act(async () => { guide().onStartWorkout(); });
     expect(tutorial.status).toBe('active');
     expect(tutorial.requestedAction).toBe('workout');
-    expect(jest.mocked(navigateToTab).mock.calls).toEqual([['Workout']]);
+    expect(jest.mocked(navigateToWorkoutHome).mock.calls).toEqual([[]]);
 });
 
 it('dispatches an explicit guided workout once despite a double tap and consumes its request', async () => {
@@ -119,7 +119,7 @@ it('dispatches an explicit guided workout once despite a double tap and consumes
     const start = guide().onStartWorkout;
     await act(async () => { start(); start(); });
     expect(jest.mocked(saveTutorialProgress).mock.calls).toEqual([['active']]);
-    expect(jest.mocked(navigateToTab).mock.calls).toEqual([['Workout']]);
+    expect(jest.mocked(navigateToWorkoutHome).mock.calls).toEqual([[]]);
     expect(tutorial.requestedAction).toBe('workout');
     expect(guide().visible).toBe(false);
     await act(async () => { tutorial.consumeAction(); });
@@ -139,10 +139,10 @@ it.each(['onCreateSplit', 'onDone'] as const)('%s completes the overview without
     expect(updateWorkout).not.toHaveBeenCalled();
     if (callback === 'onCreateSplit') {
         expect(tutorial.requestedAction).toBe('split');
-        expect(jest.mocked(navigateToTab).mock.calls).toEqual([['Workout']]);
+        expect(jest.mocked(navigateToWorkoutHome).mock.calls).toEqual([[]]);
     } else {
         expect(tutorial.requestedAction).toBeNull();
-        expect(navigateToTab).not.toHaveBeenCalled();
+        expect(navigateToWorkoutHome).not.toHaveBeenCalled();
     }
 });
 
@@ -186,7 +186,7 @@ it('keeps children and explicit actions usable when progress and personalization
     await act(async () => { guide().onStartWorkout(); });
     expect(tutorial.status).toBe('active');
     expect(tutorial.requestedAction).toBe('workout');
-    expect(jest.mocked(navigateToTab).mock.calls).toEqual([['Workout']]);
+    expect(jest.mocked(navigateToWorkoutHome).mock.calls).toEqual([[]]);
 });
 
 it('keeps an explicit action usable and reports when the progress write fails', async () => {
@@ -196,7 +196,7 @@ it('keeps an explicit action usable and reports when the progress write fails', 
     await act(async () => { guide().onStartWorkout(); });
     expect(tutorial.status).toBe('active');
     expect(tutorial.requestedAction).toBe('workout');
-    expect(jest.mocked(navigateToTab).mock.calls).toEqual([['Workout']]);
+    expect(jest.mocked(navigateToWorkoutHome).mock.calls).toEqual([[]]);
     expect(Alert.alert).toHaveBeenCalledWith('Tutorial preference not saved', expect.any(String));
     expect(JSON.stringify(renderer.toJSON())).toContain('App content');
 });
@@ -238,10 +238,10 @@ it.each([
     expect(jest.mocked(saveTutorialProgress).mock.calls).toEqual([[status]]);
     expect(guide().visible).toBe(false);
     expect(tutorial.requestedAction).toBeNull();
-    expect(navigateToTab).not.toHaveBeenCalled();
+    expect(navigateToWorkoutHome).not.toHaveBeenCalled();
     await act(async () => { guide().onDismiss(); guide().onDismiss(); });
     expect(tutorial.requestedAction).toBe(action);
-    expect(jest.mocked(navigateToTab).mock.calls).toEqual([['Workout']]);
+    expect(jest.mocked(navigateToWorkoutHome).mock.calls).toEqual([[]]);
 });
 
 it.each(['onSkip', 'onDone'] as const)('on iOS, dismissing after %s does not dispatch an action', async callback => {
@@ -251,7 +251,7 @@ it.each(['onSkip', 'onDone'] as const)('on iOS, dismissing after %s does not dis
     await act(async () => { guide()[callback](); });
     await act(async () => { guide().onDismiss(); });
     expect(tutorial.requestedAction).toBeNull();
-    expect(navigateToTab).not.toHaveBeenCalled();
+    expect(navigateToWorkoutHome).not.toHaveBeenCalled();
 });
 
 it('cancels a pending iOS launch when Skip arrives before native dismissal', async () => {
@@ -262,5 +262,5 @@ it('cancels a pending iOS launch when Skip arrives before native dismissal', asy
     await act(async () => { guide().onDismiss(); });
     expect(tutorial.status).toBe('skipped');
     expect(tutorial.requestedAction).toBeNull();
-    expect(navigateToTab).not.toHaveBeenCalled();
+    expect(navigateToWorkoutHome).not.toHaveBeenCalled();
 });

@@ -4,7 +4,7 @@ import { getOnboardingProfile } from '../../services/onboardingService';
 import { getSettings } from '../../services/preferencesService';
 import { getTutorialProgress, saveTutorialProgress } from '../../services/tutorialService';
 import type { TutorialStatus } from '../../models/tutorial';
-import { navigateToTab } from '../../navigation/navigationRef';
+import { navigateToWorkoutHome } from '../../navigation/navigationRef';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
 import QuickStartGuide from './QuickStartGuide';
 
@@ -87,7 +87,7 @@ export default function TutorialProvider({ children }: { children: React.ReactNo
         pendingAction.current = null;
         if (action) {
             setRequestedAction(action);
-            navigateToTab('Workout');
+            navigateToWorkoutHome();
         }
     }, []);
 

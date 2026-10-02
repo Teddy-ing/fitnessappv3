@@ -42,7 +42,7 @@ export default function CompareView({ photos, onClose }: CompareViewProps) {
     const halfWidth = SCREEN_WIDTH / 2 - 1;
 
     return (
-        <Modal visible animationType="slide" presentationStyle="fullScreen">
+        <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
             <View style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={onClose} style={styles.closeBtn}>

@@ -4,6 +4,14 @@ description: Feature specifications, on-device ML concepts, and UX decisions
 
 # Feature Design
 
+## Navigation ownership and return paths — 2026-10-01
+
+- Workout and Profile each own a native stack. Register shared ExerciseDetails, Settings and ExerciseMapping screens in both stacks and navigate within the caller's stack. Normal Back pops that screen. Switching tabs to simulate Back left stale Profile routes and caused the reported exercise-information trap.
+- Keep WorkoutHome mounted when opening information so workout state and input context survive. Tab visibility follows the selected stack and active workout state. Screen-specific Back handlers, including the custom workout keyboard, must only run while their screen is focused.
+- Use `navigateToWorkoutHome()` for explicit start/edit-workout actions. It returns to the existing WorkoutHome route without resetting Profile, preserving Calendar or analytics context for the eventual return. Ordinary tab selection preserves each tab's location.
+- Nested editors handle Android Back in the same order as visible Back controls: dismiss the inner picker/detail first, then the editor. Photo viewers expose native modal close handlers. Import review uses a stable original queue and blocks leaving while saving; file picking/parsing also blocks dismissal to prevent a late result from navigating unexpectedly.
+- Route types live in `src/navigation/types.ts`; regression coverage in `src/navigation/__tests__/routing.test.tsx` uses the actual navigator registrations and installed routers. Keep shared screen registration and entry-point tests together when adding routes.
+
 ## Exercise illustration library — 2026-10-01
 
 - The owner approved the original grey humanoid and coral muscle treatment in the bench/squat/curl pilot, then requested expansion to every built-in exercise. Coverage is tracked in `assets/exercises/library-manifest.json`; the target is all 114 current seed IDs.

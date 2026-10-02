@@ -13,59 +13,23 @@
  * - Path C: Pinned Exercise widget deep-link (default: Charts tab)
  */
 
-import React, { useEffect, useCallback } from 'react';
-import {
-    Text,
-    TouchableOpacity,
-    BackHandler,
-} from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
+import React from 'react';
+import type { RouteProp } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing } from '../theme';
-import type { ProfileStackParamList } from '../navigation/AppNavigator';
-import { navigateToTab } from '../navigation/navigationRef';
+import { colors } from '../theme';
+import type { ExerciseDetailsParams } from '../navigation/types';
 import ExerciseDetailsContent from '../components/exerciseDetails/ExerciseDetailsContent';
 export type { ExerciseDetailsTab } from '../components/exerciseDetails/ExerciseDetailsContent';
 
-type Props = NativeStackScreenProps<ProfileStackParamList, 'ExerciseDetails'>;
+type Props = { route: RouteProp<{ ExerciseDetails: ExerciseDetailsParams }, 'ExerciseDetails'> };
 
 // ============================================================
 // Main Screen
 // ============================================================
 
-export default function ExerciseDetailsScreen({ route, navigation }: Props) {
-    const { exerciseId, initialTab, source } = route.params;
-    const cameFromWorkout = source === 'workout';
-
-    // Navigate back to the Workout tab (for workout-sourced navigation)
-    const goBackToWorkout = useCallback(() => {
-        navigateToTab('Workout');
-    }, []);
-
-    // Override header back button when opened from a workout
-    useEffect(() => {
-        navigation.setOptions({
-            headerLeft: cameFromWorkout ? () => (
-                <TouchableOpacity onPress={goBackToWorkout} style={{ paddingRight: spacing.sm }}>
-                    <Text style={{ color: colors.text.primary, fontSize: 28 }}>‹</Text>
-                </TouchableOpacity>
-            ) : undefined,
-        });
-    }, [cameFromWorkout, navigation, goBackToWorkout]);
-
-    // Android hardware back → return to workout instead of triggering discard dialog
-    useFocusEffect(useCallback(() => {
-        if (!cameFromWorkout) return;
-
-        const handler = BackHandler.addEventListener('hardwareBackPress', () => {
-            goBackToWorkout();
-            return true; // Consume the event — don't propagate to WorkoutScreen's handler
-        });
-
-        return () => handler.remove();
-    }, [cameFromWorkout, goBackToWorkout]));
+export default function ExerciseDetailsScreen({ route }: Props) {
+    const { exerciseId, initialTab } = route.params;
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background.primary }} edges={['bottom']}>

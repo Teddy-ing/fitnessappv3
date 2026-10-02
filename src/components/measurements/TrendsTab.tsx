@@ -17,7 +17,9 @@ import {
     StyleSheet,
     ScrollView,
     ActivityIndicator,
+    BackHandler,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
 import { colors, spacing, typography } from '../../theme';
 import { getWeightUnitSync } from '../../hooks/useWeightUnit';
@@ -44,11 +46,21 @@ interface TrendsTabProps {
 }
 
 export default function TrendsTab({ autoSelectTypeId }: TrendsTabProps) {
+    const isFocused = useIsFocused();
     const [sparklineRows, setSparklineRows] = useState<SparklineRowData[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedType, setSelectedType] = useState<MeasurementType | null>(null);
     const [unitSystem, setUnitSystem] = useState(getWeightUnitSync());
     const [bwIntent, setBwIntent] = useState<WeightTrendIntent>('neutral');
+
+    useEffect(() => {
+        if (!isFocused || !selectedType) return;
+        const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+            setSelectedType(null);
+            return true;
+        });
+        return () => subscription.remove();
+    }, [isFocused, selectedType]);
 
     useEffect(() => {
         loadSparklines();
