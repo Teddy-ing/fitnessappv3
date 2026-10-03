@@ -4,6 +4,18 @@ description: User personas, audience prioritization, and feature needs by user t
 
 # Target Users
 
+## Current update — 2026-10-02
+
+The audience order below still guides IronJot: experienced lifters first, intermediates second, and beginners through optional support.
+
+- Experienced lifters can skip setup and the tutorial, start an empty workout, or build their own templates and split. Setup does not assign them a starter plan.
+- Intermediates can opt into a suggested routine. Beginners receive a suggested starting plan by default and can decline it. Both can edit their own training afterward.
+- The optional quick-start tutorial covers starting, logging, and finding completed workouts; its experienced-lifter path starts with creating a split.
+- Exercise details include offline illustrations and instructions. These are still images, not exercise videos.
+- Local logging needs no account or payment. Optional Google Drive backup is a separate choice.
+
+The personas and priorities below are retained from **2026-01-04**. They describe intended users and design goals, not measured user research or acceptance-test results. The two named modes near the end remain an early concept; the implemented app uses optional setup and tutorial flows instead of a mode switch.
+
 ## Audience Prioritization
 
 **Primary → Secondary → Tertiary**
@@ -108,7 +120,7 @@ Veterans are:
 
 ---
 
-## Mode Concept: "Just Let Me Lift" vs "Help Me Start"
+## Original mode concept — 2026-01-04
 
 Consider offering two entry points:
 
@@ -128,6 +140,7 @@ User can switch between modes at any time.
 
 ---
 
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial project setup, capturing user persona analysis from brainstorming
+## Document history
+
+- **2026-01-04:** Original personas and audience priorities.
+- **2026-10-02:** Current setup, tutorial, and exercise-guidance behavior documented.

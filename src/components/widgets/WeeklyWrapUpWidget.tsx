@@ -7,8 +7,8 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '../../theme';
+import { View, Text } from 'react-native';
+import { spacing, typography, createThemedStyles } from '../../theme';
 
 export interface WeeklyData {
     volume: number;
@@ -38,6 +38,7 @@ function formatHours(seconds: number): string {
 }
 
 export default function WeeklyWrapUpWidget({ data }: WeeklyWrapUpWidgetProps) {
+    const styles = useStyles();
     return (
         <View style={styles.container}>
             <Text style={styles.title}>THIS WEEK</Text>
@@ -63,7 +64,7 @@ export default function WeeklyWrapUpWidget({ data }: WeeklyWrapUpWidgetProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
     },
@@ -93,4 +94,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginTop: 1,
     },
-});
+}));

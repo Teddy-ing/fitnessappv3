@@ -9,13 +9,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../theme';
 import { CreateTemplateWizard, SplitListView, SplitFormView } from '../components';
 import {
     getSplits,
@@ -31,11 +30,14 @@ import { Split } from '../models/split';
 
 interface SplitsScreenProps {
     visible: boolean;
+    /** Open the real builder from the optional quick-start guide. */
+    startCreating?: boolean;
     onClose: () => void;
     onSplitSelected?: (split: Split | null) => void;
 }
 
-export default function SplitsScreen({ visible, onClose, onSplitSelected }: SplitsScreenProps) {
+export default function SplitsScreen({ visible, startCreating = false, onClose, onSplitSelected }: SplitsScreenProps) {
+    const styles = useStyles();
     const [splits, setSplits] = useState<Split[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [activeSplitState, setActiveSplitState] = useState<Split | null>(null);
@@ -79,9 +81,11 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
 
     useEffect(() => {
         if (visible) {
+            setEditingSplit(null);
+            setIsCreating(startCreating);
             loadData();
         }
-    }, [visible, loadData]);
+    }, [visible, startCreating, loadData]);
 
     const handleSelectSplit = async (split: Split | null) => {
         try {
@@ -207,7 +211,7 @@ export default function SplitsScreen({ visible, onClose, onSplitSelected }: Spli
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -238,4 +242,4 @@ const styles = StyleSheet.create({
     headerPlaceholder: {
         width: 50,
     },
-});
+}));

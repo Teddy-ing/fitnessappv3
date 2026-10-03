@@ -6,7 +6,7 @@
  * unnecessary re-renders of workout components on every tick.
  *
  * Side effects (haptics, notifications) are NOT in this store —
- * they live in the RestTimer component's useEffect.
+ * they live in useRestTimerLifecycle at the app root.
  */
 
 import { create } from 'zustand';
@@ -51,17 +51,17 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
     activeRestTimerSetId: null,
 
     startRestTimer: (seconds?: number, exerciseId?: string, setId?: string) => {
-        const duration = seconds ?? get().restTimerDuration;
+        const duration = Math.max(0, seconds ?? get().restTimerDuration);
         const endTime = Date.now() + (duration * 1000);
 
         set({
             restTimerDuration: duration,
             restTimerRemaining: duration,
-            restTimerActive: true,
-            restTimerEndTime: endTime,
-            timerCompletionReason: null,
-            activeRestTimerExerciseId: exerciseId ?? null,
-            activeRestTimerSetId: setId ?? null,
+            restTimerActive: duration > 0,
+            restTimerEndTime: duration > 0 ? endTime : null,
+            timerCompletionReason: duration > 0 ? null : 'skipped',
+            activeRestTimerExerciseId: duration > 0 ? exerciseId ?? null : null,
+            activeRestTimerSetId: duration > 0 ? setId ?? null : null,
         });
     },
 
@@ -77,12 +77,12 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
     },
 
     adjustRestTimer: (delta: number) => {
-        const { restTimerRemaining, restTimerActive, restTimerEndTime, restTimerDuration, activeRestTimerExerciseId } = get();
-        if (!restTimerActive) return;
+        const { restTimerActive, restTimerEndTime, restTimerDuration, activeRestTimerExerciseId } = get();
+        if (!restTimerActive || restTimerEndTime === null) return;
 
-        const newRemaining = Math.max(0, restTimerRemaining + delta);
+        const newEndTime = restTimerEndTime + (delta * 1000);
+        const newRemaining = Math.max(0, Math.ceil((newEndTime - Date.now()) / 1000));
         const newDuration = Math.max(0, restTimerDuration + delta);
-        const newEndTime = restTimerEndTime ? restTimerEndTime + (delta * 1000) : null;
 
         // Also update the per-exercise rest time so future sets use this duration
         if (activeRestTimerExerciseId) {
@@ -98,7 +98,13 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
         set({
             restTimerRemaining: newRemaining,
             restTimerDuration: newDuration,
-            restTimerEndTime: newEndTime,
+            restTimerEndTime: newRemaining > 0 ? newEndTime : null,
+            ...(newRemaining === 0 ? {
+                restTimerActive: false,
+                timerCompletionReason: 'skipped' as const,
+                activeRestTimerExerciseId: null,
+                activeRestTimerSetId: null,
+            } : {}),
         });
     },
 
@@ -106,7 +112,7 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
      * Pure tick — calculates remaining time from endTime.
      * When timer reaches 0, sets restTimerActive to false.
      * Side effects (haptics, notifications) are handled by the
-     * RestTimer component watching restTimerActive transitions.
+     * app-level timer lifecycle watching state changes.
      */
     tickRestTimer: () => {
         const { restTimerActive, restTimerEndTime } = get();
@@ -129,6 +135,7 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
     },
 
     setExerciseRestTime: (exerciseId: string, seconds: number) => {
+        seconds = Math.max(0, seconds);
         const { exerciseRestTimes, restTimerActive, activeRestTimerExerciseId } = get();
 
         // Update the per-exercise setting
@@ -147,6 +154,7 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => ({
                 restTimerRemaining: seconds,
                 restTimerEndTime: newEndTime,
             });
+            if (seconds === 0) get().stopRestTimer();
         }
     },
 

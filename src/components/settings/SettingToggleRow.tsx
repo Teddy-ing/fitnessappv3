@@ -8,9 +8,9 @@
  */
 
 import React from 'react';
-import { View, Text, Switch, StyleSheet } from 'react-native';
+import { View, Text, Switch } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 
 interface SettingToggleRowProps {
     icon: keyof typeof MaterialIcons.glyphMap;
@@ -24,13 +24,16 @@ interface SettingToggleRowProps {
 
 export default function SettingToggleRow({
     icon,
-    iconColor = colors.text.primary,
+    iconColor: providedIconColor,
     label,
     subtitle,
     value,
     onValueChange,
     disabled = false,
 }: SettingToggleRowProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    const iconColor = providedIconColor ?? colors.text.primary;
     return (
         <View style={[styles.container, disabled && styles.containerDisabled]}>
             <View style={styles.iconContainer}>
@@ -45,6 +48,7 @@ export default function SettingToggleRow({
             <Switch
                 value={value}
                 onValueChange={onValueChange}
+                thumbColor={colors.text.primary}
                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                 disabled={disabled}
             />
@@ -52,7 +56,7 @@ export default function SettingToggleRow({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -89,4 +93,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginTop: 2,
     },
-});
+}));

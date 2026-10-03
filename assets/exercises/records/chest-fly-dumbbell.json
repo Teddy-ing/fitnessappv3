@@ -1,0 +1,25 @@
+{
+  "id": "chest-fly-dumbbell",
+  "name": "Dumbbell Chest Fly",
+  "pose": "Flat dumbbell fly with arms opened at shoulder height and elbows softly bent",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Flat dumbbell chest fly with arms open and chest muscles highlighted.",
+  "file": "chest-fly-dumbbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: FLAT DUMBBELL CHEST FLY at the controlled open position. Mannequin face up on level flat charcoal bench with head, upper back and buttocks supported, knees bent, feet planted on floor. TWO small graphite dumbbells, one each hand; arms extended outward sideways in a broad arc with elbows softly bent 20-30 degrees. Upper arms approximately level with torso, NOT excessively dropped below bench. Palms face inward toward each other, wrists straight, dumbbells oriented parallel to torso. This is a fly, NOT a bent-elbow press; wrists well outboard of elbows. Camera slightly above front-side/foot-end three-quarter, full broad arm span and entire bench/feet visible with padding. Chest coral only, arms grey.",
+  "revisions": [],
+  "output": {
+    "height": 1254,
+    "bytes": 1492497,
+    "sha256": "5e426a6f2ea268425fbaedea0e5cd36e2e67a69e0c24fc4d6b8d62887deb2a64",
+    "width": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Arms visibly open with slight elbow bend, independent dumbbells and neutral palms-facing grip; level bench support and planted feet. Chest-only overlay. Single still does not establish range or tempo.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visible review: open-arm fly with softly bent elbows, neutral dumbbell grips, supported head/back/buttocks and planted feet; chest-only highlight."
+  }
+}

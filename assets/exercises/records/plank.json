@@ -1,0 +1,25 @@
+{
+  "id": "plank",
+  "name": "Plank",
+  "file": "plank.png",
+  "reference": "barbell-curl.png",
+  "pose": "Forearm plank",
+  "highlight": [
+    "abdominals"
+  ],
+  "accessibilityLabel": "Grey mannequin holding a forearm plank with a straight body line and abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: FOREARM PLANK. Body horizontal face down, elbows directly under shoulders bent90deg, forearms parallel flat on floor with palms down. Legs straight, toes tucked planted, feet hip-width. Straight shoulders-hips-ankles line with neutral pelvis and spine, no sagging and no pike. Head neutral looking floor between forearms. LOW SIDE-front three-quarter camera showing nearer arm/elbow support, far forearm, both toes, whole body and visible front-side abdomen. Highlight only exposed RECTUS ABDOMINIS and visible OBLIQUES on abdomen, no chest/arms/legs. No equipment/mat/barbell.",
+  "revisions": [],
+  "output": {
+    "bytes": 1315268,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "f87ac82c39446dfa587349db232effd5fb7c1d9bc7286050292b68879e502ef2"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Forearms and toes support full body; elbows roughly under shoulders, straight hip-to-ankle line and neutral head. Abdominal overlay visible on exposed front-side torso, limbs grey.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: forearms and toes grounded, elbows below shoulders and trunk/hips aligned; abdominal cue confined to exposed torso."
+  }
+}

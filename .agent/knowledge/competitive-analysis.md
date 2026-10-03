@@ -4,6 +4,16 @@ description: Competitor breakdown, market gaps, and opportunities for differenti
 
 # Competitive Analysis
 
+## Current update — 2026-10-02
+
+IronJot retains the original positioning: fast workout logging, flexible templates and splits, a polished interface, and free core features. It now includes analytics, goals, body measurements, local statistical suggestions, optional setup and tutorial, and offline exercise illustrations. Workout data is local, with optional Google Drive backup and manual data export.
+
+Describe those capabilities directly when explaining the app. Current exports are XLSX and JSON; competitor imports cover supported Hevy, Strong, and FitNotes files. Avoid promises to import from every app, claims of unique market coverage, or a claim that all competitors require accounts or subscriptions.
+
+## Original competitive analysis — 2026-01-04
+
+The comparisons below preserve the original reasoning. Prices, competitor capabilities, and market-wide claims have **not been reverified** in this documentation refresh. They are historical observations and hypotheses, not current marketing evidence. The contemplated $3–5 supporter purchase is an old option; the present direction is free core features with optional support still to be implemented. See [monetization](monetization.md).
+
 ## Market Overview
 
 The Android workout app market splits into two tiers:
@@ -98,6 +108,7 @@ Unlike everyone, we're local-first with optional cloud, and we let you export ev
 
 ---
 
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial project setup, capturing market research discussed in brainstorming
+## Document history
+
+- **2026-01-04:** Original competitive analysis.
+- **2026-10-02:** Current positioning added and old comparisons clearly bounded as historical research.

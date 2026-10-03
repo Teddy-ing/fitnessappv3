@@ -1,0 +1,23 @@
+{
+  "id": "glute-bridge",
+  "name": "Glute Bridge",
+  "file": "glute-bridge.png",
+  "reference": "barbell-curl.png",
+  "pose": "Bodyweight glute bridge with hips raised",
+  "highlight": [],
+  "accessibilityLabel": "Grey mannequin performing a glute bridge with shoulders on the floor, knees bent and feet planted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: BODYWEIGHT GLUTE BRIDGE, raised position. Lying on floor on upper back and shoulders with head supported, arms extended relaxed alongside body palms down on floor. Both knees bent about90degrees, feet flat hip-width directly below knees. Raise hips so shoulders-hips-knees form a straight gently rising line; neutral spine no exaggerated arch. Natural chin position and gaze upward. SIDE front three-quarter view clearly shows shoulder and head floor contact, hips lifted, both soles planted, two straight arms on ground. No equipment/bench/barbell. Primary glutes covered by unchanged charcoal shorts, so NO coral overlays.",
+  "revisions": [],
+  "output": {
+    "bytes": 1359936,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7280ce6e67635efd1265f54381a83d9cf4fdcf6482785305fda96f9bbe0d76a6"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Head and upper back supported on floor, arms grounded, hips lifted into shoulder-to-knee line, feet flat beneath bent knees. No overlay through glute-covering shorts.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: shoulders/head and feet on floor, hips raised with shoulder-to-knee alignment and arms resting by sides; covered glutes remain uncolored."
+  }
+}

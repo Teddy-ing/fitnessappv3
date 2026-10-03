@@ -68,21 +68,34 @@ export function invalidateWeightUnitCache(): void {
  * Automatically updates when the cache is invalidated.
  */
 export function useWeightUnit(): string {
+    return useWeightUnitState().unit;
+}
+
+/** Exposes initial-read completion for the launch screen without changing callers' unit API. */
+export function useWeightUnitState(): { unit: string; isLoaded: boolean } {
     const [unit, setUnit] = useState(cachedUnit ?? 'lbs');
+    const [isLoaded, setLoaded] = useState(cachedUnit !== null);
 
     useEffect(() => {
+        let mounted = true;
+        const receiveUnit = (value: string) => {
+            if (!mounted) return;
+            setUnit(value);
+            setLoaded(true);
+        };
         // Subscribe to future updates
-        subscribers.add(setUnit);
+        subscribers.add(receiveUnit);
 
         // Load the initial value (may already be cached)
-        loadWeightUnit().then(setUnit);
+        loadWeightUnit().then(receiveUnit);
 
         return () => {
-            subscribers.delete(setUnit);
+            mounted = false;
+            subscribers.delete(receiveUnit);
         };
     }, []);
 
-    return unit;
+    return { unit, isLoaded };
 }
 
 /**

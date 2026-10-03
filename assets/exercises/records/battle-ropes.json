@@ -1,0 +1,26 @@
+{
+  "id": "battle-ropes",
+  "name": "Battle Ropes",
+  "pose": "Alternating rope wave with shallow athletic stance",
+  "highlight": [
+    "deltoids",
+    "abdominal wall"
+  ],
+  "accessibilityLabel": "Battle ropes shown during an alternating wave, with knees softly bent and one hand higher than the other.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BATTLE ROPES, one representative alternating wave. Figure stands feet shoulder width, whole soles planted, hips and knees modestly flexed, torso tall with slight athletic forward inclination and neutral spine. Each closed hand grips end of one thick charcoal battle-rope strand, neutral wrists; one hand raised to lower chest level, opposite hand near hip level. Two coherent heavy rope strands form low alternating wave curves across floor in front, joining at a visible small sturdy floor anchor several feet ahead. Whole figure, both rope waves and anchor within square; use side-front three-quarter camera, enough room for rope length. No rope through body, no floating disconnected strands or barbell. Coral only anatomical deltoid caps and exposed abdominal wall/obliques, all upper arms and legs grey; no color on shorts.",
+  "file": "battle-ropes.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Two held rope ends form coherent waves to visible floor anchor; hands at alternate heights, planted feet and soft knees. Shoulders and visible oblique regions coral; clothing opaque. Representative wave only; still does not measure activation.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: staggered-height gripped rope ends, bent knees and stable feet, two continuous waves reaching a visible anchor, shoulder and side-core regions highlighted."
+  },
+  "output": {
+    "bytes": 1471717,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7c4334d79de1ac53b13f12f5a3d58fd07974a9229267c082f6ce06051c50f214"
+  }
+}

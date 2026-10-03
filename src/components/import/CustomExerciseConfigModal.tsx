@@ -10,16 +10,9 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Modal,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import type { MuscleGroup, Equipment } from '../../models/exercise';
 
 // ============================================================
@@ -78,6 +71,7 @@ export default function CustomExerciseConfigModal({
     onClose,
     onConfirm,
 }: CustomExerciseConfigModalProps) {
+    const styles = useStyles();
     const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | null>(null);
     const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
 
@@ -172,7 +166,7 @@ export default function CustomExerciseConfigModal({
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     header: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -200,4 +194,4 @@ const styles = StyleSheet.create({
     chipSelected: { backgroundColor: colors.accent.primary + '20', borderColor: colors.accent.primary },
     chipText: { fontSize: typography.size.sm, color: colors.text.secondary },
     chipTextSelected: { color: colors.accent.primary, fontWeight: typography.weight.semibold },
-});
+}));

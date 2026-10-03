@@ -4,6 +4,20 @@ description: Analytics feature spec — macro/micro workout statistics, dual-axi
 
 # Analytics Feature
 
+## Current app as of 2026-10-02
+
+This source-based status takes precedence over the historical design below. Root [AGENTS.md](../../../../AGENTS.md) replaces the old size/hook-count gates. This refresh did not rerun tests or benchmark charts.
+
+- `src/screens/AnalyticsScreen.tsx` has **three** tabs: Workouts, Breakdown and Exercises. Workouts contains macro metric/bucket/range controls; muscle distribution has its own Breakdown tab rather than sharing the macro view as proposed below.
+- Exercise rows open the shared `ExerciseDetails` screen, with About / History / Charts / Records tabs. Its Charts tab contains estimated 1RM, max weight and session volume; rep-specific bests live in Records. `ExerciseAnalyticsScreen` is retired.
+- Queries are split between `analyticsService.ts`, `exerciseAnalyticsService.ts` and related services/hooks. Shared formulas and `unitConversion.ts` govern calculation and pound-to-display conversion. Do not copy the historical illustrative SQL as an alternative calculation path.
+- Relative-strength/bodyweight chart support exists in Measurements. The automatic trophy-context table below remains a proposal; no `checkTrophyMilestones` implementation is present in the analytics services.
+- Charts and controls now subscribe to IronJot and Classic Purple palettes. Layout accessibility and realistic large-history performance still warrant release-device checks; historical targets and audit results are not current measurements.
+
+## Historical feature specification
+
+The original diagrams, suggested APIs, optional cache design and implementation rules below are preserved for context. Current source and the dated update above take precedence.
+
 > **Architecture note:** This spec aligns with the post-audit codebase (March 2026).
 > See `conventions.md` for guardrails: 600-line component cap, typed DB rows, versioned migrations, hook extraction.
 

@@ -1,114 +1,36 @@
 ---
-description: How to run code quality audits (baseline + diff modes) and track issues
+description: Review substantive changes against behavior, regression risks, and data safety
 ---
 
-# Code Review Workflow
+# Code Review
 
-A structured approach to LLM-assisted code review that prevents endless issue loops and maintains quality over time.
+**Updated: 2026-10-02.** [AGENTS.md](../../AGENTS.md) governs the workflow. Review substantive changes with a separate subagent. Three separate QA chats, exhaustive baseline audits, mandatory file-size refactors, and a log entry for every exchange are retired.
 
-## 📋 Prerequisites
+## Scope the review
 
-- Access to `.agent/knowledge/code-audit-baseline.md`
-- Familiarity with project conventions (see `conventions.md`)
+Give the reviewer the acceptance criteria, actual diff, relevant callers, data paths, and verification already performed. Use Git and the current worktree to identify changed files; a progress entry is context rather than proof of the diff.
 
----
+Review the surrounding implementation where needed to trace a failure. Broader audits are separate scoped work, not an automatic prerequisite for every change.
 
-## 🔄 Review Modes
+## Check the material risks
 
-### Mode A: Baseline Audit (One-Time or Quarterly)
+- Correctness of the requested behavior, empty states, failures, cancellation, repeated actions, and entity changes.
+- Data safety: atomic writes, stable IDs, migration/upgrade paths, backup/restore compatibility, unit conversion, and unfinished-workout recovery.
+- Logging speed and offline use; avoid adding account or payment friction.
+- Native navigation, timers, permissions, lifecycle, keyboard behavior, and layout.
+- Performance risks supported by the actual workload: repeated queries, broad subscriptions, expensive rendering, unbounded work, and leaked resources.
+- Service/store boundaries and shared types/helpers when violations create a concrete maintenance or correctness risk.
 
-Use when: Starting fresh, quarterly refresh, or major refactor complete.
+Optional focused guides: [logic and runtime](qa/bug-hunter.md), [performance](qa/performance-profiler.md), and [maintainability](qa/tech-debt-auditor.md). Choose the relevant focus; they are not three mandatory review passes.
 
-1. **Scan all source files** in the project's source directory
+## Report and resolve
 
-2. **Focus on platform-specific smells** (adjust per framework):
-   - **Performance**: O(n²) loops, unnecessary allocations, blocking UI thread
-   - **Resource management**: Unclosed handles, memory leaks, missing cleanup
-   - **Error handling**: Swallowed exceptions, missing validation, crash risks
-   - **Thread safety**: Race conditions, shared mutable state
-   - **Security**: Injection risks, sensitive data exposure, insecure storage
-   - **Overengineering**: Unused abstractions, premature generalization, YAGNI
-   - **Dead code**: Unused methods, unreachable code paths
-   - **Missing tests**: Critical paths without coverage
-   - **Fitness app specific**: Data loss risks, slow logging flow, sync issues
+For each finding, provide a precise location, triggering scenario, user/data impact, and a suggested correction. Distinguish confirmed defects from unresolved questions. Style preferences, line counts, or hypothetical scale alone do not justify churn.
 
-3. **For each finding, document**:
-   - File and line range
-   - Issue type
-   - Why it's a problem (1-2 sentences)
-   - Severity: Low / Medium / High
-   - Suggested fix (code snippet or description)
+The implementing agent resolves confirmed in-scope findings and reruns the checks affected by the fix. If a material issue requires unavailable access or a product decision, record the exact gap instead of claiming completion.
 
-4. **Create/update** `code-audit-baseline.md` with checklist
+## Finish
 
----
+A review is complete when the agreed scope and acceptance criteria have been checked, concrete findings are resolved or explicitly accounted for, and relevant verification is complete. Stop expanding checks once material risks are covered.
 
-### Mode B: Diff Audit (Per-Session)
-
-Use when: Reviewing code written since last session.
-
-1. **Identify changed files** since last session (check `current-progress.md` session log)
-
-2. **Review only those files** against baseline patterns
-
-3. **Report only NEW issues** (not already in baseline)
-
-4. **If no new issues**: Report "Clean pass"
-
-5. **Update** `code-audit-baseline.md` if new issues found
-
----
-
-## 📝 Baseline Document Format
-
-```markdown
-# Code Audit Baseline
-
-## Summary
-- Last full audit: [DATE]
-- Open issues: X (H: X, M: X, L: X)
-- Fixed since baseline: X
-
-## Open Issues
-- [ ] **[SHORT TITLE]** — `file.ext:L##` — [Type] — [Severity]
-  - Why: [Brief explanation]
-  - Fix: [Suggested solution]
-
-## Resolved
-- [x] **[TITLE]** — Fixed [DATE] — [What was done]
-
-## Accepted/Won't Fix
-- [~] **[TITLE]** — Reason: [Why this is acceptable]
-```
-
----
-
-## 🛑 Stop Conditions
-
-An audit is COMPLETE when:
-- All files in scope have been reviewed
-- All findings are documented in baseline
-- No new patterns are being discovered
-
-Do NOT:
-- Keep finding new issues indefinitely
-- Re-audit already-documented issues
-- Create new categories after baseline is established
-
----
-
-## 🏋️ Fitness App Specific Checks
-
-Always verify these critical paths:
-
-1. **Set logging flow** — Can a user log a set in <3 seconds?
-2. **Data persistence** — Is workout data saved atomically?
-3. **Export functionality** — Does export always produce valid output?
-4. **Offline capability** — Does app work without network?
-5. **History loading** — Does workout history load efficiently?
-
----
-
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial workflow setup
+The main agent records a short outcome in current progress and durable decisions in the relevant knowledge file. Existing audit baselines are historical references; do not recreate exhaustive inventories or duplicate findings across files.

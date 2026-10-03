@@ -1,32 +1,32 @@
 /**
  * Main Navigation Configuration
  * 
- * Bottom tab navigation with 3 tabs:
- * - AI Assistant (left)
- * - Workout (center, primary - raised icon)
- * - Profile/Stats (right) — contains a stack navigator for sub-screens
+ * Bottom tab navigation with 2 tabs:
+ * - Workout (primary) — workout and its exercise information
+ * - Profile/Stats (right) — profile and its sub-screens
  * 
  * Following the Thumb Zone rule: navigation at bottom 30% of screen
  */
 
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useMemo } from 'react';
+import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing } from '../theme';
+import { spacing, createThemedStyles, useThemeColors, type ThemeColors } from '../theme';
 import { useWorkoutStore } from '../stores';
 import { ErrorBoundary } from '../components';
 import { navigationRef, navigateToTab } from './navigationRef';
+import { shouldHideTabBar } from './tabBarVisibility';
 import SwipeableTabScreen from '../components/SwipeableTabScreen';
+import { useStartup } from '../components/startup/StartupContext';
 
 // Screen imports
 import WorkoutScreen from '../screens/WorkoutScreen';
-import AssistantScreen from '../screens/AssistantScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
 import ExerciseDetailsScreen from '../screens/ExerciseDetailsScreen';
@@ -35,33 +35,25 @@ import MeasurementsScreen from '../screens/MeasurementsScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ExerciseMappingScreen from '../screens/ExerciseMappingScreen';
-import type { ExerciseMappingParams } from '../screens/ExerciseMappingScreen';
+import type { ProfileStackParamList, RootTabParamList, WorkoutStackParamList } from './types';
+export type { ProfileStackParamList, RootTabParamList, WorkoutStackParamList, SharedStackParamList } from './types';
 
 // Wrap each screen in its own error boundary + swipe navigation
-// Tab order: Assistant (left) → Workout (center) → Profile (right)
+// Tab order: Workout → Profile
 const WorkoutScreenWithBoundary = () => {
+    const { onInitializationComplete } = useStartup();
     // Disable swipe navigation during an active workout
     const hasActiveWorkout = useWorkoutStore(s => !!s.activeWorkout);
     return (
         <SwipeableTabScreen
-            onSwipeRight={hasActiveWorkout ? undefined : () => navigateToTab('Assistant')}
             onSwipeLeft={hasActiveWorkout ? undefined : () => navigateToTab('Profile')}
         >
-            <ErrorBoundary fallback="screen" label="WorkoutScreen">
+            <ErrorBoundary fallback="screen" label="WorkoutScreen" onError={onInitializationComplete}>
                 <WorkoutScreen />
             </ErrorBoundary>
         </SwipeableTabScreen>
     );
 };
-const AssistantScreenWithBoundary = () => (
-    <SwipeableTabScreen
-        onSwipeLeft={() => navigateToTab('Workout')}
-    >
-        <ErrorBoundary fallback="screen" label="AssistantScreen">
-            <AssistantScreen />
-        </ErrorBoundary>
-    </SwipeableTabScreen>
-);
 
 // Profile uses a stack navigator — only enable swipe on the home screen
 // Sub-screens (Analytics, Calendar, etc.) should not swipe to change tabs
@@ -77,21 +69,16 @@ const ProfileSwipeWrapper = ({ children }: { children: React.ReactNode }) => (
 // Profile Stack Navigator
 // ============================================================
 
-export type ProfileStackParamList = {
-    ProfileHome: undefined;
-    Analytics: { initialTab?: 'workouts' | 'breakdown' | 'exercises' } | undefined;
-    ExerciseDetails: { exerciseId: string; exerciseName: string; initialTab?: 'about' | 'history' | 'charts' | 'records'; source?: 'workout' };
-    Calendar: undefined;
-    Measurements: { initialTab?: 'track' | 'trends' | 'gallery'; autoSelectTypeId?: string } | undefined;
-    Goals: undefined;
-    Settings: undefined;
-    ExerciseMapping: ExerciseMappingParams;
-};
-
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+const WorkoutStack = createNativeStackNavigator<WorkoutStackParamList>();
 
-// On web, jump straight to the exercise analytics screen for chart debugging
-const IS_WEB = Platform.OS === 'web';
+const getStackScreenOptions = (colors: ThemeColors) => ({
+    headerStyle: { backgroundColor: colors.background.primary },
+    headerTintColor: colors.text.primary,
+    headerTitleStyle: { fontWeight: '600' as const },
+    headerShadowVisible: false,
+    contentStyle: { backgroundColor: colors.background.primary },
+});
 
 // Wrap analytics screens in their own error boundaries so a chart library
 // crash shows a screen-level fallback instead of taking down the profile stack
@@ -100,7 +87,7 @@ const AnalyticsScreenWithBoundary = () => (
         <AnalyticsScreen />
     </ErrorBoundary>
 );
-const ExerciseDetailsScreenWithBoundary = (props: any) => (
+const ExerciseDetailsScreenWithBoundary = (props: React.ComponentProps<typeof ExerciseDetailsScreen>) => (
     <ErrorBoundary fallback="screen" label="ExerciseDetailsScreen">
         <ExerciseDetailsScreen {...props} />
     </ErrorBoundary>
@@ -133,23 +120,12 @@ const ProfileHomeWithSwipe = ({ navigation }: { navigation: any }) => (
 );
 
 function ProfileStackNavigator() {
+    const colors = useThemeColors();
     return (
         <ErrorBoundary fallback="screen" label="ProfileStack">
             <ProfileStack.Navigator
-                initialRouteName={IS_WEB ? 'ExerciseDetails' : 'ProfileHome'}
-                screenOptions={{
-                    headerStyle: {
-                        backgroundColor: colors.background.primary,
-                    },
-                    headerTintColor: colors.text.primary,
-                    headerTitleStyle: {
-                        fontWeight: '600',
-                    },
-                    headerShadowVisible: false,
-                    contentStyle: {
-                        backgroundColor: colors.background.primary,
-                    },
-                }}
+                initialRouteName="ProfileHome"
+                screenOptions={getStackScreenOptions(colors)}
             >
                 <ProfileStack.Screen
                     name="ProfileHome"
@@ -169,7 +145,6 @@ function ProfileStackNavigator() {
                     options={({ route }) => ({
                         title: route.params.exerciseName,
                     })}
-                    initialParams={IS_WEB ? { exerciseId: 'mock', exerciseName: 'Mock Bench Press' } : undefined}
                 />
                 <ProfileStack.Screen
                     name="Calendar"
@@ -213,46 +188,67 @@ function ProfileStackNavigator() {
     );
 }
 
+function WorkoutStackNavigator() {
+    const colors = useThemeColors();
+    const { onInitializationComplete } = useStartup();
+    return (
+        <ErrorBoundary fallback="screen" label="WorkoutStack" onError={onInitializationComplete}>
+            <WorkoutStack.Navigator initialRouteName="WorkoutHome" screenOptions={getStackScreenOptions(colors)}>
+                <WorkoutStack.Screen
+                    name="WorkoutHome"
+                    component={WorkoutScreenWithBoundary}
+                    options={{ headerShown: false }}
+                />
+                <WorkoutStack.Screen
+                    name="ExerciseDetails"
+                    component={ExerciseDetailsScreenWithBoundary}
+                    options={({ route }) => ({ title: route.params.exerciseName })}
+                />
+                <WorkoutStack.Screen
+                    name="Settings"
+                    component={SettingsScreenWithBoundary}
+                    options={{ title: 'Settings' }}
+                />
+                <WorkoutStack.Screen
+                    name="ExerciseMapping"
+                    component={ExerciseMappingScreen}
+                    options={{ title: 'Import', presentation: 'fullScreenModal', headerShown: false }}
+                />
+            </WorkoutStack.Navigator>
+        </ErrorBoundary>
+    );
+}
+
 // ============================================================
 // Bottom Tab Navigator
 // ============================================================
 
-// Tab navigator type definitions
-export type RootTabParamList = {
-    Assistant: undefined;
-    Workout: undefined;
-    Profile: undefined;
-};
-
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
-    Assistant: 'smart-toy',
     Workout: 'fitness-center',
     Profile: 'person',
 };
 
 /**
- * Custom Tab Bar with raised center icon and purple gradient separator
+ * Matching tab icons with the selected theme's gradient separator
  */
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const insets = useSafeAreaInsets();
     const bottomPadding = Math.max(insets.bottom, 8);
 
     // Hide tab bar during active workout
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
-    if (activeWorkout) return null;
-
-    // Hide tab bar when navigated into profile sub-screens (Analytics, etc.)
-    const profileRoute = state.routes.find(r => r.name === 'Profile');
-    const profileChild = profileRoute?.state?.routes?.[profileRoute.state.index ?? 0];
-    if (profileChild && profileChild.name !== 'ProfileHome') return null;
+    // Retained routes in another tab must not hide the selected tab's navigation.
+    if (shouldHideTabBar(state, !!activeWorkout)) return null;
 
     return (
         <View style={styles.tabBarContainer}>
-            {/* Purple gradient separator line */}
+            {/* Theme gradient separator line */}
             <LinearGradient
-                colors={['#a855f7', '#4c1d95', '#a855f7']}
+                colors={colors.gradient.tabBar}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientSeparator}
@@ -268,7 +264,6 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                             : route.name;
 
                     const isFocused = state.index === index;
-                    const isWorkout = route.name === 'Workout';
 
                     const onPress = () => {
                         const event = navigation.emit({
@@ -282,42 +277,13 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                         }
                     };
 
-                    if (isWorkout) {
-                        // Raised center button - grey when not focused, purple when focused
-                        return (
-                            <TouchableOpacity
-                                key={route.key}
-                                onPress={onPress}
-                                style={styles.centerTabButton}
-                                activeOpacity={0.9}
-                            >
-                                <View style={[
-                                    styles.raisedIconContainer,
-                                    !isFocused && styles.raisedIconContainerInactive
-                                ]}>
-                                    <MaterialIcons
-                                        name={TAB_ICONS[route.name]}
-                                        size={26}
-                                        color="#fff"
-                                    />
-                                </View>
-                                <Text style={[
-                                    styles.tabLabel,
-                                    {
-                                        color: isFocused ? colors.accent.primary : colors.text.secondary,
-                                        fontWeight: isFocused ? '700' : '500'
-                                    }
-                                ]}>
-                                    {typeof label === 'string' ? label : route.name}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    }
-
                     // Regular tab buttons
                     return (
                         <TouchableOpacity
                             key={route.key}
+                            accessibilityRole="button"
+                            accessibilityLabel={typeof label === 'string' ? label : route.name}
+                            accessibilityState={{ selected: isFocused }}
                             onPress={onPress}
                             style={styles.tabButton}
                             activeOpacity={0.7}
@@ -346,8 +312,21 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
  * Main App Navigator
  */
 export default function AppNavigator() {
+    const colors = useThemeColors();
+    const navigationTheme = useMemo(() => ({
+        ...DarkTheme,
+        colors: {
+            ...DarkTheme.colors,
+            primary: colors.accent.primary,
+            background: colors.background.primary,
+            card: colors.background.secondary,
+            text: colors.text.primary,
+            border: colors.border,
+            notification: colors.accent.primary,
+        },
+    }), [colors]);
     return (
-        <NavigationContainer ref={navigationRef}>
+        <NavigationContainer ref={navigationRef} theme={navigationTheme}>
             <Tab.Navigator
                 initialRouteName="Workout"
                 tabBar={(props) => <CustomTabBar {...props} />}
@@ -363,19 +342,10 @@ export default function AppNavigator() {
                     headerShadowVisible: false,
                 }}
             >
-                {/* Left tab: AI Assistant */}
-                <Tab.Screen
-                    name="Assistant"
-                    component={AssistantScreenWithBoundary}
-                    options={{
-                        title: 'Assistant',
-                    }}
-                />
-
-                {/* Center tab: Workout (primary) */}
+                {/* Workout (primary) */}
                 <Tab.Screen
                     name="Workout"
-                    component={WorkoutScreenWithBoundary}
+                    component={WorkoutStackNavigator}
                     options={{
                         title: 'Workout',
                         headerShown: false,
@@ -396,7 +366,7 @@ export default function AppNavigator() {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     tabBarContainer: {
         backgroundColor: colors.background.primary,
     },
@@ -417,38 +387,8 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.xs,
         gap: 4,
     },
-    centerTabButton: {
-        flex: 1,
-        alignItems: 'center',
-        paddingVertical: spacing.xs,
-        gap: 4,
-    },
-    raisedIconContainer: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: colors.accent.primary,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: -28,
-        borderWidth: 4,
-        borderColor: colors.background.primary,
-        shadowColor: colors.accent.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    raisedIconContainerInactive: {
-        backgroundColor: '#404040', // Grey when not focused
-        shadowOpacity: 0,
-        elevation: 0,
-    },
-    raisedIcon: {
-        // Kept for potential future use, MaterialIcons handles sizing via props
-    },
     tabLabel: {
         fontSize: 10,
         fontWeight: '500',
     },
-});
+}));

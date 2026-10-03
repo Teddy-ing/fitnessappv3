@@ -16,9 +16,22 @@ jest.mock('../workoutPersistence', () => ({
     loadPersistedWorkout: jest.fn().mockResolvedValue(null),
     clearPersistedWorkout: jest.fn(),
 }));
+jest.mock('../../services/workoutService', () => ({
+    getPreviousSetsForExercise: jest.fn().mockResolvedValue([]),
+    getPreviousSetsForExercises: jest.fn().mockResolvedValue(new Map()),
+}));
+jest.mock('../../services/smartSuggestionsService', () => ({
+    getSuggestionsForExercise: jest.fn().mockResolvedValue({}),
+    getSuggestionsForExercises: jest.fn().mockResolvedValue(new Map()),
+}));
+jest.mock('../../services/preferencesService', () => ({
+    getSettings: jest.fn().mockResolvedValue({ smartSuggestions: false }),
+}));
 
 import { useWorkoutStore } from '../workoutStore';
 import { Exercise } from '../../models/exercise';
+import { useRestTimerStore } from '../restTimerStore';
+import { clearPersistedWorkout } from '../workoutPersistence';
 
 // A minimal exercise fixture for testing
 function makeExercise(id: string, name: string = 'Test Exercise'): Exercise {
@@ -42,10 +55,17 @@ function makeExercise(id: string, name: string = 'Test Exercise'): Exercise {
 
 // Reset store between tests
 beforeEach(() => {
+    jest.clearAllMocks();
     useWorkoutStore.setState({
         activeWorkout: null,
         lastCompletedSet: null,
+        isFinishing: false,
+        isEditMode: false,
+        originalDuration: null,
+        originalCompletedAt: null,
+        originalStartedAt: null,
     });
+    useRestTimerStore.getState().stopRestTimer();
 });
 
 // ========================================
@@ -72,6 +92,76 @@ describe('discardWorkout', () => {
         const { activeWorkout, lastCompletedSet } = useWorkoutStore.getState();
         expect(activeWorkout).toBeNull();
         expect(lastCompletedSet).toBeNull();
+    });
+});
+
+describe('finishWorkout', () => {
+    function startCompletedWorkout() {
+        const store = useWorkoutStore.getState();
+        store.startWorkout('Strength');
+        store.addExercise(makeExercise('bench'));
+        const exercise = useWorkoutStore.getState().activeWorkout!.main.exercises[0];
+        store.updateSet(exercise.id, exercise.sets[0].id, { weight: 100, reps: 8 });
+        store.completeSet(exercise.id, exercise.sets[0].id);
+        useRestTimerStore.getState().startRestTimer(120, exercise.id, exercise.sets[0].id);
+        return useWorkoutStore.getState().activeWorkout!;
+    }
+
+    it('keeps the workout recoverable until persistence succeeds and rejects duplicate finishes', async () => {
+        const active = startCompletedWorkout();
+        let resolveSave!: () => void;
+        const persist = jest.fn(() => new Promise<void>(resolve => { resolveSave = resolve; }));
+        const first = useWorkoutStore.getState().finishWorkout(persist);
+
+        expect(useWorkoutStore.getState().activeWorkout).toBe(active);
+        expect(useWorkoutStore.getState().isFinishing).toBe(true);
+        expect(clearPersistedWorkout).not.toHaveBeenCalled();
+        expect(await useWorkoutStore.getState().finishWorkout(persist)).toBeNull();
+        useWorkoutStore.getState().discardWorkout();
+        expect(useWorkoutStore.getState().activeWorkout).toBe(active);
+        expect(persist).toHaveBeenCalledTimes(1);
+
+        resolveSave();
+        const result = await first;
+        expect(result).toMatchObject({ id: active.id, status: 'completed', totalSets: 1, totalVolume: 800 });
+        expect(useWorkoutStore.getState().activeWorkout).toBeNull();
+        expect(useWorkoutStore.getState().isFinishing).toBe(false);
+        expect(clearPersistedWorkout).toHaveBeenCalledTimes(1);
+        expect(useRestTimerStore.getState().restTimerActive).toBe(false);
+    });
+
+    it('retains the active workout, recovery file, and rest timer on save failure so retry succeeds', async () => {
+        const active = startCompletedWorkout();
+        const persist = jest.fn().mockRejectedValueOnce(new Error('Disk full')).mockResolvedValueOnce(undefined);
+        await expect(useWorkoutStore.getState().finishWorkout(persist)).rejects.toThrow('Disk full');
+
+        expect(useWorkoutStore.getState().activeWorkout).toBe(active);
+        expect(useWorkoutStore.getState().isFinishing).toBe(false);
+        expect(clearPersistedWorkout).not.toHaveBeenCalled();
+        expect(useRestTimerStore.getState().restTimerActive).toBe(true);
+
+        await expect(useWorkoutStore.getState().finishWorkout(persist)).resolves.toMatchObject({ id: active.id });
+        expect(useWorkoutStore.getState().activeWorkout).toBeNull();
+    });
+
+    it('preserves the historical workout identity and timing while saving edits', async () => {
+        const active = startCompletedWorkout();
+        const historical = {
+            ...active,
+            startedAt: new Date('2026-08-12T12:00:00Z'),
+            completedAt: new Date('2026-08-12T13:10:00Z'),
+            totalDuration: 4200,
+        };
+        useWorkoutStore.getState().loadWorkoutForEditing(historical);
+        const persist = jest.fn().mockRejectedValueOnce(new Error('Offline database')).mockResolvedValueOnce(undefined);
+        await expect(useWorkoutStore.getState().finishWorkout(persist)).rejects.toThrow();
+        expect(useWorkoutStore.getState().isEditMode).toBe(true);
+        expect(useWorkoutStore.getState().originalDuration).toBe(4200);
+
+        const result = await useWorkoutStore.getState().finishWorkout(persist);
+        expect(result).toMatchObject({ id: historical.id, startedAt: historical.startedAt, completedAt: historical.completedAt, totalDuration: 4200 });
+        expect(persist).toHaveBeenLastCalledWith(result, true);
+        expect(useWorkoutStore.getState().isEditMode).toBe(false);
     });
 });
 

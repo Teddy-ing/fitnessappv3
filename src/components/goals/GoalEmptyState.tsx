@@ -8,15 +8,10 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import type { PrefillParams } from '../../hooks/useGoalCreation';
 import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 
@@ -61,6 +56,8 @@ interface GoalEmptyStateProps {
 // ============================================================
 
 export default function GoalEmptyState({ onQuickAdd, onCreateCustom }: GoalEmptyStateProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🎯</Text>
@@ -100,7 +97,7 @@ export default function GoalEmptyState({ onQuickAdd, onCreateCustom }: GoalEmpty
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     emptyState: {
         flex: 1,
         alignItems: 'center',
@@ -160,4 +157,4 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.semibold,
         marginLeft: spacing.xs,
     },
-});
+}));

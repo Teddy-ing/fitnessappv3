@@ -1,0 +1,25 @@
+{
+  "id": "cable-lateral-raise",
+  "name": "Cable Lateral Raise",
+  "pose": "Standing single-arm cable lateral raise at shoulder height",
+  "highlight": [
+    "lateral deltoid"
+  ],
+  "accessibilityLabel": "Standing single-arm cable lateral raise with the lifting shoulder highlighted.",
+  "file": "cable-lateral-raise.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: SINGLE-ARM CABLE LATERAL RAISE. Mannequin stands SIDEWAYS beside a single low-pulley cable tower on imageLEFT. Working RIGHT arm on far side from tower raises outward to imageRIGHT just below shoulder height with soft elbow, closed neutral hand holding ONE D-handle. One taut diagonal cable runs from handle to LOW pulley at tower base, in front of thighs not through body. Nonworking left hand rests lightly on tower upright near waist. Upright trunk, feet hip width flat, no lean. Front three-quarter camera clear cable path and all hands. Coral ONLY working right lateral deltoid. Other shoulder/arms grey. Entire tower top/base visible.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Single arm raised to side below shoulder level, closed D-handle grip with coherent clip/cable to low pulley; cable visibly in front of legs. Opposite hand supports tower, both feet planted. Full apparatus with narrow top margin, working shoulder only coral.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: single handle elevated laterally near shoulder height, cable runs from low pulley across the front, free hand supports on upright. Full machine and body framed."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1509799,
+    "sha256": "a293686723328c99ea642c0fecb8b91a33476bc5a300719915eb316aaa362488"
+  }
+}

@@ -4,6 +4,18 @@ description: Tracking document for performance regression findings from Performa
 
 # Performance Profiler Audit Baseline
 
+## Current app as of 2026-10-02
+
+The register below preserves historical profiling decisions and IDs. Its counts, accepted/deferred labels and performance claims describe those sessions; they are not current measurements. Root [AGENTS.md](../../../AGENTS.md) replaces mandatory audit-chat and fixed-size gates with checks proportional to material risks.
+
+- The old summary count is not a current backlog count: its latent table lists both PP-078 and PP-091. `src/services/splitService.ts` still hydrates each split in `getSplits`; practical impact needs measurement with realistic data before changing it.
+- PP-078's old 100ms startup suggestion cannot be treated as the current app-open budget. IronJot deliberately displays a 2500ms startup sequence while initialization runs; performance work must separate readiness time from that visible hold. See `src/components/startup/StartupBranding.tsx` and `StartupGate.tsx`.
+- `smartSuggestionsService.ts` batches exercise history/rest/set/nudge queries, and `batchQuery.ts` / `batchInsert.ts` remain shared database helpers. Prior query-count improvements are historical evidence, not a guarantee for every current workload.
+- The app now bundles 114 optimized exercise illustrations and supports live theme switching. [Current progress](../current-progress.md) records the asset-export and Android checks; no new startup, memory, chart or large-history benchmark was performed in this refresh.
+- Release performance checks should target typing/set completion, long workout histories, photo galleries, imports and cold starts on representative phones. Preserve accepted tradeoffs unless evidence shows a material regression.
+
+## Historical audit record
+
 ## Summary
 
 - **Last full pass:** 2026-04-13 (Settings Revamp — 20 files)

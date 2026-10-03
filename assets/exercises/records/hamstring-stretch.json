@@ -1,0 +1,25 @@
+{
+  "id": "hamstring-stretch",
+  "name": "Hamstring Stretch",
+  "file": "hamstring-stretch.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated single-leg hamstring stretch with a gentle hip hinge",
+  "highlight": [
+    "visible hamstrings of extended leg"
+  ],
+  "accessibilityLabel": "Seated hamstring stretch with one leg extended and the torso gently hinging toward it.",
+  "revisions": [],
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: SEATED SINGLE-LEG HAMSTRING STRETCH. Sit on one plain thin charcoal yoga mat, one leg extended forward with knee nearly straight but not locked, heel on mat and toes up; other knee bends outward, sole rests toward inner thigh of extended leg. Pelvis supported, torso hinges gently forward from hips with long back rather than collapsing onto leg. Both hands rest lightly on extended leg shin, no forced toe reach, shoulders relaxed and neck natural. Side-rear three-quarter camera shows extended leg, posterior/outer thigh, bent other leg, hands and full mat. Coral on exposed HAMSTRING bellies of extended leg below shorts only, no quads, knees, calves or back. Here coral indicates stretch TARGET region, not activation. Clothing opaque, no color painted on shorts. No equipment beyond mat.",
+  "review": {
+    "status": "reviewed",
+    "notes": "Supported seated hip hinge, extended heel down with toes up and hands lightly on shin. Posterior thigh target coral, no color through shorts. Other bent leg and second hand are partly occluded by side angle; still shows one side only.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: seated straight leg with hands resting on shin, gentle forward hinge; posterior thigh highlight denotes stretch target."
+  },
+  "output": {
+    "bytes": 1452216,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "626b60fa957657e6ec1cfd6c295b4dfd6adcf04ae7b8314108af12037cde220b"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "bench-press-dumbbell",
+  "name": "Dumbbell Bench Press",
+  "pose": "Flat dumbbell bench press at the bottom position",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Flat dumbbell bench press at the bottom, with chest muscles highlighted.",
+  "file": "bench-press-dumbbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: FLAT DUMBBELL BENCH PRESS, bottom position. Lying face up on a level charcoal padded bench; head, shoulders and buttocks supported, modest natural lumbar arch, both feet flat on floor with bent knees. TWO separate equal graphite round dumbbells, one in each hand, lowered beside lower chest; closed overhand grips, wrists straight above elbows, forearms vertical, elbows 45-60 degrees from torso. Dumbbell shafts parallel to each other and perpendicular to torso; no single bar joining them. Camera foot-end front-side three-quarter slightly elevated, full figure and bench legs visible. Coral highlight ONLY both pectoralis major regions; all arm muscles grey.",
+  "revisions": [],
+  "output": {
+    "sha256": "b5fc0d13075f7fe82f92f403c80733e103007ee20503493da035eeba9c4e2498",
+    "height": 1254,
+    "bytes": 1553823,
+    "width": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Two separate dumbbells visibly gripped; wrists over elbows; chest-only highlight; feet planted; level supported bench. Perspective partly hides far shoulder contact.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visible review: paired dumbbells held coherently above bent elbows, flat bench body support and planted feet; chest highlights and model match."
+  }
+}

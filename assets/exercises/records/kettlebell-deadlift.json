@@ -1,0 +1,25 @@
+{
+  "id": "kettlebell-deadlift",
+  "name": "Kettlebell Deadlift",
+  "pose": "Kettlebell deadlift near floor with hips hinged and knees bent",
+  "highlight": [
+    "visible hamstrings"
+  ],
+  "accessibilityLabel": "Kettlebell deadlift near the floor, with both hands on one bell, hips back and feet planted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: KETTLEBELL DEADLIFT lowered just above floor. Feet around shoulder width, toes slightly out. Both hands closed overhand on top of ONE graphite kettlebell handle, arms straight and vertical between thighs. Bell hangs centrally between ankles just above floor. Hips pushed back, knees moderately flexed, hips remain distinctly ABOVE knees, back/neck neutral with torso inclined naturally forward around45 degrees. Shins near vertical; whole soles planted. Side-biased rear three-quarter camera with enough side view to see hand/handle contact and bell clear of limbs. Coral only exposed posterior HAMSTRINGS above knee backs; glutes hidden by opaque shorts, trunk and arms grey. Complete bell and figure.",
+  "file": "kettlebell-deadlift.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Both hands grip one handle, bell hangs between feet just above floor. Hips above knees, knees moderately flexed, whole soles planted and spine plausible. Visible lateral hamstrings coral; front quads and covered glutes grey.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: two hands on single kettlebell between legs, straight arms, hips hinged and knees flexed, bell slightly off floor."
+  },
+  "output": {
+    "bytes": 1418424,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "2cd1b17d1c4c035b96329dc697c1dc60c131b313402ba4bff45e0a53f2a6bcce"
+  }
+}

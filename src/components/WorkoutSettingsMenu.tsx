@@ -16,7 +16,6 @@ import {
     Text,
     TouchableOpacity,
     Modal,
-    StyleSheet,
     Switch,
     Alert,
     ScrollView,
@@ -24,7 +23,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface WorkoutSettingsMenuProps {
     visible: boolean;
@@ -86,6 +85,8 @@ export default function WorkoutSettingsMenu({
     onChangeWeightIncrement,
     onChangeRestTime,
 }: WorkoutSettingsMenuProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const insets = useSafeAreaInsets();
 
     return (
@@ -134,6 +135,7 @@ export default function WorkoutSettingsMenu({
                             <Switch
                                 value={showPrevious}
                                 onValueChange={(val) => onToggleSetting('showPrevious', val)}
+                                thumbColor={colors.text.primary}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                             />
                         </View>
@@ -149,6 +151,7 @@ export default function WorkoutSettingsMenu({
                             <Switch
                                 value={showRpe}
                                 onValueChange={(val) => onToggleSetting('showRpe', val)}
+                                thumbColor={colors.text.primary}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                             />
                         </View>
@@ -164,6 +167,7 @@ export default function WorkoutSettingsMenu({
                             <Switch
                                 value={showRir}
                                 onValueChange={(val) => onToggleSetting('showRir', val)}
+                                thumbColor={colors.text.primary}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                             />
                         </View>
@@ -184,6 +188,7 @@ export default function WorkoutSettingsMenu({
                             <Switch
                                 value={showPlateCalc}
                                 onValueChange={(val) => onToggleSetting('showPlateCalc', val)}
+                                thumbColor={colors.text.primary}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                             />
                         </View>
@@ -288,6 +293,7 @@ export default function WorkoutSettingsMenu({
                             <Switch
                                 value={autoStartRestTimer}
                                 onValueChange={(val) => onToggleSetting('autoStartRestTimer', val)}
+                                thumbColor={colors.text.primary}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                             />
                         </View>
@@ -332,6 +338,7 @@ export default function WorkoutSettingsMenu({
                             <Switch
                                 value={prefillPrevious}
                                 onValueChange={(val) => onToggleSetting('prefillPrevious', val)}
+                                thumbColor={colors.text.primary}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                             />
                         </View>
@@ -343,11 +350,12 @@ export default function WorkoutSettingsMenu({
                             </View>
                             <View style={styles.settingLabelContainer}>
                                 <Text style={styles.settingLabel}>Smart Suggestions</Text>
-                                <Text style={styles.settingSubLabel}>AI-powered weight & rep predictions</Text>
+                                <Text style={styles.settingSubLabel}>Weight & rep suggestions from your workout history</Text>
                             </View>
                             <Switch
                                 value={smartSuggestions}
                                 onValueChange={(val) => onToggleSetting('smartSuggestions', val)}
+                                thumbColor={colors.text.primary}
                                 trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                             />
                         </View>
@@ -365,6 +373,7 @@ export default function WorkoutSettingsMenu({
                                 <Switch
                                     value={showProgressionNudges}
                                     onValueChange={(val) => onToggleSetting('showProgressionNudges', val)}
+                                    thumbColor={colors.text.primary}
                                     trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
                                 />
                             </View>
@@ -379,7 +388,7 @@ export default function WorkoutSettingsMenu({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -496,4 +505,4 @@ const styles = StyleSheet.create({
     disabledText: {
         color: colors.text.disabled,
     },
-});
+}));

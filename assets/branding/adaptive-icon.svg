@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
+<title>IronJot — Barbell pen</title>
+
+<g transform="translate(256 256) scale(0.58) translate(-256 -256)"><g id="paper"><path d="M145 340 H326 L294 439 Q290 453 278 453 H87 Q68 453 76 438 L131 350 Q136 340 145 340 Z" fill="#FFF8E9"/><path d="M330 343 L400 410 H348 Q330 410 330 393 Z" fill="#FFF8E9"/><path d="M150 384 H251 M136 413 H217" fill="none" stroke="#252E33" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="pen"><path d="M311 139 L331 114 L376 150 L355 177 Z" fill="#FFF8E9"/><path d="M246 249 L311 157 L339 178 L275 269 Q261 268 246 249 Z" fill="#FF795F"/><path d="M235 251 L208 277 L187 355 L257 314 L275 277 Q254 273 235 251 Z" fill="#FFF8E9" stroke="#252E33" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M228 300 L205 331" fill="none" stroke="#252E33" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M237 300 A9 9 0 1 1 219 300 A9 9 0 1 1 237 300 Z" fill="#252E33"/></g>
+<g id="upper-plates"><path d="M243 98 L274 59 Q281 50 290 57 L297 62 Q305 68 299 77 L263 123 Q258 128 251 123 L244 118 Q235 111 243 98 Z" fill="#FF795F"/><path d="M258 139 L319 62 Q327 50 337 58 L344 64 Q353 71 345 82 L285 159 Q277 170 267 161 L260 156 Q250 149 258 139 Z" fill="#FF795F"/></g>
+<g id="lower-plates"><path d="M338 205 L393 135 Q400 125 410 132 L420 139 Q432 146 423 158 L366 230 Q359 240 349 232 L341 226 Q331 219 338 205 Z" fill="#FF795F"/><path d="M380 224 L418 175 L433 185 Q443 191 436 202 L403 246 Q397 252 390 246 L382 240 Q374 234 380 224 Z" fill="#FF795F"/></g></g>
+</svg>

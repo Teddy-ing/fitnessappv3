@@ -1,0 +1,25 @@
+{
+  "id": "smith-machine-squat",
+  "name": "Smith Machine Squat",
+  "file": "smith-machine-squat.png",
+  "reference": "barbell-curl.png",
+  "pose": "Smith machine squat near parallel",
+  "highlight": [
+    "quadriceps"
+  ],
+  "accessibilityLabel": "Grey mannequin squatting under a Smith machine bar, with quadriceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: SMITH MACHINE SQUAT near parallel. Whole Smith machine frame with TWO vertical guide rails and bar sleeves mechanically attached to guide rails, complete base and top crossbeam. Bar rests across upper traps BEHIND neck, both hands grip just outside shoulders. Feet shoulder-width slightly ahead of bar path, heels and forefeet planted, thighs near parallel, knees align toes; back neutral, torso mildly inclined. Modest equal graphite plates outside hands. Front-side three-quarter view shows bar contact, guide attachment and feet. Highlight visible quadriceps above kneecaps only; glutes covered uncolored.",
+  "revisions": [],
+  "output": {
+    "bytes": 1567053,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "24042ac1d9e2348097c656af1b211de7ab6a13ea4f1738bddee0fb1078de5595"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Continuous Smith bar linked to two vertical sliding sleeves, resting behind neck; closed grips, planted feet and near-parallel squat. Quads stop above knees. Slight front-biased perspective limits precise bar-over-foot projection.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: bar behind shoulders attaches to two guide sleeves, closed grips, flexed knees and planted feet; complete Smith frame visible."
+  }
+}

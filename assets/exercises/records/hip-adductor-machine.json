@@ -1,0 +1,25 @@
+{
+  "id": "hip-adductor-machine",
+  "name": "Hip Adductor Machine",
+  "file": "hip-adductor-machine.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated hip adduction with thighs partly apart against inner-thigh pads",
+  "highlight": [
+    "adductors"
+  ],
+  "accessibilityLabel": "Grey mannequin seated in a hip adductor machine with pads against the inner thighs and adductors highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: SEATED HIP ADDUCTOR MACHINE, mid-range with knees moderately apart. Whole compact weight-stack machine, upright back on backrest, butt on seat, knees90deg and thighs spread symmetrically about25deg each side. TWO separate vertical padded blocks against INNER SIDES of thighs just above knees; pads are BETWEEN legs, knees press INWARD against them. Each pad mounted to corresponding pivoting connected arm, feet on separate footpegs under each knee. Hands hold seat-side handles. Front-side three-quarter camera makes INSIDE pad contacts unambiguous. Highlight only exposed INNER thigh adductor muscle bellies between shorts hem and pad, never quads or through clothing. Complete frame, connected weight stack and feet inside square.",
+  "revisions": [],
+  "output": {
+    "bytes": 1674356,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "d1086c75b635d449717107a4513940d2728556c2af72f84de7d78097c40ee605"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Pads clearly between knees against inner thighs; hands hold handles, torso supported, feet rest on platforms. Exposed inner thigh regions coral, no quadriceps coloration. Machine linkage is schematic.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: pads against inner thighs with separated knees, supported torso, handles and footrests; visible inner-thigh cues distinguish adduction."
+  }
+}

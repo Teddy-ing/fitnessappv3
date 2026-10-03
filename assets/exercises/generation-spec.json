@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "systemName": "Exercise model v1",
+  "status": "Owner approved model v1 and full built-in library expansion on 2026-09-30",
+  "generator": "Built-in image_gen; no API runner",
+  "reference": {
+    "path": "barbell-curl.png",
+    "role": "Original generated identity/style master. Always reference this file for new exercises; do not chain references from subsequent generations.",
+    "sha256": "c12750114fc3f389b02de0f514953e45d2b766975d83e8a58024e881b1a7e39d"
+  },
+  "render": {
+    "canvas": "square",
+    "background": "#F3F5F7",
+    "primaryMuscle": "#DF685A",
+    "character": "Matte slate-grey adult mannequin; moderate athletic build; bald; charcoal short shorts and training shoes",
+    "camera": "Near-orthographic three-quarter view chosen to make key joints and equipment contact legible",
+    "framing": "Complete figure and equipment, contain fit; target 7–9% margin",
+    "highlightMeaning": "Visible primary muscle regions only, schematic rather than a measurement of activation. Covered muscles are not colored through clothing."
+  },
+  "entries": [
+    {
+      "id": "barbell-curl",
+      "file": "barbell-curl.png",
+      "pose": "Standing underhand curl at approximately 90 degrees of elbow flexion",
+      "highlight": [
+        "biceps"
+      ],
+      "reference": null,
+      "prompt": "Use case: scientific-educational\nAsset type: original exercise-library illustration for a mobile workout app; foundational reference asset in a consistent series.\nPrimary request: one clean, realistic, anatomically plausible full-body humanoid demonstrating a standing straight-bar barbell curl at the middle of the lifting phase.\nSubject identity: an original adult masculine but neutral instructional mannequin, normally athletic proportions, moderate muscle definition, natural human limb lengths, smooth bald oval head with minimal facial planes, no hair, no expressive face, no dramatic bodybuilding definition. Matte pale slate-grey body. Fitted plain charcoal short training shorts ending high on the thigh, low-profile plain charcoal training shoes. Keep this exact character reproducible.\nPose mechanics: upright torso and neutral neck; feet approximately hip width, both whole soles planted, knees softly unlocked. Both upper arms hang vertically close beside the ribs, shoulders relaxed. Elbows bent approximately 90 degrees, forearms approximately horizontal in front of body. Both hands have a clearly UNDERHAND, palms-up, shoulder-width closed grip around a single straight bar, thumbs wrapped; wrists straight in line with forearms. One continuous straight metallic bar, centered and held level, with one modest plain graphite round weight plate and collar at each end. Bar rests in the palms at about lower-rib/upper-waist height. No leaned-back torso or raised upper arms.\nCamera: mild front three-quarter view, seeing the front and the mannequin's left side; near-orthographic low-distortion lens, camera near waist level. Ensure both hand grips and both arms are legible. Entire head, feet, and both bar ends comfortably inside a square canvas, with consistent 7-9 percent padding. The figure occupies most of the canvas.\nStyle: restrained premium 3D educational illustration, smooth sculpted anatomy, soft studio key light from upper left, subtle ambient occlusion, crisp silhouette. Flat very light cool-grey background (#F3F5F7), only a faint soft contact shadow. No gym environment.\nMuscle overlay: muted warm coral (#DF685A) on the anatomical BICEPS muscle bellies of both upper arms only, following the curved muscle shape; both heads read as one smooth muscle region per arm. All forearms, deltoids, chest, trunk and legs remain grey. This color indicates the primary target muscles, not quantified activation. No exposed tendon fibers, stripes, glow, vascular detail or labels.\nConstraints: design entirely from this written brief. Do not imitate a particular app, artist, stock illustration, or licensed character. Exactly one figure, one barbell, two plates, two hands, five fingers per hand; anatomically coherent joints, visible equipment contact; no logos, no words, no borders, no arrows, no inset, no multiple poses. Quiet, natural, not heroic or exaggerated.",
+      "output": {
+        "file": "barbell-curl.png",
+        "bytes": 1291588,
+        "width": 1254,
+        "height": 1254,
+        "sha256": "c12750114fc3f389b02de0f514953e45d2b766975d83e8a58024e881b1a7e39d"
+      }
+    },
+    {
+      "id": "bench-press-barbell",
+      "file": "bench-press-barbell.png",
+      "pose": "Flat bench press, controlled bottom position",
+      "highlight": [
+        "pectoralis major"
+      ],
+      "reference": "barbell-curl.png",
+      "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: FLAT BARBELL BENCH PRESS, controlled bottom position.\nPose and equipment: mannequin lies face-up on a HORIZONTAL level narrow charcoal padded flat bench. Head, upper back/shoulders, and buttocks are supported on the pad. Mild natural lumbar arch, not a dramatic powerlifting bridge. Both knees bent and feet placed on the floor either side of the bench, whole soles flat; feet do not rest on bench. Neck neutral.\nBoth hands have a closed OVERHAND grip slightly wider than shoulders, thumbs visibly wrapped around the SAME straight bar. Lowered bar lightly contacts the lower sternum/lower chest, clearly in front of and never penetrating the body. Wrists nearly straight and stacked over elbows, forearms approximately vertical when viewed from the side. Elbows are bent roughly 90 degrees and are comfortably tucked about 45-60 degrees from the torso, not flared straight sideways. Both shoulders remain against the bench.\nCamera: front-side three-quarter view from slightly above the bench, enough side view to show the bench is level, torso support and bar at the chest, enough foot-end angle to distinguish both arms and both planted feet. Head towards image upper left and feet toward image lower right. Plate sizes modest so hands and arm mechanics stay visible.\nHighlight ONLY the two pectoralis major chest muscle regions in coral. Arms, shoulders, forearms and all other regions grey. Show the complete simple bench with credible legs and floor contact. No rack or spotter in this isolated exercise illustration.",
+      "output": {
+        "file": "bench-press-barbell.png",
+        "bytes": 1463101,
+        "width": 1254,
+        "height": 1254,
+        "sha256": "d38ebcad4ab3eae814f103e89fe6395cd3b3543bef571ae0e9cbf02fb3fdc8e2"
+      },
+      "revisions": [
+        {
+          "reason": "Initial bar touchpoint was too high on chest",
+          "prompt": "Use case: precise-object-edit / scientific-educational.\nInput image 1 is the EDIT TARGET: original grey mannequin flat barbell bench press illustration. Input image 2 is the canonical IDENTITY/STYLE REFERENCE: original grey mannequin curl illustration.\nCorrect ONLY the bench-press bar touch point and corresponding arm position in image 1. Keep the exact same character identity, size/proportions, pose of legs and planted feet, flat bench geometry, bench support/contact of head/shoulders/buttocks, camera, framing, grey materials, charcoal shorts/shoes, coral pectoral highlight, equipment and background.\nRequired correction: the lowered bar currently crosses too high on the chest. Move the entire barbell TOWARD THE FEET along the torso until the shaft gently touches the LOWER STERNUM AT THE BOTTOM EDGE OF THE PECTORAL MUSCLES, just below the nipple line and immediately above the grey upper-abdominal area. The shaft should visibly cross the lower border of both coral chest regions, not their upper halves. Do not simply lower the bar into the torso. Reposition both arms coherently: elbows move toward hips and tuck to approximately 45–60 degrees from torso, wrists directly above elbows so forearms are approximately vertical relative to the floor. Both hands maintain closed overhand grip slightly wider than shoulder width, thumbs wrapped, near-straight wrists. Keep shoulders resting on bench. Hands each grip the same straight bar with matching plates outside hands.\nMake this one concrete mechanical correction, no redesign. Exactly one full mannequin, no extra limbs or bars, no labels or arrows or new objects. Keep full equipment comfortably within square frame.",
+          "result": "Bar lowered toward lower pectoral/sternal region; elbows shifted toward hips; independent visual recheck passed."
+        }
+      ]
+    },
+    {
+      "id": "squat-barbell",
+      "file": "squat-barbell.png",
+      "pose": "High-bar back squat near parallel",
+      "highlight": [
+        "visible quadriceps"
+      ],
+      "reference": "barbell-curl.png",
+      "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: HIGH-BAR BARBELL BACK SQUAT at a controlled near-parallel bottom position.\nPose: feet around shoulder width, toes angled slightly outward, knees following toe direction, both heels AND forefeet planted firmly. Hips lowered between and behind the knees, thighs approximately horizontal, hips and knees both flexed. Natural modest forward torso inclination with a neutral-looking spine and neck, no extreme arch or rounding; look ahead. Bar centered over midfoot.\nA single straight barbell rests firmly ON TOP OF the upper trapezius behind the neck, with clear visible contact outside the body; never crossing through the neck or floating. Both hands wrap the bar in closed overhand grips just outside shoulder width, elbows angled naturally down/back. Equal moderate round graphite plates and collars on both ends. Full bar visible.\nCamera: side-biased front three-quarter view, mannequin facing diagonally toward image right, enough profile to clearly show squat depth, neutral spine, heel contact and bar placement; far leg and hand can be partially occluded naturally but remain anatomically coherent.\nHighlight ONLY the visible quadriceps muscle bellies of both anterior thighs in coral, stopping above the kneecaps. The charcoal shorts cover glutes and upper thighs; do not paint anatomy on top of fabric or highlight the buttocks through the shorts. All calves, kneecaps, trunk, shoulders, and arms remain grey. No rack or extra equipment.",
+      "output": {
+        "file": "squat-barbell.png",
+        "bytes": 1505412,
+        "width": 1254,
+        "height": 1254,
+        "sha256": "497dae010a4f7744ca9e39772d1296505baecf9c32dbce42096d8284f3b39adf"
+      }
+    }
+  ],
+  "review": {
+    "status": "Independent visual pose and consistency review passed for all three final stills",
+    "limitation": "A still does not establish full movement, tempo, or hidden anatomy; squat camera partially obscures bar-to-trapezius contact. Owner review of the pilot style remains."
+  }
+}

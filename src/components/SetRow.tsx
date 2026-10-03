@@ -14,12 +14,12 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { WorkoutSet, SetType } from '../models/workout';
 import { PreviousSetData } from '../models/workout';
 import type { SetSuggestion } from '../models/smartSuggestions';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { getWeightUnitSync } from '../hooks/useWeightUnit';
 import { convertWeight, displayWeight } from '../utils/unitConversion';
 import SetTypeMenu from './SetTypeMenu';
@@ -85,6 +85,7 @@ function SetRowInner({
     suggestion = null,
     prefillPrevious = true,
 }: SetRowProps) {
+    const styles = useStyles();
     const swipeableRef = useRef<Swipeable>(null);
     const isCompleted = set.status === 'completed';
     const isWarmup = set.type === 'warmup';
@@ -470,7 +471,7 @@ function SetRowInner({
 
 export default React.memo(SetRowInner);
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     // Row — strict 40px height, no rounded corners, separator via border
     row: {
         flexDirection: 'row',
@@ -532,7 +533,7 @@ const styles = StyleSheet.create({
     },
     inlineInputFocused: {
         borderColor: colors.accent.primary,
-        backgroundColor: 'rgba(168, 85, 247, 0.08)',
+        backgroundColor: colors.accent.subtle,
     },
     dataText: {
         color: colors.text.primary,
@@ -541,7 +542,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     dataTextActive: {
-        color: '#ffffff',
+        color: colors.text.primary,
         fontWeight: typography.weight.bold,
     },
     dataTextPlaceholder: {
@@ -588,7 +589,7 @@ const styles = StyleSheet.create({
         borderColor: colors.accent.primary,
     },
     checkmark: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.bold,
     },
@@ -602,8 +603,8 @@ const styles = StyleSheet.create({
         height: 40,
     },
     deleteText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.sm,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

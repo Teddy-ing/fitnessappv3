@@ -1,0 +1,35 @@
+{
+  "id": "close-grip-bench",
+  "name": "Close-Grip Bench Press",
+  "file": "close-grip-bench.png",
+  "reference": "barbell-curl.png",
+  "pose": "Flat barbell bench press at the lower chest with shoulder-width grip",
+  "highlight": [
+    "pectoralis major",
+    "triceps"
+  ],
+  "accessibilityLabel": "Grey mannequin pressing a barbell from the lower chest with a close grip, with chest and triceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: CLOSE-GRIP BARBELL BENCH PRESS, bottom. Level flat bench supports head, upper back, buttocks; feet planted floor either side. Closed overhand shoulder-width grip, distinctly narrower than conventional bench, never hands touching. Straight bar gently at LOWER STERNUM bottom border of pectorals. Elbows tuck beside torso at about 20-40 degrees and bend roughly 90 degrees; wrists above elbows, forearms upright. Side-front three-quarter view shows grip width, lower-chest contact and tucked elbows. Highlight pectoralis major and visible posterior triceps only. Full bench and bar ends visible, no rack.\nRender square 1024x1024 PNG. Preserve master clothing.",
+  "revisions": [
+    {
+      "reason": "Initial bar too high and head support unclear",
+      "prompt": "Use case: precise-object-edit / scientific-educational. Image 1 is EDIT TARGET: the approved FLAT BARBELL BENCH PRESS pilot with correct lower-sternum touchpoint and full bench support. Image 2 is canonical character reference. Create the CLOSE-GRIP BENCH PRESS variant by changing ONLY grip width, corresponding elbow position, and adding triceps highlights. Preserve the approved image's exact lower-chest bar position, flat bench, head resting fully on pad, supported shoulders/buttocks, planted feet, model, camera and equipment. Move both hands inward symmetrically until SHOULDER WIDTH apart, palms down closed grip. Elbows tuck near torso but stay vertically under wrists, roughly 20-40 degrees from torso, not below head. Keep shaft touching bottom border of chest ABOVE abdominal muscles; never near throat. Retain chest coral and add muted coral ONLY to visible posterior triceps bellies. Full body, bench, bar and both plates visible. No other changes.",
+      "references": [
+        "bench-press-barbell.png",
+        "barbell-curl.png"
+      ]
+    }
+  ],
+  "output": {
+    "bytes": 1467260,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "e4a8433c9e47fa4ec55dcd9cdfde77e74b83c3c77bc422a385490c4c960c40e6"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Regenerated from approved bench pose to preserve lower chest touchpoint and head support. Both feet planted; narrower symmetric overhand grip and tucked elbows visible; chest and visible triceps highlighted. Forearm alignment judged in perspective; motion unverified.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: shoulder-width close grip, tucked elbows, supported head/back/pelvis, planted feet and bar near lower chest are coherent."
+  }
+}

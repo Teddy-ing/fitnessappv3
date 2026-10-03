@@ -1,0 +1,25 @@
+{
+  "id": "incline-dumbbell-curl",
+  "name": "Incline Dumbbell Curl",
+  "file": "incline-dumbbell-curl.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated incline dumbbell curl at mid-repetition with upper arms hanging behind the torso",
+  "highlight": [
+    "biceps"
+  ],
+  "accessibilityLabel": "Grey mannequin seated on an incline bench curling two dumbbells, with biceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: INCLINE DUMBBELL CURL, simultaneous supinated curl midway upward. Equipment override: ONLY two modest graphite dumbbells and one adjustable bench, no barbell. The bench back is about 55 degrees above horizontal. Head, upper back and buttocks supported; both feet planted. Upper arms hang naturally near vertical slightly behind the inclined torso, shoulders stay back against pad; elbows flexed about 90 degrees, palms up, wrists straight, one dumbbell firmly in each hand. Do not raise elbows forward into a preacher curl. Side-biased front three-quarter view clearly shows inclined backrest and arms hanging behind torso. Highlight only visible biceps in muted coral, other muscles grey. Full bench and dumbbells inside frame.\nRender one square 1024x1024 PNG. Preserve charcoal shorts and shoes exactly; never highlight muscles through clothing.",
+  "revisions": [],
+  "output": {
+    "bytes": 1563728,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "376d11e93b6897e8a79cd8b53d7d0bd4e5c90f8bbb0e9b4a1a369ce3a9eb4350"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Inclined back support, planted feet, two supinated dumbbell grips, roughly vertical upper arms and coherent biceps overlays visible. Bench angle is steeper than requested but remains a clear incline curl. Full body and equipment fit; motion and hidden surfaces unverified.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: incline-supported torso, upper arms near sides, two supinated dumbbells and bent elbows, feet planted; biceps-only regions."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "cable-curl",
+  "name": "Cable Curl",
+  "pose": "Standing low-cable curl with short bar midway upward",
+  "highlight": [
+    "biceps"
+  ],
+  "accessibilityLabel": "Standing cable curl with a low cable, palms up and biceps highlighted.",
+  "file": "cable-curl.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STANDING LOW CABLE CURL midway upward. Single cable tower in front to imageRIGHT, LOW pulley near floor. Mannequin faces tower, upright neutral torso hip-width feet. Elbows remain beside ribs, flexed90degrees, forearms near horizontal. Both CLOSED SUPINATED palms up on shoulder-width short straight bar. Metal eyelet at EXACT BAR CENTER between hands connects to one taut cable diagonally downward to low pulley; no cable through body or wrists. Front-side three-quarter camera reveals two hands/bar center junction and cable, both biceps. Coral biceps only. Entire tower visible with padding.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Two supinated hands on bar, elbows alongside torso, central metal swivel visibly attached between grips with taut cable to low pulley. Full tower and feet visible, top margin narrow. Biceps-only coral.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: closed supinated grips on straight bar, elbows near torso, cable visibly connects the central swivel to low pulley. Upright full figure and machine framed."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1536642,
+    "sha256": "6342d1f88b2d5fe87ff5e699e0c385bede599ab127bd5641b6c99df68ee2497a"
+  }
+}

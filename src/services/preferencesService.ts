@@ -13,6 +13,9 @@ import { safeJsonParse } from './hydration';
 import { UserSettings } from '../models/preferences';
 import type { StrengthProfile } from '../models/smartSuggestions';
 import { WidgetConfig, DEFAULT_WIDGETS } from '../models/widget';
+import { DEFAULT_THEME, normalizeThemeId } from '../models/theme';
+import { notifySettingsChanged } from './settingsEvents';
+import { withWriteLock } from '../utils/dbMutex';
 
 // Re-export for barrel consumers
 export type { UserSettings };
@@ -67,7 +70,7 @@ const DEFAULTS: UserSettings = {
     lastWorkoutDate: null,
     weightUnit: 'lbs',
     distanceUnit: 'mi',
-    theme: 'dark',
+    theme: DEFAULT_THEME,
     defaultRestTime: 90,
     autoStartRestTimer: true,
     restTimerVibration: true,
@@ -120,7 +123,7 @@ export async function getSettings(): Promise<UserSettings> {
         lastWorkoutDate: row.last_workout_date,
         weightUnit: row.weight_unit,
         distanceUnit: row.distance_unit,
-        theme: row.theme,
+        theme: normalizeThemeId(row.theme),
         defaultRestTime: row.default_rest_time,
         autoStartRestTimer: row.auto_start_rest_timer === 1,
         restTimerVibration: row.rest_timer_vibration === 1,
@@ -175,7 +178,10 @@ export async function updateSettings(
     updates: Partial<UserSettings>,
 ): Promise<void> {
     const db = await getDatabase();
-    if (!db) return;
+    if (!db) {
+        if ('theme' in updates) throw new Error('Settings database is unavailable.');
+        return;
+    }
 
     // Map camelCase keys → snake_case columns, converting booleans to integers
     const columnMap: Record<keyof UserSettings, string> = {
@@ -223,7 +229,9 @@ export async function updateSettings(
         setClauses.push(`${column} = ?`);
 
         // Convert booleans to integers for SQLite
-        if (typeof value === 'boolean') {
+        if (key === 'theme') {
+            values.push(normalizeThemeId(value));
+        } else if (typeof value === 'boolean') {
             values.push(value ? 1 : 0);
         } else if (Array.isArray(value)) {
             // JSON arrays (e.g., visibleMeasurements) → stringify
@@ -238,8 +246,17 @@ export async function updateSettings(
 
     if (setClauses.length === 0) return;
 
-    await db.runAsync(
-        `UPDATE user_settings SET ${setClauses.join(', ')} WHERE id = 1`,
-        values,
-    );
+    const write = async () => {
+        const result = await db.runAsync(
+            `UPDATE user_settings SET ${setClauses.join(', ')} WHERE id = 1`,
+            values,
+        );
+        if ('theme' in updates) {
+            if (result.changes === 0) throw new Error('Settings row is missing.');
+            notifySettingsChanged();
+        }
+    };
+    // Keep a theme selection outside a concurrent backup restore transaction.
+    if ('theme' in updates) await withWriteLock(write);
+    else await write();
 }

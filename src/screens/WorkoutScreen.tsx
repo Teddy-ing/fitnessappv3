@@ -21,17 +21,20 @@ import {
     FlatList,
     Alert,
     BackHandler,
+    ActivityIndicator,
+    Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { File, Paths } from 'expo-file-system';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../theme';
 import { useWorkoutStore } from '../stores';
 import { ExercisePicker, RestTimer, WorkoutKeyboard, SaveTemplateModal, WorkoutSettingsMenu } from '../components';
 import RenderableExerciseItem, { RenderableItem } from '../components/workout/RenderableExerciseItem';
 import WorkoutNoteSection from '../components/workout/WorkoutNoteSection';
 import WorkoutHeader from '../components/workout/WorkoutHeader';
+import WorkoutCompletion from '../components/workout/WorkoutCompletion';
 import { useElapsedTimer, useWorkoutKeyboard, useHomeScreenData } from '../hooks';
 import { isKeyboardField } from '../hooks/useWorkoutKeyboard';
 import { useWorkoutSettings } from '../hooks/workout/useWorkoutSettings';
@@ -49,11 +52,20 @@ import { useGoalCelebrationStore } from '../stores/goalCelebrationStore';
 import WorkoutHomeView from './WorkoutHomeView';
 import { navigateToTab, navigationRef } from '../navigation/navigationRef';
 import { useIsFocused } from '@react-navigation/native';
+import { useTutorial } from '../components/tutorial/TutorialProvider';
+import WorkoutTutorialTip from '../components/tutorial/WorkoutTutorialTip';
+import SplitsScreen from './SplitsScreen';
+import { useStartup } from '../components/startup/StartupContext';
 
 // Swipe hint persistence key
 const SWIPE_HINT_FILE = new File(Paths.document, '.swipe_hint_seen');
 
 export default function WorkoutScreen() {
+    const colors = useThemeColors();
+    const styles = useStyles();
+    const tutorial = useTutorial();
+    const [showTutorialSplit, setShowTutorialSplit] = useState(false);
+    const handledTutorialAction = useRef<string | null>(null);
     // PP-001 fix: Fine-grained selector — only re-render when activeWorkout changes.
     // Actions are stable references; access via getState() to avoid subscribing to them.
     const activeWorkout = useWorkoutStore(s => s.activeWorkout);
@@ -62,8 +74,7 @@ export default function WorkoutScreen() {
     const exerciseSuggestions = useWorkoutStore(s => s.exerciseSuggestions);
     const collapsedExercises = useWorkoutStore(s => s.collapsedExercises);
     const originalDuration = useWorkoutStore(s => s.originalDuration);
-    const originalCompletedAt = useWorkoutStore(s => s.originalCompletedAt);
-    const originalStartedAt = useWorkoutStore(s => s.originalStartedAt);
+    const isFinishing = useWorkoutStore(s => s.isFinishing);
     const {
         startWorkout,
         startFromTemplate,
@@ -91,6 +102,7 @@ export default function WorkoutScreen() {
         currentTemplateIndex,
         workoutDatesThisWeek,
         refreshing,
+        isLoading: isHomeLoading,
         loadData,
         onRefresh,
         handleChangeTemplateIndex,
@@ -105,6 +117,7 @@ export default function WorkoutScreen() {
 
     // Workout settings — extracted to useWorkoutSettings hook
     const {
+        isLoaded: settingsLoaded,
         showPrevious,
         showRpe,
         showRir,
@@ -128,6 +141,12 @@ export default function WorkoutScreen() {
         handleChangeRestTime,
         refreshSettings,
     } = useWorkoutSettings();
+
+    const { onInitializationComplete } = useStartup();
+    useEffect(() => {
+        // Reveal the actual saved units, settings, and home data, not their placeholders.
+        if (settingsLoaded && !isHomeLoading) onInitializationComplete();
+    }, [settingsLoaded, isHomeLoading, onInitializationComplete]);
 
     // BH-051: Re-read settings when the Workout tab receives focus.
     // keepAwakeDuringWorkout (and other settings) were stale if changed
@@ -156,13 +175,15 @@ export default function WorkoutScreen() {
 
     useEffect(() => {
         // Swipe hint check
-        if (SWIPE_HINT_FILE.exists) {
+        if (tutorial.status === null || tutorial.status === 'available' || tutorial.status === 'active') {
+            setShowSwipeHint(false);
+        } else if (SWIPE_HINT_FILE.exists) {
             setShowSwipeHint(false);
         } else {
             setShowSwipeHint(true);
             SWIPE_HINT_FILE.write('1');
         }
-    }, []);
+    }, [tutorial.status]);
 
     // Live timer - extracted to useElapsedTimer hook
     const { elapsedTime } = useElapsedTimer(activeWorkout?.startedAt ?? null);
@@ -170,6 +191,19 @@ export default function WorkoutScreen() {
     // Save as template modal state
     const [showSaveTemplateModal, setSaveTemplateModal] = useState(false);
     const [pendingWorkout, setPendingWorkout] = useState<Workout | null>(null);
+    const [completedWorkout, setCompletedWorkout] = useState<Workout | null>(null);
+    const [offerSaveTemplate, setOfferSaveTemplate] = useState(false);
+    const completionIdRef = useRef<string | null>(null);
+
+    // Calendar edits and template starts can load a workout from outside this screen.
+    useEffect(() => {
+        if (!activeWorkout) return;
+        completionIdRef.current = null;
+        setCompletedWorkout(null);
+        setPendingWorkout(null);
+        setSaveTemplateModal(false);
+        setOfferSaveTemplate(false);
+    }, [activeWorkout?.id]);
 
     // Custom keyboard - extracted to useWorkoutKeyboard hook
     const {
@@ -192,7 +226,7 @@ export default function WorkoutScreen() {
     const exercisesListStyle = useMemo(() => ({
         ...styles.exercisesList,
         paddingBottom: isKeyboardVisible ? 360 : 120,
-    }), [isKeyboardVisible]);
+    }), [isKeyboardVisible, styles]);
 
     // Auto-scroll: bring focused exercise above the keyboard when it would obstruct
     const flatListRef = useRef<FlatList>(null);
@@ -213,6 +247,7 @@ export default function WorkoutScreen() {
         // Reset any pending template modal state
         setSaveTemplateModal(false);
         setPendingWorkout(null);
+        setCompletedWorkout(null);
         startWorkout();
     };
 
@@ -229,6 +264,31 @@ export default function WorkoutScreen() {
             Alert.alert('Error', 'Failed to start workout from template');
         }
     };
+
+    // Reopening help must preserve active workouts, including historical edits.
+    useEffect(() => {
+        const action = tutorial.requestedAction;
+        if (!action) {
+            handledTutorialAction.current = null;
+            return;
+        }
+        if (!isFocused || isHomeLoading || handledTutorialAction.current === action) return;
+        handledTutorialAction.current = action;
+        tutorial.consumeAction();
+        if (action === 'split') {
+            handleHideKeyboard();
+            setShowTutorialSplit(true);
+        } else if (!useWorkoutStore.getState().activeWorkout) {
+            if (currentTemplate) {
+                // A workout restored or started during this read takes precedence.
+                void startWorkoutFromTemplate(currentTemplate.id).then(workout => {
+                    if (workout && !useWorkoutStore.getState().activeWorkout) startFromTemplate(workout);
+                }).catch(() => Alert.alert('Could not start workout', 'Try Start Workout again. Your plan is unchanged.'));
+            } else {
+                handleStartWorkout();
+            }
+        }
+    }, [tutorial.requestedAction, tutorial.consumeAction, isFocused, isHomeLoading, currentTemplate]);
 
     // BH-059: Guard against double-tap on finish (guardrail #14).
     // Set synchronously before first await, cleared in finally.
@@ -255,72 +315,43 @@ export default function WorkoutScreen() {
         } else {
             isSavingRef.current = true;
             try {
-                // BH-007 fix: Snapshot edit-mode state BEFORE finishWorkout() clears it.
-                // finishWorkout() resets isEditMode/original* to false/null in the store,
-                // so reading them after the await would see the cleared values.
                 const wasEditMode = isEditMode;
-                const savedDuration = originalDuration;
-                const savedCompletedAt = originalCompletedAt;
-                const savedStartedAt = originalStartedAt;
-
-                const workout = await finishWorkout();
+                handleHideKeyboard();
+                Keyboard.dismiss();
+                const workout = await finishWorkout(async (finishedWorkout, editing) => {
+                    const completedGoals = await (editing ? updateWorkout(finishedWorkout) : saveWorkout(finishedWorkout));
+                    if (completedGoals.length > 0) {
+                        useGoalCelebrationStore.getState().celebrate(completedGoals);
+                    }
+                });
                 if (workout) {
                     if (wasEditMode) {
-                        // Edit mode: restore original timestamps + duration,
-                        // skip template prompt, navigate back to calendar
-                        const editedWorkout = {
-                            ...workout,
-                            totalDuration: savedDuration ?? workout.totalDuration,
-                            completedAt: savedCompletedAt ?? workout.completedAt,
-                            startedAt: savedStartedAt ?? workout.startedAt,
-                        };
-                        console.log('[WorkoutScreen] Updating edited workout...');
-                        const completedGoals = await updateWorkout(editedWorkout);
-                        console.log('[WorkoutScreen] Workout updated!');
-                        if (completedGoals.length > 0) {
-                            useGoalCelebrationStore.getState().celebrate(completedGoals);
-                        }
-                        // Navigate back to the Profile tab (Calendar)
                         navigateToTab('Profile');
                     } else {
-                        // Normal mode: save + template prompt
-                        console.log('[WorkoutScreen] Saving workout...');
-                        const completedGoals = await saveWorkout(workout);
-                        console.log('[WorkoutScreen] Workout saved!');
-                        if (completedGoals.length > 0) {
-                            useGoalCelebrationStore.getState().celebrate(completedGoals);
-                        }
+                        tutorial.complete();
+                        completionIdRef.current = workout.id;
+                        setCompletedWorkout(workout);
+                        setOfferSaveTemplate(false);
 
-                        await markWorkoutCompletedToday();
-                        await loadData();
-
-                        // Fire-and-forget cloud backup (Option A: immediate)
+                        // These follow-ups must not turn a successful save into a retry prompt.
+                        void markWorkoutCompletedToday()
+                            .then(loadData)
+                            .catch(error => {
+                                console.warn('[WorkoutScreen] Split progress refresh failed:', error);
+                                Alert.alert('Workout saved', 'Your workout is in history, but split progress could not be refreshed. Check your next workout on the home screen.');
+                            });
                         triggerAutoBackupIfEnabled();
-
-                        const matchingTemplate = await findMatchingTemplate(workout);
-                        if (matchingTemplate) {
-                            console.log('[WorkoutScreen] Workout matches template:', matchingTemplate.name);
-                        } else {
-                            Alert.alert(
-                                'Workout Saved!',
-                                'This workout has different exercises than your templates. Save as a new template?',
-                                [
-                                    { text: 'No Thanks', style: 'cancel' },
-                                    {
-                                        text: 'Save Template',
-                                        onPress: () => {
-                                            setPendingWorkout(workout);
-                                            setSaveTemplateModal(true);
-                                        }
-                                    },
-                                ]
-                            );
-                        }
+                        void findMatchingTemplate(workout).then(template => {
+                            if (completionIdRef.current === workout.id) setOfferSaveTemplate(!template);
+                        }).catch(error => {
+                            console.warn('[WorkoutScreen] Template lookup failed:', error);
+                            if (completionIdRef.current === workout.id) setOfferSaveTemplate(true);
+                        });
                     }
                 }
             } catch (error) {
                 console.error('[WorkoutScreen] Error finishing workout:', error);
-                Alert.alert('Error', 'Failed to save workout. Please try again.');
+                Alert.alert('Could not save workout', 'Your workout is still here. Please try again.');
             } finally {
                 isSavingRef.current = false;
             }
@@ -329,6 +360,7 @@ export default function WorkoutScreen() {
 
     // Handle discard workout
     const handleDiscardWorkout = useCallback(() => {
+        if (useWorkoutStore.getState().isFinishing) return;
         Alert.alert(
             'Discard Workout',
             'Are you sure you want to discard this workout? All progress will be lost.',
@@ -344,9 +376,25 @@ export default function WorkoutScreen() {
         );
     }, [handleHideKeyboard, discardWorkout]);
 
+    const handleCompletionDone = useCallback(() => {
+        completionIdRef.current = null;
+        setCompletedWorkout(null);
+        setSaveTemplateModal(false);
+        setPendingWorkout(null);
+    }, []);
+
+    useEffect(() => {
+        if (!completedWorkout || !isFocused) return;
+        const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+            handleCompletionDone();
+            return true;
+        });
+        return () => sub.remove();
+    }, [completedWorkout, isFocused, handleCompletionDone]);
+
     // Intercept Android back button during active workout
     useEffect(() => {
-        if (!activeWorkout) return;
+        if (!activeWorkout || !isFocused) return;
 
         const onBackPress = () => {
             handleDiscardWorkout();
@@ -355,7 +403,7 @@ export default function WorkoutScreen() {
 
         const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
         return () => sub.remove();
-    }, [activeWorkout !== null, handleDiscardWorkout]);
+    }, [activeWorkout !== null, isFocused, handleDiscardWorkout]);
 
     // PP-008 fix: memoize workout stats so they only recompute when activeWorkout changes
     const stats = useMemo(() => {
@@ -486,7 +534,7 @@ export default function WorkoutScreen() {
             showPrevious={showPrevious}
             showRpe={showRpe}
             showRir={showRir}
-            showSwipeHint={showSwipeHint}
+            showSwipeHint={showSwipeHint && tutorial.status !== 'active'}
             defaultWarmupSets={defaultWarmupSets}
             previousSets={previousSets}
             exerciseSuggestions={exerciseSuggestions}
@@ -508,7 +556,7 @@ export default function WorkoutScreen() {
     ), [
         // Props that change between renders (all others are stable refs from getState/useState):
         activeWorkout, focusState, collapsedExercises,
-        showPrevious, showRpe, showRir, showSwipeHint,
+        showPrevious, showRpe, showRir, showSwipeHint, tutorial.status,
         defaultWarmupSets, previousSets, exerciseSuggestions, showProgressionNudges, prefillPrevious,
         // Stable refs — listed for completeness but won't cause re-creation:
         handleFocusField, updateSet, completeSet, addSet, removeSet,
@@ -516,9 +564,38 @@ export default function WorkoutScreen() {
         setReplaceExerciseId, toggleCollapse, handleRpeRirSelected,
     ]);
 
+    const showWorkoutTutorial = tutorial.status === 'active' && !isEditMode && !isKeyboardVisible && !isExercisePickerOpen && !settingsMenuVisible && !showTutorialSplit;
+    const tutorialSplit = (
+        <SplitsScreen
+            visible={showTutorialSplit}
+            startCreating
+            onClose={() => {
+                setShowTutorialSplit(false);
+                void loadData();
+            }}
+            onSplitSelected={(split) => {
+                setActiveSplit(split);
+                void loadData();
+            }}
+        />
+    );
+
     // Render home view (no active workout) — WorkoutHomeView owns its own modals
     if (!activeWorkout) {
         return (
+            <>
+            {tutorialSplit}
+            {completedWorkout ? (
+                <WorkoutCompletion
+                    workout={completedWorkout}
+                    weightUnit={weightUnit}
+                    onDone={handleCompletionDone}
+                    onSaveTemplate={offerSaveTemplate ? () => {
+                        setPendingWorkout(completedWorkout);
+                        setSaveTemplateModal(true);
+                    } : undefined}
+                />
+            ) : (
             <WorkoutHomeView
                 activeSplit={activeSplit}
                 currentTemplate={currentTemplate}
@@ -537,15 +614,28 @@ export default function WorkoutScreen() {
                 onDataRefresh={loadData}
                 onSettingsPress={() => {
                     if (navigationRef.isReady()) {
-                        (navigationRef as any).navigate('Profile', { screen: 'Settings', initial: false });
+                        navigationRef.navigate('Workout', { screen: 'Settings', initial: false });
                     }
                 }}
             />
+            )}
+            <SaveTemplateModal
+                visible={showSaveTemplateModal}
+                pendingWorkout={pendingWorkout}
+                activeSplit={activeSplit}
+                onClose={() => {
+                    setSaveTemplateModal(false);
+                    setPendingWorkout(null);
+                }}
+                onSaved={loadData}
+            />
+            </>
         );
     }
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+            {tutorialSplit}
             {/* Workout header */}
             <WorkoutHeader
                 title={activeWorkout.name}
@@ -571,6 +661,14 @@ export default function WorkoutScreen() {
                 scrollEventThrottle={16}
                 CellRendererComponent={CellRenderer}
                 ListHeaderComponent={
+                    <>
+                    {showWorkoutTutorial && (
+                        <WorkoutTutorialTip
+                            stage={activeWorkout.main.exercises.length === 0 ? 'add' : stats.sets === 0 ? 'log' : 'finish'}
+                            onSkip={tutorial.skip}
+                            onAddExercise={() => setExercisePickerOpen(true)}
+                        />
+                    )}
                     <WorkoutNoteSection
                         isEditing={showWorkoutNote}
                         inputValue={workoutNoteInput}
@@ -586,15 +684,16 @@ export default function WorkoutScreen() {
                             setShowWorkoutNote(true);
                         }}
                     />
+                    </>
                 }
-                ListEmptyComponent={
+                ListEmptyComponent={showWorkoutTutorial ? null :
                     <View style={styles.emptyExercises}>
                         <Text style={styles.emptyExercisesText}>
                             Tap "Add Exercise" to start building your workout
                         </Text>
                     </View>
                 }
-                ListFooterComponent={
+                ListFooterComponent={showWorkoutTutorial && activeWorkout.main.exercises.length === 0 ? null :
                     <TouchableOpacity
                         style={styles.addExerciseButton}
                         onPress={() => setExercisePickerOpen(true)}
@@ -643,7 +742,7 @@ export default function WorkoutScreen() {
 
             {/* Custom Workout Keyboard */}
             <WorkoutKeyboard
-                visible={focusState !== null && isKeyboardField(focusState.field)}
+                visible={isFocused && isKeyboardVisible}
                 currentValue={keyboardValue}
                 fieldType={getKeyboardFieldType()}
                 fieldLabel={getFieldLabel()}
@@ -690,22 +789,19 @@ export default function WorkoutScreen() {
                 }}
             />
 
-            {/* Save as template modal */}
-            <SaveTemplateModal
-                visible={showSaveTemplateModal}
-                pendingWorkout={pendingWorkout}
-                activeSplit={activeSplit}
-                onClose={() => {
-                    setSaveTemplateModal(false);
-                    setPendingWorkout(null);
-                }}
-                onSaved={loadData}
-            />
+            {isFinishing && (
+                <View style={styles.savingOverlay} accessibilityViewIsModal accessibilityLiveRegion="polite">
+                    <ActivityIndicator size="large" color={colors.accent.primary} />
+                    <Text style={styles.savingText}>Saving workout…</Text>
+                </View>
+            )}
         </SafeAreaView>
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
+    savingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.overlay, alignItems: 'center', justifyContent: 'center', gap: spacing.md, zIndex: 100 },
+    savingText: { color: colors.text.primary, fontSize: typography.size.lg },
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -744,4 +840,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.lg,
         fontWeight: typography.weight.medium,
     },
-});
+}));

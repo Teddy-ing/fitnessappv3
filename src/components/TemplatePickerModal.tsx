@@ -8,9 +8,9 @@
  */
 
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { Split } from '../models';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 /** Minimal template shape — the picker only needs id and name */
 interface TemplateSummary {
@@ -34,6 +34,7 @@ export default function TemplatePickerModal({
     onChangeIndex,
     onClose,
 }: TemplatePickerModalProps) {
+    const styles = useStyles();
     return (
         <Modal
             visible={visible}
@@ -104,7 +105,7 @@ export default function TemplatePickerModal({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -176,4 +177,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         fontStyle: 'italic',
     },
-});
+}));

@@ -13,26 +13,17 @@
  */
 
 import React, { useCallback, useRef, useState } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    StyleSheet,
-    ActivityIndicator,
-    Alert,
-    Modal,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TouchableWithoutFeedback, ActivityIndicator, Alert, Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { parseFile, generateExerciseMappings, getUnresolvedMappings } from '../../services/importParsers';
 import type { CompetitorSource } from '../../services/importParsers';
-import type { ProfileStackParamList } from '../../navigation/AppNavigator';
+import type { SharedStackParamList } from '../../navigation/types';
 
 interface ImportBottomSheetProps {
     isOpen: boolean;
@@ -40,17 +31,23 @@ interface ImportBottomSheetProps {
     onImportJSON: () => void; // Triggers existing destructive import flow
 }
 
-type Navigation = NativeStackNavigationProp<ProfileStackParamList>;
+type Navigation = NativeStackNavigationProp<SharedStackParamList>;
 
 export default function ImportBottomSheet({
     isOpen,
     onClose,
     onImportJSON,
 }: ImportBottomSheetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const isRunning = useRef(false);
     const [loadingSource, setLoadingSource] = useState<CompetitorSource | null>(null);
     const navigation = useNavigation<Navigation>();
     const insets = useSafeAreaInsets();
+
+    const handleClose = useCallback(() => {
+        if (!isRunning.current) onClose();
+    }, [onClose]);
 
     const handleCompetitorImport = useCallback(async (source: CompetitorSource) => {
         // Guardrail #14: concurrent invocation guard
@@ -127,6 +124,7 @@ export default function ImportBottomSheet({
     }, [navigation, onClose]);
 
     const handleJSONImport = useCallback(() => {
+        if (isRunning.current) return;
         onClose();
         // Small delay to let modal close before showing alert
         setTimeout(() => onImportJSON(), 300);
@@ -139,9 +137,9 @@ export default function ImportBottomSheet({
             visible={isOpen}
             transparent
             animationType="slide"
-            onRequestClose={onClose}
+            onRequestClose={handleClose}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
+            <TouchableWithoutFeedback onPress={handleClose}>
                 <View style={styles.overlay}>
                     <TouchableWithoutFeedback>
                         <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
@@ -157,7 +155,7 @@ export default function ImportBottomSheet({
                                     disabled={isLoading}
                                     activeOpacity={0.7}
                                 >
-                                    <View style={[styles.iconContainer, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}>
+                                    <View style={[styles.iconContainer, { backgroundColor: colors.accent.muted }]}>
                                         <MaterialIcons name="restore" size={22} color={colors.accent.primary} />
                                     </View>
                                     <View style={styles.optionText}>
@@ -229,6 +227,8 @@ function SourceRow({
     disabled: boolean;
     onPress: () => void;
 }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <TouchableOpacity
             style={styles.option}
@@ -252,7 +252,7 @@ function SourceRow({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -318,4 +318,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginTop: 2,
     },
-});
+}));

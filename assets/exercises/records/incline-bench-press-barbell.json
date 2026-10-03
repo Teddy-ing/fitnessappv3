@@ -1,0 +1,32 @@
+{
+  "id": "incline-bench-press-barbell",
+  "name": "Incline Barbell Bench Press",
+  "pose": "Barbell incline press on a 30-degree bench at the bottom",
+  "highlight": [
+    "pectoralis major",
+    "anterior deltoids"
+  ],
+  "accessibilityLabel": "Incline barbell bench press at the bottom, with chest and front shoulders highlighted.",
+  "file": "incline-bench-press-barbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: INCLINE BARBELL BENCH PRESS, bottom position. A charcoal adjustable bench back pad at approximately 30 degrees above horizontal with short seat pad. Head, upper back and buttocks fully supported, both feet planted on floor. One continuous straight bar with modest matching graphite plate and collar on each end. Closed overhand grips slightly wider than shoulders; shaft gently contacts upper sternum BELOW collarbones, never at neck, near-straight wrists above bent elbows, forearms vertical relative to floor, elbows moderately tucked. Camera side-biased front three-quarter shows bench angle and bar-chest contact. Highlight both pectoralis major and anterior deltoid muscle regions in coral only; biceps/triceps remain grey.",
+  "revisions": [
+    {
+      "reason": "Independent review found shaft too close to base of neck",
+      "prompt": "Use case: precise-object-edit/scientific-educational. Image 1 is edit target, original incline barbell bench press. Image 2 is canonical identity/style master. Correct ONLY bar touchpoint and corresponding arm position. Keep identical model/body, bench angle, supported body, feet, camera, materials, charcoal shorts/shoes, coral chest/front-deltoid highlights, lighting and background. Move entire straight barbell slightly TOWARD THE FEET so shaft clearly crosses the UPPER THIRD OF BOTH CORAL PECTORAL MUSCLE REGIONS, several centimeters BELOW CLAVICLES, never across neck or above chest. The bar should contact the upper sternum, below the existing bar position. Reposition both elbows/wrists together so closed overhand grips remain slightly wider than shoulders, wrists directly above elbows, forearms near vertical. Maintain one continuous straight bar, same plates/collars and full equipment. No other changes.",
+      "result": "Bar moved down onto upper coral pectoral region; elbows and wrists follow."
+    }
+  ],
+  "output": {
+    "bytes": 1588705,
+    "width": 1254,
+    "sha256": "89afef2122d37a6685a2ddc26e542feff33b5424abbb5e8558018e3c1dd518d0",
+    "height": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Corrected shaft visibly below clavicles on upper pectoral region. Continuous bar, overhand grips, planted feet and bench/body preserved; bench angle approximate.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent recheck: corrected shaft crosses upper pectoral/sternal area below clavicles; hands keep closed grip and forearms under bar; supported incline posture and feet preserved."
+  }
+}

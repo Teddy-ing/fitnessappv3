@@ -1,0 +1,25 @@
+{
+  "id": "leg-press",
+  "name": "Leg Press",
+  "file": "leg-press.png",
+  "reference": "barbell-curl.png",
+  "pose": "Seated 45-degree sled leg press with knees flexed near 90 degrees",
+  "highlight": [
+    "quadriceps"
+  ],
+  "accessibilityLabel": "Grey mannequin seated in a sled leg press with feet on the platform and knees bent, with quadriceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: 45-DEGREE SLED LEG PRESS, controlled middle-lowered position. Equipment override: ONLY a complete simple plate-loaded leg-press machine, no handheld bar or bench. Model reclines against charcoal seat/back pad near floor, head/back/pelvis supported, both hands hold side handles. Both feet shoulder-width on ONE large footplate at top of sled, soles FLUSH with plate. Knees around90 degrees aligned toes; pelvis remains seated, no excessive knee-to-chest compression. Sled footplate and modest plates mounted on carriage running along two continuous diagonal guide rails, all visibly mechanically connected to stable base. Side-front three-quarter camera shows full machine, both feet contact, knee bend and seated support. Highlight visible quadriceps only, glutes covered by shorts grey.\nRender square 1024x1024 PNG. Complete machine fits inside canvas, no cropped parts.",
+  "revisions": [],
+  "output": {
+    "bytes": 1775263,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "e886cbe027cb251e6bb46f7f9d30b3dbd70dbc940ca7c8905412f2f5eb835e7a"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Supported head/back/pelvis, both soles flush against footplate, knees tracking feet and coherent carriage/rails/base visible. Complete machine fits. Far hand and exact knee angle partially obscured by perspective; movement unverified.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: feet flat on sled plate, knees flexed, pelvis and back supported; continuous rails and plausible plate-loaded sled."
+  }
+}

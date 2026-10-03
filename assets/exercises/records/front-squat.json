@@ -1,0 +1,30 @@
+{
+  "id": "front-squat",
+  "name": "Front Squat",
+  "file": "front-squat.png",
+  "reference": "barbell-curl.png",
+  "pose": "Barbell front squat around parallel with crossed-arm front rack",
+  "highlight": [
+    "quadriceps"
+  ],
+  "accessibilityLabel": "Grey mannequin squatting with barbell supported across front shoulders and arms crossed, with quadriceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BARBELL FRONT SQUAT at near-parallel bottom. Bar RESTS ACROSS FRONT DELTOIDS just in front of neck, visibly supported outside anatomy. Clean-style front rack: hands slightly outside shoulders, fingers underneath shaft, wrists extended naturally, elbows high pointing FORWARD so upper arms roughly horizontal. Hands guide rather than lift bar; no crossed-arm grip. Feet shoulder width slightly turned out, whole soles planted. Hips/knees flexed, thighs approximately parallel, knees align toes; torso upright with natural modest inclination and neutral back. Side-biased front three-quarter view reveals the front shoulder shelf, raised elbows, heel contact and depth. Highlight visible quadriceps only above kneecaps; glutes covered by shorts uncolored. Full bar and equal plates visible.\nRender square 1024x1024 PNG; complete figure and equipment inside generous margins.",
+  "revisions": [
+    {
+      "reason": "Initial clean-style front-rack contact and wrist orientation unclear",
+      "prompt": "Use case: precise-object-edit / scientific-educational. Input1 edit target front-squat candidate, input2 canonical identity. Keep exact mannequin body identity, charcoal shorts and shoes, squat legs, planted feet, upright torso, coral quadriceps, bar plates and background. Correct ONLY front-rack support/arms by choosing a valid CROSS-ARM FRONT SQUAT rack: lower bar until it visibly rests on FRONT DELTOID shelf directly below base of throat, outside anatomy. Both elbows point forward high, upper arms roughly horizontal. Forearms CROSS over chest above the bar; right hand rests on bar near left shoulder and left hand on bar near right shoulder with palms down securing it against shoulders. Bar lies under the crossing forearms and hands, not through neck and not floating. Fingers rest on top of bar naturally. No clean-grip bent wrists. Keep bar balanced, centered and equal plates. Near-side three-quarter angle sufficient to show shelf contact. All other geometry unchanged."
+    }
+  ],
+  "output": {
+    "bytes": 1406616,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "ec93cb0d85dbabfc6f7aa9b08726fa6d4a1796fef58f3343f3838f3053707d0b"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Bar supported across anterior shoulders under crossed forearms, high elbows, upright torso and planted feet visible. Corrected unreliable clean-rack wrist depiction by choosing crossed-arm variant. Quad overlays stop above patellae. Frontal perspective limits precise depth measurement.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: bar supported on front shoulders with crossed-arm rack and raised elbows; near-parallel squat with planted heels and knees following toes."
+  }
+}

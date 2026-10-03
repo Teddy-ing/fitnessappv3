@@ -1,0 +1,38 @@
+{
+  "id": "straight-arm-lat-pulldown",
+  "name": "Straight-Arm Lat Pulldown",
+  "pose": "Standing high-cable straight-arm rope pulldown near bottom",
+  "highlight": [
+    "latissimus dorsi"
+  ],
+  "accessibilityLabel": "Standing straight-arm rope pulldown with handles near thighs and lat muscle highlighted.",
+  "file": "straight-arm-lat-pulldown.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STRAIGHT-ARM LAT PULLDOWN bottom position. Standing facing a single high cable tower, feet hip width, knees softly bent, small hip hinge with neutral spine. Both closed OVERHAND hands shoulder width on one short straight bar near FRONT upper thighs. Elbows almost straight with small natural bend; arms run downward forward of torso. One continuous taut cable from bar CENTER up to high front pulley, never through head or torso. Rear-side three-quarter view shows lats, bar in front, cable connection, full tower. Coral latissimus muscle bellies only, not central spine or arms.",
+  "revisions": [
+    {
+      "reason": "Cable clip did not clearly connect to bar",
+      "prompt": "Use case: precise-object-edit. Image1 edit target, image2 canonical style reference. Correct ONLY cable/bar/hand contact in this straight-arm pulldown. Move the short straight bar slightly forward from thighs to show both overhand hands spaced shoulder-width. The single cable must connect via a visible steel swivel eyelet at the EXACT MIDDLE of the bar BETWEEN the hands. The clip must physically touch this center eyelet; no suspended gap and no cable attached to a hand or wrist. Show both grips clearly on either side of midpoint. Keep almost straight elbows and downward-forward arms, small hip hinge, full tower, lats-only coral, same original mannequin, palette, shorts/shoes, background and light."
+    },
+    {
+      "reason": "Revision detached near hand from forearm",
+      "prompt": "Image1 EDIT TARGET has a concrete anatomy error: the rightmost hand gripping the bar is DETACHED from its arm, while the near forearm terminates at center cable collar. Repair ONLY this: shift/re-angle the mannequin's visible near forearm so its wrist continuously joins that RIGHTMOST hand. Keep this near elbow almost straight. The bar center must contain only METAL cable swivel, no wrist, no skin. Final exactly two arms ending in exactly two gripping hands, both on bar on opposite sides of cable midpoint. Keep other far arm/hand, bar and cable, character identity from image2, equipment and composition unchanged."
+    },
+    {
+      "reason": "Two bar edits failed wrist anatomy; regenerate valid rope variant",
+      "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STRAIGHT-ARM LAT PULLDOWN with ROPE attachment, near bottom of pull. Mannequin faces a single cable tower with high pulley. Stand hip width, slight forward hip hinge, knees soft. Both arms extend downward and forward with almost straight elbows. Each closed neutral hand grips one black rope end, hands just outside upper thighs. Rope forms an inverted Y: two clear strands rise from hands to single shared center junction ahead of abdomen, center junction connects via metal carabiner to taut cable leading diagonally up to HIGH tower pulley. Exactly two arms, two forearms, two hands each continuously connected. SIDE three-quarter view with near side lat visible and rope branching unobstructed in FRONT of body. Full figure, complete high tower top/base, all hands and feet. Coral only visible lateral latissimus region on torso below armpit; arms and spine grey. No straight bar and no loose equipment."
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Fresh rope variant resolves previous disconnected wrist. Two coherent arms/hands grip two rope ends, near-straight elbows, visible central attachment and taut cable to overhead pulley. Lat visible below near armpit, rest grey. Hands ahead of thighs near bottom, full machine visible.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: rope ends visibly held, continuous cable through upper pulley, arms mostly straight at low position and slight hip hinge; rope variant is plausible."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1545134,
+    "sha256": "70b7df574193d4249d4a112abceed13490225e1f84212e0ffd749ad310e6fbe6"
+  }
+}

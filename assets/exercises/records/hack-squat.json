@@ -1,0 +1,25 @@
+{
+  "id": "hack-squat",
+  "name": "Hack Squat",
+  "file": "hack-squat.png",
+  "reference": "barbell-curl.png",
+  "pose": "Machine hack squat around parallel with back against angled carriage",
+  "highlight": [
+    "quadriceps"
+  ],
+  "accessibilityLabel": "Grey mannequin squatting in a hack-squat machine with back and shoulders supported, with quadriceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: MACHINE HACK SQUAT near-parallel bottom. Equipment override ONLY complete plate-loaded 45-degree hack squat machine. Subject faces outward AWAY from rails, back/buttocks rest on large inclined charcoal backpad of moving carriage; shoulders under TWO shoulder pads, hands on handles beside shoulders. Both whole feet shoulder width on fixed sloped foot platform below, knees bent near90 degrees and following toes. Carriage attached to two continuous diagonal guide rails behind backpad, modest plates on symmetric pegs. Neutral supported torso, heels stay on platform. Side-front three-quarter camera makes shoulder pad contacts, back support, knee bend, both feet and full rails/base clear. Not a leg press: subject's back/shoulders move with sled while footplate is fixed below. Highlight quadriceps only, covered glutes grey.\nRender square 1024x1024 PNG; entire figure/equipment inside frame.",
+  "revisions": [],
+  "output": {
+    "bytes": 1637761,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "c8c95419fcbb2572156b571cee1700367a7f512d0d379ef34cca17ad36a2dabc"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Back against angled carriage, shoulders under pads, hands on side handles, feet on fixed platform and bent knees visible. Rails, carriage and base coherently connected; footplate partly occludes shoe-to-platform edge. Quad overlays avoid kneecaps.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: shoulders under carriage pads, supported back, two hand grips and both feet on fixed platform; rails and plates connected with complete framing."
+  }
+}

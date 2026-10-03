@@ -6,15 +6,9 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 
 export default function PillRow<T extends string>({
     items,
@@ -27,6 +21,7 @@ export default function PillRow<T extends string>({
     selected: T;
     onSelect: (item: T) => void;
 }) {
+    const styles = useStyles();
     return (
         <ScrollView
             horizontal
@@ -49,7 +44,7 @@ export default function PillRow<T extends string>({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     pillRow: {
         flexDirection: 'row',
         gap: spacing.sm,
@@ -71,7 +66,7 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
     },
     pillTextActive: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

@@ -1,0 +1,25 @@
+{
+  "id": "push-up",
+  "name": "Push-Up",
+  "pose": "Standard floor push-up near bottom with straight body and tucked elbows",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Push-up near the bottom with hands and toes on the floor and chest highlighted.",
+  "file": "push-up.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STANDARD FLOOR PUSH-UP, near bottom. Body face down supported ONLY by both palms and toes. Hands slightly wider than shoulders, fingers spread forward, wrists under hands and forearms near vertical. Elbows flexed and comfortably 45 degrees from torso. Head, shoulders, hips and ankles in a straight plank line; knees off floor, no sagging/raised hips. Chest a few inches above floor. Both feet behind torso on toes, shoes flexed at toe contact. No weights or bench. Low front-side three-quarter camera to show chest/arm mechanics and full head-to-toe alignment. Coral pectoralis major only; all other muscles grey.",
+  "revisions": [],
+  "output": {
+    "width": 1254,
+    "bytes": 1267036,
+    "sha256": "1379332a72696fa8059dd152f34591cccdef9a550a91c05280fa9f47053d0c55",
+    "height": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Both palms and toes contact floor; elbows bent, knees lifted and body approximately aligned; full silhouette and chest overlay visible. Neck slightly extended; still does not establish entire movement.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: bent-elbow lower push-up with both palms and toes supported, straight trunk/legs and chest above floor; chest target regions."
+  }
+}

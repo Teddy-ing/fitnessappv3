@@ -4,6 +4,28 @@ description: Visual design system, interaction patterns, and UX principles based
 
 # UI Design Guidelines
 
+## Current update — 2026-10-02
+
+IronJot now has two dark themes. **IronJot** is the default; **Classic Purple** preserves the earlier palette. Use semantic tokens from `src/theme/palettes.ts` through `useThemeColors` and `createThemedStyles`, so switching themes updates open screens without discarding workout state or form drafts.
+
+| Role | IronJot | Classic Purple |
+|---|---|---|
+| Main background | `#252E33` | `#09090b` |
+| Card background | `#303B42` | `#18181b` |
+| Primary text | `#FFF8E9` | `#ffffff` |
+| Primary action | `#FF795F` | `#a855f7` |
+| Text on filled action | `#252E33` | `#ffffff` |
+
+- The icon and startup artwork keep IronJot's charcoal, coral, and cream identity in either theme. Startup motion runs on a fresh launch and respects reduced motion.
+- Navigation has **Workout** and **Profile** tabs with Material Icons. The assistant tab is retired. Each tab owns its stack; ordinary Back returns within that stack.
+- Setup and the quick-start tutorial are optional. Setup can suggest a routine; the tutorial teaches logging and offers experienced lifters a path into split creation. See [feature design](feature-design.md) for the actual flows.
+- Exercise details use offline still illustrations alongside instructions. Coral identifies target muscle regions, not a measured activation level.
+- Preserve large numeric inputs, clear set state, reachable controls, and bottom safe areas. Device and accessibility checks are needed to establish that each screen meets these goals; this document is not a verification report.
+
+## Original visual reference — 2026-01-13
+
+The material below preserves the early purple-theme design and interaction ideas. Hard-coded purple colors, a raised three-tab navigation bar, emoji icons, the original onboarding questions, and its TODO/test lists are historical. They do not override the current theme system and two-tab navigation above. The thumb-zone percentage and accessibility bullets are design aspirations, not measured compliance.
+
 ## Design Philosophy: The Frankenstein Method
 
 Combine the best elements from the gold-standard apps:
@@ -337,7 +359,7 @@ Don't dump users into an empty app. Ask:
 
 ---
 
-## TODO: Custom Navigation Icons
+## Historical TODO: Custom Navigation Icons — 2026-01-13
 
 > **Priority:** Medium (polish item)
 
@@ -364,6 +386,7 @@ Replace emoji icons in bottom navigation with custom icons:
 
 ---
 
-## Last Updated
-- Date: 2026-01-13
-- Session Context: Major visual upgrade - integrated Google Stitch premium design with glassmorphism cards, gradient buttons, decorative blur orbs, and comprehensive color system documentation
+## Document history
+
+- **2026-01-13:** Original purple-theme visual reference.
+- **2026-10-02:** Current IronJot/Classic Purple palettes, navigation, guidance, and illustration behavior added.

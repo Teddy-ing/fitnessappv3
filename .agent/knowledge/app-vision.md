@@ -4,6 +4,23 @@ description: Core goals, market positioning, design philosophy, and disruption s
 
 # App Vision
 
+## Current update — 2026-10-02
+
+**IronJot is the final app name, and a barbell-and-pen icon was created to connect lifting with logging.** The default visual identity uses charcoal, coral, and cream. Classic Purple remains an optional theme.
+
+The core direction is unchanged: a polished, free workout tracker that serves experienced lifters first, keeps logging fast, and gives users control of their history. The app now includes workout logging, templates and splits, analytics, goals, measurements, exercise illustrations, and import/export.
+
+- **Guidance is optional.** Setup can apply preferences and suggest a starter routine. Beginners receive a suggestion, intermediates can opt in, and experienced lifters keep control of their own program. A separate quick-start tutorial is implemented and can be skipped or reopened from Settings.
+- **The core works locally without an account.** Google Drive sign-in is optional for backups. Describe cloud backup as an explicit user choice; avoid blanket claims that data can never leave the device.
+- **Suggestions use local workout history and statistics.** They support logging without an AI assistant or cloud model. The assistant and paid AI tier were retired in September 2026.
+- **Core features remain free.** Optional developer support is desired, but payments are not implemented.
+
+This file records product direction. Implementation outcomes and remaining release work belong in [current progress](current-progress.md); detailed behavior belongs in [feature design](feature-design.md).
+
+## Founding vision — 2026-01-04
+
+The original strategy below is retained as context. Competitor comparisons, pricing, ML language, and market-wide claims reflect early research rather than a verified description of today's market or app. The current update above takes precedence. The repository license also needs reconciliation before making a definitive licensing claim; see [current progress](current-progress.md).
+
 ## Mission Statement
 
 Create the best weight training app that disrupts the fitness app market by combining:
@@ -111,6 +128,7 @@ This project is **open source**, which means:
 
 ---
 
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial project setup and vision documentation from brainstorming session
+## Document history
+
+- **2026-01-04:** Original product vision and positioning.
+- **2026-10-02:** Current product direction added; implementation history moved out of the vision.

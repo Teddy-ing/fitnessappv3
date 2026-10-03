@@ -1,0 +1,26 @@
+{
+  "id": "good-morning",
+  "name": "Good Morning",
+  "file": "good-morning.png",
+  "reference": "barbell-curl.png",
+  "pose": "Barbell good morning partway through a hip hinge",
+  "highlight": [
+    "hamstrings",
+    "spinal erectors"
+  ],
+  "accessibilityLabel": "Grey mannequin hinging forward with a barbell across the upper back, with hamstrings and spinal erectors highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: BARBELL GOOD MORNING lowered hip hinge. Bar supported across upper trapezius BEHIND neck, closed overhand grips slightly outside shoulders, elbows bent down/back. Feet hip-width, soles flat, knees softly bent about15degrees, hips pushed back, torso inclined30degrees above horizontal, long neutral spine and neck gazing down-forward. One continuous bar, equal modest graphite plates/collars; no bar touching throat. REAR-side three-quarter view clearly showing hinge, flat back, bar upper-trap contact, whole feet and rear thighs. Highlight exposed HAMSTRINGS below shorts and two narrow spinal-erector strips either side of spine on lower back; no lats, biceps or calves; covered glutes uncolored.",
+  "revisions": [],
+  "output": {
+    "bytes": 1437419,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "de0b96d678d4c81db11ba566645cd00ef23aacad8233eaef352079534fb35160"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Bar rests across upper traps behind neck with closed grips; hips back, modest knee bend, neutral back and grounded feet. Actual position is a partial hip hinge, not deepest bottom; label reflects it. Hamstrings and narrow erector regions highlighted.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: bar supported behind shoulders with two closed grips, hips shifted back and soft knees; moderate forward inclination correctly described as partial hinge."
+  }
+}

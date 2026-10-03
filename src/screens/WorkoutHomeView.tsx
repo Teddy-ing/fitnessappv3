@@ -16,7 +16,6 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     ScrollView,
     RefreshControl,
@@ -25,13 +24,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../theme';
 import { Template } from '../services';
 import { Split } from '../models/split';
 import WeeklyTracker from '../components/WeeklyTracker';
 import { TemplatePickerModal } from '../components';
 import SplitsScreen from './SplitsScreen';
 import TemplatesScreen from './TemplatesScreen';
+import { useTutorial } from '../components/tutorial/TutorialProvider';
+import TutorialInvitation from '../components/tutorial/TutorialInvitation';
 
 interface WorkoutHomeViewProps {
     // Data
@@ -69,6 +70,9 @@ export default function WorkoutHomeView({
     onDataRefresh,
     onSettingsPress,
 }: WorkoutHomeViewProps) {
+    const colors = useThemeColors();
+    const styles = useStyles();
+    const tutorial = useTutorial();
     // Modal visibility — owned locally, not passed from parent
     const [showSplitsModal, setShowSplitsModal] = useState(false);
     const [showTemplatesModal, setShowTemplatesModal] = useState(false);
@@ -105,6 +109,10 @@ export default function WorkoutHomeView({
                     splitSchedule={activeSplit?.schedule ?? []}
                     currentScheduleIndex={currentTemplateIndex}
                 />
+
+                {tutorial.status === 'available' && (
+                    <TutorialInvitation experienced={tutorial.experienced} onOpen={tutorial.openGuide} onSkip={tutorial.skip} />
+                )}
 
                 {/* Current Split Card */}
                 <View style={styles.splitCard}>
@@ -164,7 +172,7 @@ export default function WorkoutHomeView({
                     ) : (
                         <View style={styles.upNextRow}>
                             <Text style={styles.upNextLabel}>
-                                {activeSplit ? 'No templates in split' : 'Select a split to get started'}
+                                {activeSplit ? 'No templates in split' : 'Start empty or choose a split'}
                             </Text>
                         </View>
                     )}
@@ -262,7 +270,7 @@ export default function WorkoutHomeView({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -395,7 +403,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius['2xl'],
     },
     startButtonText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.bold,
         letterSpacing: 1.5,
@@ -419,4 +427,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         color: colors.text.disabled,
     },
-});
+}));

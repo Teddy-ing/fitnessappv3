@@ -9,10 +9,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Dimensions } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { getMuscleDistribution } from '../services/analyticsService';
 import { MetricType, ChartRange, MuscleDistributionPoint } from '../models/analytics';
 import { MUSCLE_LABELS } from '../models/muscleGroups';
@@ -24,28 +24,30 @@ interface MuscleDistributionChartProps {
 
 
 
-/** Accent colors for pie slices (rotating palette) */
-const SLICE_COLORS = [
-    colors.accent.primary,     // Purple
-    '#8b5cf6',                 // Violet
-    '#6366f1',                 // Indigo
-    '#3b82f6',                 // Blue
-    '#06b6d4',                 // Cyan
-    '#14b8a6',                 // Teal
-    '#22c55e',                 // Green
-    '#eab308',                 // Yellow
-    '#f97316',                 // Orange
-    '#ef4444',                 // Red
-    '#ec4899',                 // Pink
-    '#a855f7',                 // Purple variant
-];
-
 const CHART_SIZE = Math.min(Dimensions.get('window').width - 80, 220);
 
 export default function MuscleDistributionChart({
     metric,
     range,
 }: MuscleDistributionChartProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    // The first slice uses the app accent; the other colors distinguish categories.
+    const SLICE_COLORS = [
+        colors.accent.primary,
+        '#8b5cf6',                 // Violet
+        '#6366f1',                 // Indigo
+        '#3b82f6',                 // Blue
+        '#06b6d4',                 // Cyan
+        '#14b8a6',                 // Teal
+        '#22c55e',                 // Green
+        '#eab308',                 // Yellow
+        '#f97316',                 // Orange
+        '#ef4444',                 // Red
+        '#ec4899',                 // Pink
+        '#a855f7',                 // Purple variant
+    ];
+
     const [data, setData] = useState<MuscleDistributionPoint[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -133,7 +135,7 @@ function formatValue(value: number, metric: MetricType): string {
     }
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         backgroundColor: colors.background.secondary,
         borderRadius: borderRadius.xl,
@@ -187,4 +189,4 @@ const styles = StyleSheet.create({
         color: colors.text.disabled,
         textAlign: 'right',
     },
-});
+}));

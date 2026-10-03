@@ -16,11 +16,15 @@ import {
     Modal,
     TextInput,
     Alert,
+    Keyboard,
 } from 'react-native';
-import { ExercisePicker } from '../components';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
+import ExercisePicker from './ExercisePicker';
+import ExerciseInfoView from './exerciseDetails/ExerciseInfoView';
 import { updateTemplate, deleteTemplate, type Template } from '../services';
 import { Exercise } from '../models/exercise';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface EditExercise {
     exercise: Exercise;
@@ -42,11 +46,16 @@ export default function TemplateActionSheet({
     onClose,
     onTemplateChanged,
 }: TemplateActionSheetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [editName, setEditName] = useState('');
     const [editExercises, setEditExercises] = useState<EditExercise[]>([]);
     const [showExercisePicker, setShowExercisePicker] = useState(false);
+    const [infoExercise, setInfoExercise] = useState<Exercise | null>(null);
 
     useEffect(() => {
+        setInfoExercise(null);
+        setShowExercisePicker(false);
         if (template) {
             setEditName(template.name);
             setEditExercises(
@@ -58,6 +67,13 @@ export default function TemplateActionSheet({
             );
         }
     }, [template]);
+
+    useEffect(() => {
+        if (!visible) {
+            setInfoExercise(null);
+            setShowExercisePicker(false);
+        }
+    }, [visible]);
 
     // BH-073: Double-tap guard for async save
     const isSavingRef = useRef(false);
@@ -173,123 +189,166 @@ export default function TemplateActionSheet({
             visible={visible}
             animationType="slide"
             presentationStyle="pageSheet"
-            onRequestClose={onClose}
+            statusBarTranslucent
+            navigationBarTranslucent
+            onRequestClose={() => {
+                if (infoExercise) setInfoExercise(null);
+                else if (showExercisePicker) setShowExercisePicker(false);
+                else onClose();
+            }}
         >
-            <View style={styles.container}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={onClose}>
-                        <Text style={styles.cancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Edit Template</Text>
-                    <TouchableOpacity onPress={handleSave}>
-                        <Text style={styles.saveText}>Save</Text>
-                    </TouchableOpacity>
-                </View>
+            <SafeAreaProvider>
+                <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+                    <View style={styles.container}>
+                        <View
+                            style={[styles.container, infoExercise && styles.hidden]}
+                            pointerEvents={infoExercise ? 'none' : 'auto'}
+                            accessibilityElementsHidden={!!infoExercise}
+                            importantForAccessibility={infoExercise ? 'no-hide-descendants' : 'auto'}
+                        >
+                            {/* Header */}
+                            <View style={styles.header}>
+                                <TouchableOpacity onPress={onClose} style={styles.headerButton} accessibilityRole="button">
+                                    <Text style={styles.cancelText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <Text style={styles.title}>Edit Template</Text>
+                                <TouchableOpacity onPress={handleSave} style={styles.headerButton} accessibilityRole="button">
+                                    <Text style={styles.saveText}>Save</Text>
+                                </TouchableOpacity>
+                            </View>
 
-                <ScrollView style={styles.content}>
-                    <Text style={styles.formLabel}>Template Name</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={editName}
-                        onChangeText={setEditName}
-                        placeholder="e.g., Push Day"
-                        placeholderTextColor={colors.text.disabled}
-                    />
+                            <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+                                <Text style={styles.formLabel}>Template Name</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={editName}
+                                    onChangeText={setEditName}
+                                    placeholder="e.g., Push Day"
+                                    placeholderTextColor={colors.text.disabled}
+                                />
 
-                    <Text style={styles.formLabel}>Exercises</Text>
-                    {editExercises.map((item, index) => {
-                        const isInSuperset = item.supersetGroupId !== null;
-                        const nextInSameGroup = index < editExercises.length - 1 &&
-                            item.supersetGroupId !== null &&
-                            item.supersetGroupId === editExercises[index + 1].supersetGroupId;
+                                <Text style={styles.formLabel}>Exercises</Text>
+                                {editExercises.map((item, index) => {
+                                    const isInSuperset = item.supersetGroupId !== null;
+                                    const nextInSameGroup = index < editExercises.length - 1 &&
+                                        item.supersetGroupId !== null &&
+                                        item.supersetGroupId === editExercises[index + 1].supersetGroupId;
 
-                        return (
-                            <React.Fragment key={index}>
-                                <View style={[
-                                    styles.exerciseRow,
-                                    isInSuperset && styles.supersetExerciseRow,
-                                ]}>
-                                    {/* Reorder buttons */}
-                                    <View style={styles.reorderButtons}>
-                                        <TouchableOpacity
-                                            style={[styles.reorderButton, index === 0 && styles.reorderButtonDisabled]}
-                                            onPress={() => handleMoveUp(index)}
-                                            disabled={index === 0}
-                                        >
-                                            <Text style={styles.reorderButtonText}>▲</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={[styles.reorderButton, index === editExercises.length - 1 && styles.reorderButtonDisabled]}
-                                            onPress={() => handleMoveDown(index)}
-                                            disabled={index === editExercises.length - 1}
-                                        >
-                                            <Text style={styles.reorderButtonText}>▼</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View style={styles.exerciseInfo}>
-                                        <Text style={styles.exerciseName}>{item.exercise.name}</Text>
-                                        <Text style={styles.exerciseMeta}>{item.exercise.category}</Text>
-                                    </View>
-                                    <View style={styles.setsControl}>
-                                        <TouchableOpacity
-                                            style={styles.setsButton}
-                                            onPress={() => handleUpdateSets(index, item.defaultSets - 1)}
-                                        >
-                                            <Text style={styles.setsButtonText}>−</Text>
-                                        </TouchableOpacity>
-                                        <Text style={styles.setsText}>{item.defaultSets}</Text>
-                                        <TouchableOpacity
-                                            style={styles.setsButton}
-                                            onPress={() => handleUpdateSets(index, item.defaultSets + 1)}
-                                        >
-                                            <Text style={styles.setsButtonText}>+</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <TouchableOpacity
-                                        style={styles.removeButton}
-                                        onPress={() => handleRemoveExercise(index)}
-                                    >
-                                        <Text style={styles.removeButtonText}>✕</Text>
-                                    </TouchableOpacity>
-                                </View>
-                                {/* Superset link button */}
-                                {index < editExercises.length - 1 && (
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.supersetLinkButton,
-                                            nextInSameGroup && styles.supersetLinkActive,
-                                        ]}
-                                        onPress={() => handleToggleSuperset(index)}
-                                    >
-                                        <Text style={[
-                                            styles.supersetLinkText,
-                                            nextInSameGroup && styles.supersetLinkTextActive,
-                                        ]}>
-                                            {nextInSameGroup ? '🔗 Superset' : '➕ Link as Superset'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-                            </React.Fragment>
-                        );
-                    })}
+                                    return (
+                                        <React.Fragment key={index}>
+                                            <View style={[
+                                                styles.exerciseRow,
+                                                isInSuperset && styles.supersetExerciseRow,
+                                            ]}>
+                                                {/* Reorder buttons */}
+                                                <View style={styles.reorderButtons}>
+                                                    <TouchableOpacity
+                                                        accessibilityLabel={`Move ${item.exercise.name} up`}
+                                                        style={[styles.reorderButton, index === 0 && styles.reorderButtonDisabled]}
+                                                        onPress={() => handleMoveUp(index)}
+                                                        disabled={index === 0}
+                                                    >
+                                                        <Text style={styles.reorderButtonText}>▲</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        accessibilityLabel={`Move ${item.exercise.name} down`}
+                                                        style={[styles.reorderButton, index === editExercises.length - 1 && styles.reorderButtonDisabled]}
+                                                        onPress={() => handleMoveDown(index)}
+                                                        disabled={index === editExercises.length - 1}
+                                                    >
+                                                        <Text style={styles.reorderButtonText}>▼</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                                <View style={styles.exerciseInfo}>
+                                                    <View style={styles.exerciseNameRow}>
+                                                        <Text style={styles.exerciseName}>{item.exercise.name}</Text>
+                                                        <TouchableOpacity
+                                                            style={styles.infoButton}
+                                                            accessibilityRole="button"
+                                                            accessibilityLabel={`Information about ${item.exercise.name}`}
+                                                            onPress={() => {
+                                                                Keyboard.dismiss();
+                                                                setInfoExercise(item.exercise);
+                                                            }}
+                                                        >
+                                                            <MaterialIcons name="info-outline" size={20} color={colors.text.secondary} />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                    <Text style={styles.exerciseMeta}>{item.exercise.category}</Text>
+                                                </View>
+                                                <View style={styles.setsControl}>
+                                                    <TouchableOpacity
+                                                        accessibilityLabel={`Decrease sets for ${item.exercise.name}`}
+                                                        style={styles.setsButton}
+                                                        onPress={() => handleUpdateSets(index, item.defaultSets - 1)}
+                                                    >
+                                                        <Text style={styles.setsButtonText}>−</Text>
+                                                    </TouchableOpacity>
+                                                    <Text style={styles.setsText}>{item.defaultSets}</Text>
+                                                    <TouchableOpacity
+                                                        accessibilityLabel={`Increase sets for ${item.exercise.name}`}
+                                                        style={styles.setsButton}
+                                                        onPress={() => handleUpdateSets(index, item.defaultSets + 1)}
+                                                    >
+                                                        <Text style={styles.setsButtonText}>+</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                                <TouchableOpacity
+                                                    style={styles.removeButton}
+                                                    onPress={() => handleRemoveExercise(index)}
+                                                >
+                                                    <Text style={styles.removeButtonText}>✕</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            {/* Superset link button */}
+                                            {index < editExercises.length - 1 && (
+                                                <TouchableOpacity
+                                                    style={[
+                                                        styles.supersetLinkButton,
+                                                        nextInSameGroup && styles.supersetLinkActive,
+                                                    ]}
+                                                    onPress={() => handleToggleSuperset(index)}
+                                                >
+                                                    <Text style={[
+                                                        styles.supersetLinkText,
+                                                        nextInSameGroup && styles.supersetLinkTextActive,
+                                                    ]}>
+                                                        {nextInSameGroup ? '🔗 Superset' : '➕ Link as Superset'}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
 
-                    <TouchableOpacity
-                        style={styles.addExerciseButton}
-                        onPress={() => setShowExercisePicker(true)}
-                    >
-                        <Text style={styles.addExerciseIcon}>+</Text>
-                        <Text style={styles.addExerciseText}>Add Exercise</Text>
-                    </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.addExerciseButton}
+                                    onPress={() => setShowExercisePicker(true)}
+                                >
+                                    <Text style={styles.addExerciseIcon}>+</Text>
+                                    <Text style={styles.addExerciseText}>Add Exercise</Text>
+                                </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={handleDelete}
-                    >
-                        <Text style={styles.deleteButtonText}>Delete Template</Text>
-                    </TouchableOpacity>
-                </ScrollView>
-            </View>
+                                <TouchableOpacity
+                                    style={styles.deleteButton}
+                                    onPress={handleDelete}
+                                >
+                                    <Text style={styles.deleteButtonText}>Delete Template</Text>
+                                </TouchableOpacity>
+                            </ScrollView>
+                        </View>
+                        {infoExercise && (
+                            <View style={StyleSheet.absoluteFill}>
+                                <ExerciseInfoView
+                                    exercise={infoExercise}
+                                    onBack={() => setInfoExercise(null)}
+                                    returnLabel="Back to template"
+                                />
+                            </View>
+                        )}
+                    </View>
+                </SafeAreaView>
+            </SafeAreaProvider>
 
             {/* Exercise Picker */}
             <ExercisePicker
@@ -301,10 +360,14 @@ export default function TemplateActionSheet({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
+    },
+    hidden: {
+        // Preserve native scroll layout while the guide covers the editor.
+        opacity: 0,
     },
     header: {
         flexDirection: 'row',
@@ -314,6 +377,11 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.md,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+    },
+    headerButton: {
+        minHeight: 44,
+        minWidth: 44,
+        justifyContent: 'center',
     },
     cancelText: {
         color: colors.text.secondary,
@@ -373,9 +441,20 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     exerciseName: {
+        flex: 1,
         color: colors.text.primary,
         fontSize: typography.size.md,
         marginBottom: 2,
+    },
+    exerciseNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    infoButton: {
+        minWidth: 40,
+        minHeight: 44,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     exerciseMeta: {
         color: colors.text.disabled,
@@ -469,4 +548,4 @@ const styles = StyleSheet.create({
         color: colors.accent.warning,
         fontWeight: typography.weight.medium,
     },
-});
+}));

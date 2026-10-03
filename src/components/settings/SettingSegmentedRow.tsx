@@ -9,9 +9,9 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 
 interface SegmentOption {
     key: string;
@@ -29,24 +29,29 @@ interface SettingSegmentedRowProps {
 
 export default function SettingSegmentedRow({
     icon,
-    iconColor = colors.text.primary,
+    iconColor: providedIconColor,
     label,
     options,
     selectedKey,
     onSelect,
 }: SettingSegmentedRowProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    const iconColor = providedIconColor ?? colors.text.primary;
+    const stacked = options.length > 2;
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, stacked && styles.stackedContainer]}>
             <View style={styles.iconContainer}>
                 <MaterialIcons name={icon} size={20} color={iconColor} />
             </View>
             <Text style={styles.label}>{label}</Text>
-            <View style={styles.segmentedControl}>
+            <View style={[styles.segmentedControl, stacked && styles.stackedControl]}>
                 {options.map((opt) => (
                     <TouchableOpacity
                         key={opt.key}
                         style={[
                             styles.segment,
+                            stacked && styles.stackedSegment,
                             selectedKey === opt.key && styles.segmentActive,
                         ]}
                         onPress={() => onSelect(opt.key)}
@@ -67,7 +72,7 @@ export default function SettingSegmentedRow({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -84,6 +89,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: spacing.md,
+    },
+    stackedContainer: {
+        flexWrap: 'wrap',
+    },
+    stackedControl: {
+        width: '100%',
+        marginTop: spacing.md,
+        flexWrap: 'wrap',
+    },
+    stackedSegment: {
+        flexGrow: 1,
+        alignItems: 'center',
     },
     label: {
         flex: 1,
@@ -110,7 +127,7 @@ const styles = StyleSheet.create({
         color: colors.text.disabled,
     },
     segmentTextActive: {
-        color: '#ffffff',
+        color: colors.text.onAccent,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

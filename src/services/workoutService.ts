@@ -38,8 +38,7 @@ export async function saveWorkout(workout: Workout): Promise<Goal[]> {
     return withWriteLock(async () => {
     const db = await getDatabase();
     if (!db) {
-        console.log('[WorkoutService] Database not available - workout not saved (Expo Go mode)');
-        return [];
+        throw new Error('Database unavailable. Your workout has not been saved.');
     }
 
     try {
@@ -153,8 +152,7 @@ export async function updateWorkout(workout: Workout): Promise<Goal[]> {
     return withWriteLock(async () => {
     const db = await getDatabase();
     if (!db) {
-        console.log('[WorkoutService] Database not available - workout not updated (Expo Go mode)');
-        return [];
+        throw new Error('Database unavailable. Your workout changes have not been saved.');
     }
 
     try {

@@ -1,0 +1,25 @@
+{
+  "id": "kettlebell-goblet-squat",
+  "name": "Kettlebell Goblet Squat",
+  "pose": "Goblet squat near parallel holding kettlebell horns",
+  "highlight": [
+    "visible quadriceps"
+  ],
+  "accessibilityLabel": "Kettlebell goblet squat near parallel, holding the bell by both horns at the chest with heels planted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: KETTLEBELL GOBLET SQUAT, near-parallel bottom. Feet slightly wider than hips, toes modestly outward, hips lowered between ankles, knees track toes, thighs near horizontal, entire soles on floor. Torso near upright with modest natural inclination, back/neck neutral. ONE graphite kettlebell close to upper chest: ball downward and arched handle upwards; each hand securely grasps one SIDE HORN of same handle, elbows bend and point down inside knees. Do not hold dumbbell. Side-biased front three-quarter camera clearly shows bell and both arms. Coral only exposed front quadriceps above kneecaps, all shorts/other anatomy grey. Complete figure and kettlebell.",
+  "file": "kettlebell-goblet-squat.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Near-parallel squat, whole soles planted, one upright kettlebell with both hands on handle horns, elbows down. Coral remains on exposed quadriceps. Full figure/equipment framed.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: two hands grip kettlebell horns near chest, complete bell geometry, hips lowered and both feet planted."
+  },
+  "output": {
+    "bytes": 1414346,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "6c60ee3b6c2bda14caefc40976087a634ca37a131a09c8456d76c0886f7a7606"
+  }
+}

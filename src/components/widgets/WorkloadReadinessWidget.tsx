@@ -13,9 +13,9 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { FatigueRatioResult } from '../../models/analytics';
 import { formatCompactVolume } from '../../utils/formatters';
 
@@ -45,6 +45,8 @@ const STATUS_CONFIG = {
 };
 
 export default function WorkloadReadinessWidget({ data }: WorkloadReadinessWidgetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const config = STATUS_CONFIG[data.status];
     const hasData = data.acute > 0 || data.chronic > 0;
 
@@ -97,7 +99,7 @@ export default function WorkloadReadinessWidget({ data }: WorkloadReadinessWidge
 
 
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
     },
@@ -163,4 +165,4 @@ const styles = StyleSheet.create({
         color: colors.text.disabled,
         marginTop: spacing.xs,
     },
-});
+}));

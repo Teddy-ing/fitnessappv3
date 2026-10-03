@@ -1,0 +1,25 @@
+{
+  "id": "hamstring-walkout",
+  "name": "Hamstring Walkout",
+  "pose": "Supine hamstring walkout with heels farther from hips and pelvis lifted",
+  "highlight": [
+    "visible hamstrings"
+  ],
+  "accessibilityLabel": "Hamstring walkout shown with hips lifted, heels extended away from the body and arms resting on the floor.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: HAMSTRING WALKOUT, extended heel-walk phase. Lie face-up with head and shoulders resting on floor, arms straight on floor beside body palms down. Pelvis remains lifted about20cm, forming a long gentle line shoulders-hips-knees; lower back neutral, not exaggerated arch. Both heels have walked AWAY from buttocks until knees only modestly bent (about30degrees); toes lifted, weight on heels. Legs almost long, feet hipwidth apart and both heels on floor. This is a long-lever bridge, NOT normal short glute bridge, NOT standing. Side three-quarter LOW camera makes exposed back/side hamstrings beneath elevated thighs visible, plus all contact points. Coral only visible hamstrings posterior thighs above knees; glutes stay covered by shorts, calves grey. One figure no equipment.",
+  "file": "hamstring-walkout.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Long-lever bridge with pelvis elevated, knees partly bent, both heels on floor and toes lifted. Head/upper shoulders plus arms support floor contact; visible hamstring highlighted and shorts opaque. Still represents extended phase only.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: shoulders supported, hips raised, heels extended away with toes lifted; representative extended walkout phase rather than full movement."
+  },
+  "output": {
+    "bytes": 1352317,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4e6d7f2cfbc2addf4533c4e09c29ebf81bdd5a0b14b7fa600c3b09c0cebf9db0"
+  }
+}

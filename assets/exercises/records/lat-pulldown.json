@@ -1,0 +1,26 @@
+{
+  "id": "lat-pulldown",
+  "name": "Lat Pulldown",
+  "pose": "Seated cable lat pulldown with wide overhand bar at upper chest",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "Cable lat pulldown with an overhand bar at the upper chest and back highlighted.",
+  "file": "lat-pulldown.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: CABLE LAT PULLDOWN, bottom of pull. Full simple graphite lat-pulldown machine with seat, thigh restraint pad, overhead pulley and rear weight stack. Seated mannequin thighs snug under restraint, feet flat, torso mostly upright with small backward lean. ONE long slightly angled pulldown bar held by wide CLOSED OVERHAND grips; bar pulled to upper chest IN FRONT of head, never behind neck. Both elbows bent down toward ribs; wrists straight. A single taut center cable connects bar midpoint upward to overhead pulley; show route and attachment clearly without passing through head. Rear-side three-quarter camera, sufficiently side-on to see front-of-chest bar and hands while back visible. Coral lats and mid-back only, arms grey.",
+  "revisions": [],
+  "output": {
+    "height": 1254,
+    "bytes": 1568549,
+    "sha256": "a3e253f987777f1ef3f60f44b51d960dfc4abc890f7f41ff9adb0b10d3e662ee",
+    "width": 1254
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Wide overhand grips, bar in front of body, center cable to overhead pulley, thighs restrained and feet planted; back/lats highlighted. Chest contact and internal stack routing partly hidden in rear view.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: seated torso, thigh restraint, wide overhand grips, continuous center cable and overhead pulley. Front chest contact is hidden by rear camera; representative lowered-bar phase."
+  }
+}

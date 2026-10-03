@@ -1,0 +1,25 @@
+{
+  "id": "cable-crunch",
+  "name": "Cable Crunch",
+  "file": "cable-crunch.png",
+  "reference": "barbell-curl.png",
+  "pose": "Kneeling cable crunch in early curl with torso facing away from high pulley",
+  "highlight": [
+    "abdominals"
+  ],
+  "accessibilityLabel": "Grey mannequin kneeling at a high cable pulley and curling the torso while holding rope ends beside the head, with abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: KNEELING HIGH-CABLE CRUNCH curled phase. Whole compact single cable tower with HIGH pulley above subject head, taut cable from pulley to center of a two-ended rope attachment. Mannequin KNEELS facing tower, both knees and shins on floor, hips remain over or slightly behind knees, not sitting on heels. Hold rope ends beside temples with hands and elbows bent; curl ribcage toward pelvis so rounded upper torso inclines forward about45degrees. Arms hold rope by head, do not pull ends to waist. Chin tucked naturally, elbows point toward knees. Side-front three-quarter angle shows abdominal curl, stable kneeling base and continuous high cable route to rope. Highlight exposed rectus abdominis/obliques only; no triceps/shoulders. Full tower and figure inside square.",
+  "revisions": [],
+  "output": {
+    "bytes": 1426034,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "78e8eab7f7db6b9d24a32d9afcdf3092585750459c130b750030ec82d4b48189"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Knees/shins supported, hips over knees; rope ends held beside temples with taut line to high pulley. Actual pose faces away from tower with modest early torso curl; label reflects this valid variation. Full equipment and abdominal overlay.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: plausible facing-away kneeling rope variation, hands beside the head and early spinal curl. The still depicts an early curl rather than the full repetition."
+  }
+}

@@ -10,18 +10,10 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator,
-    Alert,
-    Switch,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Switch } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import {
     connectGoogleDrive,
     disconnectCloudProvider,
@@ -37,6 +29,8 @@ import {
 // ============================================================
 
 export default function CloudBackupSection() {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [config, setConfig] = useState<CloudBackupConfig | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -306,7 +300,7 @@ export default function CloudBackupSection() {
                     value={config.autoBackupEnabled}
                     onValueChange={handleToggleAutoBackup}
                     trackColor={{ false: colors.background.tertiary, true: colors.accent.primary }}
-                    thumbColor="#fff"
+                    thumbColor={colors.text.primary}
                 />
             </View>
 
@@ -333,10 +327,10 @@ export default function CloudBackupSection() {
                     activeOpacity={0.7}
                 >
                     {isBacking ? (
-                        <ActivityIndicator size="small" color="#fff" />
+                        <ActivityIndicator size="small" color={colors.text.onAccent} />
                     ) : (
                         <>
-                            <MaterialIcons name="backup" size={16} color="#fff" />
+                            <MaterialIcons name="backup" size={16} color={colors.text.onAccent} />
                             <Text style={styles.backupButtonText}>Back Up Now</Text>
                         </>
                     )}
@@ -375,7 +369,7 @@ export default function CloudBackupSection() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     section: {
         marginBottom: spacing.lg,
     },
@@ -506,7 +500,7 @@ const styles = StyleSheet.create({
     backupButtonText: {
         fontSize: typography.size.sm,
         fontWeight: typography.weight.semibold,
-        color: '#fff',
+        color: colors.text.onAccent,
     },
     restoreButton: {
         backgroundColor: colors.background.secondary,
@@ -528,4 +522,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         color: colors.text.secondary,
     },
-});
+}));

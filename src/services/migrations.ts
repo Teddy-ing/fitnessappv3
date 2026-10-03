@@ -13,6 +13,8 @@
  */
 
 import * as SQLite from 'expo-sqlite';
+import { createSkippedOnboardingProfile } from '../models/onboarding';
+import { createTutorialProgress } from '../models/tutorial';
 
 // ============================================================
 // Types
@@ -24,7 +26,7 @@ interface Migration {
     /** Human-readable name for logging (e.g., "add_is_favorite_columns"). */
     name: string;
     /** Forward migration function. Throw on failure — never swallow errors. */
-    up: (db: SQLite.SQLiteDatabase) => Promise<void>;
+    up: (db: SQLite.SQLiteDatabase, context: { startingVersion: number }) => Promise<void>;
 }
 
 // ============================================================
@@ -805,6 +807,46 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+    // ----------------------------------------------------------
+    // v20: Optional onboarding answers, separate from active settings
+    // ----------------------------------------------------------
+    {
+        version: 20,
+        name: 'onboarding_profile',
+        up: async (db, { startingVersion }) => {
+            const hasProfile = await columnExists(db, 'user_settings', 'onboarding_profile');
+            if (!hasProfile) {
+                await db.execAsync('ALTER TABLE user_settings ADD COLUMN onboarding_profile TEXT;');
+            }
+            // Fresh installs see onboarding. Upgrades keep their existing launch experience.
+            if (startingVersion > 0) {
+                await db.runAsync(
+                    'UPDATE user_settings SET onboarding_profile = ?, has_completed_onboarding = 1 WHERE id = 1 AND onboarding_profile IS NULL',
+                    [JSON.stringify(createSkippedOnboardingProfile())],
+                );
+            }
+        },
+    },
+    // ----------------------------------------------------------
+    // v21: Optional tutorial invitation and contextual guidance
+    // ----------------------------------------------------------
+    {
+        version: 21,
+        name: 'tutorial_progress',
+        up: async (db, { startingVersion }) => {
+            const hasProgress = await columnExists(db, 'user_settings', 'tutorial_progress');
+            if (!hasProgress) {
+                await db.execAsync('ALTER TABLE user_settings ADD COLUMN tutorial_progress TEXT;');
+            }
+            // Fresh installs get an invitation. Existing users can open the guide from Settings.
+            if (startingVersion > 0) {
+                await db.runAsync(
+                    'UPDATE user_settings SET tutorial_progress = ? WHERE id = 1 AND tutorial_progress IS NULL',
+                    [JSON.stringify(createTutorialProgress('skipped'))],
+                );
+            }
+        },
+    },
 ];
 
 // ============================================================
@@ -852,7 +894,7 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
 
         try {
             await db.execAsync('BEGIN;');
-            await migration.up(db);
+            await migration.up(db, { startingVersion: currentVersion });
             // Stamp version inside the transaction — only persists on commit
             await db.execAsync(`PRAGMA user_version = ${migration.version};`);
             await db.execAsync('COMMIT;');

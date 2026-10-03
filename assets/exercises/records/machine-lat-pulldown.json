@@ -1,0 +1,26 @@
+{
+  "id": "machine-lat-pulldown",
+  "name": "Machine Lat Pulldown",
+  "pose": "Seated plate-loaded lever pulldown partway through the pull",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back muscles"
+  ],
+  "accessibilityLabel": "Seated machine lat pulldown with bent elbows and back muscles highlighted.",
+  "file": "machine-lat-pulldown.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: MACHINE LAT PULLDOWN using a plate-loaded lever machine with two overhead pivot arms, each connected structurally to upright frame with modest plate loads. Seated thighs held under padded restraint, feet planted, upright torso slight rear lean, paired NEUTRAL grips pulled beside shoulders to upper chest level, elbows bent downward near ribs, wrists straight. Rear-side three-quarter camera exposes back and clear hands on handle grips. No cable bar. Show whole believable machine compactly. Coral lats and mid-back muscles only, arms grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Seated neutral-grip lever pulldown with elbows bent, restrained thighs, both feet planted and coherent paired lever arms. Depicts mid-pull; handles remain above shoulder level. Back highlights match targets.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: paired overhead lever handles, flexed elbows, thigh restraint and supported seat; representative mid-pull with handles above shoulders."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1462119,
+    "sha256": "de357d8e4cbaf90a4e1414c28beffb94c2c90da832d6b6259fbe256458a2a982"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "elliptical",
+  "name": "Elliptical",
+  "pose": "Upright elliptical stride with both feet supported and hands on moving handles",
+  "highlight": [
+    "visible quadriceps"
+  ],
+  "accessibilityLabel": "Elliptical trainer shown mid-stride with feet on the pedals and hands holding the paired handles.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: ELLIPTICAL TRAINER, mid stride on a complete compact plain charcoal trainer. Stable base with rear flywheel, rails/linkages, two separate long foot platforms at opposite fore-aft positions, two moving upright curved handles and small blank console. Model standing upright, neutral neck, relaxed shoulders, feet fully supported on their respective platforms, one knee gently bent forward while other leg trails, knees not locked. Each hand securely grips its corresponding handle with soft elbows. Moving handle positions oppose leg stride naturally. Full figure and complete machine near-orthographic side-front three-quarter, every contact coherent. Highlight only exposed quadriceps above knees; glutes stay covered under charcoal shorts. Calves, arms and trunk grey. No treadmill belt or bicycle saddle.",
+  "file": "elliptical.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Both shoes supported on separate foot platforms and hands grasp handles; upright torso, opposing stride, complete trainer and natural joints. Only quads highlighted outside shorts. Fixed image cannot demonstrate linkages in motion.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: upright rider on two pedal platforms holding both handles, complete machine with connected lower linkages, thigh highlights; motion not inferred from still."
+  },
+  "output": {
+    "bytes": 1468778,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4d530ca83e8bfdc04d0e284fd9daf77387e0f0623d37a110275701934878dc03"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "pigeon-pose",
+  "name": "Pigeon Pose",
+  "pose": "Upright supported pigeon stretch with folded front leg and rear leg extended",
+  "highlight": [],
+  "accessibilityLabel": "Pigeon stretch with the front knee bent, rear leg extended back and hands supporting an upright torso.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: PIGEON POSE, basic upright supported version, NOT advanced king pigeon. Single plain thin charcoal mat. Front knee bent in front of pelvis, thigh externally rotated and shin angled diagonally back toward opposite hip so front heel stays relatively close to pelvis, do not force shin parallel. Other leg extends straight backward behind its hip with knee and shin on mat, top of shoe resting naturally. Hips face forward rather than rolling entirely onto side, supported low, torso long and upright, both hands on mat alongside front knee/hips for support, shoulders relaxed, neck neutral. Side-front three-quarter camera shows both legs' coherent path and both support hands. Full head, hands, feet and mat. Main targets glutes and hip flexors are covered by shorts/deep, so deliberately NO coral marks, all exposed skin grey; no false color through fabric or substitute quads. Same exact reference character. Comfortable natural range, no excessive contortion, no rear foot grasp.",
+  "file": "pigeon-pose.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "techniqueSources": [
+    "https://yogainternational.com/article/view/seven-tips-for-a-more-pleasant-pigeon-pose/"
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Bent front leg folds heel toward opposite hip, rear leg extends with knee/shin supported, both hands on mat and trunk upright. No coral because target hips/glutes covered/deep. Full limbs visible; one pose does not establish individual comfortable range.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: folded front leg, rear leg extended with knee supported and two palms supporting upright torso; no coral through clothing or over deep targets."
+  },
+  "output": {
+    "bytes": 1390372,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4e362d84e39f7fce290faeaec4fbc31083cb273460bd899421c99fd0a7be4ddf"
+  }
+}

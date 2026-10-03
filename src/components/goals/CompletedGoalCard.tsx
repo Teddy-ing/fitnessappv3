@@ -11,15 +11,10 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import type { Goal } from '../../models';
 import type { GoalDisplayInfo } from './GoalCard';
 import { formatDate, formatTitle } from './goalUtils';
@@ -48,6 +43,7 @@ export default React.memo(function CompletedGoalCard({
     onPress,
     onLongPress,
 }: CompletedGoalCardProps) {
+    const styles = useStyles();
     return (
         <TouchableOpacity
             style={styles.card}
@@ -105,7 +101,7 @@ export default React.memo(function CompletedGoalCard({
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     card: {
         backgroundColor: colors.background.secondary,
         borderRadius: borderRadius.lg,
@@ -155,4 +151,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

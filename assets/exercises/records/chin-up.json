@@ -1,0 +1,26 @@
+{
+  "id": "chin-up",
+  "name": "Chin-Up",
+  "pose": "Underhand chin-up near the top on a supported horizontal bar",
+  "highlight": [
+    "latissimus dorsi",
+    "biceps"
+  ],
+  "accessibilityLabel": "Underhand chin-up with elbows bent and lats and biceps highlighted.",
+  "file": "chin-up.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: UNDERHAND CHIN-UP near top. Same model suspended from single fixed horizontal steel bar on full freestanding graphite frame, two uprights and wide stable floor feet. Closed SUPINATED underhand grips shoulder-width, palms distinctly TOWARD FACE, thumbs wrapped. Chin just above bar, elbows bent down close to ribs in front/alongside torso, tall trunk and no swinging. Knees softly bent, feet visibly clear of floor. Front-side three-quarter camera shows underhand orientation and biceps, plus visible side lat regions. Coral BICEPS and visible LATS only, chest/shoulders grey; do not show color through torso. Entire rig/figure uncropped; no cables.",
+  "revisions": [],
+  "output": {
+    "width": 1254,
+    "bytes": 1366975,
+    "height": 1254,
+    "sha256": "f6fcaaaca57e8c32bb0ea356d095dcb238960250c159045d9352fbab0d7ab6ec"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Shoulder-width underhand grip, bent elbows near torso, chin above bar and feet suspended; biceps and visible side lats coral. Full figure and support frame visible.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: narrower underhand grips and flexed elbows distinguish chin-up, suspended feet and complete support frame; visible biceps/lats highlighted."
+  }
+}

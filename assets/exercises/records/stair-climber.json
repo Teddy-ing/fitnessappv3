@@ -1,0 +1,26 @@
+{
+  "id": "stair-climber",
+  "name": "Stair Climber",
+  "pose": "Stepping position on revolving stair climber",
+  "highlight": [
+    "visible quadriceps",
+    "calves"
+  ],
+  "accessibilityLabel": "Stair climber shown while stepping upward, with one foot on the higher step and hands lightly on the rails.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: STAIR CLIMBER, one representative upward step on a complete plain charcoal revolving-stair machine, three wide consecutive stair treads, sturdy side casing and base, waist-level side support rails attached to a front console upright. Figure faces the stairs, torso upright with small natural inclination, one foot fully supported on higher step and other foot on lower step; knees tracking toes, not deep squatting. Hands lightly touch corresponding support rails, body supported by legs rather than hanging off arms. Three-quarter SIDE/REAR camera shows both feet on their own treads, full head and base. Coral only visible quadriceps and calf bellies; glutes stay covered under plain shorts. No highlight on kneecaps, shins, achilles tendons, arms or clothes. Complete equipment in frame.",
+  "file": "stair-climber.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Complete stair machine, both feet on separate steps, hands on rails and upright torso; exposed quadriceps and calf cues with shorts opaque. Rear camera makes foot support and step heights clear. Single step only; calf overlay has tapered lower edges.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: upright step stance with each shoe supported on a separate stair, hands lightly on rails, complete stair machine, visible thigh/calf targets; covered glutes remain uncolored."
+  },
+  "output": {
+    "bytes": 1545692,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "1b0e37163bea9a959348dafe70e381753a005942f8aa25eec2d5066cb721731d"
+  }
+}

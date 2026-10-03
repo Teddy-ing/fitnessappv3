@@ -9,6 +9,7 @@
 import * as SQLite from 'expo-sqlite';
 import { runMigrations } from './migrations';
 import { withWriteLock } from '../utils/dbMutex';
+import { notifySettingsChanged } from './settingsEvents';
 
 // Database state
 let db: SQLite.SQLiteDatabase | null = null;
@@ -143,6 +144,7 @@ export async function clearAllData(): Promise<void> {
         } catch {
             // Persistence module may not be available in all contexts
         }
+        notifySettingsChanged();
     } catch (error) {
         console.error('[DB] Error clearing data:', error);
     }

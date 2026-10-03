@@ -8,19 +8,11 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    TextInput,
-    ScrollView,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import type { GoalCreationState, ExerciseMetric } from '../../hooks/useGoalCreation';
 import type { MeasurementType } from '../../models/measurement';
 
@@ -52,6 +44,8 @@ interface TypeStepProps {
 }
 
 export function TypeStep({ onSelectExercise, onSelectMeasurement, onSelectConsistency }: TypeStepProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>What kind of goal?</Text>
@@ -97,6 +91,8 @@ interface ExerciseMetricStepProps {
 }
 
 export function ExerciseMetricStep({ exerciseName, onSelectMetric }: ExerciseMetricStepProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>{exerciseName}</Text>
@@ -131,6 +127,8 @@ interface MeasurementStepProps {
 }
 
 export function MeasurementStep({ types, onSelect }: MeasurementStepProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>Which measurement?</Text>
@@ -169,6 +167,8 @@ interface TargetStepProps {
 }
 
 export function TargetStep({ state, unitSystem, onChangeValue, onConfirm }: TargetStepProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const unit = (() => {
         if (state.category === 'consistency') return 'workouts';
         if (state.category === 'measurement') return state.measurementType?.unitImperial ?? '';
@@ -223,6 +223,7 @@ interface DeadlineStepProps {
 }
 
 export function DeadlineStep({ deadline, onSetDeadline, onConfirm }: DeadlineStepProps) {
+    const styles = useStyles();
     const handlePreset = (weeks: number) => {
         const date = new Date();
         date.setDate(date.getDate() + weeks * 7);
@@ -300,6 +301,8 @@ interface LabelStepProps {
 }
 
 export function LabelStep({ label, onChangeLabel, onConfirm }: LabelStepProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>Name this goal</Text>
@@ -348,6 +351,8 @@ interface ConfirmStepProps {
 }
 
 export function ConfirmStep({ state, unitSystem, onSubmit }: ConfirmStepProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const targetName = (() => {
         if (state.category === 'exercise') {
             const metricLabel = EXERCISE_METRICS.find((m) => m.id === state.exerciseMetric)?.label ?? '';
@@ -415,7 +420,7 @@ export function ConfirmStep({ state, unitSystem, onSubmit }: ConfirmStepProps) {
             >
                 <LinearGradient colors={colors.gradient.primary} style={styles.createButtonGradient}>
                     {state.isSubmitting ? (
-                        <ActivityIndicator color="#fff" />
+                        <ActivityIndicator color={colors.text.onAccent} />
                     ) : (
                         <Text style={styles.createButtonText}>Create Goal 🎯</Text>
                     )}
@@ -429,7 +434,7 @@ export function ConfirmStep({ state, unitSystem, onSubmit }: ConfirmStepProps) {
 // Shared Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     stepContent: {
         flex: 1,
         paddingHorizontal: spacing.lg,
@@ -523,7 +528,7 @@ const styles = StyleSheet.create({
     continueButtonText: {
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
-        color: colors.text.primary,
+        color: colors.text.onAccent,
     },
 
     // Deadline
@@ -626,6 +631,6 @@ const styles = StyleSheet.create({
     createButtonText: {
         fontSize: typography.size.lg,
         fontWeight: typography.weight.bold,
-        color: '#fff',
+        color: colors.text.onAccent,
     },
-});
+}));

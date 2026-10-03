@@ -7,9 +7,9 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import type { WeightTrendIntent, SparklinePoint } from '../../models/widget';
 import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 
@@ -24,7 +24,7 @@ interface BodyweightSparklineWidgetProps {
 }
 
 // Helper: determine delta badge background style based on trend intent
-function getDeltaBadgeStyle(isPositive: boolean, intent: WeightTrendIntent) {
+function getDeltaBadgeStyle(isPositive: boolean, intent: WeightTrendIntent, styles: ReturnType<typeof useStyles>) {
     if (intent === 'neutral') return styles.deltaBadgeNeutral;
     // Bulk: weight up = good, weight down = bad
     // Cut:  weight up = bad,  weight down = good
@@ -33,7 +33,7 @@ function getDeltaBadgeStyle(isPositive: boolean, intent: WeightTrendIntent) {
 }
 
 // Helper: determine delta text color style based on trend intent
-function getDeltaTextStyle(isPositive: boolean, intent: WeightTrendIntent) {
+function getDeltaTextStyle(isPositive: boolean, intent: WeightTrendIntent, styles: ReturnType<typeof useStyles>) {
     if (intent === 'neutral') return styles.deltaTextNeutral;
     const isGood = intent === 'bulk' ? isPositive : !isPositive;
     return isGood ? styles.deltaTextGood : styles.deltaTextBad;
@@ -44,6 +44,8 @@ export default function BodyweightSparklineWidget({
     unit = getWeightUnitSync(),
     trendIntent = 'neutral',
 }: BodyweightSparklineWidgetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const chartData = useMemo(() => {
         return data.map((p) => ({ value: p.value }));
     }, [data]);
@@ -85,8 +87,8 @@ export default function BodyweightSparklineWidget({
             <View style={styles.header}>
                 <Text style={styles.title}>BODYWEIGHT</Text>
                 {delta !== null && (
-                    <View style={[styles.deltaBadge, getDeltaBadgeStyle(isPositive, trendIntent)]}>
-                        <Text style={[styles.deltaText, getDeltaTextStyle(isPositive, trendIntent)]}>
+                    <View style={[styles.deltaBadge, getDeltaBadgeStyle(isPositive, trendIntent, styles)]}>
+                        <Text style={[styles.deltaText, getDeltaTextStyle(isPositive, trendIntent, styles)]}>
                             {isPositive ? '+' : ''}{delta.toFixed(1)} {unit}
                         </Text>
                     </View>
@@ -128,7 +130,7 @@ export default function BodyweightSparklineWidget({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
     },
@@ -204,4 +206,4 @@ const styles = StyleSheet.create({
         marginTop: spacing.xs,
         textAlign: 'center',
     },
-});
+}));

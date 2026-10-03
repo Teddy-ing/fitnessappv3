@@ -1,0 +1,26 @@
+{
+  "id": "cat-cow-stretch",
+  "name": "Cat-Cow Stretch",
+  "pose": "Cat phase on hands and knees with gently rounded back",
+  "highlight": [
+    "visible back",
+    "visible abdominal wall"
+  ],
+  "accessibilityLabel": "Cat-cow mobility shown in the cat phase, on hands and knees with the back gently rounded.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: CAT-COW mobility, depict only CAT phase. Plain thin charcoal mat. Figure on all fours, both palms flat shoulder width, fingers forward, wrists below shoulders, elbows straight but not hyperextended; both knees on mat hip width under hips, lower legs resting back. Gently round spine upward into smooth shallow curve, pelvis tilts under, chin gently tucked with head naturally following curve, not forced to chest. No extreme hump or twisted torso. Side-rear three-quarter camera showing long curved back, visible abdomen side and hands/knee support. Coral target-region cues only on visible back muscle bellies beside spine and exposed abdominal side; leave central spine, ribs, joints, limbs and clothing grey. This is a mobility TARGET cue, not measured activation. Full figure and mat in square, one still only, no cow ghost pose.",
+  "file": "cat-cow-stretch.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Cat phase shows both palms under shoulders and knees under hips with a smoothly rounded back and lowered head. Back/abdominal target cues avoid clothes and central spine. Still intentionally omits cow phase.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: hands and knees supported, back rounded and head follows curve; label correctly identifies cat phase rather than the whole motion."
+  },
+  "output": {
+    "bytes": 1513917,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "89086ef2824c4a37871f6b766a94edd609a984d258756b754e13f7ddf53e6eed"
+  }
+}

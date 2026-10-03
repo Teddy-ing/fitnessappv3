@@ -4,6 +4,21 @@ description: Measurements feature spec — 3-tab architecture for body metrics t
 
 # Measurements Feature
 
+## Current app as of 2026-10-02
+
+This source review updates the original design below. Root [AGENTS.md](../../../../AGENTS.md) supersedes the old size/hook-count rules. This refresh did not test native camera/photo permissions or rendering.
+
+- Track, Trends and Gallery are implemented by `MeasurementsScreen` and `src/components/measurements/`. The app supports metric entry/visibility choices, sparklines and detail charts, a bodyweight/lift overlay, photo viewing and two-photo comparison.
+- Detailed charts use **react-native-gifted-charts**, rather than the alternative libraries considered below. `measurementService.ts` handles measurement data and `photoService.ts` manages photo records plus image files in the app document directory.
+- Weight values use the canonical-pound boundary; tape measurements use the separate measurement-unit preference. UI follows the live IronJot and Classic Purple palettes.
+- **Backup limitation:** JSON/Drive snapshots export measurement records and `progress_photos` metadata, including relative image paths, but do not contain the image bytes. A clean-device restore cannot recover those photos. Photo packaging or explicit exclusion messaging remains release work.
+- Photo viewer/comparison and trend modal Android Back paths were addressed in the October navigation changes. Check [current progress](../../current-progress.md) for the actual recorded scope; iOS/native permission and new-device photo recovery remain unverified.
+- The proposed pinch-to-zoom interaction and exact overlay presentation below are not a guarantee of current behavior. Use `DetailChartView.tsx` and `TrendsTab.tsx` as the implementation reference.
+
+## Historical feature specification
+
+The original tables, proposed hooks, library alternatives and future-tense requirements below are preserved as the design record, not a current feature checklist.
+
 > **Architecture note:** This spec aligns with the post-audit codebase (March 2026).
 > See `conventions.md` for guardrails: 600-line component cap, typed DB rows, versioned migrations, hook extraction.
 

@@ -8,7 +8,6 @@ import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     ScrollView,
     Modal,
@@ -17,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../theme';
 import { createCustomExercise, updateCustomExercise, deleteExercise } from '../services';
 import { Exercise, ExerciseCategory, MuscleGroup, Equipment } from '../models/exercise';
 import { ALL_MUSCLE_GROUPS } from '../models/muscleGroups';
@@ -59,6 +58,8 @@ const EQUIPMENT: { value: Equipment; label: string }[] = [
 ];
 
 export default function AddExerciseScreen({ visible, onClose, onSave, editingExercise }: AddExerciseScreenProps) {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const [name, setName] = useState('');
     const [category, setCategory] = useState<ExerciseCategory>('strength');
     const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([]);
@@ -279,7 +280,7 @@ export default function AddExerciseScreen({ visible, onClose, onSave, editingExe
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
     chipSelected: {
-        backgroundColor: colors.accent.primary + '20',
+        backgroundColor: colors.accent.muted,
         borderColor: colors.accent.primary,
     },
     chipText: {
@@ -365,11 +366,11 @@ const styles = StyleSheet.create({
         marginTop: spacing.xl,
     },
     deleteButtonText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
     },
     bottomSpacer: {
         height: spacing.xxl,
     },
-});
+}));

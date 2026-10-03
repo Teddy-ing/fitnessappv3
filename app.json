@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Workout App",
+    "name": "IronJot",
     "slug": "workout-app",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/branding/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/branding/splash-initial.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a1a"
+      "backgroundColor": "#252E33"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,17 +18,29 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a1a1a"
+        "foregroundImage": "./assets/branding/adaptive-icon.png",
+        "backgroundColor": "#252E33"
       },
       "package": "com.workoutapp.app",
+      "permissions": ["android.permission.SCHEDULE_EXACT_ALARM"],
       "googleServicesFile": "./google-services.json"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/branding/favicon.png"
     },
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/branding/splash-initial.png",
+          "imageWidth": 240,
+          "android": { "imageWidth": 160 },
+          "resizeMode": "contain",
+          "backgroundColor": "#252E33"
+        }
+      ],
       "expo-sqlite",
+      ["expo-notifications", { "defaultChannel": "rest-timer" }],
       [
         "@react-native-google-signin/google-signin",
         {

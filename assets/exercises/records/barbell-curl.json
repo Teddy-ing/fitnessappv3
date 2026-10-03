@@ -1,0 +1,25 @@
+{
+  "id": "barbell-curl",
+  "file": "barbell-curl.png",
+  "pose": "Standing underhand curl at approximately 90 degrees of elbow flexion",
+  "highlight": [
+    "biceps"
+  ],
+  "reference": null,
+  "prompt": "Use case: scientific-educational\nAsset type: original exercise-library illustration for a mobile workout app; foundational reference asset in a consistent series.\nPrimary request: one clean, realistic, anatomically plausible full-body humanoid demonstrating a standing straight-bar barbell curl at the middle of the lifting phase.\nSubject identity: an original adult masculine but neutral instructional mannequin, normally athletic proportions, moderate muscle definition, natural human limb lengths, smooth bald oval head with minimal facial planes, no hair, no expressive face, no dramatic bodybuilding definition. Matte pale slate-grey body. Fitted plain charcoal short training shorts ending high on the thigh, low-profile plain charcoal training shoes. Keep this exact character reproducible.\nPose mechanics: upright torso and neutral neck; feet approximately hip width, both whole soles planted, knees softly unlocked. Both upper arms hang vertically close beside the ribs, shoulders relaxed. Elbows bent approximately 90 degrees, forearms approximately horizontal in front of body. Both hands have a clearly UNDERHAND, palms-up, shoulder-width closed grip around a single straight bar, thumbs wrapped; wrists straight in line with forearms. One continuous straight metallic bar, centered and held level, with one modest plain graphite round weight plate and collar at each end. Bar rests in the palms at about lower-rib/upper-waist height. No leaned-back torso or raised upper arms.\nCamera: mild front three-quarter view, seeing the front and the mannequin's left side; near-orthographic low-distortion lens, camera near waist level. Ensure both hand grips and both arms are legible. Entire head, feet, and both bar ends comfortably inside a square canvas, with consistent 7-9 percent padding. The figure occupies most of the canvas.\nStyle: restrained premium 3D educational illustration, smooth sculpted anatomy, soft studio key light from upper left, subtle ambient occlusion, crisp silhouette. Flat very light cool-grey background (#F3F5F7), only a faint soft contact shadow. No gym environment.\nMuscle overlay: muted warm coral (#DF685A) on the anatomical BICEPS muscle bellies of both upper arms only, following the curved muscle shape; both heads read as one smooth muscle region per arm. All forearms, deltoids, chest, trunk and legs remain grey. This color indicates the primary target muscles, not quantified activation. No exposed tendon fibers, stripes, glow, vascular detail or labels.\nConstraints: design entirely from this written brief. Do not imitate a particular app, artist, stock illustration, or licensed character. Exactly one figure, one barbell, two plates, two hands, five fingers per hand; anatomically coherent joints, visible equipment contact; no logos, no words, no borders, no arrows, no inset, no multiple poses. Quiet, natural, not heroic or exaggerated.",
+  "output": {
+    "file": "barbell-curl.png",
+    "bytes": 1291588,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "c12750114fc3f389b02de0f514953e45d2b766975d83e8a58024e881b1a7e39d"
+  },
+  "name": "barbell-curl",
+  "accessibilityLabel": "Standing barbell curl midway through the lift, with an underhand grip and biceps highlighted.",
+  "review": {
+    "status": "reviewed",
+    "notes": "Pilot independently reviewed in preceding task; user approved all three and the model direction.",
+    "independentReviewer": "pose_spec",
+    "ownerApproved": true
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "bodyweight-calf-raise",
+  "name": "Bodyweight Calf Raise",
+  "pose": "Standing calf raise at top with heels raised",
+  "highlight": [
+    "gastrocnemius",
+    "soleus"
+  ],
+  "accessibilityLabel": "Bodyweight calf raise at the top, with both heels lifted and weight supported on the forefeet.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BODYWEIGHT CALF RAISE, top. Stand upright, feet hipwidth parallel, both knees straight but not locked. Both HEELS clearly lifted about5cm above floor; both balls of feet and toes remain supported on flat floor. Ankles plantarflexed naturally; shoes bend at forefoot instead of floating. Arms hang naturally beside body, no weights/support equipment. Rear-side three-quarter camera shows both elevated heels and backs of calves. Coral only calf muscle bellies gastrocnemius/soleus, stopping above Achilles tendons and below knee crease. Entire fullbody framed.",
+  "file": "bodyweight-calf-raise.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Both heels clearly raised with forefeet/toes contacting floor, knees extended and torso upright. Coral calves avoid knees/Achilles; full figure framed.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: both forefeet bear weight with heels elevated and upright posture. Rear view clearly exposes highlighted calves."
+  },
+  "output": {
+    "bytes": 1353711,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7db479eb56ab3168d769c8d937603476ce9814494f3584b542b805b730cead47"
+  }
+}

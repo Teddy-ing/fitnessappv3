@@ -1,0 +1,25 @@
+{
+  "id": "romanian-deadlift",
+  "name": "Romanian Deadlift",
+  "file": "romanian-deadlift.png",
+  "reference": "barbell-curl.png",
+  "pose": "Barbell Romanian deadlift in lowered hip hinge",
+  "highlight": [
+    "hamstrings"
+  ],
+  "accessibilityLabel": "Grey mannequin holding a barbell close to the shins in a Romanian deadlift hip hinge, with hamstrings highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: BARBELL ROMANIAN DEADLIFT lowered position. Feet hip-width, whole soles grounded; knees softly bent about20degrees, hips pushed far backward, torso inclined roughly30degrees above horizontal with long neutral spine and aligned neck. Straight arms hang vertically, closed overhand shoulder-width grips; continuous straight bar skims front of upper shins just below knees. Modest equal graphite plates and collars outside legs clear of floor. This is a hip hinge, not a squat; shins nearly vertical. SIDE-biased rear three-quarter view showing flat back, hips back, bar close to shins, hamstring backs of thighs exposed below shorts. Highlight visible hamstrings only; glutes covered.",
+  "revisions": [],
+  "output": {
+    "bytes": 1435250,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "36f1e2bc416acd88501a292c6cb9eb35fbe4877075734bfdaa3e606d157b5714"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Hip hinge with hips back, slight knee flexion and bar at upper shin; straight arms, grounded soles and neutral back visible. Rear-side view shows hamstrings below shorts; hidden far grip partly occluded.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: hip hinge with softly bent knees, straight arms and bar just below knees; lifted plates and posterior-thigh cues distinguish mid-descent from floor setup."
+  }
+}

@@ -4,6 +4,21 @@ description: Product Requirements Document for the core workout logging screen r
 
 # Workout Logging Screen Redesign — PRD
 
+## Current app as of 2026-10-02
+
+This source review updates the original redesign plan. Root [AGENTS.md](../../../AGENTS.md) governs implementation and verification; the historical checklist below is not a fresh QA result.
+
+- The table-based logger, Previous column, set-type menu, exercise action menu, notes, supersets, auto-collapse, optional RPE/RIR and keyboard plate calculator are implemented across `WorkoutScreen`, `ExerciseCard`, `SetRow`, `SupersetGroup` and `WorkoutKeyboard`.
+- Working weights are canonical pounds in state/storage and converted at input/display boundaries. Smart suggestions, prefill previous values, progression nudges and learned rest defaults extend the original plan and remain optional.
+- Active-workout recovery uses `src/stores/workoutPersistence.ts` and `active-workout.json`; timers have a separate `restTimerStore`. `finishWorkout` awaits the persistence callback before clearing the active workout. Recovery JSON still lacks a versioned runtime schema check; do not treat the existence of persistence as proof every upgrade/recovery path is safe.
+- The legacy swipe hint uses a file marker (`.swipe_hint_seen`), not AsyncStorage. A separate optional Quick Start Guide now walks through logging and stores tutorial progress via migration 21.
+- Exercise information opens in the Workout stack and returns to the existing workout. Keyboard Back handling is focus-gated. History editing preserves the workout identity; current navigation and finish regression coverage are described in [current progress](../current-progress.md).
+- Both IronJot and Classic Purple are live themes. The original purple/white-only visual rules and file line counts are historical. Phone/iOS checks for logging, interruptions, background timer delivery and recovery remain part of release verification; no new timing benchmark was run here.
+
+## Historical PRD
+
+The original state description, proposed APIs and unchecked acceptance boxes below belong to the redesign planning stage. They are preserved for rationale, not a current inventory of missing features.
+
 > **Goal:** Transform the exercise logging experience from a functional prototype into a premium, high-density interface that rivals Hevy/Strong while staying true to the app's veteran-first, zero-friction philosophy.
 
 ---

@@ -4,6 +4,37 @@ description: Prioritized list of app improvements and feature requests from user
 
 # App Improvement Backlog
 
+## Current update — 2026-10-02
+
+Use [current progress](current-progress.md) for the active release follow-up list. This file preserves feature ideas and earlier reports without treating the old roadmap as unfinished work.
+
+### Reconciled with the current implementation
+
+| Earlier item | Current state |
+|---|---|
+| Purple-theme request | Classic Purple remains available; IronJot is now the default. See `src/theme/palettes.ts`. |
+| Rest timer/notification work | Countdown and native notification scheduling exist. Current behavior and remaining device verification belong in current progress; the old startup-permission description below is historical. |
+| Templates/splits and rest days | Implemented through the split schedule model and editors. |
+| Exercise images | Built-in exercises have an offline illustration library; custom/unknown entries use their image or fallback. |
+| Visual refactor, Profile, analytics, Settings | Implemented screens exist; the old phase headings are not open tasks. |
+| Widgets | In-app dashboard cards are implemented. Native phone home-screen widgets remain a separate, unimplemented idea. |
+| Import/export | XLSX and JSON export, JSON restore, and supported competitor imports exist. CSV/PDF export and iCloud remain old proposals. |
+| Set-count and local suggestions | `smartSuggestionsService.ts` implements set-count, weight/rep, rest, and progression suggestions. It uses statistics, not an ML framework. Workout-day prediction remains a proposal. |
+| Beginner guidance | Optional setup, starter-plan selection, and quick-start tutorial are implemented. |
+| AI chatbot and paid AI tier | Retired in September 2026; remove from any active planning. |
+
+### Earlier reports that still need confirmation
+
+- **BUG-001 — Superset unlink display:** The old report below has no verified current reproduction or closure here. The current UI groups exercises through `src/components/workout/SupersetGroup.tsx`, and unlinking updates `supersetGroupId` in `src/stores/workoutStore.ts`. A changed implementation is not proof of a fix. Reproduce on the current build before treating this as an active defect or closing it.
+- **Rest-timer visual redesign, post-workout split creation, and separate warmup/cooldown flow:** Retained ideas with no new commitment. Current logging already supports strength, cardio, and stretching categories; the Settings warm-up calculator remains a placeholder.
+- **Remove Recent Workouts:** Old question, not a current decision. Reassess against the current Workout home before changing the screen.
+
+### Reading the history
+
+The sections below are a **2026-02-20 backlog snapshot**, including earlier implementation notes. Checkmarks record what was reported at that time, not new verification. The eight-phase roadmap is a dated planning artifact. Other old planning lists are preserved in the [planning snapshot](progress-archive/2026-10-02-planning-snapshot.md), and dated implementation history is in the [development archive](progress-archive/2026-01-to-05-development.md).
+
+## Historical backlog — 2026-02-20
+
 ## Priority Categories
 - **P0 (Critical)**: Bugs affecting core functionality
 - **P1 (High)**: Essential UX improvements for MVP
@@ -116,11 +147,11 @@ description: Prioritized list of app improvements and feature requests from user
 
 ---
 
-## 🐛 Known Bugs
+## Historical Bug Reports
 
 ### BUG-001: Superset Unlink Causes Exercise to Disappear
 - **Priority:** P1 (High)
-- **Status:** Open
+- **Status at the time:** Open; current status unverified (see current update above)
 - **Symptom:** When unlinking a superset (clicking "🔗 Unlink" button), the first exercise in the superset visually disappears from the workout screen
 - **Location:** 
   - `src/stores/workoutStore.ts` - `toggleSuperset` function
@@ -141,7 +172,7 @@ description: Prioritized list of app improvements and feature requests from user
 
 ---
 
-## Suggested Order of Implementation (Updated 8-Phase Roadmap)
+## Historical Eight-Phase Roadmap — 2026-02-20
 
 ### ~~Phase 1-3: Foundation~~ ✅ COMPLETE
 - ✅ Bug fixes (timer, set removal)
@@ -181,13 +212,14 @@ description: Prioritized list of app improvements and feature requests from user
 - Smart rest timer, set count suggestions
 - On-device only, privacy-first
 
-### Phase 8: LLM Chatbot
+### Phase 8: LLM Chatbot (retired September 2026)
 - AI assistant in dedicated tab
 - Preformatted + free-form queries with workout context
 - Premium/paid tier feature
 
 ---
 
-## Last Updated
-- Date: 2026-02-20
-- Session: Restructured roadmap with new 8-phase feature plan after month-long break
+## Document history
+
+- **2026-02-20:** Original backlog and eight-phase roadmap snapshot.
+- **2026-10-02:** Resolved feature scope reconciled with code; remaining ideas and unverified reports separated from active release work.

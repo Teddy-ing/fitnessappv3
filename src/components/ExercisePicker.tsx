@@ -20,15 +20,17 @@ import {
     FlatList,
     StyleSheet,
     Alert,
+    Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Exercise, MuscleGroup, ExerciseCategory } from '../models/exercise';
 import { INDIVIDUAL_MUSCLE_FILTERS } from '../models/muscleGroups';
 import { getExercises, toggleExerciseFavorite, toggleExerciseHidden, getSettings, getSuggestedExercises } from '../services';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
 import AddExerciseScreen from '../screens/AddExerciseScreen';
 import ExercisePickerItem from './ExercisePickerItem';
+import ExerciseInfoView from './exerciseDetails/ExerciseInfoView';
 
 interface ExercisePickerProps {
     visible: boolean;
@@ -59,6 +61,8 @@ export default function ExercisePicker({
     onClose,
     onSelect,
 }: ExercisePickerProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<CategoryTab>('all');
     const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
@@ -66,6 +70,7 @@ export default function ExercisePicker({
     const [hiddenExercises, setHiddenExercises] = useState<Exercise[]>([]);
     const [showAddExercise, setShowAddExercise] = useState(false);
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+    const [infoExercise, setInfoExercise] = useState<Exercise | null>(null);
     const [suggestedExercises, setSuggestedExercises] = useState<Exercise[]>([]);
     const [smartSuggestionsEnabled, setSmartSuggestionsEnabled] = useState(false);
 
@@ -110,6 +115,10 @@ export default function ExercisePicker({
             })();
         }
     }, [visible, loadExercises]);
+
+    useEffect(() => {
+        if (!visible) setInfoExercise(null);
+    }, [visible]);
 
     // Filter and search exercises
     const filteredExercises = React.useMemo(() => {
@@ -168,11 +177,17 @@ export default function ExercisePicker({
 
     // Handle close
     const handleClose = () => {
+        setInfoExercise(null);
         setSearchQuery('');
         setActiveCategory('all');
         setActiveFilter('all');
         onClose();
     };
+
+    const handleShowInfo = useCallback((exercise: Exercise) => {
+        Keyboard.dismiss();
+        setInfoExercise(exercise);
+    }, []);
 
     // Toggle favorite (optimistic update)
     const handleToggleFavorite = useCallback(async (exercise: Exercise) => {
@@ -242,158 +257,182 @@ export default function ExercisePicker({
             onToggleFavorite={handleToggleFavorite}
             onLongPress={handleLongPress}
             onUnhide={handleUnhide}
+            onShowInfo={handleShowInfo}
         />
-    ), [activeFilter, handleSelect, handleToggleFavorite, handleLongPress, handleUnhide]);
+    ), [activeFilter, handleSelect, handleToggleFavorite, handleLongPress, handleUnhide, handleShowInfo]);
 
     return (
         <Modal
             visible={visible}
             animationType="slide"
             presentationStyle="pageSheet"
-            onRequestClose={handleClose}
+            statusBarTranslucent
+            navigationBarTranslucent
+            onRequestClose={infoExercise ? () => setInfoExercise(null) : handleClose}
         >
-            <SafeAreaView style={styles.container} edges={['top']}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={handleClose}>
-                        <Text style={styles.cancelButton}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Add Exercise</Text>
-                    <TouchableOpacity onPress={() => {
-                        setEditingExercise(null);
-                        setShowAddExercise(true);
-                    }}>
-                        <Text style={styles.createButton}>+ New</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Search bar */}
-                <View style={styles.searchContainer}>
-                    <TextInput
-                        style={styles.searchInput}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        placeholder="Search exercises..."
-                        placeholderTextColor={colors.text.secondary}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                    />
-                </View>
-
-                {/* Category tabs */}
-                <View style={styles.categoryContainer}>
-                    {CATEGORY_TABS.map(cat => (
-                        <TouchableOpacity
-                            key={cat.key}
-                            style={[
-                                styles.categoryTab,
-                                activeCategory === cat.key && styles.categoryTabActive,
-                            ]}
-                            onPress={() => {
-                                setActiveCategory(cat.key);
-                                // Reset muscle filter when changing category
-                                if (cat.key !== 'all' && cat.key !== 'strength') {
-                                    setActiveFilter('all');
-                                }
-                            }}
+            <SafeAreaProvider>
+                <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+                    <View style={styles.container}>
+                        <View
+                            style={[styles.container, infoExercise && styles.hidden]}
+                            pointerEvents={infoExercise ? 'none' : 'auto'}
+                            accessibilityElementsHidden={!!infoExercise}
+                            importantForAccessibility={infoExercise ? 'no-hide-descendants' : 'auto'}
                         >
-                            <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                            <Text style={[
-                                styles.categoryTabText,
-                                activeCategory === cat.key && styles.categoryTabTextActive,
-                            ]}>
-                                {cat.label}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                {/* Filter tabs - only show muscle filters for strength */}
-                {(activeCategory === 'all' || activeCategory === 'strength') && (
-                    <View style={styles.filterContainer}>
-                        <FlatList
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            data={[
-                                { key: 'all', label: 'All' },
-                                { key: 'favorites', label: '★ Favorites' },
-                                ...INDIVIDUAL_MUSCLE_FILTERS,
-                                { key: 'hidden', label: '👁 Hidden' },
-                            ]}
-                            keyExtractor={(item) => item.key}
-                            contentContainerStyle={styles.filterList}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={[
-                                        styles.filterTab,
-                                        activeFilter === item.key && styles.filterTabActive,
-                                    ]}
-                                    onPress={() => setActiveFilter(item.key as FilterTab)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.filterTabText,
-                                            activeFilter === item.key && styles.filterTabTextActive,
-                                        ]}
-                                    >
-                                        {item.label}
-                                    </Text>
+                            {/* Header */}
+                            <View style={styles.header}>
+                                <TouchableOpacity onPress={handleClose}>
+                                    <Text style={styles.cancelButton}>Cancel</Text>
                                 </TouchableOpacity>
-                            )}
-                        />
-                    </View>
-                )}
-                <FlatList
-                    data={filteredExercises}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderExerciseItem}
-                    contentContainerStyle={styles.listContent}
-                    ListHeaderComponent={
-                        smartSuggestionsEnabled && suggestedExercises.length > 0 && activeFilter === 'all' && activeCategory === 'all' && !searchQuery.trim() ? (
-                            <View style={styles.suggestedSection}>
-                                <View style={styles.suggestedHeader}>
-                                    <Text style={styles.suggestedIcon}>{'\u2728'}</Text>
-                                    <Text style={styles.suggestedTitle}>Suggested For You</Text>
-                                </View>
-                                {suggestedExercises.map(ex => (
-                                    <ExercisePickerItem
-                                        key={`suggested-${ex.id}`}
-                                        exercise={ex}
-                                        isHiddenView={false}
-                                        onSelect={handleSelect}
-                                        onToggleFavorite={handleToggleFavorite}
-                                        onLongPress={handleLongPress}
-                                        onUnhide={handleUnhide}
-                                    />
-                                ))}
-                                <View style={styles.suggestedDivider} />
-                            </View>
-                        ) : null
-                    }
-                    ListEmptyComponent={
-                        <View style={styles.emptyState}>
-                            <Text style={styles.emptyText}>No exercises found</Text>
-                            <Text style={styles.emptySubtext}>
-                                {activeFilter === 'favorites'
-                                    ? 'Tap ★ to favorite exercises'
-                                    : 'Try a different search or filter'}
-                            </Text>
-                            <TouchableOpacity
-                                style={styles.createExerciseButton}
-                                onPress={() => {
+                                <Text style={styles.title}>Add Exercise</Text>
+                                <TouchableOpacity onPress={() => {
                                     setEditingExercise(null);
                                     setShowAddExercise(true);
-                                }}
-                            >
-                                <Text style={styles.createExerciseButtonText}>+ Create Custom Exercise</Text>
-                            </TouchableOpacity>
+                                }}>
+                                    <Text style={styles.createButton}>+ New</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Search bar */}
+                            <View style={styles.searchContainer}>
+                                <TextInput
+                                    style={styles.searchInput}
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                    placeholder="Search exercises..."
+                                    placeholderTextColor={colors.text.secondary}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                />
+                            </View>
+
+                            {/* Category tabs */}
+                            <View style={styles.categoryContainer}>
+                                {CATEGORY_TABS.map(cat => (
+                                    <TouchableOpacity
+                                        key={cat.key}
+                                        style={[
+                                            styles.categoryTab,
+                                            activeCategory === cat.key && styles.categoryTabActive,
+                                        ]}
+                                        onPress={() => {
+                                            setActiveCategory(cat.key);
+                                            // Reset muscle filter when changing category
+                                            if (cat.key !== 'all' && cat.key !== 'strength') {
+                                                setActiveFilter('all');
+                                            }
+                                        }}
+                                    >
+                                        <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                                        <Text style={[
+                                            styles.categoryTabText,
+                                            activeCategory === cat.key && styles.categoryTabTextActive,
+                                        ]}>
+                                            {cat.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            {/* Filter tabs - only show muscle filters for strength */}
+                            {(activeCategory === 'all' || activeCategory === 'strength') && (
+                                <View style={styles.filterContainer}>
+                                    <FlatList
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}
+                                        data={[
+                                            { key: 'all', label: 'All' },
+                                            { key: 'favorites', label: '★ Favorites' },
+                                            ...INDIVIDUAL_MUSCLE_FILTERS,
+                                            { key: 'hidden', label: '👁 Hidden' },
+                                        ]}
+                                        keyExtractor={(item) => item.key}
+                                        contentContainerStyle={styles.filterList}
+                                        renderItem={({ item }) => (
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.filterTab,
+                                                    activeFilter === item.key && styles.filterTabActive,
+                                                ]}
+                                                onPress={() => setActiveFilter(item.key as FilterTab)}
+                                            >
+                                                <Text
+                                                    style={[
+                                                        styles.filterTabText,
+                                                        activeFilter === item.key && styles.filterTabTextActive,
+                                                    ]}
+                                                >
+                                                    {item.label}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    />
+                                </View>
+                            )}
+                            <FlatList
+                                data={filteredExercises}
+                                keyExtractor={(item) => item.id}
+                                renderItem={renderExerciseItem}
+                                contentContainerStyle={styles.listContent}
+                                ListHeaderComponent={
+                                    smartSuggestionsEnabled && suggestedExercises.length > 0 && activeFilter === 'all' && activeCategory === 'all' && !searchQuery.trim() ? (
+                                        <View style={styles.suggestedSection}>
+                                            <View style={styles.suggestedHeader}>
+                                                <Text style={styles.suggestedIcon}>{'\u2728'}</Text>
+                                                <Text style={styles.suggestedTitle}>Suggested For You</Text>
+                                            </View>
+                                            {suggestedExercises.map(ex => (
+                                                <ExercisePickerItem
+                                                    key={`suggested-${ex.id}`}
+                                                    exercise={ex}
+                                                    isHiddenView={false}
+                                                    onSelect={handleSelect}
+                                                    onToggleFavorite={handleToggleFavorite}
+                                                    onLongPress={handleLongPress}
+                                                    onUnhide={handleUnhide}
+                                                    onShowInfo={handleShowInfo}
+                                                />
+                                            ))}
+                                            <View style={styles.suggestedDivider} />
+                                        </View>
+                                    ) : null
+                                }
+                                ListEmptyComponent={
+                                    <View style={styles.emptyState}>
+                                        <Text style={styles.emptyText}>No exercises found</Text>
+                                        <Text style={styles.emptySubtext}>
+                                            {activeFilter === 'favorites'
+                                                ? 'Tap ★ to favorite exercises'
+                                                : 'Try a different search or filter'}
+                                        </Text>
+                                        <TouchableOpacity
+                                            style={styles.createExerciseButton}
+                                            onPress={() => {
+                                                setEditingExercise(null);
+                                                setShowAddExercise(true);
+                                            }}
+                                        >
+                                            <Text style={styles.createExerciseButtonText}>+ Create Custom Exercise</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                }
+                                ListFooterComponent={
+                                    <Text style={styles.hint}>Long-press to hide or edit exercises</Text>
+                                }
+                            />
                         </View>
-                    }
-                    ListFooterComponent={
-                        <Text style={styles.hint}>Long-press to hide or edit exercises</Text>
-                    }
-                />
-            </SafeAreaView>
+                        {infoExercise && (
+                            <View style={StyleSheet.absoluteFill}>
+                                <ExerciseInfoView
+                                    exercise={infoExercise}
+                                    onBack={() => setInfoExercise(null)}
+                                    returnLabel="Back to exercise picker"
+                                />
+                            </View>
+                        )}
+                    </View>
+                </SafeAreaView>
+            </SafeAreaProvider>
 
             {/* Add/Edit Exercise Modal */}
             <AddExerciseScreen
@@ -411,10 +450,14 @@ export default function ExercisePicker({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
+    },
+    hidden: {
+        // Keep FlatList mounted and measured so its exact scroll offset survives.
+        opacity: 0,
     },
 
     // Header
@@ -481,7 +524,7 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.medium,
     },
     filterTabTextActive: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
     },
 
     // Category tabs
@@ -587,4 +630,4 @@ const styles = StyleSheet.create({
         backgroundColor: colors.separator,
         marginVertical: spacing.sm,
     },
-});
+}));

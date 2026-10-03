@@ -7,18 +7,10 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Dimensions,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import {
     getMeasurementHistory,
 } from '../../services';
@@ -59,6 +51,8 @@ interface DetailChartProps {
 }
 
 export default function DetailChartView({ type, unitSystem, onBack }: DetailChartProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [range, setRange] = useState<RangeKey>('3M');
     const [data, setData] = useState<{ date: string; value: number }[]>([]);
     const [loading, setLoading] = useState(true);
@@ -233,7 +227,7 @@ export default function DetailChartView({ type, unitSystem, onBack }: DetailChar
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
     },
@@ -277,7 +271,7 @@ const styles = StyleSheet.create({
         lineHeight: 16,
     },
     pillTextActive: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontWeight: typography.weight.semibold as '600',
     },
     loading: {
@@ -338,4 +332,4 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.bold as '700',
     },
 
-});
+}));

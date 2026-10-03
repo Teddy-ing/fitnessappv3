@@ -14,10 +14,9 @@ import {
     TouchableOpacity,
     Modal,
     Pressable,
-    StyleSheet,
 } from 'react-native';
 import { SetType } from '../models/workout';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface SetTypeOption {
     type: SetType;
@@ -46,6 +45,7 @@ export default function SetTypeMenu({
     onSelect,
     onClose,
 }: SetTypeMenuProps) {
+    const styles = useStyles();
     return (
         <Modal
             visible={visible}
@@ -94,7 +94,7 @@ export default function SetTypeMenu({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     },
     optionPillSelected: {
         borderColor: colors.accent.primary,
-        backgroundColor: 'rgba(168, 85, 247, 0.15)',
+        backgroundColor: colors.accent.muted,
     },
     optionBadge: {
         color: colors.text.secondary,
@@ -155,4 +155,4 @@ const styles = StyleSheet.create({
     optionLabelSelected: {
         color: colors.accent.tertiary,
     },
-});
+}));

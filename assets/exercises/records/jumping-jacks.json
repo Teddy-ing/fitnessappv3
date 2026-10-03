@@ -1,0 +1,27 @@
+{
+  "id": "jumping-jacks",
+  "name": "Jumping Jacks",
+  "pose": "Open phase with feet apart and arms raised overhead",
+  "highlight": [
+    "deltoids",
+    "visible quadriceps",
+    "calves"
+  ],
+  "accessibilityLabel": "Jumping jack shown in the open position, with feet apart and arms raised overhead.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: JUMPING JACKS, representative OPEN position. Upright full body, feet wider than shoulder width on floor with knees soft, both arms raised overhead in a wide symmetrical arc, elbows slightly bent, hands separate just above head with palms facing toward each other. Neutral neck and torso, no leaning or unusual joint bends. Three-quarter frontal camera with full raised hands and feet comfortably visible. For full-body seed category show restrained coral only on deltoid shoulder caps, visible quadriceps above knees and calf muscle bellies. All joints, lower-leg tendons and other skin grey; no clothing highlight. Single open still, no motion trails or other poses.",
+  "file": "jumping-jacks.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Full open stance with overhead separated hands, feet wide and coherent joints. Selected exposed deltoid, quadriceps and calf targets highlighted; shorts opaque. Hands are close to upper canvas edge but fully inside; single phase only.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: symmetric open stance with arms overhead, complete hands and feet. Representative open phase; no motion inferred."
+  },
+  "output": {
+    "bytes": 1400071,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "14c622040628c6ceb2b1dddf57fb74fdf1e2654bfe3562b349328759ea038f75"
+  }
+}

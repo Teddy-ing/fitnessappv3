@@ -1,0 +1,25 @@
+{
+  "id": "dip-chest",
+  "name": "Chest Dip",
+  "pose": "Parallel-bar dip at mid-lower position with a modest forward lean",
+  "highlight": [
+    "pectoralis major"
+  ],
+  "accessibilityLabel": "Chest dip on parallel bars with bent elbows, forward lean, and chest highlighted.",
+  "file": "dip-chest.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: CHEST DIP on two parallel waist-high rails attached to a simple stable freestanding dip station. Entire station visible. Body suspended by closed palms-in grips on rails beside hips; elbows bent about 90 degrees and tracking behind torso, shoulders no deeper than elbow level. Modest forward torso lean, neck neutral; knees bent behind, feet clear of floor and no step supporting body. Hands visibly bear weight on top of rails, rails continue in front and behind grips. Front-side three-quarter shows both contacts and suspended feet. Highlight pectoralis major coral only; triceps/shoulders grey. No cables or weights.",
+  "revisions": [],
+  "output": {
+    "sha256": "543115a93e8448442217a15a8fe3a96327906df268b6214fe76db4497a3d4723",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1418592
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Both hands grip parallel rails; bent elbows, bent knees and feet suspended clear of station; chest overlay. Forward lean is modest and partly foreshortened by front-biased camera.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent review: suspended dip with bent elbows, wrapped grips, bent knees and modest forward torso inclination; clear chest highlight; both bars grounded."
+  }
+}

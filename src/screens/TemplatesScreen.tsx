@@ -8,7 +8,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     ScrollView,
     Modal,
@@ -18,7 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors, withAlpha } from '../theme';
 import { getTemplates, deleteTemplate, updateTemplate, toggleTemplateFavorite, type Template } from '../services';
 import { ExercisePicker } from '../components';
 import { Exercise } from '../models/exercise';
@@ -30,6 +29,8 @@ interface TemplatesScreenProps {
 }
 
 export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: TemplatesScreenProps) {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -222,7 +223,7 @@ export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: 
             visible={visible}
             animationType="slide"
             presentationStyle="pageSheet"
-            onRequestClose={onClose}
+            onRequestClose={editingTemplate ? handleCancelEdit : onClose}
         >
             <SafeAreaView style={styles.container}>
                 {/* Header */}
@@ -436,7 +437,7 @@ export default function TemplatesScreen({ visible, onClose, onSelectTemplate }: 
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -666,7 +667,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xl,
     },
     deleteTemplateButtonText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
     },
@@ -680,7 +681,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     supersetLinkActive: {
-        backgroundColor: colors.accent.warning + '15',
+        backgroundColor: withAlpha(colors.accent.warning, 0.08),
         borderRadius: borderRadius.sm,
     },
     supersetLinkText: {
@@ -691,4 +692,4 @@ const styles = StyleSheet.create({
         color: colors.accent.warning,
         fontWeight: typography.weight.medium,
     },
-});
+}));

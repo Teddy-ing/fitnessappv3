@@ -1,0 +1,26 @@
+{
+  "id": "prone-y-raise",
+  "name": "Prone Y Raise",
+  "pose": "Prone Y raise with straight arms slightly lifted in a Y",
+  "highlight": [
+    "lower trapezius",
+    "deltoids"
+  ],
+  "accessibilityLabel": "Prone Y raise with the torso supported on the floor and arms lifted slightly overhead in a Y, thumbs pointing up.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: PRONE Y RAISE. Lie FACE DOWN on floor with chest/abdomen/pelvis and legs supported. Neck relaxed in line with spine, forehead just above floor and gaze down. Both arms extend diagonally OVERHEAD at45degrees from midline so body forms Y shape from above. Elbows straight, thumbs point UP, palms toward each other. Both entire arms/hands lifted only5-10cm above floor, shoulder blades draw gently down/back. Do NOT arch trunk high, no Superman leg lift. Legs remain long on floor. Camera elevated REAR-side three-quarter from foot end, clearly seeing back and separated Y arms, complete head/hands/feet. Coral only lower trapezius regions of mid-back and visible shoulder deltoids; arms grey, spine grey. No equipment.",
+  "file": "prone-y-raise.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Prone torso and legs supported, arms extend overhead in Y with thumbs upward and slight floor clearance; no large lumbar arch/leg lift. Coral shoulder caps and lower medial back regions. Head turned slightly rather than forehead-down; neck still close to torso line.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: prone body with straight legs, lifted Y-shaped arms and upward thumbs; head remains aligned toward the floor. Visible upper-back and posterior-shoulder target overlay."
+  },
+  "output": {
+    "bytes": 1392569,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "12908ef3ca349a606628d42e20e24f9bef4e1b6d26ee70a4eced8530c30fac87"
+  }
+}

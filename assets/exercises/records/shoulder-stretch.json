@@ -1,0 +1,28 @@
+{
+  "id": "shoulder-stretch",
+  "name": "Shoulder Stretch",
+  "pose": "Standing cross-body shoulder stretch",
+  "highlight": [
+    "posterior deltoid of crossed arm"
+  ],
+  "accessibilityLabel": "Cross-body shoulder stretch with the opposite hand supporting the upper arm above the elbow.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: CROSS-BODY SHOULDER STRETCH. Stand upright feet hip width, both soles flat, neutral neck. One arm reaches across chest at just below shoulder height, elbow softly straight, palm relaxed. Opposite hand gently supports the stretched arm on its upper arm just ABOVE elbow, not pressing directly into joint; opposite forearm angled upward naturally. Shoulders stay down and torso faces forward, no rotation or shrugging. Rear-side three-quarter camera chosen so the posterior shoulder of stretched arm, crossing arm and support hand can be read. Coral ONLY posterior deltoid target region of the arm crossing chest; no biceps, triceps, chest or supporting shoulder color. Coral marks stretch TARGET not activation. All clothing opaque. Full body with hands and feet.",
+  "file": "shoulder-stretch.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "techniqueSources": [
+    "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848"
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "One arm crosses at shoulder height and opposite hand supports upper arm above elbow, with relaxed upright posture. Only stretched shoulder region coral. Camera is front-biased rather than requested rear view, so posterior detail is schematic.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: one arm drawn across chest, opposite hand supports above elbow, stable upright stance; shoulder target cue."
+  },
+  "output": {
+    "bytes": 1365541,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "cf2607e72df841017323b71ed7e20f2b9b294cb09c1bfb12157b48967e7d2bd5"
+  }
+}

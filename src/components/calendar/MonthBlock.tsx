@@ -8,14 +8,8 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Dimensions,
-} from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors, withAlpha } from '../../theme';
 import type { CalendarDayData } from '../../services';
 import {
     type MonthData,
@@ -61,6 +55,8 @@ const DayCell = React.memo(function DayCell({
     showFatigueFilter,
     onDayPress,
 }: DayCellProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     // PP-019 fix: callback lives inside the memoized component,
     // so the parent never creates per-cell closures.
     const handlePress = useCallback(() => {
@@ -76,13 +72,14 @@ const DayCell = React.memo(function DayCell({
     const matchesFilter =
         (!showPRFilter || hasPR) && (!showNoteFilter || hasNote) && (!showFatigueFilter || hasFatigue);
     const dimmed = filterActive && hasWorkout && !matchesFilter;
+    const cellOpacity = dimmed ? heatmapOpacity * 0.25 : heatmapOpacity;
 
     return (
         <TouchableOpacity
             style={[
                 styles.dayCell,
                 hasWorkout && {
-                    backgroundColor: `rgba(168, 85, 247, ${dimmed ? heatmapOpacity * 0.25 : heatmapOpacity})`,
+                    backgroundColor: withAlpha(colors.accent.primary, cellOpacity),
                 },
                 isToday && styles.todayCell,
             ]}
@@ -95,6 +92,7 @@ const DayCell = React.memo(function DayCell({
                     styles.dayText,
                     isToday && styles.todayText,
                     hasWorkout && styles.workoutDayText,
+                    hasWorkout && cellOpacity >= 0.7 && { color: colors.text.onAccent },
                     dimmed && styles.dimmedDayText,
                 ]}
             >
@@ -148,6 +146,7 @@ const MonthBlock = React.memo(function MonthBlock({
     showFatigueFilter,
     onDayPress,
 }: MonthBlockProps) {
+    const styles = useStyles();
     const { year, month, days, prDates, noteDates, fatigueDates } = monthData;
     const totalDays = daysInMonth(year, month);
     const firstDayOffset = getFirstDayOffset(year, month, startDay);
@@ -245,7 +244,7 @@ const GRID_PADDING = spacing.md * 2; // paddingHorizontal on listContent
 const CELL_WIDTH = Math.floor((SCREEN_WIDTH - GRID_PADDING) / 7);
 const CELL_GAP = 3;
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     // Month block
     monthBlock: {
         marginTop: spacing.lg,
@@ -331,4 +330,4 @@ const styles = StyleSheet.create({
         borderRadius: 2.5,
         backgroundColor: '#EF4444',
     },
-});
+}));

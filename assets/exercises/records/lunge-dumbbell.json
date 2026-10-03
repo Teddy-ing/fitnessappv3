@@ -1,0 +1,25 @@
+{
+  "id": "lunge-dumbbell",
+  "name": "Dumbbell Lunge",
+  "file": "lunge-dumbbell.png",
+  "reference": "barbell-curl.png",
+  "pose": "Forward dumbbell lunge at the lowered split-stance position",
+  "highlight": [
+    "quadriceps"
+  ],
+  "accessibilityLabel": "Grey mannequin in a forward lunge holding dumbbells at the sides, with quadriceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: FORWARD DUMBBELL LUNGE lowered position. Equipment override ONLY TWO dumbbells one hanging in each closed neutral hand beside hips, arms straight down, no bench/barbell. Front foot whole sole flat; rear foot heel raised and toes pressing floor. Long split stance, front knee flexed near90 degrees and aligned toes, rear knee bent and hovers a few centimeters above floor. Upright neutral torso with natural slight forward lean; hips square, legs in two parallel tracks rather than tightrope. Side-front three-quarter camera shows front foot, rear toe contact, back knee clearance and both weights. Highlight exposed anterior quadriceps only; covered glutes uncolored. Distinct from rear-foot-elevated split squat; no support under rear foot.\nRender square 1024x1024 PNG. Full figure and all equipment.",
+  "revisions": [],
+  "output": {
+    "bytes": 1455532,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "80cfd74aaf32d2b87ce0462047477c20de995a4319c16c9dc662f9c7117e6fdb"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Split stance with front sole flat, rear heel lifted and rear knee above floor, two hanging dumbbells and upright torso visible. Exposed quadriceps highlighted without fabric overlay. Direction of stepping cannot be established from still.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: paired dumbbells at sides, front foot planted, rear forefoot supported, rear knee lowered and trunk upright; no crossed or extra limbs."
+  }
+}

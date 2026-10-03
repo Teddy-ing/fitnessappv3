@@ -12,9 +12,8 @@ import {
     Text,
     Modal,
     Pressable,
-    StyleSheet,
 } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 // Standard plate inventory (in lbs, descending)
 const PLATES_LBS = [45, 35, 25, 10, 5, 2.5];
@@ -79,6 +78,7 @@ export default function PlateCalculator({
     unit,
     onClose,
 }: PlateCalculatorProps) {
+    const styles = useStyles();
     const barbellWeight = unit === 'kg' ? BARBELL_KG : BARBELL_LBS;
     const plates = useMemo(() => calculatePlates(weight, unit), [weight, unit]);
     const isValid = weight >= barbellWeight;
@@ -141,7 +141,7 @@ export default function PlateCalculator({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     backdrop: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -211,4 +211,4 @@ const styles = StyleSheet.create({
         marginTop: spacing.md,
         textAlign: 'center',
     },
-});
+}));

@@ -10,19 +10,10 @@
  */
 
 import React, { useCallback, useRef } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    StyleSheet,
-    ActivityIndicator,
-    Alert,
-    Modal,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TouchableWithoutFeedback, ActivityIndicator, Alert, Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 
 interface ExportBottomSheetProps {
     isOpen: boolean;
@@ -37,6 +28,8 @@ export default function ExportBottomSheet({
     onExportSpreadsheet,
     onExportJSON,
 }: ExportBottomSheetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const isRunning = useRef(false);
     const [loadingType, setLoadingType] = React.useState<'xlsx' | 'json' | null>(null);
     const insets = useSafeAreaInsets();
@@ -110,7 +103,7 @@ export default function ExportBottomSheet({
                                     disabled={loadingType !== null}
                                     activeOpacity={0.7}
                                 >
-                                    <View style={[styles.iconContainer, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}>
+                                    <View style={[styles.iconContainer, { backgroundColor: colors.accent.muted }]}>
                                         {loadingType === 'json' ? (
                                             <ActivityIndicator size="small" color={colors.accent.primary} />
                                         ) : (
@@ -134,7 +127,7 @@ export default function ExportBottomSheet({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -192,4 +185,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginTop: 2,
     },
-});
+}));

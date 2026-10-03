@@ -15,13 +15,12 @@ import type { RouteProp } from '@react-navigation/native';
 import {
     View,
     Text,
-    StyleSheet,
     ScrollView,
     TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../theme';
 import MacroAnalyticsView from '../components/analytics/MacroAnalyticsView';
 import BreakdownView from '../components/analytics/BreakdownView';
 import ExerciseListView from '../components/analytics/ExerciseListView';
@@ -45,6 +44,7 @@ function TabControl({
     activeTab: AnalyticsTab;
     onTabChange: (tab: AnalyticsTab) => void;
 }) {
+    const styles = useStyles();
     const tabs: { key: AnalyticsTab; label: string }[] = [
         { key: 'workouts', label: 'Workouts' },
         { key: 'breakdown', label: 'Breakdown' },
@@ -74,6 +74,7 @@ function TabControl({
 // ============================================================
 
 export default function AnalyticsScreen() {
+    const styles = useStyles();
     const route = useRoute<RouteProp<ProfileStackParamList, 'Analytics'>>();
     const [activeTab, setActiveTab] = useState<AnalyticsTab>(
         route.params?.initialTab ?? 'workouts',
@@ -113,7 +114,7 @@ export default function AnalyticsScreen() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -149,6 +150,6 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
     },
     tabTextActive: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
     },
-});
+}));

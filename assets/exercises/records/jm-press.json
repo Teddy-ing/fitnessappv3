@@ -1,0 +1,30 @@
+{
+  "id": "jm-press",
+  "name": "JM Press",
+  "file": "jm-press.png",
+  "reference": "barbell-curl.png",
+  "pose": "Supine JM press during lowering with elbows held high and bar above chin",
+  "highlight": [
+    "triceps"
+  ],
+  "accessibilityLabel": "Grey mannequin on a flat bench holding a close-grip barbell above the chin with elbows raised, with triceps highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Same straight metal barbell style, one modest round graphite plate and collar per end. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, one continuous straight bar, two modest weight plates, closed grips and plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: JM PRESS, inventor JM Blakley's close-grip triceps press/extension hybrid. Important: different from a bench press and a skull crusher. Lie flat with head, shoulders and buttocks supported on level bench, feet planted. Closed overhand shoulder-width grip, modest straight barbell. Elbows remain HIGH ABOVE torso/bench, upper arms pointing upward and outward only about 30-45 degrees from torso midline. Flex elbows deeply, bringing forearms toward biceps, while bar descends toward point above chin/throat, visibly several centimeters clear and never touching head/neck/chest. Knuckles gently rocked back in the characteristic wrist position. Both elbows remain higher than the chest, not dropped beside ribs. Side-biased front three-quarter view shows high elbows, folded arms, bar above chin, supported head and all feet/bench. Highlight posterior triceps only. Reference mechanics from inventor tutorial, https://elitefts.com/blogs/training/how-to-perform-the-jm-press-a-step-by-step-guide-from-the-inventor ; use written mechanics only, no third-party artwork.\nRender square 1024x1024 PNG; complete figure and equipment inside generous margins.",
+  "revisions": [
+    {
+      "reason": "Initial pose too shallow and resembled skull crusher",
+      "prompt": "Use case: precise-object-edit / scientific-educational. Input1 edit target JM press candidate, input2 canonical model identity. Preserve exact supported body, bench, planted feet, model, clothes, camera, grey and coral materials. Correct ONLY the arm/bar phase to show the defining DEEPLY FOLDED JM press bottom: keep both elbows raised above chest and slightly forward toward feet, then bend elbows MUCH MORE until forearms almost touch biceps. Lower barbell to hover 5-10 centimeters above CHIN/UPPER THROAT area, staying in front of neck, never touching. Upper arms slope upward/forward from shoulders with elbows held high, not pointing behind head. Wrists mildly rocked back, closed shoulder-width grip. Current bar is too high with only mildly flexed elbows and resembles skull crusher mid-rep; show deeply folded elbows with forearms meeting upper arms, bar near chin. Keep triceps-only coral."
+    }
+  ],
+  "output": {
+    "bytes": 1432843,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "20f9950b7d7aef2b4037e9834f836f30f5c7468279fdef19bde337390f09489d"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Head/back/hips supported, feet planted, close closed grip, high elbows and bar clear of face visible. Correction deepened elbow fold, but output remains a mid-descent pose rather than full forearm-biceps contact at bottom. Distinction from generic lying triceps extension warrants independent review.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: close grip, high bent elbows and bar above chin region form a plausible mid-descent JM press. The still does not show the complete movement path or bottom position."
+  }
+}

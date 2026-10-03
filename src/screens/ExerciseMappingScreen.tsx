@@ -16,26 +16,24 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     Alert,
-    ActivityIndicator,
     ScrollView,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, usePreventRemove } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors, withAlpha } from '../theme';
 import { getUnresolvedMappings } from '../services/importParsers/exerciseMapper';
 import { getImportSummary, executeCompetitorImport } from '../services/competitorImportService';
 import { ExercisePicker } from '../components';
 import ImportSummaryView from '../components/import/ImportSummaryView';
 import CustomExerciseConfigModal from '../components/import/CustomExerciseConfigModal';
 import type { Exercise, MuscleGroup, Equipment } from '../models/exercise';
-import type { ProfileStackParamList } from '../navigation/AppNavigator';
+import type { SharedStackParamList } from '../navigation/types';
 import type {
     CompetitorSource,
     ParsedWorkout,
@@ -56,14 +54,16 @@ export type ExerciseMappingParams = {
     skipToSummary: boolean;
 };
 
-type RouteType = RouteProp<ProfileStackParamList, 'ExerciseMapping'>;
-type NavigationType = NativeStackNavigationProp<ProfileStackParamList>;
+type RouteType = RouteProp<SharedStackParamList, 'ExerciseMapping'>;
+type NavigationType = NativeStackNavigationProp<SharedStackParamList>;
 
 // ============================================================
 // Component
 // ============================================================
 
 export default function ExerciseMappingScreen() {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const route = useRoute<RouteType>();
     const navigation = useNavigation<NavigationType>();
     const insets = useSafeAreaInsets();
@@ -85,13 +85,26 @@ export default function ExerciseMappingScreen() {
     const [showCustomConfig, setShowCustomConfig] = useState(false);
     const importGuard = React.useRef(false);
 
-    // Get only unresolved mappings for the step-through flow
-    const unresolvedMappings = useMemo(
-        () => getUnresolvedMappings(mappings),
-        [mappings],
+    // Keep the original review order so resolving an item does not skip the next
+    // item, and Previous can revisit an earlier decision.
+    const mappingNames = useMemo(
+        () => getUnresolvedMappings(initialMappings).map((mapping) => mapping.originalName),
+        [initialMappings],
     );
 
-    const currentMapping = unresolvedMappings[currentIndex] ?? null;
+    const currentMapping = mappings.find((mapping) => mapping.originalName === mappingNames[currentIndex]) ?? null;
+
+    usePreventRemove(isImporting, () => {});
+
+    useEffect(() => {
+        if (!currentMapping && !showSummary) {
+            setShowSummary(true);
+        }
+    }, [currentMapping, showSummary]);
+
+    const handleClose = useCallback(() => {
+        if (!importGuard.current) navigation.goBack();
+    }, [navigation]);
 
     // ============================================================
     // Mapping Actions
@@ -106,20 +119,12 @@ export default function ExerciseMappingScreen() {
     }, []);
 
     const advanceOrShowSummary = useCallback(() => {
-        const stillUnresolved = getUnresolvedMappings(
-            mappings.map((m) =>
-                m.originalName === currentMapping?.originalName
-                    ? { ...m, resolvedExerciseId: m.suggestedMatch?.id ?? null }
-                    : m,
-            ),
-        );
-
-        if (currentIndex + 1 >= unresolvedMappings.length || stillUnresolved.length <= 1) {
+        if (currentIndex + 1 >= mappingNames.length) {
             setShowSummary(true);
         } else {
-            setCurrentIndex((prev) => Math.min(prev + 1, unresolvedMappings.length - 1));
+            setCurrentIndex(currentIndex + 1);
         }
-    }, [currentIndex, unresolvedMappings.length, mappings, currentMapping]);
+    }, [currentIndex, mappingNames.length]);
 
     const handleAcceptSuggestion = useCallback((matchId: string) => {
         if (!currentMapping) return;
@@ -214,7 +219,7 @@ export default function ExerciseMappingScreen() {
                 warnings={warnings}
                 isImporting={isImporting}
                 onImport={handleExecuteImport}
-                onClose={() => navigation.goBack()}
+                onClose={handleClose}
                 bottomInset={insets.bottom}
             />
         );
@@ -224,14 +229,6 @@ export default function ExerciseMappingScreen() {
     // Mapping Step-Through View
     // ============================================================
 
-    // BH-063: Transition to summary when all mappings are resolved.
-    // Must be in useEffect — setState during render violates React's contract.
-    useEffect(() => {
-        if (!currentMapping && !showSummary) {
-            setShowSummary(true);
-        }
-    }, [currentMapping, showSummary]);
-
     if (!currentMapping) {
         return null;
     }
@@ -239,12 +236,12 @@ export default function ExerciseMappingScreen() {
     return (
         <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity onPress={handleClose} style={styles.backButton} accessibilityLabel="Close exercise mapping">
                     <MaterialIcons name="close" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Map Exercises</Text>
                 <Text style={styles.counter}>
-                    {currentIndex + 1} of {unresolvedMappings.length}
+                    {currentIndex + 1} of {mappingNames.length}
                 </Text>
             </View>
 
@@ -365,7 +362,7 @@ export default function ExerciseMappingScreen() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -400,8 +397,8 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: colors.border,
     },
     suggestionCardBest: {
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        borderColor: 'rgba(34, 197, 94, 0.3)',
+        backgroundColor: withAlpha(colors.accent.success, 0.1),
+        borderColor: withAlpha(colors.accent.success, 0.3),
     },
     suggestionInfo: { flex: 1, marginLeft: spacing.sm },
     suggestionName: { fontSize: typography.size.md, fontWeight: typography.weight.medium, color: colors.text.primary },
@@ -431,5 +428,5 @@ const styles = StyleSheet.create({
         backgroundColor: colors.accent.primary,
         paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: borderRadius.md,
     },
-    confirmAllText: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: '#fff' },
-});
+    confirmAllText: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: colors.text.onAccent },
+}));

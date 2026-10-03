@@ -15,16 +15,17 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     ScrollView,
     Alert,
     TouchableOpacity,
     Linking,
+    Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, useThemeColors, spacing, borderRadius, typography } from '../theme';
+import ThemePicker from '../components/theme/ThemePicker';
 import { getSettings, updateSettings } from '../services/preferencesService';
 import type { UserSettings } from '../models/preferences';
 import { clearAllData, generateMockData, exportAllData, importAllData } from '../services';
@@ -34,6 +35,8 @@ import ExportBottomSheet from '../components/settings/ExportBottomSheet';
 import ImportBottomSheet from '../components/settings/ImportBottomSheet';
 import CloudBackupSection from '../components/settings/CloudBackupSection';
 import { invalidateWeightUnitCache } from '../hooks/useWeightUnit';
+import { openRestTimerAlarmSettings } from '../services/notificationService';
+import { useTutorial } from '../components/tutorial/TutorialProvider';
 
 // ============================================================
 // Segment options
@@ -59,11 +62,6 @@ const CALENDAR_START_OPTIONS = [
     { key: 'monday', label: 'Mon' },
 ];
 
-const THEME_OPTIONS = [
-    { key: 'dark', label: 'Dark' },
-    { key: 'light', label: 'Light' },
-];
-
 const TRAINING_PHASE_OPTIONS = [
     { key: 'bulk', label: 'Bulk' },
     { key: 'cut', label: 'Cut' },
@@ -76,6 +74,9 @@ const TRAINING_PHASE_OPTIONS = [
 // ============================================================
 
 export default function SettingsScreen() {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    const tutorial = useTutorial();
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [showExportSheet, setShowExportSheet] = useState(false);
@@ -214,18 +215,6 @@ export default function SettingsScreen() {
     };
 
     // ============================================================
-    // Theme guard — light theme is a placeholder
-    // ============================================================
-
-    const handleThemeSelect = (key: string) => {
-        if (key === 'light') {
-            Alert.alert('Coming Soon', 'Light theme coming soon! We\'re working on it.');
-            return;
-        }
-        handleUpdate({ theme: key });
-    };
-
-    // ============================================================
     // Render
     // ============================================================
 
@@ -244,13 +233,7 @@ export default function SettingsScreen() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>GENERAL</Text>
 
-                    <SettingSegmentedRow
-                        icon="brightness-6"
-                        label="Theme Mode"
-                        options={THEME_OPTIONS}
-                        selectedKey={settings.theme}
-                        onSelect={handleThemeSelect}
-                    />
+                    <ThemePicker />
 
                     <SettingSegmentedRow
                         icon="fitness-center"
@@ -321,6 +304,33 @@ export default function SettingsScreen() {
                         onValueChange={(val) => handleUpdate({ showExerciseMedia: val })}
                     />
 
+                    {Platform.OS === 'android' && Number(Platform.Version) >= 31 && (
+                        <SettingNavigationRow
+                            icon="alarm"
+                            label="Rest Timer Alerts"
+                            subtitle="Allow alarms while your screen is off"
+                            onPress={() => Alert.alert(
+                                'Rest Timer Alerts',
+                                'For timely rest alerts, open Alarms & reminders, select IronJot, and allow alarms. Also allow notifications and sound in the app’s Android settings.',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    {
+                                        text: 'App Settings',
+                                        onPress: () => Linking.openSettings().catch(() => {
+                                            Alert.alert('Open Android Settings', 'Open Settings → Apps → IronJot → Notifications.');
+                                        }),
+                                    },
+                                    {
+                                        text: 'Alarms & Reminders',
+                                        onPress: () => openRestTimerAlarmSettings().catch(() => {
+                                            Alert.alert('Open Android Settings', 'Open Settings → Apps → Special access → Alarms and reminders, then choose IronJot.');
+                                        }),
+                                    },
+                                ],
+                            )}
+                        />
+                    )}
+
                     <SettingToggleRow
                         icon="description"
                         label="Show Exercise Instructions"
@@ -355,6 +365,12 @@ export default function SettingsScreen() {
                     <Text style={styles.sectionTitle}>SUPPORT</Text>
 
                     <SettingNavigationRow
+                        icon="help-outline"
+                        label="Quick start tutorial"
+                        onPress={tutorial.openGuide}
+                    />
+
+                    <SettingNavigationRow
                         icon="star-outline"
                         iconColor={colors.accent.warning}
                         label="Rate App"
@@ -369,7 +385,7 @@ export default function SettingsScreen() {
                         label="Support the Dev"
                         onPress={() => {
                             Alert.alert(
-                                'Thank You! 💜',
+                                'Thank You! 🧡',
                                 'Thank you for your interest in supporting the project! Donation options are coming soon.',
                             );
                         }}
@@ -380,7 +396,7 @@ export default function SettingsScreen() {
                         iconColor={colors.accent.primary}
                         label="Send Feedback"
                         onPress={() => {
-                            Linking.openURL('mailto:feedback@example.com?subject=Workout App Feedback').catch(() => {
+                            Linking.openURL('mailto:feedback@example.com?subject=IronJot%20Feedback').catch(() => {
                                 Alert.alert('Error', 'Could not open email client.');
                             });
                         }}
@@ -420,7 +436,7 @@ export default function SettingsScreen() {
                         onPress={() => {
                             Alert.alert(
                                 'About',
-                                `Workout App v${appVersion}\n\nA free, privacy-first workout tracker.\n\nMade with 💜`,
+                                `IronJot v${appVersion}\n\nA free, privacy-first workout tracker.\n\nMade with 🧡`,
                             );
                         }}
                     />
@@ -492,7 +508,7 @@ export default function SettingsScreen() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -560,4 +576,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         color: colors.text.disabled,
     },
-});
+}));

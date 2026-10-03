@@ -1,0 +1,27 @@
+{
+  "id": "treadmill-run",
+  "name": "Treadmill Running",
+  "file": "treadmill-run.png",
+  "reference": "barbell-curl.png",
+  "pose": "Running stride on a treadmill",
+  "highlight": [
+    "quadriceps",
+    "hamstrings",
+    "calves"
+  ],
+  "accessibilityLabel": "Grey mannequin running on a treadmill, with exposed quadriceps, hamstrings and calf muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: TREADMILL RUNNING, natural mid-stride. Whole modern minimal treadmill with moving belt deck, side rails, two front console supports and unbranded blank dark console. Mannequin centered on belt facing console, torso upright with slight forward lean from ankles, head forward. One foot planted under center of mass on belt with knee gently flexed; other foot lifted behind with bent knee. Arms swing naturally reciprocal to legs, elbows90deg, hands relaxed, not holding handrails. SIDE-front three-quarter view from treadmill rear quarter so belt stance/airborne shoe, complete machine and figure visible. Highlight visible QUADRICEPS above kneecaps, HAMSTRINGS backs thighs below shorts and CALVES only, no glutes through clothing. Keep ordinary moderate running stride, no huge leap or sprint exaggeration. No text or numbers.",
+  "revisions": [],
+  "output": {
+    "bytes": 1510252,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "fbd345b5c621d9edef8915e17456ca80d017cec8181aab020de565ff0b4538ee"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Complete treadmill with figure facing console; one foot on belt, other lifted behind with bent knee, reciprocal arm swing and upright torso. Exposed front/back thigh and calves highlighted, no overlays through shorts; full machine and figure visible.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: full treadmill and runner visible, one foot contacts the belt and opposite heel trails in flight, opposing bent-arm swing. Representative stride phase with lower-limb targets."
+  }
+}

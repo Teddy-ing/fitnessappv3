@@ -8,16 +8,10 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Modal,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import type { Goal } from '../../models';
 
 // ============================================================
@@ -41,6 +35,8 @@ export default function GoalContextMenu({
     onAction,
     onClose,
 }: GoalContextMenuProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     if (!goal) return null;
     const isActive = goal.status === 'active';
 
@@ -108,7 +104,7 @@ export default function GoalContextMenu({
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     modalOverlay: {
         flex: 1,
         backgroundColor: colors.overlay,
@@ -137,4 +133,4 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         marginLeft: spacing.sm,
     },
-});
+}));

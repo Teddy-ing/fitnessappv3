@@ -1,0 +1,26 @@
+{
+  "id": "hip-flexor-stretch",
+  "name": "Hip Flexor Stretch",
+  "pose": "Half-kneeling hip flexor stretch with upright trunk",
+  "highlight": [],
+  "accessibilityLabel": "Half-kneeling hip flexor stretch with the back knee supported on a mat and front foot planted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: HALF-KNEELING HIP FLEXOR STRETCH. Plain thin charcoal yoga mat. One knee and shin rest on mat behind pelvis, rear toes relaxed; other foot flat well in front with knee bent near right angle directly over ankle. Torso upright, pelvis gently tucked under rather than lower back arched, small forward shift from hips; front knee not exaggerated beyond foot. One hand rests on front thigh, other on hip to cue upright posture, neutral relaxed neck. Side-front three-quarter view shows rear knee support, front sole and knee/ankle alignment. Hip flexors are deep and their surface landmarks covered by shorts in this pose. Therefore deliberately NO coral overlay on this image: all exposed skin grey and clothing charcoal; do not paint anatomy on top of shorts or substitute quadriceps. Same reference model, material and studio style. Single comfortable stretch position only.",
+  "file": "hip-flexor-stretch.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "techniqueSources": [
+    "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848"
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Rear knee and shin supported on mat; front sole down and knee above ankle, hand on hip and other on thigh, upright trunk. Deliberately no coral because targeted hip-flexor anatomy is deep/covered. Full body and mat visible.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: half-kneeling lunge with rear knee supported and front foot planted, upright trunk. No coral because the intended primary target is deep or covered by shorts."
+  },
+  "output": {
+    "bytes": 1471381,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "ceb0652075fc4ebea9057a3266a6933b59a7fd1e9b7bf0461693767125ca7aae"
+  }
+}

@@ -6,9 +6,9 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Template } from '../services/templateService';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface TemplateCardProps {
     template: Template;
@@ -17,6 +17,7 @@ interface TemplateCardProps {
 }
 
 export default function TemplateCard({ template, onPress, onDelete }: TemplateCardProps) {
+    const styles = useStyles();
     // Get muscle groups from exercises
     const muscleGroups = new Set<string>();
     template.exercises.forEach(ex => {
@@ -95,7 +96,7 @@ export default function TemplateCard({ template, onPress, onDelete }: TemplateCa
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     card: {
         backgroundColor: colors.background.secondary,
         borderRadius: borderRadius.lg,
@@ -160,4 +161,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         fontSize: typography.size.xs,
     },
-});
+}));

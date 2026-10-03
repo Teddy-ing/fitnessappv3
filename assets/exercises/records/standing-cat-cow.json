@@ -1,0 +1,25 @@
+{
+  "id": "standing-cat-cow",
+  "name": "Standing Cat-Cow",
+  "pose": "Standing cat-cow shown in rounded cat phase with hands on thighs",
+  "highlight": [
+    "visible back musculature"
+  ],
+  "accessibilityLabel": "Standing cat-cow shown in the rounded-back phase, with knees softly bent and hands resting on the thighs.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: STANDING CAT-COW mobility, one representative CAT rounded-back phase. Feet hipwidth, whole soles flat, knees softly bent. Hinge forward modestly, both open hands braced on own thighs just above knees, elbows almost straight. Gently round thoracic/mid-back upward, pelvis slightly tucked, chin gently toward chest and gaze down, comfortable natural spinal flexion not extreme hump. It must clearly remain STANDING, not kneeling/all-fours. Rear-side three-quarter camera makes rounded spine contour and both hands/thigh contact visible. Coral narrow bilateral back-muscle regions either side of thoracic/lumbar spine, never bone or joints; chest/abdomen/arms/legs grey. Highlights indicate mobilized region, not measured activation. Full figure, no equipment or multiple phases.",
+  "file": "standing-cat-cow.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Standing with softly bent knees, planted feet, palms on thighs, rounded thoracic contour and chin gently down. Far hand naturally obscured. Bilateral back regions highlighted while spine and limbs remain grey. Single cat phase labelled explicitly.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: grounded standing position with soft knees, hands on thighs, rounded upper back and lowered head. Single rounded phase; visible back target overlay."
+  },
+  "output": {
+    "bytes": 1372122,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "181b577c901cabee5cd15a2aafa549a67cce1d8c0dfeba9b1e481cd53f55a730"
+  }
+}

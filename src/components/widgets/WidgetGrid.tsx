@@ -13,12 +13,12 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { spacing, typography, borderRadius, createThemedStyles, useThemeColors } from '../../theme';
 import { WidgetConfig, WeightTrendIntent, SparklinePoint } from '../../models/widget';
 import { Goal } from '../../models/goal';
 import { MuscleDistributionPoint, FatigueRatioResult, ExerciseTimeSeriesPoint } from '../../models/analytics';
@@ -142,6 +142,8 @@ async function fetchWidgetData(widgets: WidgetConfig[]): Promise<WidgetData> {
 // ============================================================
 
 export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
     const [data, setData] = useState<WidgetData>({
         streak: 0,
@@ -234,7 +236,7 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
                     );
             }
         },
-        [data],
+        [data, styles],
     );
 
     // Get tap handler for a widget type — deep-link to specific content
@@ -332,7 +334,7 @@ export default function WidgetGrid({ widgets, onEditPress }: WidgetGridProps) {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     section: {
         marginBottom: spacing.md,
     },
@@ -397,4 +399,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         color: colors.text.disabled,
     },
-});
+}));

@@ -7,10 +7,10 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { ExerciseTimeSeriesPoint } from '../../models/analytics';
 import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 
@@ -27,6 +27,8 @@ export default function PinnedExerciseWidget({
     data,
     unit = getWeightUnitSync(),
 }: PinnedExerciseWidgetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const chartData = useMemo(() => {
         return data.map((p) => ({ value: p.value }));
     }, [data]);
@@ -129,7 +131,7 @@ export default function PinnedExerciseWidget({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
     },
@@ -203,4 +205,4 @@ const styles = StyleSheet.create({
         color: colors.text.disabled,
         marginTop: spacing.xs,
     },
-});
+}));

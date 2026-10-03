@@ -1,0 +1,31 @@
+{
+  "id": "high-knees",
+  "name": "High Knees",
+  "pose": "One knee lifted to hip height with opposite arm forward",
+  "highlight": [
+    "abdominal wall"
+  ],
+  "accessibilityLabel": "High knees shown with one thigh lifted near horizontal and the opposite arm forward.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: HIGH KNEES, single marching/running-in-place knee drive. Upright torso, neutral neck; one thigh lifted approximately horizontal to hip height with knee flexed 90 degrees, same foot under knee; opposite support leg under body with knee softly unlocked and forefoot on ground, heel slightly elevated. Opposite arm forward with elbow bent 90 degrees, raised-knee-side arm back. Natural relaxed hands. Front-side three-quarter view with separated limbs. Coral ONLY on exposed abdominal wall/obliques. Primary hip flexors are mostly deep or covered by shorts, so do NOT invent surface highlights through clothing or color quads red. All thighs and arms grey, charcoal shorts opaque. No equipment. A still represents one knee drive only.",
+  "file": "high-knees.png",
+  "reference": "barbell-curl.png",
+  "revisions": [
+    {
+      "reason": "Initial arm swing matched raised knee side",
+      "prompt": "Use case: precise-object-edit. Image 1 is edit target HIGH KNEES; image 2 canonical grey mannequin reference. Correct arm swing only: currently the raised arm and raised knee are on same body side. Swap the ARM POSITIONS so the arm on the LEFT SIDE OF THE PICTURE is the one bent forward with fist at lower chest height, and the arm on RIGHT SIDE OF THE PICTURE is moved back with hand beside/behind hip. Keep raised leg on RIGHT side of picture and support leg on left unchanged. Thus opposite arm and raised knee are forward. Maintain natural shoulder, elbow and wrist anatomy. Preserve exact character, face, shorts, shoes, coral abdominal overlay only, pose of trunk/legs, framing, lighting, background. No other changes.",
+      "result": "Changed arm swing so opposite arm is forward"
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Raised thigh near horizontal, opposite arm forward after correction, support forefoot grounded and trunk upright. Coral only exposed abdominal wall; covered/deep hip flexors not painted onto shorts. Far hand is naturally partly occluded.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed corrected image: raised knee paired with opposite forward arm, upright torso and supporting forefoot; full limbs coherent."
+  },
+  "output": {
+    "bytes": 1382934,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "99f02afbc48e51adf82bf0ab7a7f62f70212088a8f76e8727e9d7ae7e6f36007"
+  }
+}

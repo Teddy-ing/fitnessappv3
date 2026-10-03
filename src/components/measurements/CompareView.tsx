@@ -6,17 +6,9 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    Modal,
-    Dimensions,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Image, Modal, Dimensions } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { getPhotoUri } from '../../services';
 import type { ProgressPhoto } from '../../models';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
@@ -37,12 +29,14 @@ interface CompareViewProps {
 }
 
 export default function CompareView({ photos, onClose }: CompareViewProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const weightUnit = useWeightUnit();
     const [left, right] = photos;
     const halfWidth = SCREEN_WIDTH / 2 - 1;
 
     return (
-        <Modal visible animationType="slide" presentationStyle="fullScreen">
+        <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
             <View style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -119,7 +113,7 @@ export default function CompareView({ photos, onClose }: CompareViewProps) {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: '#000',
@@ -184,4 +178,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.lg,
         fontWeight: typography.weight.bold as '700',
     },
-});
+}));

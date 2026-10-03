@@ -9,8 +9,8 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { View, Text } from 'react-native';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import { WorkoutExercise } from '../../models/workout';
 import { PreviousSetData } from '../../models/workout';
 import type { ExerciseSuggestion } from '../../models/smartSuggestions';
@@ -78,6 +78,7 @@ export default function SupersetGroup({
     showProgressionNudges,
     prefillPrevious,
 }: SupersetGroupProps) {
+    const styles = useStyles();
     return (
         <View style={styles.container}>
             <View style={styles.line} />
@@ -135,7 +136,7 @@ export default function SupersetGroup({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         marginBottom: spacing.md,
         position: 'relative',
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     badgeText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.xs,
         fontWeight: typography.weight.bold,
         letterSpacing: 1,
@@ -167,4 +168,4 @@ const styles = StyleSheet.create({
     cards: {
         paddingLeft: spacing.sm,
     },
-});
+}));

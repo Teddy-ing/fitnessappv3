@@ -1,0 +1,25 @@
+{
+  "id": "shrug-dumbbell",
+  "name": "Dumbbell Shrug",
+  "pose": "Standing dumbbell shrug with slightly elevated shoulders and straight arms",
+  "highlight": [
+    "upper trapezius"
+  ],
+  "accessibilityLabel": "Standing dumbbell shrug with weights at sides, slightly raised shoulders and upper traps highlighted.",
+  "file": "shrug-dumbbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: DUMBBELL SHRUG top position. Stand upright feet hip width, knees soft, head neutral. Two matching graphite dumbbells in CLOSED NEUTRAL hands at outer sides of thighs. Arms straight down no elbow curl. Both shoulders raised toward ears, no head tilt, no shoulder roll. Front-side three-quarter camera entire body/two weights. Coral upper trapezius from base of neck to inner shoulders only. Deltoid caps, arms and chest grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Standing with straight elbows, two neutral dumbbell grips and slight shoulder elevation, neutral head. Upper trap overlay only. A still does not establish shrug motion.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: two dumbbells held neutrally beside thighs with straight arms, modest shoulder elevation and upright stance."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1379321,
+    "sha256": "b174cc470077bc7a6ba4c70824441dc43f6b3f76476113c039bdd284deca4193"
+  }
+}

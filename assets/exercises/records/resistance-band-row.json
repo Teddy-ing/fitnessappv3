@@ -1,0 +1,37 @@
+{
+  "id": "resistance-band-row",
+  "name": "Seated Resistance Band Row",
+  "pose": "Seated band row with band around feet and hands pulled toward waist",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back"
+  ],
+  "accessibilityLabel": "Seated resistance band row with softly bent knees, band looped around both feet and hands pulled toward the waist.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: SEATED RESISTANCE BAND ROW, finish position. Sit directly on floor with both legs extended in front, knees slightly bent, heels resting floor. Upright neutral torso, no backward lean. ONE continuous graphite elastic band loops securely around BOTH shoe midfoot soles together, ends extend taut separately to each hand beside lower ribs/waist. Both closed hands grip an end, palms inward, wrists straight, elbows bent90 degrees and tucked beside ribs pointing backward. Band must visibly wrap across shoe soles, coherent tension lines with no external anchor or floating attachments. Rear-side three-quarter camera seeing both shoe band contact and working back. Coral on visible lats/mid-back only; shoulders/arms/abdomen grey. Whole figure and band visible.",
+  "file": "resistance-band-row.png",
+  "reference": "barbell-curl.png",
+  "revisions": [
+    {
+      "reason": "Initial band crossed shoe tops rather than soles",
+      "prompt": "Use case: precise-object-edit / scientific-educational.\nInput1 edit target seated band row; input2 canonical identity.\nCorrect only BAND ROUTING and grip separation. Band must be securely LOOPED AROUND THE SOLES of both shoes at midfoot, with its central bridge OUTSIDE and beyond the soles, NOT stretched across tops/laces. The two tension strands run from left/right SIDE EDGES of the feet back toward the corresponding left/right hands. Show clear turnaround at each outer sole edge, attached by continuous band across underside of soles, not attached to upper shoe fabric. Feet held dorsiflexed so band won't slip. Keep hands distinctly apart beside waist, each grips its own end, elbows pulled back. Preserve seated pose, neutral upright torso, soft knees, foot positions if possible, same anatomy/highlights/style/backdrop/fullframe. No new anchor.",
+      "result": "Rejected: incorrect routing persisted."
+    },
+    {
+      "reason": "Fresh front-side camera so outsole wrap is explicit",
+      "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: SEATED RESISTANCE BAND ROW. One figure seated on floor, upright neutral back, legs forward with knees softly bent. Camera FRONT-SIDE THREE-QUARTER from just beyond the feet so the OUTSOLES of both dorsiflexed shoes are CLEARLY VISIBLE.\nOne continuous flat charcoal resistance band has its middle draped across OUTSOLES of both feet at the arch, like a sling resisting feet. There is NO band crossing laces or tops of feet. Clearly show a band strip across the visible outward-facing shoe soles. Two ends run BACK from outer edges of shoes toward corresponding hands at the waist. Hands closed holding an end each, shoulder width apart, elbows bent and pulled back near ribs. Both heels on floor.\nCoral only visible lateral lat regions; if mostly occluded keep them subtle. Arms/chest/abdomen grey. Exactly one figure, two hands/two shoes and coherent single band. Entire figure/band framed.",
+      "result": "Selected: coherent wrap around both soles."
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Fresh front-side view clearly shows continuous band across both shoe OUTSOLES with two taut strands to separated hands. Knees slightly bent, upright torso, elbows pulled back and hands at waist. Lat regions coral; arms grey.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed corrected image: continuous band across both shoe outsoles and held at torso with bent elbows; upright seated position and slightly bent knees."
+  },
+  "output": {
+    "bytes": 1607389,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "26f2e19687f56b9c9bf4a967f1b971a3fb404e8f59e94dc9ac24ce6cb815ee93"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "bodyweight-squat",
+  "name": "Bodyweight Squat",
+  "pose": "Bodyweight squat near parallel with arms forward",
+  "highlight": [
+    "visible quadriceps"
+  ],
+  "accessibilityLabel": "Bodyweight squat near parallel, with feet planted and arms extended forward for balance.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: BODYWEIGHT SQUAT, near-parallel bottom. No weights/equipment. Feet shoulderwidth, toes modestly outward, hips lowered between and behind knees, thighs nearhorizontal. Whole soles flat, knees track toes. Neutral spine/neck with natural forward trunk inclination, arms extended forward at shoulder height for balance with relaxed open hands. Side-biased front three-quarter camera clearly shows squat depth and feet contact. Coral only quadriceps above kneecaps; glutes covered by shorts and all other anatomy grey.",
+  "file": "bodyweight-squat.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Near-parallel squat with both whole soles planted, knees over toe direction, arms forward, complete silhouette. Coral confined to quads, kneecaps grey.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: hips/knees flexed near parallel with arms forward for balance, planted feet and knees following toes."
+  },
+  "output": {
+    "bytes": 1382128,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "70c211f3fcc18ac7f6634c461119050c5355db7a546b5235339eac5c09e5997b"
+  }
+}

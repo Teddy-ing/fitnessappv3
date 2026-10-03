@@ -11,15 +11,10 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, BackHandler } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 import {
     getSparklineDataBatch,
@@ -44,11 +39,23 @@ interface TrendsTabProps {
 }
 
 export default function TrendsTab({ autoSelectTypeId }: TrendsTabProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    const isFocused = useIsFocused();
     const [sparklineRows, setSparklineRows] = useState<SparklineRowData[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedType, setSelectedType] = useState<MeasurementType | null>(null);
     const [unitSystem, setUnitSystem] = useState(getWeightUnitSync());
     const [bwIntent, setBwIntent] = useState<WeightTrendIntent>('neutral');
+
+    useEffect(() => {
+        if (!isFocused || !selectedType) return;
+        const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+            setSelectedType(null);
+            return true;
+        });
+        return () => subscription.remove();
+    }, [isFocused, selectedType]);
 
     useEffect(() => {
         loadSparklines();
@@ -152,7 +159,7 @@ export default function TrendsTab({ autoSelectTypeId }: TrendsTabProps) {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     loading: {
         flex: 1,
         justifyContent: 'center',
@@ -195,4 +202,4 @@ const styles = StyleSheet.create({
         marginBottom: spacing.sm,
         textTransform: 'uppercase',
     },
-});
+}));

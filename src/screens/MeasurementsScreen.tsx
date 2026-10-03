@@ -19,14 +19,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
-    StyleSheet,
     Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 
-import { colors } from '../theme';
+import { createThemedStyles } from '../theme';
 import { WorkoutKeyboard } from '../components';
 import {
     getMeasurementTypes,
@@ -64,6 +63,7 @@ const TABS: { id: TabId; label: string }[] = [
 // ============================================================
 
 export default function MeasurementsScreen() {
+    const styles = useStyles();
     const route = useRoute<RouteProp<ProfileStackParamList, 'Measurements'>>();
     const [activeTab, setActiveTab] = useState<TabId>(
         route.params?.initialTab ?? 'track',
@@ -316,7 +316,7 @@ export default function MeasurementsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -324,4 +324,4 @@ const styles = StyleSheet.create({
     tabContent: {
         flex: 1,
     },
-});
+}));

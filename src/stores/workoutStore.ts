@@ -33,6 +33,7 @@ import { getSettings } from '../services/preferencesService';
 import { type PreviousSetData } from '../models/workout';
 import type { ExerciseSuggestion } from '../models/smartSuggestions';
 import { useRestTimerStore } from './restTimerStore';
+import { getWorkoutSummary } from '../utils/workoutSummary';
 
 /** Signal emitted when a set is completed, watched by RestTimer */
 export interface CompletedSetSignal {
@@ -92,13 +93,14 @@ interface WorkoutState {
     originalDuration: number | null;
     originalCompletedAt: Date | null;
     originalStartedAt: Date | null;
+    isFinishing: boolean;
 
 
     // Actions - Workout lifecycle
     startWorkout: (name?: string) => void;
     startFromTemplate: (workout: Workout) => void;
     loadWorkoutForEditing: (workout: Workout) => void;
-    finishWorkout: () => Promise<Workout | null>;
+    finishWorkout: (persist: (workout: Workout, isEditMode: boolean) => Promise<void>) => Promise<Workout | null>;
     discardWorkout: () => void;
     restoreWorkout: () => Promise<void>;
 
@@ -135,6 +137,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     originalDuration: null,
     originalCompletedAt: null,
     originalStartedAt: null,
+    isFinishing: false,
 
 
     // ========================================
@@ -211,61 +214,54 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         }
     },
 
-    finishWorkout: async () => {
-        const { activeWorkout } = get();
-        if (!activeWorkout) return null;
+    finishWorkout: async (persist) => {
+        const { activeWorkout, isFinishing, isEditMode, originalDuration, originalCompletedAt, originalStartedAt } = get();
+        if (!activeWorkout || isFinishing) return null;
+        set({ isFinishing: true });
 
         const now = new Date();
-        const duration = Math.floor((now.getTime() - activeWorkout.startedAt.getTime()) / 1000);
-
-        // Calculate totals
-        const allExercises = activeWorkout.main.exercises;
-        let totalVolume = 0;
-        let totalSets = 0;
-        const muscleGroups = new Set<string>();
-
-        allExercises.forEach(ex => {
-            ex.sets.forEach(s => {
-                if (s.status === 'completed' && s.weight && s.reps) {
-                    totalVolume += s.weight * s.reps;
-                    totalSets++;
-                }
-            });
-            ex.exercise.muscleGroups.forEach(mg => {
-                if (mg.isPrimary) muscleGroups.add(mg.muscle);
-            });
-        });
+        const duration = Math.max(0, Math.floor((now.getTime() - activeWorkout.startedAt.getTime()) / 1000));
+        const summary = getWorkoutSummary(activeWorkout);
 
         const completedWorkout: Workout = {
             ...activeWorkout,
             status: 'completed',
-            completedAt: now,
-            totalDuration: duration,
-            totalVolume,
-            totalSets,
-            muscleGroupsWorked: Array.from(muscleGroups),
+            startedAt: isEditMode ? originalStartedAt ?? activeWorkout.startedAt : activeWorkout.startedAt,
+            completedAt: isEditMode ? originalCompletedAt ?? now : now,
+            totalDuration: isEditMode ? originalDuration ?? duration : duration,
+            totalVolume: summary.totalVolume,
+            totalSets: summary.completedSets,
+            muscleGroupsWorked: summary.muscleGroups,
             updatedAt: now,
         };
 
-        set({
-            activeWorkout: null,
-            lastCompletedSet: null,
-            previousSets: new Map(),
-            exerciseSuggestions: new Map(),
-            collapsedExercises: new Set(),
-            isEditMode: false,
-            originalDuration: null,
-            originalCompletedAt: null,
-            originalStartedAt: null,
-        });
-
-        // Clear persisted state (fire-and-forget, non-critical)
-        clearPersistedWorkout();
-
-        return completedWorkout;
+        try {
+            // Keep the active workout and recovery file until the database confirms success.
+            await persist(completedWorkout, isEditMode);
+            if (get().activeWorkout?.id === activeWorkout.id) {
+                useRestTimerStore.getState().stopRestTimer();
+                set({
+                    activeWorkout: null,
+                    lastCompletedSet: null,
+                    previousSets: new Map(),
+                    exerciseSuggestions: new Map(),
+                    collapsedExercises: new Set(),
+                    isEditMode: false,
+                    originalDuration: null,
+                    originalCompletedAt: null,
+                    originalStartedAt: null,
+                });
+                clearPersistedWorkout();
+            }
+            return completedWorkout;
+        } finally {
+            set({ isFinishing: false });
+        }
     },
 
     discardWorkout: () => {
+        if (get().isFinishing) return;
+        useRestTimerStore.getState().stopRestTimer();
         set({
             activeWorkout: null,
             lastCompletedSet: null,

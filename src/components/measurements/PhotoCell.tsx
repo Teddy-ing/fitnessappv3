@@ -16,7 +16,7 @@ import {
     Dimensions,
 } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import { getPhotoUri } from '../../services';
 import type { ProgressPhoto } from '../../models';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
@@ -47,6 +47,7 @@ interface PhotoCellProps {
 const PhotoCell = React.memo(function PhotoCell({
     photo, index, onGridPress, onDeletePress, isCompareMode, isSelected,
 }: PhotoCellProps) {
+    const styles = useStyles();
     const weightUnit = useWeightUnit();
     const uri = getPhotoUri(photo.filePath);
     const dateLabel = new Date(photo.recordedAt + 'T12:00:00').toLocaleDateString('en-US', {
@@ -96,7 +97,7 @@ export default PhotoCell;
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         width: CELL_SIZE,
         height: CELL_SIZE,
@@ -156,8 +157,8 @@ const styles = StyleSheet.create({
         borderColor: colors.accent.primary,
     },
     checkmark: {
-        color: '#fff',
+        color: colors.text.onAccent,
         fontSize: 14,
         fontWeight: typography.weight.bold as '700',
     },
-});
+}));

@@ -6,8 +6,8 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import { colors, spacing, borderRadius } from '../../theme';
+import { TouchableOpacity, ViewStyle } from 'react-native';
+import { spacing, borderRadius, createThemedStyles } from '../../theme';
 
 interface WidgetCardProps {
     size: 'square' | 'rectangle';
@@ -17,6 +17,7 @@ interface WidgetCardProps {
 }
 
 export default function WidgetCard({ size, onPress, children, style }: WidgetCardProps) {
+    const styles = useStyles();
     return (
         <TouchableOpacity
             style={[
@@ -33,7 +34,7 @@ export default function WidgetCard({ size, onPress, children, style }: WidgetCar
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     card: {
         backgroundColor: colors.background.secondary,
         borderRadius: borderRadius.lg,
@@ -48,4 +49,4 @@ const styles = StyleSheet.create({
     rectangle: {
         width: '100%',
     },
-});
+}));

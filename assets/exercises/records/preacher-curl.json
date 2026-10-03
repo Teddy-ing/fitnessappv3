@@ -1,0 +1,30 @@
+{
+  "id": "preacher-curl",
+  "name": "Preacher Curl",
+  "pose": "Seated EZ-bar preacher curl with upper arms resting on angled pad",
+  "highlight": [
+    "biceps"
+  ],
+  "accessibilityLabel": "Seated preacher curl with an EZ-bar, supported upper arms and biceps highlighted.",
+  "file": "preacher-curl.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: EZ-BAR PREACHER CURL midway upward. Mannequin seated behind preacher bench, armpits near upper edge of angled pad, BOTH upper arms rest flush on FRONT sloping pad; elbows remain supported. Hands closed semi-supinated on angled inner grips of ONE coherent zigzag EZ-bar, forearms raised from pad about45degrees, elbows bent roughly90degrees. Matching small plates/collars, wrists neutral. Both feet planted, torso near upright leaning slightly into support. Front-side three-quarter view shows pad, upper arm contact and two grips. Coral biceps only. Full bench/figure/bar visible.",
+  "revisions": [
+    {
+      "reason": "Upper arms insufficiently supported on preacher pad",
+      "prompt": "Use case: precise-object-edit. Image1 edit target has only elbows touching preacher pad; fix proper PREACHER arm support. Raise top edge of angled arm pad to armpit level; lean torso forward into pad and angle BOTH UPPER ARMS forward-down flush along pad, so entire back of upper arm from near armpit through elbow is supported. Elbows point forward lower on pad, forearms curl upward from elbows, hands still closed semi-supinated on same EZ-bar. Move camera slightly to more SIDE three-quarter view to make long upper-arm contact with pad unmistakable. Keep same mannequin identity from image2, normal limb proportions, stable seated butt/feet, same EZ-bar, grey/coral biceps only, graphite bench, light background and full framing."
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Revised bench height and torso lean to support upper arms against angled pad through elbows. Seated feet planted, closed semi-supinated EZ-bar grips, forearms raised from pad. Full bench/bar visible; biceps-only coral.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: upper arms supported on sloping pad, feet grounded and seated base stable; closed supinated grips on EZ bar with clear forearm clearance. Biceps target overlay."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1592024,
+    "sha256": "5ee45e6769f7446fc6c6f2d551c1a7aba48661d80bb8755e4a49c41cbf439df0"
+  }
+}

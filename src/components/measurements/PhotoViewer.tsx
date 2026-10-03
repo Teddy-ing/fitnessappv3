@@ -6,19 +6,9 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    FlatList,
-    Modal,
-    Alert,
-    Dimensions,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Image, FlatList, Modal, Alert, Dimensions } from 'react-native';
 
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles } from '../../theme';
 import { getPhotoUri } from '../../services';
 import type { ProgressPhoto } from '../../models';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
@@ -42,6 +32,7 @@ interface PhotoViewerProps {
 }
 
 export default function PhotoViewer({ visible, photos, initialIndex, onClose, onDelete }: PhotoViewerProps) {
+    const styles = useStyles();
     const weightUnit = useWeightUnit();
     const flatListRef = useRef<FlatList>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -88,7 +79,7 @@ export default function PhotoViewer({ visible, photos, initialIndex, onClose, on
     };
 
     return (
-        <Modal visible={visible} animationType="fade" presentationStyle="fullScreen">
+        <Modal visible={visible} animationType="fade" presentationStyle="fullScreen" onRequestClose={onClose}>
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -166,7 +157,7 @@ export default function PhotoViewer({ visible, photos, initialIndex, onClose, on
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: '#000',
@@ -225,4 +216,4 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.md,
         fontSize: typography.size.sm,
     },
-});
+}));

@@ -16,6 +16,9 @@ import { getDatabase } from './database';
 import { formatISODate } from '../utils/formatters';
 import { withWriteLock } from '../utils/dbMutex';
 import { batchInsert, normalizeRowValues } from '../utils/batchInsert';
+import { restoreOnboardingCompatibility } from './onboardingService';
+import { restoreTutorialCompatibility } from './tutorialService';
+import { notifySettingsChanged } from './settingsEvents';
 
 // ============================================================
 // Types
@@ -214,8 +217,11 @@ export async function importAllData(): Promise<boolean> {
             );
             await batchInsert(db, table, columns, normalizedRows);
         }
+        await restoreOnboardingCompatibility(db, payload.meta.schemaVersion);
+        await restoreTutorialCompatibility(db, payload.meta.schemaVersion);
     });
 
+    notifySettingsChanged();
     console.log(
         `[DataTransfer] Import complete from ${payload.meta.exportedAt} ` +
         `(schema v${payload.meta.schemaVersion})`,

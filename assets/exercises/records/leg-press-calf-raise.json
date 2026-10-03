@@ -1,0 +1,30 @@
+{
+  "id": "leg-press-calf-raise",
+  "name": "Leg Press Calf Raise",
+  "file": "leg-press-calf-raise.png",
+  "reference": "barbell-curl.png",
+  "pose": "Calf raise on angled leg press with knees extended and forefeet on footplate edge",
+  "highlight": [
+    "calves"
+  ],
+  "accessibilityLabel": "Grey mannequin extending the ankles against a leg press footplate while keeping the knees nearly straight, with calf muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: LEG PRESS CALF RAISE, plantarflexed position. Whole 45degree sled leg press, mannequin reclined on seat/backpad with head supported, hands on seat-side handles. Legs almost straight (knees slightly soft), toes and BALLS of both feet planted securely shoulder-width on LOWER EDGE of broad sled footplate; HEELS EXTEND BELOW EDGE unsupported and lifted away from plate as ankles plantarflex. Feet must not rest wholly on plate. Side-rear three-quarter viewpoint clearly shows sole forefoot contacts, free heel gap, straight legs, both calves. Plate sled rides on two continuous45degree diagonal rails; complete base, modest equal plate weights. Highlight calf muscle bellies only; quads/hamstrings grey. No locked/hyperextended knees.",
+  "revisions": [
+    {
+      "reason": "Initial feet sat too far onto footplate to clearly show calf raise forefoot support",
+      "prompt": "Use case: precise-object-edit. Input1 edit target leg press calf raise. Input2 canonical identity. Fix ONLY foot placement and ankle extension. Slide both forefeet DOWN to the bottom edge of sled footplate so only toes and BALL OF EACH FOOT contact the plate. Heel and rear half of shoe MUST extend clearly BELOW the plate bottom edge into empty space. Show ankles plantarflexed, heels raised away from plate, knees remaining almost straight but soft. A viewer must plainly see the two heel gaps below the plate edge and stable broad forefoot contact on plate, not whole-foot flat placement. Preserve everything else: grey mannequin identity, pose of upper body, seat/back contacts, hands on handles, leg geometry, existing calf-only coral, shorts/shoes, rails/weights/base, lighting/background. Full square composition."
+    }
+  ],
+  "output": {
+    "bytes": 1701178,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "467111c7b5d42e56766328428cc35089ab71f0982120eed865a469f790651828"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "After correction, heels extend below plate edge while forefeet retain contact; legs near straight, back supported and hands on seat handles. Calves only highlighted. Still does not establish full ankle range of motion.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed corrected image: forefeet on low footplate edge with heels unsupported below edge, knees nearly straight and back/pelvis supported."
+  }
+}

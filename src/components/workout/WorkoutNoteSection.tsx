@@ -7,14 +7,8 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-} from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 
 interface WorkoutNoteSectionProps {
     /** Whether the note editor is visible */
@@ -38,6 +32,8 @@ export default function WorkoutNoteSection({
     onCancel,
     onStartEditing,
 }: WorkoutNoteSectionProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     if (isEditing) {
         return (
             <View style={styles.container}>
@@ -80,7 +76,7 @@ export default function WorkoutNoteSection({
     return null;
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         backgroundColor: colors.background.secondary,
         borderRadius: borderRadius.lg,
@@ -125,4 +121,4 @@ const styles = StyleSheet.create({
         padding: spacing.md,
         marginBottom: spacing.md,
     },
-});
+}));

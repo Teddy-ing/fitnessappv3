@@ -1,5 +1,19 @@
 # Workout App Architecture Walkthrough
 
+## Current app as of 2026-10-02
+
+This is the original explanatory walkthrough with a current orientation note. Its simplified interfaces, example code and original local paths describe an older implementation and should not be copied as current APIs. Root [AGENTS.md](../../../AGENTS.md) governs development.
+
+- The current app is **IronJot**, built with React Native/Expo, TypeScript, Zustand and `expo-sqlite`. `src/services/migrations.ts` owns schema upgrades through version 21; shared hydration, formulas, unit conversion, batching and `dbMutex` helpers support data operations.
+- `workoutStore.ts` owns active workout state, while `restTimerStore.ts` owns timer state. `workoutPersistence.ts` writes a debounced active-workout JSON snapshot. Workout completion awaits the persistence callback before clearing active state; the simplified finish-then-save example below is historical.
+- Weight is canonical pounds at rest, converted at input and display boundaries. The old `warmup`/`cooldown` section fields shown below were removed from the Workout model; warmup sets remain part of the workout.
+- The app now includes analytics, calendar, measurements/photos, goals, widgets and import/export. Google Drive is an optional backup service, not a required account or live sync. JSON/Drive backups contain photo metadata but omit image bytes; restoring records alone cannot recover photos on a new device.
+- `App.tsx` composes the startup gate, theme provider, optional onboarding and tutorial. Live colors come from the IronJot or Classic Purple palette through `useThemeColors` / `createThemedStyles`; the static purple example below is obsolete.
+- Workout and Profile have separate navigation stacks for details and Settings. The Assistant tab is retired. The 114 built-in exercise illustrations are bundled for offline display.
+- Database unavailability is an error/recovery concern, not a blanket instruction to silently succeed as the old service example suggests. See [current progress](../current-progress.md) and the [bug register](../qa/bug-hunter-baseline.md) for recorded validation and unresolved recovery/device gaps. No new tests were run for this refresh.
+
+## Historical walkthrough
+
 This walkthrough explains how your fitness app works from the ground up. Even without deep TypeScript/React Native experience, you'll understand the patterns and data flow.
 
 ![alt text](image.png)
@@ -45,14 +59,14 @@ flowchart TB
 
 ## Data Models
 
-Location: [src/models/](file:///c:/Users/teddy/projects/workout-app/src/models)
+Location: [src/models/](../../../src/models)
 
 Models are **TypeScript interfaces** - they define the *shape* of your data without any logic. Think of them as blueprints.
 
 ### Core Models
 
 ````carousel
-### Exercise ([exercise.ts](file:///c:/Users/teddy/projects/workout-app/src/models/exercise.ts))
+### Exercise ([exercise.ts](../../../src/models/exercise.ts))
 
 The definition of an exercise (e.g., "Bench Press", "Squat").
 
@@ -74,7 +88,7 @@ interface Exercise {
 
 **Key insight:** An Exercise is a *definition*, not an actual workout. It's like a recipe, not a meal.
 <!-- slide -->
-### Workout ([workout.ts](file:///c:/Users/teddy/projects/workout-app/src/models/workout.ts))
+### Workout ([workout.ts](../../../src/models/workout.ts))
 
 An actual workout session the user logs.
 
@@ -108,7 +122,7 @@ Workout
         └── WorkoutSet[] (each set within that exercise)
 ```
 <!-- slide -->
-### Template ([template.ts](file:///c:/Users/teddy/projects/workout-app/src/models/template.ts))
+### Template ([template.ts](../../../src/models/template.ts))
 
 A saved workout structure you can reuse.
 
@@ -126,7 +140,7 @@ interface Template {
 
 **Relationship:** You start a workout FROM a template. The template defines which exercises; the workout records what you actually did.
 <!-- slide -->
-### Split ([split.ts](file:///c:/Users/teddy/projects/workout-app/src/models/split.ts))
+### Split ([split.ts](../../../src/models/split.ts))
 
 A training program - a sequence of templates over days.
 
@@ -172,7 +186,7 @@ const set = createSet(0, 'working');
 
 ## Services
 
-Location: [src/services/](file:///c:/Users/teddy/projects/workout-app/src/services)
+Location: [src/services/](../../../src/services)
 
 Services handle **database operations**. They're the only layer that talks to SQLite.
 
@@ -206,15 +220,15 @@ export async function saveWorkout(workout: Workout): Promise<void> {
 
 | Service | Purpose |
 |---------|---------|
-| [database.ts](file:///c:/Users/teddy/projects/workout-app/src/services/database.ts) | DB connection, schema creation |
-| [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts) | Save/load workout history |
-| [templateService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/templateService.ts) | CRUD for templates |
-| [splitService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/splitService.ts) | Split management, current position tracking |
-| [exerciseService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/exerciseService.ts) | Exercise library, favorites, hiding |
+| [database.ts](../../../src/services/database.ts) | DB connection, schema creation |
+| [workoutService.ts](../../../src/services/workoutService.ts) | Save/load workout history |
+| [templateService.ts](../../../src/services/templateService.ts) | CRUD for templates |
+| [splitService.ts](../../../src/services/splitService.ts) | Split management, current position tracking |
+| [exerciseService.ts](../../../src/services/exerciseService.ts) | Exercise library, favorites, hiding |
 
 ### Barrel Export
 
-[services/index.ts](file:///c:/Users/teddy/projects/workout-app/src/services/index.ts) re-exports everything so other code can:
+[services/index.ts](../../../src/services/index.ts) re-exports everything so other code can:
 
 ```typescript
 import { saveWorkout, getTemplates, getActiveSplit } from '../services';
@@ -226,7 +240,7 @@ Instead of importing from 5 different files.
 
 ## State Management
 
-Location: [src/stores/workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts)
+Location: [src/stores/workoutStore.ts](../../../src/stores/workoutStore.ts)
 
 ### What is Zustand?
 
@@ -280,7 +294,7 @@ When you're logging a workout, changes go to the **Store**. When you finish, the
 
 ## Components
 
-Location: [src/components/](file:///c:/Users/teddy/projects/workout-app/src/components)
+Location: [src/components/](../../../src/components)
 
 Components are **reusable UI building blocks**. They're like LEGO pieces.
 
@@ -322,11 +336,11 @@ function ExerciseCard({ workoutExercise, onAddSet, ... }: ExerciseCardProps) {
 
 ## Screens
 
-Location: [src/screens/](file:///c:/Users/teddy/projects/workout-app/src/screens)
+Location: [src/screens/](../../../src/screens)
 
 Screens are **complete pages** that compose components and connect to state.
 
-### WorkoutScreen ([WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx))
+### WorkoutScreen ([WorkoutScreen.tsx](../../../src/screens/WorkoutScreen.tsx))
 
 The main screen. Has two modes:
 
@@ -381,7 +395,7 @@ function WorkoutScreen() {
 
 ## Theme
 
-Location: [src/theme/index.ts](file:///c:/Users/teddy/projects/workout-app/src/theme/index.ts)
+Location: [src/theme/index.ts](../../../src/theme/index.ts)
 
 Centralized design tokens:
 

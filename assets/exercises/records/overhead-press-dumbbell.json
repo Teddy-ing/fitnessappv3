@@ -1,0 +1,25 @@
+{
+  "id": "overhead-press-dumbbell",
+  "name": "Dumbbell Shoulder Press",
+  "pose": "Standing dumbbell shoulder press with elbows near shoulder level",
+  "highlight": [
+    "deltoids"
+  ],
+  "accessibilityLabel": "Standing dumbbell shoulder press with bent elbows at shoulder level and shoulders highlighted.",
+  "file": "overhead-press-dumbbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: STANDING DUMBBELL SHOULDER PRESS halfway upward. Two separate matching graphite dumbbells above shoulder level, elbows bent about70degrees and slightly forward of frontal plane, forearms nearly vertical, dumbbell handles held in closed pronated grips palms forward. Dumbbells above wrists, no crossover. Feet hip width firmly grounded; spine neutral upright, no back arch. Front three-quarter view. Coral deltoids only, arms/chest grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Two separate dumbbells held with forearms near vertical, closed pronated grips and flexed elbows at shoulder level. Upright torso and planted feet. Shoulder-only coral.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: two dumbbells over forearms with elbows near shoulder height, upright planted stance; representative lowered pressing phase."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1371952,
+    "sha256": "51e6caae43be783069cbace8cfcb423a3038e8b2bc1dce18043bed23c95b6876"
+  }
+}

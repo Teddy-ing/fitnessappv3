@@ -1,0 +1,42 @@
+{
+  "id": "kettlebell-row",
+  "name": "Kettlebell Row",
+  "pose": "One-arm kettlebell row at top with opposite hand supported on thigh",
+  "highlight": [
+    "latissimus dorsi",
+    "mid-back"
+  ],
+  "accessibilityLabel": "Kettlebell row with a staggered stance, free hand on the front thigh and the working elbow pulled toward the hip.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: ONE-ARM KETTLEBELL ROW at top. Staggered stance, left foot forward with flexed knee, right foot behind, both soles planted. Hip hinge torso around45 degrees from floor, back/neck neutral. Left palm rests on left thigh above knee for support. Right hand closed neutral grip on top handle of ONE graphite kettlebell, bell pulled beside right hip/lower ribs, right elbow bent approximately90 degrees and travels close to torso backwards, wrist straight. Shoulders remain square, no exaggerated torso rotation. Rear-right three-quarter camera shows working lat and elbow plus bell/free hand support. Coral only visible lats and mid-back muscle regions; biceps, triceps, shoulders grey. Complete figure and bell, no bench.",
+  "file": "kettlebell-row.png",
+  "reference": "barbell-curl.png",
+  "revisions": [
+    {
+      "reason": "Initial upright torso/flared elbow",
+      "prompt": "Use case: precise-object-edit / scientific-educational.\nImage1 EDIT TARGET kettlebell row candidate. Image2 canonical mannequin identity reference.\nCorrect the row mechanics. Rotate the torso forward AT HIPS into a distinct hip hinge, torso approximately45degrees to floor, spine and neck neutral. Maintain staggered stance and both soles flat. Left hand braced on left thigh above knee. Working RIGHT elbow is currently far flared out; bring that elbow CLOSE alongside ribs and directed backwards toward hip, not lifted sideways. Right elbow bent90 degrees, upper arm aligned beside torso, forearm vertical, right hand gripping the ONE kettlebell beside hip. Keep shoulders square. Camera rear-right three-quarter to actually see BACK and working lat, rather than frontal. Highlight visible lat and mid-back ONLY, remove coral from serratus/obliques abdomen. Preserve exact grey mannequin identity, shorts/shoes, square framing, full figure/bell, equipment design, lighting/background; no new equipment/text.",
+      "result": "Rejected: working elbow became too straight."
+    },
+    {
+      "reason": "Correct elbow and hinge",
+      "prompt": "Use case: scientific-educational; precise-object-edit.\nInput1 candidate to correct. Input2 exact canonical grey mannequin identity.\nThe kettlebell row currently has a straight working arm and torso too vertical. Correct BOTH to unmistakable BENT-OVER ROW TOP: hinge torso down until back is nearly PARALLEL to floor (15degrees above horizontal). Feet staggered, knees soft. Left palm braces on front left thigh. RIGHT UPPER ARM runs alongside torso pointing backwards almost horizontally, right ELBOW bends90degrees, right FOREARM hangs vertically DOWN from elbow, right HAND holds kettlebell at side of waist. This makes a clear right angle at the working elbow. Kettlebell hangs below hand without intersecting torso. Side-right camera shows elbow angle, back angle, bell, supporting hand. Neck follows spine looking toward floor, shoulders square. Coral only exposed lat region on right side of back, abdomen grey. Preserve exact character/proportions/grey material/charcoal shorts/shoes, square studio backdrop, complete figure and one bell. No text.",
+      "result": "Rejected: extra leg."
+    },
+    {
+      "reason": "Fresh canonical-reference generation to remove accumulated pose defects",
+      "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: KETTLEBELL ROW. Exactly one adult humanoid with TWO legs, TWO feet, TWO hands.\nCamera: almost pure SIDE PROFILE, see mannequin's RIGHT side; slight angle only enough to distinguish far foot. Mannequin faces right.\nFeet staggered fore-and-aft. LEFT foot front under left knee, RIGHT foot behind under hip. Both knees softly bent. Hips pushed back. Torso tilted forwards about45degrees from upright with neutral back. LEFT hand supports left thigh. RIGHT hand holds ONE kettlebell at HIP HEIGHT at top of row. RIGHT elbow is BENT90degrees; right UPPER ARM lies beside torso pointing backward; right FOREARM is vertical pointing toward floor; bell hangs below right hand. No sideways flared elbow. Head aligned spine looking slightly ahead/down.\nCoral overlay ONLY on visible right latissimus dorsi on back side of ribs. Abdomen, chest, arms, shoulders, legs grey. Full figure/bell. Same exact style as master.",
+      "result": "Selected: two legs, coherent elbow and bell support."
+    }
+  ],
+  "review": {
+    "status": "reviewed",
+    "notes": "Final fresh generation restores two legs, a bent working elbow, thigh support and coherent bell grip. Torso uses a modest hip hinge; working hand/bell beside hip and elbow back. Side lat highlighted with grey abdomen. Representative top of row with shallower hinge than requested, not a horizontal torso variant.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed corrected image: split stance, free hand supported on front thigh and kettlebell held toward hip with elbow drawn back. Hinge is moderate rather than horizontal; no extra limb."
+  },
+  "output": {
+    "bytes": 1449216,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "2f98459cd1ccdfbf958684270503b72f6e31cc652dad7e8838e572d5723c29bf"
+  }
+}

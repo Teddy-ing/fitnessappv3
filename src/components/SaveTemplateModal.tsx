@@ -11,9 +11,9 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, TextInput, Alert, StyleSheet } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { Workout, Split } from '../models';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import {
     createTemplateFromWorkout,
     findTemplatesByName,
@@ -37,6 +37,8 @@ export default function SaveTemplateModal({
     onClose,
     onSaved,
 }: SaveTemplateModalProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [templateName, setTemplateName] = useState('');
 
     // Sync template name from pending workout when opening
@@ -195,7 +197,7 @@ export default function SaveTemplateModal({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -248,8 +250,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.accent.primary,
     },
     modalButtonSaveText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

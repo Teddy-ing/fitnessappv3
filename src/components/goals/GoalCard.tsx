@@ -12,15 +12,10 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors, type ThemeColors } from '../../theme';
 import type { Goal } from '../../models';
 import { getProgressPercent, formatTitle } from './goalUtils';
 
@@ -48,7 +43,7 @@ interface GoalCardProps {
 // Helpers
 // ============================================================
 
-function getDeadlineBadge(goal: Goal): { text: string; color: string } | null {
+function getDeadlineBadge(goal: Goal, colors: ThemeColors): { text: string; color: string } | null {
     if (!goal.deadline) return null;
 
     const now = new Date();
@@ -87,8 +82,10 @@ function getDeadlineBadge(goal: Goal): { text: string; color: string } | null {
 // ============================================================
 
 export default React.memo(function GoalCard({ goal, displayInfo, onPress, onLongPress }: GoalCardProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const percent = getProgressPercent(goal);
-    const badge = getDeadlineBadge(goal);
+    const badge = getDeadlineBadge(goal, colors);
 
     return (
         <TouchableOpacity
@@ -149,7 +146,7 @@ export { getDeadlineBadge };
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     card: {
         backgroundColor: colors.background.secondary,
         borderRadius: borderRadius.lg,
@@ -217,4 +214,4 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.semibold,
         color: colors.accent.primary,
     },
-});
+}));

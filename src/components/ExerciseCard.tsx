@@ -11,7 +11,6 @@ import {
     Text,
     TouchableOpacity,
     TextInput,
-    StyleSheet,
     LayoutAnimation,
     Platform,
     UIManager,
@@ -20,12 +19,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { WorkoutExercise, WorkoutSet } from '../models/workout';
 import { PreviousSetData } from '../models/workout';
 import type { ExerciseSuggestion } from '../models/smartSuggestions';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import SetRow from './SetRow';
 import ActiveRestLine from './ActiveRestLine';
 import ExerciseMenu from './ExerciseMenu';
-import { navigationRef } from '../navigation/navigationRef';
+import { openWorkoutExerciseDetails } from '../navigation/navigationRef';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -102,6 +101,8 @@ function ExerciseCardInner({
     showProgressionNudges = false,
     prefillPrevious = true,
 }: ExerciseCardProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const { exercise, sets } = workoutExercise;
 
     // Local UI state
@@ -151,17 +152,11 @@ function ExerciseCardInner({
 
     // Navigate to Exercise Details screen (info icon)
     const handleInfoPress = useCallback(() => {
-        navigationRef.navigate('Profile', {
-            screen: 'ExerciseDetails',
-            params: {
-                exerciseId: exercise.id,
-                exerciseName: exercise.name,
-                initialTab: 'about',
-                source: 'workout',
-            },
-            initial: false,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any — cross-stack navigation requires untyped nested params (BH-041)
-        } as any);
+        openWorkoutExerciseDetails({
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            initialTab: 'about',
+        });
     }, [exercise.id, exercise.name]);
 
     // Note handlers
@@ -248,6 +243,8 @@ function ExerciseCardInner({
                     style={styles.infoButton}
                     onPress={handleInfoPress}
                     activeOpacity={0.6}
+                    accessibilityRole="button"
+                    accessibilityLabel={`About ${exercise.name}`}
                 >
                     <MaterialIcons
                         name="info-outline"
@@ -393,7 +390,7 @@ function ExerciseCardInner({
 
 export default React.memo(ExerciseCardInner);
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     card: {
         backgroundColor: colors.background.secondary,
         borderRadius: borderRadius.lg,
@@ -432,7 +429,7 @@ const styles = StyleSheet.create({
         marginRight: spacing.sm,
     },
     collapsedCheckmarkText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.sm,
         fontWeight: typography.weight.bold,
     },
@@ -456,7 +453,7 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.xs,
     },
     supersetBadgeText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.xs,
         fontWeight: typography.weight.semibold,
         textAlign: 'center',
@@ -628,4 +625,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.md,
         fontWeight: typography.weight.medium,
     },
-});
+}));

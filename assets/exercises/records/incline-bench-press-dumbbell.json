@@ -1,0 +1,26 @@
+{
+  "id": "incline-bench-press-dumbbell",
+  "name": "Incline Dumbbell Bench Press",
+  "pose": "Incline dumbbell press on an approximately 30-degree bench, bottom position",
+  "highlight": [
+    "pectoralis major",
+    "anterior deltoids"
+  ],
+  "accessibilityLabel": "Incline dumbbell bench press with chest and front shoulders highlighted.",
+  "file": "incline-bench-press-dumbbell.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: INCLINE DUMBBELL BENCH PRESS, bottom position. Charcoal adjustable bench back at 30 degrees above horizontal, short seat pad. Head, back and buttocks supported; both feet flat on floor. Two separate equal graphite round dumbbells, one per hand, beside upper chest. Closed overhand grips, shafts perpendicular to torso, wrists straight and directly above elbows, forearms vertical, elbows bent 90 degrees and moderately tucked. Do not connect dumbbells by any bar. Camera front-side three-quarter clearly shows inclined back pad, both hand contacts, feet and complete bench. Highlight pectoralis major and anterior deltoid regions coral only.",
+  "revisions": [],
+  "output": {
+    "sha256": "243320534cf1d644a0a61c0edefaa5c125023d37cf75b58cf1591dc8dae75efa",
+    "height": 1254,
+    "width": 1254,
+    "bytes": 1611819
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Inclined supported torso and planted feet; separate matching dumbbells and closed grips; bent elbows under near-vertical forearms. Chest and front deltoids highlighted. Exact bench angle remains approximate.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visible review: inclined back support, distinct dumbbells/closed grips and bent elbows, both feet planted; chest/anterior-shoulder regions match seed."
+  }
+}

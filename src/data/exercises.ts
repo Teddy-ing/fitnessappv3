@@ -904,6 +904,50 @@ export const SEED_EXERCISES: Exercise[] = [
         ['yoga_mat'],
         { trackWeight: false, trackTime: true }
     ),
+    // Home and equipment-free alternatives used by the starter programs.
+    seedExercise('dumbbell-floor-press', 'Dumbbell Floor Press', 'strength', ['chest'], ['triceps', 'shoulders'], ['dumbbell'], {
+        instructions: ['Lie on the floor with knees bent and dumbbells beside the chest.', 'Press upward, then lower under control until the upper arms gently meet the floor.'],
+    }),
+    seedExercise('dumbbell-romanian-deadlift', 'Dumbbell Romanian Deadlift', 'strength', ['hamstrings', 'glutes'], ['back', 'core'], ['dumbbell'], {
+        instructions: ['Stand holding dumbbells with knees slightly bent.', 'Push the hips back while keeping the weights close, then stand tall.'],
+    }),
+    seedExercise('dumbbell-goblet-squat', 'Dumbbell Goblet Squat', 'strength', ['quads', 'glutes'], ['core'], ['dumbbell']),
+    seedExercise('kettlebell-goblet-squat', 'Kettlebell Goblet Squat', 'strength', ['quads', 'glutes'], ['core'], ['kettlebell']),
+    seedExercise('kettlebell-deadlift', 'Kettlebell Deadlift', 'strength', ['hamstrings', 'glutes'], ['back', 'core'], ['kettlebell']),
+    seedExercise('kettlebell-row', 'Kettlebell Row', 'strength', ['back', 'lats'], ['biceps', 'core'], ['kettlebell'], {
+        instructions: ['Take a staggered stance and hinge forward, resting your free hand on your own thigh if needed.', 'Row the kettlebell toward the hip, then lower with control. Repeat on the other side.'],
+    }),
+    seedExercise('resistance-band-row', 'Seated Resistance Band Row', 'strength', ['back', 'lats'], ['biceps'], ['resistance_band'], {
+        trackWeight: false,
+        instructions: ['Sit with knees slightly bent and loop an intact resistance band securely around both feet; no external anchor is needed.', 'Sit tall and pull the ends toward the waist. Keep the band secure and return slowly.'],
+    }),
+    seedExercise('bodyweight-squat', 'Bodyweight Squat', 'strength', ['quads', 'glutes'], ['core'], ['bodyweight'], { trackWeight: false }),
+    seedExercise('reverse-lunge-bodyweight', 'Bodyweight Reverse Lunge', 'strength', ['quads', 'glutes'], ['hamstrings', 'core'], ['bodyweight'], { trackWeight: false }),
+    seedExercise('pike-push-up', 'Pike Push-Up', 'strength', ['shoulders'], ['triceps', 'chest'], ['bodyweight'], { trackWeight: false }),
+    seedExercise('hamstring-walkout', 'Hamstring Walkout', 'strength', ['hamstrings', 'glutes'], ['core'], ['bodyweight'], {
+        trackWeight: false,
+        instructions: ['Lie on your back with knees bent and raise your hips.', 'Take short heel steps away while keeping hips lifted, then walk back. Shorten the distance to make it easier.'],
+    }),
+    seedExercise('bodyweight-calf-raise', 'Bodyweight Calf Raise', 'strength', ['calves'], [], ['bodyweight'], { trackWeight: false }),
+    seedExercise('prone-y-raise', 'Prone Y Raise', 'strength', ['shoulders', 'traps'], ['back'], ['bodyweight'], {
+        trackWeight: false,
+        description: 'Light shoulder-blade control work on the floor. It does not replace loaded rows or pull-ups for the lats.',
+        instructions: ['Lie face down with arms reaching overhead in a Y.', 'Keep the neck relaxed and lift the arms slightly without arching the lower back. Lower slowly.'],
+    }),
+    seedExercise('brisk-walk', 'Brisk Walking', 'cardio', ['quads', 'calves'], ['glutes'], ['none'], {
+        trackWeight: false, trackReps: false, trackTime: true, trackDistance: true,
+    }),
+    seedExercise('calf-stretch', 'Calf Stretch', 'stretch', ['calves'], [], ['none'], {
+        trackWeight: false, trackReps: false, trackTime: true,
+    }),
+    seedExercise('thoracic-rotation', 'Side-Lying Thoracic Rotation', 'mobility', ['back'], ['chest', 'shoulders'], ['none'], {
+        trackWeight: false, trackReps: true, trackTime: false,
+        instructions: ['Lie on your side with hips and knees bent and hands together in front.', 'Rotate the top arm and chest open slowly while keeping the knees together. Return and repeat, then switch sides.'],
+    }),
+    seedExercise('standing-cat-cow', 'Standing Cat-Cow', 'mobility', ['back', 'core'], [], ['none'], {
+        trackWeight: false, trackReps: true, trackTime: false,
+        instructions: ['Stand with knees slightly bent and hands resting on the thighs.', 'Gently alternate rounding and lengthening the back through a comfortable range.'],
+    }),
 ];
 
 /**

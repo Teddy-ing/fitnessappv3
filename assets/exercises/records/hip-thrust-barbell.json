@@ -1,0 +1,23 @@
+{
+  "id": "hip-thrust-barbell",
+  "name": "Barbell Hip Thrust",
+  "file": "hip-thrust-barbell.png",
+  "reference": "barbell-curl.png",
+  "pose": "Barbell hip thrust during the rising phase, with upper back supported on bench",
+  "highlight": [],
+  "accessibilityLabel": "Grey mannequin raising the hips beneath a padded barbell with upper back supported on a bench and feet planted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: BARBELL HIP THRUST top position. Horizontal flat padded bench behind torso, upper back contacts bench EDGE at lower shoulder blades; head and neck aligned naturally slightly chin tucked. Shoulders, hips and knees form near-horizontal line, torso neutral without arching. Knees roughly90deg, both feet flat hip-width, shins vertical. Continuous metal barbell rests across FRONT hip crease on thick charcoal cylindrical pad, outside body, equal modest graphite plates clear of floor. Both hands secure bar outside hip width. Full side-biased front three-quarter view shows bench support, pad across hip crease, knee angles, planted feet and full bar. Primary glutes are under charcoal shorts, so NO coral overlay at all; no highlighting through shorts or secondary muscles.",
+  "revisions": [],
+  "output": {
+    "bytes": 1463247,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "8c664898ddbf018f836ae0ad970c77ee56239690df25c1958051b20c006a928c"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Bench edge supports upper back, bar pad crosses hip crease, both hands secure shaft, knees bent and feet flat. Candidate is a mid-raised phase rather than lockout; pose label reflects this. Glutes covered, so no coral.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: upper back contacts bench edge, feet flat, padded bar across hips and hands stabilize it. Hips below lockout; label correctly states rising phase."
+  }
+}

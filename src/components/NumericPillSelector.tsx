@@ -14,10 +14,9 @@ import {
     Text,
     TouchableOpacity,
     Modal,
-    StyleSheet,
     Pressable,
 } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface NumericPillSelectorProps {
     visible: boolean;
@@ -44,6 +43,7 @@ export default function NumericPillSelector({
     onSelect,
     onClose,
 }: NumericPillSelectorProps) {
+    const styles = useStyles();
     const getLabel = formatLabel ?? ((val: number) => val.toString());
     const checkHard = isHard ?? (() => false);
 
@@ -85,6 +85,7 @@ export default function NumericPillSelector({
                                     <Text style={[
                                         styles.pillText,
                                         isSelected && styles.pillTextSelected,
+                                        isSelected && styles.pillTextOnAccent,
                                     ]}>
                                         {getLabel(val)}
                                     </Text>
@@ -110,7 +111,7 @@ export default function NumericPillSelector({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     backdrop: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -171,6 +172,9 @@ const styles = StyleSheet.create({
     pillTextSelected: {
         fontWeight: typography.weight.bold,
     },
+    pillTextOnAccent: {
+        color: colors.text.onAccent,
+    },
     clearButton: {
         marginTop: spacing.md,
         paddingVertical: spacing.sm,
@@ -181,4 +185,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         fontWeight: typography.weight.medium,
     },
-});
+}));

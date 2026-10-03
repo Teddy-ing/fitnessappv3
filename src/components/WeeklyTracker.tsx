@@ -5,16 +5,16 @@
  * Shows rest indicator for today if current split position is a rest day.
  * 
  * States:
- * - Completed: purple filled circle with check icon
+ * - Completed: accent filled circle with check icon
  * - Rest day: dark circle with "Rest" label (today only)
  * - Today: highlighted border circle
  * - Future: dim empty circle
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius } from '../theme';
 
 type SplitScheduleItem = { type: 'template'; templateId: string } | { type: 'rest' };
 
@@ -34,6 +34,8 @@ export default function WeeklyTracker({
     splitSchedule,
     currentScheduleIndex,
 }: WeeklyTrackerProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const now = new Date();
     // Convert JS day (0=Sun) to our Mon-based index (0=Mon..6=Sun)
     const jsDayOfWeek = now.getDay();
@@ -87,7 +89,7 @@ export default function WeeklyTracker({
                             state === 'future' && styles.dayCircleFuture,
                         ]}>
                             {state === 'completed' ? (
-                                <MaterialIcons name="check" size={16} color="#fff" />
+                                <MaterialIcons name="check" size={16} color={colors.text.onAccent} />
                             ) : state === 'rest' ? (
                                 <Text style={styles.restText}>Rest</Text>
                             ) : null}
@@ -100,7 +102,7 @@ export default function WeeklyTracker({
 }
 
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -153,4 +155,4 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: colors.text.secondary,
     },
-});
+}));

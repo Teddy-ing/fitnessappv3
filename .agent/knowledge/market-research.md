@@ -4,6 +4,16 @@ description: Compiled market research, competitor deep-dives, Reddit sentiment, 
 
 # Market Research
 
+## Current update — 2026-10-02
+
+IronJot's current direction is a free, locally stored workout tracker with optional guidance and Google Drive backup. The practical ideas retained from this research are fast logging, flexible routines, useful history, and data portability. Local statistical suggestions are implemented; a cloud AI assistant and paid AI tier are retired.
+
+## Research archive — February 2025 to January 2026
+
+Everything below is preserved research context, last compiled on **2026-01-04**. Competitor prices, feature gaps, rankings, Reddit sentiment, and quoted comments have **not been reverified** for this refresh. Some entries conflict with other early notes, such as FitNotes analytics. They must not be treated as current facts, cited as verified quotations, or copied into marketing without checking original sources.
+
+The old feature lists are opportunities considered at the time, not a current roadmap. In particular, IronJot currently exports XLSX and JSON, implements in-app widgets, and uses Google Drive for optional backup. Native launcher widgets, PDF/CSV export, iCloud, universal competitor imports, and broad ML claims are not established capabilities. See [feature design](feature-design.md) for the current implementation and [current progress](current-progress.md) for remaining work.
+
 ## Sources
 
 1. **Original Market Study (Feb 2025)** — User's hands-on analysis of major apps
@@ -350,6 +360,7 @@ Based on all research, an app that wins needs:
 
 ---
 
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Comprehensive web research covering Reddit sentiment, Strong vs Hevy comparisons, stretching/mobility apps, pricing analysis, and user complaint patterns
+## Document history
+
+- **2026-01-04:** Original market-research compilation.
+- **2026-10-02:** Research labeled as historical and related to the current product; external research not refreshed.

@@ -7,15 +7,16 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles } from '../../theme';
 
 interface StreakBadgeWidgetProps {
     streak: number;
 }
 
 export default function StreakBadgeWidget({ streak }: StreakBadgeWidgetProps) {
+    const styles = useStyles();
     const isActive = streak > 0;
 
     return (
@@ -29,7 +30,7 @@ export default function StreakBadgeWidget({ streak }: StreakBadgeWidgetProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -67,4 +68,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginTop: 2,
     },
-});
+}));

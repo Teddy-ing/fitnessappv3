@@ -9,16 +9,9 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Animated,
-    TouchableOpacity,
-    Dimensions,
-} from 'react-native';
+import { View, Text, Animated, TouchableOpacity, Dimensions } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import { useGoalCelebrationStore } from '../../stores/goalCelebrationStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -26,6 +19,7 @@ const TOAST_WIDTH = SCREEN_WIDTH - spacing.lg * 2;
 const AUTO_DISMISS_MS = 4000;
 
 export default function GoalCelebrationOverlay() {
+    const styles = useStyles();
     const queue = useGoalCelebrationStore((s) => s.queue);
     const dismiss = useGoalCelebrationStore((s) => s.dismiss);
 
@@ -119,7 +113,7 @@ export default function GoalCelebrationOverlay() {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         position: 'absolute',
         top: 60,
@@ -165,4 +159,4 @@ const styles = StyleSheet.create({
         color: colors.text.disabled,
         marginLeft: spacing.sm,
     },
-});
+}));

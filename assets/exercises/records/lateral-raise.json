@@ -1,0 +1,25 @@
+{
+  "id": "lateral-raise",
+  "name": "Lateral Raise",
+  "pose": "Standing dumbbell lateral raise at shoulder height",
+  "highlight": [
+    "lateral deltoids"
+  ],
+  "accessibilityLabel": "Standing lateral raise with dumbbells to either side and shoulders highlighted.",
+  "file": "lateral-raise.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: DUMBBELL LATERAL RAISE at shoulder height. Standing hip-width planted feet, upright relaxed spine. Arms spread laterally in slight forward scapular plane to just below shoulder height, elbows softly bent about15degrees, neutral wrists, knuckles facing outward and thumbs slightly raised not tipped down. One matching dumbbell in each CLOSED hand at each side. Elbows and wrists around same height. Front three-quarter view shows symmetrical full figure plus both dumbbells. Coral lateral shoulder deltoid muscle belly only. Trapezius and biceps grey.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Both arms raised laterally slightly below shoulder height, soft elbows, coherent closed dumbbell grips, stable standing posture. Coral shoulder bellies, no stray arm highlights.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: paired dumbbells at approximately shoulder height, arms out to sides with soft elbows and upright stance; full equipment visible."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1357433,
+    "sha256": "f2060456d744c063f1d85125bcefc3b7ebcec2b8bb1ca60ff9a91e95cf122050"
+  }
+}

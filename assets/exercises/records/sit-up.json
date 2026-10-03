@@ -1,0 +1,25 @@
+{
+  "id": "sit-up",
+  "name": "Sit-Up",
+  "file": "sit-up.png",
+  "reference": "barbell-curl.png",
+  "pose": "Bodyweight sit-up near upright position",
+  "highlight": [
+    "abdominals"
+  ],
+  "accessibilityLabel": "Grey mannequin sitting up from the floor with bent knees and arms crossed over the chest, with abdominal muscles highlighted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: original square workout exercise illustration.\nInput1 is the canonical identity/style REFERENCE ONLY; create the new exercise below.\nKeep EXACT SAME adult pale slate-grey mannequin, oval bald head, natural athletic build, realistic proportions, matte material, short charcoal training shorts and charcoal shoes. Match restrained premium 3D rendering, soft upper-left lighting, light cool-grey #F3F5F7 background and subtle contact shadow.\nOnly specified exposed primary muscle bellies use muted coral #DF685A. Remove reference biceps highlights; do not highlight joints, bones, secondary muscles or through clothing. No glow or veins.\nOne whole figure and complete specified equipment, near-orthographic low-distortion camera, square 1024x1024, 7–9% margins. Plausible hands, limbs and support contacts. No text, logos, numbers, arrows, panels, duplicates or gym scenery.\n\nExercise: BODYWEIGHT SIT-UP near-top position. Seated on buttocks, both knees bent90deg in front, feet flat hip-width on floor, no foot restraint. Torso raised to roughly70degrees above floor with relaxed natural spinal curve, facing knees, hips flexed. Arms crossed lightly over chest, hands touch opposite upper chest; no pulling neck. Head aligned with torso. SIDE-front three-quarter camera shows both grounded feet, knees bent, hips grounded and clearly upright sit-up torso; distinguish from low shoulder-lift crunch. Highlight exposed rectus abdominis/obliques ONLY. Whole figure square, no equipment.",
+  "revisions": [],
+  "output": {
+    "bytes": 1550710,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9ed1bc2587f6ce1554824832af281225c7514aac4c8a4951434cbd5270a6c48b"
+  },
+  "review": {
+    "status": "reviewed",
+    "notes": "Near-upright torso with bent knees and grounded feet; hips supported on floor, arms crossed on chest and no neck pulling. Distinctly higher torso position than crunch; abdominal overlay.",
+    "independentReviewer": "root",
+    "independentNotes": "Independent visual review: bent knees with both feet grounded, arms crossed over chest and torso raised to a seated phase. Visible core target overlay; full pose remains in frame."
+  }
+}

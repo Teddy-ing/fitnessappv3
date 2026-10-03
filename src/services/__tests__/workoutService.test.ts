@@ -148,11 +148,10 @@ describe('saveWorkout', () => {
         jest.clearAllMocks();
     });
 
-    it('returns empty array when DB is unavailable', async () => {
+    it('rejects when DB is unavailable so an unsaved workout stays recoverable', async () => {
         setMockDb(false);
         const workout = makeTestWorkout();
-        const result = await saveWorkout(workout);
-        expect(result).toEqual([]);
+        await expect(saveWorkout(workout)).rejects.toThrow('Database unavailable');
         expect(mockRunAsync).not.toHaveBeenCalled();
     });
 
@@ -271,10 +270,9 @@ describe('updateWorkout', () => {
         jest.clearAllMocks();
     });
 
-    it('returns empty array when DB is unavailable', async () => {
+    it('rejects when DB is unavailable so edits stay recoverable', async () => {
         setMockDb(false);
-        const result = await updateWorkout(makeTestWorkout());
-        expect(result).toEqual([]);
+        await expect(updateWorkout(makeTestWorkout())).rejects.toThrow('Database unavailable');
     });
 
     it('uses UPDATE (not DELETE+INSERT) for the parent workout row — guardrail #12', async () => {

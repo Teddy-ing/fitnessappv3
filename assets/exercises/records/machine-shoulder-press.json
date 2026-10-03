@@ -1,0 +1,25 @@
+{
+  "id": "machine-shoulder-press",
+  "name": "Machine Shoulder Press",
+  "pose": "Seated plate-loaded shoulder press with bent elbows near shoulder height",
+  "highlight": [
+    "deltoids"
+  ],
+  "accessibilityLabel": "Seated machine shoulder press with bent elbows and shoulders highlighted.",
+  "file": "machine-shoulder-press.png",
+  "reference": "barbell-curl.png",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. Use the same plain graphite and metal style for the exercise-specific equipment. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams.\nComposition: one full-body figure and complete equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, bar ends or bench. Exactly one figure, two hands, two feet, closed grips and plausible joints. Use only the equipment specified below. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nOutput: one square 1024x1024 PNG illustration.\nExercise: MACHINE SHOULDER PRESS halfway up on simple plate-loaded press machine. Mannequin seated against near-vertical back pad, butt on seat, both feet flat on floor. Two closed overhand grips on horizontal handles located above shoulder height; elbows bent roughly90degrees, forearms near vertical under handles. Each handle connects to rigid lever arm pivoting from rear upper machine frame, modest identical plates on loading horns, coherent full machine. Front-side three-quarter view shows hands, support contacts, both elbows. Coral deltoids only; chest/triceps grey. Full machine/feet/head in frame.",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Seated back/head supported, both feet planted, two closed handle grips and elbows flexed near shoulder height, forearms approximately vertical. Complete plate-loaded lever machine, shoulder-only coral. Internal linkage simplified.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: supported seated torso, feet planted and both handles gripped above elbows; lever arms and plates attached to complete machine."
+  },
+  "output": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 1650250,
+    "sha256": "c555d7648f5e5bf20b3b179631f9745b1eaa9749ee446df59ff207da167e7b67"
+  }
+}

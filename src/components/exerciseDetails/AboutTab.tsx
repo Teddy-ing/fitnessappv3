@@ -1,45 +1,25 @@
 /**
  * About Tab — Exercise Details
  *
- * Form guide with exercise icon placeholder, metadata pills,
+ * Form guide with exercise illustration, metadata pills,
  * numbered instructions, and multi-note exercise notes with Save button.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TextInput,
-    TouchableOpacity,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { getExerciseNotes, saveExerciseNote, deleteExerciseNote } from '../../services/exerciseDetailsService';
 import { getExerciseById } from '../../services/exerciseService';
 import { Exercise } from '../../models/exercise';
 import { ExerciseNote } from '../../models/exerciseDetails';
 import { MUSCLE_LABELS } from '../../models/muscleGroups';
+import ExerciseIllustration from './ExerciseIllustration';
 
 // ============================================================
 // Helpers
 // ============================================================
-
-/** Map category to a MaterialIcons name */
-function getCategoryIcon(category: string): keyof typeof MaterialIcons.glyphMap {
-    switch (category) {
-        case 'cardio': return 'directions-run';
-        case 'stretch':
-        case 'mobility':
-        case 'warmup': return 'self-improvement';
-        case 'plyometric': return 'sports-gymnastics';
-        default: return 'fitness-center';
-    }
-}
 
 /** Format equipment name for display */
 function formatEquipment(eq: string): string {
@@ -66,6 +46,7 @@ function formatNoteDate(isoDate: string): string {
 // ============================================================
 
 function MetadataPill({ label }: { label: string }) {
+    const styles = useStyles();
     return (
         <View style={styles.pill}>
             <Text style={styles.pillText}>{label}</Text>
@@ -80,6 +61,8 @@ function NoteCard({
     note: ExerciseNote;
     onDelete: (id: string) => void;
 }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.noteCard}>
             <View style={styles.noteHeader}>
@@ -105,6 +88,8 @@ interface AboutTabProps {
 }
 
 export default function AboutTab({ exerciseId }: AboutTabProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [exercise, setExercise] = useState<Exercise | null>(null);
     const [notes, setNotes] = useState<ExerciseNote[]>([]);
     const [newNote, setNewNote] = useState('');
@@ -202,14 +187,7 @@ export default function AboutTab({ exerciseId }: AboutTabProps) {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
         >
-            {/* Icon placeholder */}
-            <View style={styles.iconContainer}>
-                <MaterialIcons
-                    name={getCategoryIcon(exercise.category)}
-                    size={48}
-                    color={colors.accent.primary}
-                />
-            </View>
+            <ExerciseIllustration exercise={exercise} />
 
             {/* Metadata pills */}
             <View style={styles.pillRow}>
@@ -262,7 +240,7 @@ export default function AboutTab({ exerciseId }: AboutTabProps) {
                     <MaterialIcons
                         name="save"
                         size={16}
-                        color={!newNote.trim() || saving ? colors.text.disabled : colors.text.primary}
+                        color={!newNote.trim() || saving ? colors.text.disabled : colors.text.onAccent}
                     />
                     <Text style={[
                         styles.saveButtonText,
@@ -289,7 +267,7 @@ export default function AboutTab({ exerciseId }: AboutTabProps) {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     scrollView: {
         flex: 1,
     },
@@ -306,18 +284,6 @@ const styles = StyleSheet.create({
     loadingText: {
         fontSize: typography.size.sm,
         color: colors.text.secondary,
-    },
-
-    // Icon
-    iconContainer: {
-        width: 96,
-        height: 96,
-        borderRadius: borderRadius.xl,
-        backgroundColor: colors.background.secondary,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        marginBottom: spacing.md,
     },
 
     // Metadata pills
@@ -411,7 +377,7 @@ const styles = StyleSheet.create({
     saveButtonText: {
         fontSize: typography.size.sm,
         fontWeight: typography.weight.semibold,
-        color: colors.text.primary,
+        color: colors.text.onAccent,
     },
     saveButtonTextDisabled: {
         color: colors.text.disabled,
@@ -442,4 +408,4 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         lineHeight: 20,
     },
-});
+}));

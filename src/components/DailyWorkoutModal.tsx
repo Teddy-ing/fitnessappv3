@@ -20,10 +20,10 @@ import {
     Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { getWorkoutsForDate, getPRSetIdsForDate, type PRSetIds } from '../services';
 import { useWorkoutStore } from '../stores';
-import { navigateToTab } from '../navigation/navigationRef';
+import { navigateToWorkoutHome } from '../navigation/navigationRef';
 import { formatDuration, formatVolume } from '../utils/formatters';
 import { convertWeight, displayWeight } from '../utils/unitConversion';
 import { useWeightUnit } from '../hooks/useWeightUnit';
@@ -80,6 +80,8 @@ function SummaryBadge({
     label: string;
     value: string;
 }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.summaryBadge}>
             <MaterialIcons name={icon} size={16} color={colors.accent.primary} />
@@ -92,6 +94,7 @@ function SummaryBadge({
 }
 
 function SetRow({ set, isPR, weightUnit }: { set: WorkoutSet; isPR: boolean; weightUnit: string }) {
+    const styles = useStyles();
     return (
         <View style={styles.setRow}>
             <Text style={styles.setText}>{formatSet(set, weightUnit)}</Text>
@@ -114,6 +117,7 @@ function ExerciseCard({
     prSetIds: PRSetIds;
     weightUnit: string;
 }) {
+    const styles = useStyles();
     // Show all sets (not just completed) for historical view
     const sets = exercise.sets;
     const completedCount = sets.filter((s) => s.status === 'completed').length;
@@ -163,6 +167,8 @@ function WorkoutCard({
     onEdit: (workout: Workout) => void;
     weightUnit: string;
 }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const exercises = workout.main.exercises;
 
     return (
@@ -219,6 +225,8 @@ function WorkoutCard({
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export default function DailyWorkoutModal({ date, onClose }: DailyWorkoutModalProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [prSetIds, setPrSetIds] = useState<PRSetIds>(new Set());
     const [loading, setLoading] = useState(false);
@@ -231,7 +239,7 @@ export default function DailyWorkoutModal({ date, onClose }: DailyWorkoutModalPr
             loadWorkoutForEditing(workout);
             onClose();
             // Small delay to let modal close animation start
-            setTimeout(() => navigateToTab('Workout'), 150);
+            setTimeout(navigateToWorkoutHome, 150);
         };
 
         if (activeWorkout) {
@@ -376,7 +384,7 @@ export default function DailyWorkoutModal({ date, onClose }: DailyWorkoutModalPr
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -500,7 +508,7 @@ const styles = StyleSheet.create({
     workoutNoteContainer: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: 'rgba(168, 85, 247, 0.08)',
+        backgroundColor: colors.accent.subtle,
         borderRadius: borderRadius.md,
         padding: spacing.sm,
         marginBottom: spacing.sm,
@@ -559,7 +567,7 @@ const styles = StyleSheet.create({
     noteContainer: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: 'rgba(168, 85, 247, 0.08)',
+        backgroundColor: colors.accent.subtle,
         borderRadius: borderRadius.sm,
         padding: spacing.xs,
         marginTop: spacing.xs,
@@ -594,11 +602,11 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.md,
         borderWidth: 1,
         borderColor: colors.accent.primary,
-        backgroundColor: 'rgba(168, 85, 247, 0.08)',
+        backgroundColor: colors.accent.subtle,
     },
     editButtonText: {
         fontSize: typography.size.sm,
         fontWeight: typography.weight.semibold,
         color: colors.accent.primary,
     },
-});
+}));

@@ -8,15 +8,10 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import Svg, { Polyline, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import type { MeasurementType } from '../../models';
 import type { WeightTrendIntent } from '../../models/widget';
 
@@ -38,7 +33,9 @@ interface SparklineProps {
     color?: string;
 }
 
-function SparklineSVG({ data, width = SPARKLINE_WIDTH, height = SPARKLINE_HEIGHT, color = colors.accent.primary }: SparklineProps) {
+function SparklineSVG({ data, width = SPARKLINE_WIDTH, height = SPARKLINE_HEIGHT, color: providedColor }: SparklineProps) {
+    const colors = useThemeColors();
+    const color = providedColor ?? colors.accent.primary;
     if (data.length < 2) {
         return (
             <View style={{ width, height, justifyContent: 'center', alignItems: 'center' }}>
@@ -103,6 +100,8 @@ interface SparklineRowProps {
 }
 
 export default function SparklineRow({ row, onPress, trendIntent = 'neutral' }: SparklineRowProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     let trendColor = colors.accent.primary; // Default: neutral purple
 
     if (row.dataPoints.length >= 2) {
@@ -138,7 +137,7 @@ export default function SparklineRow({ row, onPress, trendIntent = 'neutral' }: 
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     row: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -172,4 +171,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.xs,
         marginTop: 1,
     },
-});
+}));

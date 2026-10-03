@@ -14,7 +14,7 @@ import {
     ScrollView,
 } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import type { MeasurementType } from '../../models';
 import { formatISODate } from '../../utils/formatters';
 
@@ -42,6 +42,7 @@ interface DateSelectorProps {
 }
 
 function DateSelector({ date, onPrev, onNext, isToday }: DateSelectorProps) {
+    const dateStyles = useDateStyles();
     const formatted = formatDateDisplay(date);
     return (
         <View style={dateStyles.container}>
@@ -73,7 +74,7 @@ function formatDateDisplay(dateStr: string): string {
     });
 }
 
-const dateStyles = StyleSheet.create({
+const useDateStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -114,7 +115,7 @@ const dateStyles = StyleSheet.create({
         fontWeight: typography.weight.medium as '500',
         marginTop: 2,
     },
-});
+}));
 
 // ============================================================
 // MetricInputRow
@@ -128,6 +129,7 @@ interface MetricInputRowProps {
 }
 
 function MetricInputRow({ field, isFocused, unitSystem, onPress }: MetricInputRowProps) {
+    const rowStyles = useRowStyles();
     const unit = unitSystem === 'kg' ? field.type.unitMetric : field.type.unitImperial;
     const displayValue = field.currentValue || field.lastValue || '—';
     const isPlaceholder = !field.currentValue;
@@ -160,7 +162,7 @@ function MetricInputRow({ field, isFocused, unitSystem, onPress }: MetricInputRo
     );
 }
 
-const rowStyles = StyleSheet.create({
+const useRowStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -208,7 +210,7 @@ const rowStyles = StyleSheet.create({
         color: colors.text.secondary,
         fontSize: typography.size.sm,
     },
-});
+}));
 
 // ============================================================
 // ManageMeasurementsModal
@@ -223,6 +225,7 @@ interface ManageModalProps {
 }
 
 function ManageMeasurementsModal({ visible, allTypes, visibleIds, onToggle, onClose }: ManageModalProps) {
+    const manageStyles = useManageStyles();
     if (!visible) return null;
 
     return (
@@ -267,7 +270,7 @@ function ManageMeasurementsModal({ visible, allTypes, visibleIds, onToggle, onCl
     );
 }
 
-const manageStyles = StyleSheet.create({
+const useManageStyles = createThemedStyles((colors) => ({
     overlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0,0,0,0.6)',
@@ -347,7 +350,7 @@ const manageStyles = StyleSheet.create({
     toggleIcon: {
         fontSize: 16,
     },
-});
+}));
 
 // ============================================================
 // TrackTab (main exported component)
@@ -376,6 +379,7 @@ export default function TrackTab({
     visibleIds,
     onToggleVisibility,
 }: TrackTabProps) {
+    const trackStyles = useTrackStyles();
     const [showManage, setShowManage] = useState(false);
 
     const isToday = date === getTodayStr();
@@ -461,7 +465,7 @@ export function getTodayStr(): string {
 // Styles
 // ============================================================
 
-const trackStyles = StyleSheet.create({
+const useTrackStyles = createThemedStyles((colors) => ({
     emptyState: {
         alignItems: 'center',
         paddingVertical: spacing.xxl,
@@ -502,4 +506,4 @@ const trackStyles = StyleSheet.create({
         fontSize: typography.size.sm,
         fontWeight: typography.weight.medium as '500',
     },
-});
+}));

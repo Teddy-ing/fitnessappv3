@@ -1,0 +1,25 @@
+{
+  "id": "dumbbell-goblet-squat",
+  "name": "Dumbbell Goblet Squat",
+  "pose": "Goblet squat near parallel holding one vertical dumbbell",
+  "highlight": [
+    "visible quadriceps"
+  ],
+  "accessibilityLabel": "Dumbbell goblet squat near parallel, holding one vertical dumbbell close to the chest with heels planted.",
+  "prompt": "Use case: scientific-educational.\nAsset type: square original exercise-library illustration for a mobile workout app, target 1024x1024.\nInput image: identity and rendering REFERENCE ONLY, the original curl illustration supplied here. Create a new exercise scene, not another curl.\nIdentity invariants: use the EXACT SAME adult grey mannequin identity, oval bald head, natural athletic build and muscle definition, body proportions, matte pale slate grey material, plain charcoal short training shorts and charcoal low-profile shoes as the reference. Same subdued studio lighting from upper left, flat very light cool-grey background #F3F5F7 with faint soft contact shadow, restrained premium 3D educational rendering. No brand identifiers or text.\nMuscle overlays: use the same muted coral #DF685A as reference, following anatomical muscle belly shapes, only the visible primary muscles specified for this new exercise. Do NOT keep the curl's biceps overlay. No glow, exposed fibers, vascularity or diagrams. Never color through clothing.\nComposition: one full-body figure and complete exercise-specific equipment, inside square canvas with 7-9 percent padding. Near-orthographic low-distortion camera. Clear, large silhouette. No cropped head, feet, equipment. Exactly one figure, two hands, two feet, anatomically plausible joints. No lettering, logos, labels, arrows, panels or multiple poses. Entirely original illustration from the supplied original reference.\nExercise: DUMBBELL GOBLET SQUAT, near-parallel bottom. Feet slightly wider than hips with toes modestly outward; hips lowered between ankles, knees track toes, thighs around horizontal, whole soles flat. Torso naturally inclined slightly, back/neck neutral. Hold ONE moderate dumbbell VERTICALLY close to upper chest, both palms cup underneath the TOP plate, fingers wrap securely around upper shaft/plate edge, lower plate points down between forearms. Elbows point down and fit inside knees. Natural side-biased front three-quarter camera. Highlight only exposed front quadriceps above kneecaps, never shorts/glutes, all other anatomy grey. Complete figure and single dumbbell.",
+  "file": "dumbbell-goblet-squat.png",
+  "reference": "barbell-curl.png",
+  "revisions": [],
+  "review": {
+    "status": "reviewed",
+    "notes": "Near-parallel squat with flat heels/forefeet and knees tracking toes; one vertical dumbbell supported at upper plate by both hands, elbows angled down. Quadriceps overlays avoid kneecaps and shorts.",
+    "independentReviewer": "root",
+    "independentNotes": "Viewed full image: both hands supporting upper end of vertical dumbbell at chest, knees track outward with planted feet and hips near parallel."
+  },
+  "output": {
+    "bytes": 1430717,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9b6c51e246ed0026cde7c026be72501e2a7cafee43fb8387b18dba1841647120"
+  }
+}
