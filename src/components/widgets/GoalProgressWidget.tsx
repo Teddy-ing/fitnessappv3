@@ -7,10 +7,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Svg, Circle } from 'react-native-svg';
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { Goal } from '../../models/goal';
 
 interface GoalProgressWidgetProps {
@@ -23,6 +23,8 @@ const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export default function GoalProgressWidget({ goal }: GoalProgressWidgetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     if (!goal) {
         return (
             <View style={styles.container}>
@@ -109,7 +111,7 @@ function formatGoalType(type: string): string {
     }
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -152,4 +154,4 @@ const styles = StyleSheet.create({
         color: colors.text.disabled,
         marginTop: 2,
     },
-});
+}));

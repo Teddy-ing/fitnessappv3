@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import type { Exercise } from '../../models/exercise';
 import { getExerciseIllustration, type ExerciseIllustrationAsset } from '../../data/exerciseIllustrations';
-import { borderRadius, colors, spacing } from '../../theme';
+import { borderRadius, spacing, createThemedStyles, useThemeColors } from '../../theme';
 
 type IllustratedExercise = Pick<Exercise, 'id' | 'name' | 'category' | 'isCustom' | 'imageUrl'>;
 
@@ -24,6 +24,8 @@ function IllustrationContent({ exercise, imageUri, bundled }: {
     imageUri?: string;
     bundled?: ExerciseIllustrationAsset;
 }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [customImageFailed, setCustomImageFailed] = useState(false);
     const [bundledImageFailed, setBundledImageFailed] = useState(false);
     const showCustomImage = Boolean(imageUri && !customImageFailed);
@@ -71,7 +73,7 @@ export default function ExerciseIllustration({ exercise }: { exercise: Illustrat
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     card: {
         width: '100%',
         maxWidth: 380,
@@ -96,4 +98,4 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginBottom: spacing.md,
     },
-});
+}));

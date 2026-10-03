@@ -8,21 +8,22 @@
  * Following the Thumb Zone rule: navigation at bottom 30% of screen
  */
 
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useMemo } from 'react';
+import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing } from '../theme';
+import { spacing, createThemedStyles, useThemeColors, type ThemeColors } from '../theme';
 import { useWorkoutStore } from '../stores';
 import { ErrorBoundary } from '../components';
 import { navigationRef, navigateToTab } from './navigationRef';
 import { shouldHideTabBar } from './tabBarVisibility';
 import SwipeableTabScreen from '../components/SwipeableTabScreen';
+import { useStartup } from '../components/startup/StartupContext';
 
 // Screen imports
 import WorkoutScreen from '../screens/WorkoutScreen';
@@ -40,13 +41,14 @@ export type { ProfileStackParamList, RootTabParamList, WorkoutStackParamList, Sh
 // Wrap each screen in its own error boundary + swipe navigation
 // Tab order: Workout → Profile
 const WorkoutScreenWithBoundary = () => {
+    const { onInitializationComplete } = useStartup();
     // Disable swipe navigation during an active workout
     const hasActiveWorkout = useWorkoutStore(s => !!s.activeWorkout);
     return (
         <SwipeableTabScreen
             onSwipeLeft={hasActiveWorkout ? undefined : () => navigateToTab('Profile')}
         >
-            <ErrorBoundary fallback="screen" label="WorkoutScreen">
+            <ErrorBoundary fallback="screen" label="WorkoutScreen" onError={onInitializationComplete}>
                 <WorkoutScreen />
             </ErrorBoundary>
         </SwipeableTabScreen>
@@ -70,13 +72,13 @@ const ProfileSwipeWrapper = ({ children }: { children: React.ReactNode }) => (
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const WorkoutStack = createNativeStackNavigator<WorkoutStackParamList>();
 
-const stackScreenOptions = {
+const getStackScreenOptions = (colors: ThemeColors) => ({
     headerStyle: { backgroundColor: colors.background.primary },
     headerTintColor: colors.text.primary,
     headerTitleStyle: { fontWeight: '600' as const },
     headerShadowVisible: false,
     contentStyle: { backgroundColor: colors.background.primary },
-};
+});
 
 // Wrap analytics screens in their own error boundaries so a chart library
 // crash shows a screen-level fallback instead of taking down the profile stack
@@ -118,11 +120,12 @@ const ProfileHomeWithSwipe = ({ navigation }: { navigation: any }) => (
 );
 
 function ProfileStackNavigator() {
+    const colors = useThemeColors();
     return (
         <ErrorBoundary fallback="screen" label="ProfileStack">
             <ProfileStack.Navigator
                 initialRouteName="ProfileHome"
-                screenOptions={stackScreenOptions}
+                screenOptions={getStackScreenOptions(colors)}
             >
                 <ProfileStack.Screen
                     name="ProfileHome"
@@ -186,9 +189,11 @@ function ProfileStackNavigator() {
 }
 
 function WorkoutStackNavigator() {
+    const colors = useThemeColors();
+    const { onInitializationComplete } = useStartup();
     return (
-        <ErrorBoundary fallback="screen" label="WorkoutStack">
-            <WorkoutStack.Navigator initialRouteName="WorkoutHome" screenOptions={stackScreenOptions}>
+        <ErrorBoundary fallback="screen" label="WorkoutStack" onError={onInitializationComplete}>
+            <WorkoutStack.Navigator initialRouteName="WorkoutHome" screenOptions={getStackScreenOptions(colors)}>
                 <WorkoutStack.Screen
                     name="WorkoutHome"
                     component={WorkoutScreenWithBoundary}
@@ -226,9 +231,11 @@ const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
 };
 
 /**
- * Matching tab icons with a purple gradient separator
+ * Matching tab icons with the selected theme's gradient separator
  */
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const insets = useSafeAreaInsets();
     const bottomPadding = Math.max(insets.bottom, 8);
 
@@ -239,9 +246,9 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
     return (
         <View style={styles.tabBarContainer}>
-            {/* Purple gradient separator line */}
+            {/* Theme gradient separator line */}
             <LinearGradient
-                colors={['#a855f7', '#4c1d95', '#a855f7']}
+                colors={colors.gradient.tabBar}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientSeparator}
@@ -305,8 +312,21 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
  * Main App Navigator
  */
 export default function AppNavigator() {
+    const colors = useThemeColors();
+    const navigationTheme = useMemo(() => ({
+        ...DarkTheme,
+        colors: {
+            ...DarkTheme.colors,
+            primary: colors.accent.primary,
+            background: colors.background.primary,
+            card: colors.background.secondary,
+            text: colors.text.primary,
+            border: colors.border,
+            notification: colors.accent.primary,
+        },
+    }), [colors]);
     return (
-        <NavigationContainer ref={navigationRef}>
+        <NavigationContainer ref={navigationRef} theme={navigationTheme}>
             <Tab.Navigator
                 initialRouteName="Workout"
                 tabBar={(props) => <CustomTabBar {...props} />}
@@ -346,7 +366,7 @@ export default function AppNavigator() {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     tabBarContainer: {
         backgroundColor: colors.background.primary,
     },
@@ -371,4 +391,4 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: '500',
     },
-});
+}));

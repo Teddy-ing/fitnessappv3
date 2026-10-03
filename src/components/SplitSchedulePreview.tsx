@@ -6,10 +6,10 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { SplitScheduleItem } from '../models/split';
 import { type Template } from '../services';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface SplitSchedulePreviewProps {
     scheduleItems: SplitScheduleItem[];
@@ -28,6 +28,7 @@ function SplitSchedulePreview({
     onMoveUp,
     onMoveDown,
 }: SplitSchedulePreviewProps) {
+    const styles = useStyles();
     return (
         <>
             {/* Add Rest Day button */}
@@ -90,7 +91,7 @@ function SplitSchedulePreview({
 
 export default React.memo(SplitSchedulePreview);
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     formLabel: {
         color: colors.text.secondary,
         fontSize: typography.size.sm,
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
         marginRight: spacing.sm,
     },
     scheduleItemOrderText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.sm,
         fontWeight: typography.weight.bold,
     },
@@ -179,4 +180,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         fontSize: typography.size.xs,
     },
-});
+}));

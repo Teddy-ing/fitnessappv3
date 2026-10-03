@@ -7,16 +7,10 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    TextInput,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { spacing, typography, borderRadius, createThemedStyles, useThemeColors } from '../../theme';
 import { getPerformedExercises } from '../../services';
 import { PerformedExercise } from '../../models/analytics';
 
@@ -36,6 +30,8 @@ interface ExercisePickerViewProps {
 // ============================================================
 
 export default function ExercisePickerView({ onSelect, onBack }: ExercisePickerViewProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [exercises, setExercises] = useState<PerformedExercise[]>([]);
     const [exerciseSearch, setExerciseSearch] = useState('');
     const [selectedMetric, setSelectedMetric] = useState<'1rm' | 'volume'>('1rm');
@@ -133,7 +129,7 @@ export default function ExercisePickerView({ onSelect, onBack }: ExercisePickerV
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     // Metric toggle
     metricToggle: {
         flexDirection: 'row',
@@ -157,7 +153,7 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
     },
     metricButtonTextActive: {
-        color: '#fff',
+        color: colors.text.onAccent,
     },
 
     // Search
@@ -220,4 +216,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginLeft: spacing.xs,
     },
-});
+}));

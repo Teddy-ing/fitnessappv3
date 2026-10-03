@@ -4,6 +4,20 @@ description: Calendar feature spec — heatmap view, daily modal, filtering, and
 
 # Calendar Feature
 
+## Current app as of 2026-10-02
+
+This is a source review of the implemented calendar, not a new device QA pass. Root [AGENTS.md](../../../../AGENTS.md) supersedes the old component-size and hook-count conventions.
+
+- `src/screens/CalendarScreen.tsx` implements month history, metric-based heatmaps, streak/rest summaries, PR/notes/fatigue filtering, daily workout details and the conditional searchable `JournalView`. Older months load incrementally.
+- Calendar data and personal-record queries live in `src/services/calendarService.ts` and the related services; month/header rendering is under `src/components/calendar/`. The PR table and calendar preference columns are already migrated. Schema version is 21, so the proposed v4 migration below must not be reapplied.
+- Start-of-week is read from General Settings; the calendar retains its heatmap metric control. Colors follow IronJot or Classic Purple instead of fixed purple fills.
+- Historical workout editing routes to the existing WorkoutHome screen and preserves Profile/Calendar navigation context. October routing work also covered Back handling; see [current progress](../../current-progress.md) for the recorded scoped verification.
+- Release checks should include multiple workouts on one date, unit display, month/week boundaries, historical edits and iOS Back gestures. This refresh does not certify the illustrative SQL or every historical acceptance claim.
+
+## Historical feature specification
+
+The original UX and data plans below remain a design reference. Proposed APIs, new-table instructions and obsolete procedural gates describe that planning stage.
+
 > **Architecture note:** This spec aligns with the post-audit codebase (March 2026).
 > See `conventions.md` for guardrails: 600-line component cap, typed DB rows, versioned migrations, hook extraction.
 

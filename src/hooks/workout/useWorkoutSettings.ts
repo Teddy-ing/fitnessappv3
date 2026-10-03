@@ -15,7 +15,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getSettings, updateSettings } from '../../services';
-import { useWeightUnit } from '../useWeightUnit';
+import { useWeightUnitState } from '../useWeightUnit';
 import { useWorkoutStore } from '../../stores';
 import { createSet } from '../../models/workout';
 
@@ -47,27 +47,35 @@ export function useWorkoutSettings() {
     const [smartSuggestions, setSmartSuggestions] = useState(false);
     const [showProgressionNudges, setShowProgressionNudges] = useState(false);
     const [prefillPrevious, setPrefillPrevious] = useState(true);
-    const weightUnit = useWeightUnit();
+    const { unit: weightUnit, isLoaded: weightUnitLoaded } = useWeightUnitState();
+    const [settingsLoaded, setSettingsLoaded] = useState(false);
     const [keepAwakeDuringWorkout, setKeepAwakeDuringWorkout] = useState(true);
     const [settingsMenuVisible, setSettingsMenuVisible] = useState(false);
 
     // Load/refresh settings from DB
     const refreshSettings = useCallback(async () => {
-        const settings = await getSettings();
-        setShowPrevious(settings.showPrevious ?? true);
-        setShowRpe(settings.showRpe ?? false);
-        setShowRir(settings.showRir ?? false);
-        setShowPlateCalc(settings.showPlateCalc ?? true);
-        setDefaultWarmupSets(settings.defaultWarmupSets ?? 2);
-        setDefaultSetsPerExercise(settings.defaultSetsPerExercise ?? 3);
-        setDefaultWeightIncrement(settings.defaultWeightIncrement ?? 5);
-        setAutoStartRestTimer(settings.autoStartRestTimer ?? true);
-        setDefaultRestTime(settings.defaultRestTime ?? 90);
-        setSmartSuggestions(settings.smartSuggestions ?? false);
-        setShowProgressionNudges(settings.showProgressionNudges ?? false);
-        setPrefillPrevious(settings.prefillPrevious ?? true);
-        // weightUnit is managed by useWeightUnit() subscriber — no local state needed
-        setKeepAwakeDuringWorkout(settings.keepAwakeDuringWorkout ?? true);
+        try {
+            const settings = await getSettings();
+            setShowPrevious(settings.showPrevious ?? true);
+            setShowRpe(settings.showRpe ?? false);
+            setShowRir(settings.showRir ?? false);
+            setShowPlateCalc(settings.showPlateCalc ?? true);
+            setDefaultWarmupSets(settings.defaultWarmupSets ?? 2);
+            setDefaultSetsPerExercise(settings.defaultSetsPerExercise ?? 3);
+            setDefaultWeightIncrement(settings.defaultWeightIncrement ?? 5);
+            setAutoStartRestTimer(settings.autoStartRestTimer ?? true);
+            setDefaultRestTime(settings.defaultRestTime ?? 90);
+            setSmartSuggestions(settings.smartSuggestions ?? false);
+            setShowProgressionNudges(settings.showProgressionNudges ?? false);
+            setPrefillPrevious(settings.prefillPrevious ?? true);
+            // weightUnit is managed by useWeightUnitState's shared subscriber.
+            setKeepAwakeDuringWorkout(settings.keepAwakeDuringWorkout ?? true);
+        } catch (error) {
+            console.warn('[WorkoutSettings] Could not load settings:', error);
+        } finally {
+            // A failed read uses the existing safe defaults instead of trapping startup.
+            setSettingsLoaded(true);
+        }
     }, []);
 
     // Load settings on mount
@@ -204,6 +212,7 @@ export function useWorkoutSettings() {
     }, [handleChangeWarmupSets, isExerciseUnstarted]);
 
     return {
+        isLoaded: settingsLoaded && weightUnitLoaded,
         showPrevious,
         showRpe,
         showRir,

@@ -14,10 +14,10 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import { View, Text, TouchableOpacity, AppState, AppStateStatus } from 'react-native';
 import { useWorkoutStore } from '../stores';
 import { useRestTimerStore } from '../stores/restTimerStore';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface RestTimerProps {
     autoStartRestTimer?: boolean;
@@ -28,6 +28,7 @@ export default function RestTimer({
     autoStartRestTimer = true,
     defaultRestTime = 120,
 }: RestTimerProps) {
+    const styles = useStyles();
     // PP-009 fix: Fine-grained selectors to avoid full-store subscription
     const restTimerActive = useRestTimerStore(s => s.restTimerActive);
     const restTimerRemaining = useRestTimerStore(s => s.restTimerRemaining);
@@ -137,7 +138,7 @@ export default function RestTimer({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         position: 'absolute',
         bottom: 0,
@@ -223,4 +224,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.md,
         fontWeight: typography.weight.medium,
     },
-});
+}));

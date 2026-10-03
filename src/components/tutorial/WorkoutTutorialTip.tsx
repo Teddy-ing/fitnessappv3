@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { borderRadius, colors, spacing } from '../../theme';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { borderRadius, spacing, createThemedStyles } from '../../theme';
 
 interface WorkoutTutorialTipProps {
     stage: 'add' | 'log' | 'finish';
@@ -16,6 +16,7 @@ const tips = {
 
 /** The parent derives the current tip from the active workout, so it stays in context. */
 export default function WorkoutTutorialTip({ stage, onSkip, onAddExercise }: WorkoutTutorialTipProps) {
+    const styles = useStyles();
     const tip = tips[stage];
     return (
         <View style={styles.card}>
@@ -35,13 +36,13 @@ export default function WorkoutTutorialTip({ stage, onSkip, onAddExercise }: Wor
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     card: { padding: spacing.md, marginBottom: spacing.md, borderRadius: borderRadius.lg, backgroundColor: colors.background.secondary, borderLeftWidth: 3, borderLeftColor: colors.accent.primary, gap: spacing.sm },
     title: { color: colors.text.primary, fontSize: 16, fontWeight: '600' },
     body: { color: colors.text.secondary, fontSize: 15, lineHeight: 23 },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     addButton: { minHeight: 48, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, justifyContent: 'center', backgroundColor: colors.accent.secondary, borderRadius: borderRadius.md },
-    addText: { color: colors.text.primary, fontSize: 16, fontWeight: '600' },
+    addText: { color: colors.text.onAccent, fontSize: 16, fontWeight: '600' },
     skipButton: { minHeight: 48, padding: spacing.sm, justifyContent: 'center' },
     skipText: { color: colors.accent.tertiary, fontSize: 15, fontWeight: '600' },
-});
+}));

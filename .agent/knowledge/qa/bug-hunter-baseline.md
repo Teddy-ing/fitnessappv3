@@ -4,6 +4,18 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 # Bug Hunter Audit Baseline
 
+## Current app as of 2026-10-02
+
+This file is a historical findings register. Counts, resolved labels, false-positive decisions and line numbers below belong to the dated audits; they are not a fresh whole-app certification. Root [AGENTS.md](../../../AGENTS.md) now requires proportionate verification and independent review of substantive changes, not three compulsory QA chats or a baseline update for every exchange.
+
+- **BH-058 remains relevant:** `src/services/database.ts` still sets `dbInitFailed` after initialization failure and returns null on later calls. The broad historical claim about all user feedback has not been retested against the newer startup gates; retain the failure/retry issue for a focused recovery check.
+- **BH-061 remains relevant:** `src/stores/workoutPersistence.ts` parses JSON as `PersistedWorkoutState`, checks for an active workout, and has no versioned runtime shape validation. Do not discard potentially recoverable user history merely to satisfy the old proposed fix.
+- Current code additionally includes migrations through 21, optional onboarding/tutorial, the IronJot/Classic Purple theme provider and owning-stack exercise-detail navigation. Older findings about these areas must be checked against source before reuse.
+- A confirmed release limitation outside the old IDs: JSON and Drive backup payloads contain photo paths/metadata but no photo bytes (`dataTransferService.ts`, `photoService.ts`). Clean-device photo recovery is not provided by those snapshots.
+- Latest recorded tests and Android checks are in [current progress](../current-progress.md). iOS and production Google Drive validation remain outstanding. This documentation pass did not reproduce every old issue, rerun the test suite or change any finding's historical resolution.
+
+## Historical audit record
+
 ## Summary
 
 - **Last full pass:** 2026-04-13 (Settings Revamp + Canonical Weight Storage — 24 files)
@@ -18,7 +30,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ### Deferred
 
 #### BH-058 · `dbInitFailed` is permanent — no retry, no recovery, no user feedback
-- **File:** [database.ts](file:///c:/Users/teddy/projects/workout-app/src/services/database.ts#L28-L44)
+- **File:** `database.ts` (historical location: `src/services/database.ts#L28-L44`)
 - **Phase:** Latent (Jan 2026 — foundational)
 - **Description:** If `openDatabaseAsync` throws for any transient reason, `dbInitFailed = true` permanently. All data operations silently degrade.
 - **Deferred to:** Pre-launch polish. Has never triggered. Requires crash reporting (TD-048) to detect in production. Fix: retry with backoff + user-facing error banner.
@@ -34,7 +46,7 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 ### Low (Defensive Gaps)
 
 #### BH-061 · Persisted workout `as Workout` cast with no runtime validation
-- **File:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts) → `restoreWorkout()`
+- **File:** [workoutStore.ts](../../../src/stores/workoutStore.ts) → `restoreWorkout()`
 - **Phase:** Latent (Mar 2026 — TD-021 persistence)
 - **Description:** `loadPersistedWorkout()` casts persisted data as `Workout` with no runtime validation or schema versioning. If the model changes between app versions, the persisted JSON silently loads a malformed object. Note: TD-051 replaced `unknown` with `Workout | null` which adds compile-time protection, but runtime validation on load is still missing.
 - **Likelihood:** Low — only triggers on model schema changes between app updates.
@@ -116,409 +128,409 @@ description: Tracking document for logic bugs, runtime errors, and edge case fin
 
 #### BH-074 · ExercisePicker `renderExerciseItem` unstable callback deps — **RESOLVED 2026-05-21**
 - **Severity:** Low (Performance)
-- **File:** [ExercisePicker.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/ExercisePicker.tsx#L162-L241)
+- **File:** `ExercisePicker.tsx` (historical location: `src/components/ExercisePicker.tsx#L162-L241`)
 - **Root cause:** `handleSelect`, `handleToggleFavorite`, and `handleLongPress` were plain functions recreated every render, defeating the `useCallback` memoization of `renderExerciseItem` and causing FlatList to re-render all items on every state change.
 - **Fix applied:** Wrapped all three handlers in `useCallback` with appropriate deps.
 
 #### BH-073 · `TemplateActionSheet.handleSave` missing double-tap guard — **RESOLVED 2026-05-21**
 - **Severity:** Medium
-- **File:** [TemplateActionSheet.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/TemplateActionSheet.tsx#L62-L77)
+- **File:** `TemplateActionSheet.tsx` (historical location: `src/components/TemplateActionSheet.tsx#L62-L77`)
 - **Root cause:** `handleSave` was async with no synchronous guard. `updateTemplate` deletes all exercises then re-inserts them — a rapid double-tap could cause duplicate exercises.
 - **Fix applied:** Added `useRef(false)` double-tap guard with try/finally pattern.
 
 #### BH-072 · `getBootstrapEstimate` cross-exercise loop is dead code — **RESOLVED 2026-05-21**
 - **Severity:** Low
-- **File:** [strengthProfileService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/strengthProfileService.ts)
+- **File:** [strengthProfileService.ts](../../../src/services/strengthProfileService.ts)
 - **Root cause:** Loop iterated over related exercises from ratio table but the inner query didn't use `rel.pattern`. Result was fetched but never used (comment: "for now, use muscle group estimate").
 - **Fix applied:** Removed dead loop, replaced with TODO comment. Fallback to 75% muscle-group 1RM works correctly.
 
 #### BH-071 · `strengthProfileService` Step 1 query is dead code — **RESOLVED 2026-05-21**
 - **Severity:** Medium
-- **File:** [strengthProfileService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/strengthProfileService.ts)
+- **File:** [strengthProfileService.ts](../../../src/services/strengthProfileService.ts)
 - **Root cause:** `maxRows` query used broken `CROSS JOIN json_each` with identical CASE branches and a `LEFT JOIN` on empty array. Result was never read — muscle map was built entirely from `exerciseMaxRows` (Step 2).
 - **Fix applied:** Removed the dead query and unused `MuscleMaxRow`/`WeeklyProgressRow` types. Cleaned up `getEstimatedWeight`/`getRelatedExercises` imports.
 
 #### BH-070 · `rest_duration` column never populated — smart rest learning is a no-op — **RESOLVED 2026-05-21**
 - **Severity:** Medium-High
-- **File:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts) + [smartSuggestionsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/smartSuggestionsService.ts)
+- **File:** [workoutStore.ts](../../../src/stores/workoutStore.ts) + [smartSuggestionsService.ts](../../../src/services/smartSuggestionsService.ts)
 - **Root cause:** `rest_duration` column existed in v1 schema and the model, but `completeSet` never computed or wrote a value. `getSmartRestDuration` always returned null (no rows with non-null `rest_duration`).
 - **Fix applied:** Added rest duration computation in `completeSet` — calculates elapsed seconds since the most recent previously-completed set in the same exercise, with sanity bounds (5s–30min).
 
 #### BH-069 · `handleRestore` deps missing `executeRestore` — stale closure risk — **RESOLVED 2026-04-28**
 - **Severity:** Low
 - **Original status:** 🟢 Defensive gap
-- **File:** [CloudBackupSection.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/settings/CloudBackupSection.tsx#L139)
+- **File:** `CloudBackupSection.tsx` (historical location: `src/components/settings/CloudBackupSection.tsx#L139`)
 - **Root cause:** `handleRestore` captured `executeRestore` in an Alert callback but didn't list it in `useCallback` deps. Currently safe (stable ref), but violates exhaustive-deps.
 - **Fix applied:** Moved `executeRestore` definition above `handleRestore`, added `[executeRestore]` to deps.
 
 #### BH-068 · `ExportBottomSheet` swallows export failures silently — **RESOLVED 2026-04-28**
 - **Severity:** Low
 - **Original status:** 🟢 Edge case
-- **File:** [ExportBottomSheet.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/settings/ExportBottomSheet.tsx#L43-L59)
+- **File:** `ExportBottomSheet.tsx` (historical location: `src/components/settings/ExportBottomSheet.tsx#L43-L59`)
 - **Root cause:** `handleExport` had try/finally with no catch. On failure, sheet closed with no user feedback.
 - **Fix applied:** Added `catch (error)` block with `Alert.alert('Export Failed', ...)` before the `finally` block.
 
 #### BH-067 · `cloudBackupService.restoreFromCloud` row-by-row INSERT — no batching — **RESOLVED 2026-04-28**
 - **Severity:** Low
 - **Original status:** 🟢 Performance / guardrail compliance
-- **File:** [cloudBackupService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/cloudBackupService.ts#L397-L416)
+- **File:** `cloudBackupService.ts` (historical location: `src/services/cloudBackupService.ts#L397-L416`)
 - **Root cause:** Cloud restore inserted rows one at a time, violating guardrail #13 (bulk imports must use chunked batch INSERT).
 - **Fix applied:** Added `BATCH_SIZE = 500` chunking loop matching `competitorImportService` pattern.
 
 #### BH-066 · `RESTORE_TABLES` hardcoded duplicate of `EXPORT_TABLES` — maintenance drift risk — **RESOLVED 2026-04-28**
 - **Severity:** Medium
 - **Original status:** 🟡 Maintainability
-- **File:** [cloudBackupService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/cloudBackupService.ts#L381-L386)
+- **File:** `cloudBackupService.ts` (historical location: `src/services/cloudBackupService.ts#L381-L386`)
 - **Root cause:** `restoreFromCloud` defined its own `RESTORE_TABLES` constant that had to exactly mirror `EXPORT_TABLES` from `dataTransferService.ts`. A future table addition could be missed.
 - **Fix applied:** Exported `EXPORT_TABLES` from `dataTransferService.ts` and imported it in `cloudBackupService.ts`. Single source of truth.
 
 #### BH-065 · `executeCompetitorImport` custom exercise creation not under write lock — **RESOLVED 2026-04-28**
 - **Severity:** Medium
 - **Original status:** 🟡 Concurrency
-- **File:** [competitorImportService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/competitorImportService.ts#L119-L133)
+- **File:** `competitorImportService.ts` (historical location: `src/services/competitorImportService.ts#L119-L133`)
 - **Root cause:** Custom exercises were created outside any write lock. A concurrent auto-backup could snapshot exercises without their associated workouts.
 - **Fix applied:** Wrapped entire `executeCompetitorImport` body in `withWriteLock()` to serialize against concurrent writes.
 
 #### BH-064 · Hevy parser maps both `abdomen_in` and `waist_in` to `'waist'` — duplicate measurements — **RESOLVED 2026-04-28**
 - **Severity:** Medium
 - **Original status:** 🟡 Data integrity
-- **File:** [hevyParser.ts](file:///c:/Users/teddy/projects/workout-app/src/services/importParsers/hevyParser.ts#L250-L251)
+- **File:** `hevyParser.ts` (historical location: `src/services/importParsers/hevyParser.ts#L250-L251`)
 - **Root cause:** Both `abdomen_in` and `waist_in` mapped to the same `'waist'` type ID. If a Hevy CSV had both columns with values, it produced duplicate measurements for the same date/type.
 - **Fix applied:** Removed `waist_in` mapping. `abdomen_in` → `'waist'` is sufficient.
 
 #### BH-063 · `ExerciseMappingScreen` calls `setShowSummary(true)` during render — **RESOLVED 2026-04-28**
 - **Severity:** Medium
 - **Original status:** 🟡 React correctness
-- **File:** [ExerciseMappingScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseMappingScreen.tsx#L320-L323)
+- **File:** `ExerciseMappingScreen.tsx` (historical location: `src/screens/ExerciseMappingScreen.tsx#L320-L323`)
 - **Root cause:** `setShowSummary(true)` was called directly in the render body (not inside `useEffect`), violating React's rendering contract and triggering "Cannot update component while rendering another component" warnings.
 - **Fix applied:** Moved to `useEffect(() => { if (!currentMapping && !showSummary) setShowSummary(true); }, [currentMapping, showSummary])`. Render body now returns `null` without side effects.
 
 #### BH-062 · `createWorkoutExercise` hardcodes first set as warmup regardless of settings — **RESOLVED 2026-04-16**
 - **Severity:** Low
 - **Original status:** 🟡 Latent
-- **File:** [workout.ts](file:///c:/Users/teddy/projects/workout-app/src/models/workout.ts#L226-L240)
+- **File:** `workout.ts` (historical location: `src/models/workout.ts#L226-L240`)
 - **Root cause:** Factory always marked `i === 0 && exercise.category === 'strength'` as warmup. Setting warmups to 0 still produced 1 warmup set.
 - **Fix applied:** Added `warmupSets` parameter (defaults to 0) to `createWorkoutExercise`. Only creates warmup sets for strength exercises when `warmupSets > 0`. `WorkoutScreen` now passes the user's `defaultWarmupSets` setting via `addWarmupSets()` after adding each exercise.
 
 #### BH-059 · `handleFinishWorkout` double-tap race condition — **RESOLVED 2026-04-16**
 - **Severity:** High
 - **Original status:** 🔴 Latent
-- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx#L208-L299)
+- **File:** `WorkoutScreen.tsx` (historical location: `src/screens/WorkoutScreen.tsx#L208-L299`)
 - **Root cause:** `handleFinishWorkout` chained 6+ async operations with no guard against concurrent invocation. A double-tap would race two save operations.
 - **Fix applied:** Added `isSavingRef = useRef(false)` guard per guardrail #14. Set synchronously before first `await`, cleared in `finally`.
 
 #### BH-051 · `keepAwakeDuringWorkout` stale after Settings toggle — **RESOLVED 2026-04-16**
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
-- **File:** [useWorkoutSettings.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/workout/useWorkoutSettings.ts), [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx)
+- **File:** [useWorkoutSettings.ts](../../../src/hooks/workout/useWorkoutSettings.ts), [WorkoutScreen.tsx](../../../src/screens/WorkoutScreen.tsx)
 - **Root cause:** Settings loaded once on mount via `getSettings().then(...)` with empty deps. Toggling keepAwake in SettingsScreen didn't propagate to already-mounted WorkoutScreen tab.
 - **Fix applied:** Extracted `refreshSettings()` callback from `useWorkoutSettings`. WorkoutScreen calls it on focus via `useIsFocused()` + `useEffect`. All settings (not just keepAwake) now refresh when the tab regains focus.
 
 #### BH-055 · `SettingsScreen.handleUpdate` no rollback on DB write failure — **RESOLVED 2026-04-16**
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
-- **File:** [SettingsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/SettingsScreen.tsx#L79-L101)
+- **File:** `SettingsScreen.tsx` (historical location: `src/screens/SettingsScreen.tsx#L79-L101`)
 - **Root cause:** Optimistic state update followed by bare `await updateSettings()`. On failure, local state showed new value but DB retained old value, causing silent revert on restart.
 - **Fix applied:** Added try/catch with rollback to `previousSettings` snapshot + `Alert.alert` on failure.
 
 #### BH-057 · `weightUnit` stale in WorkoutSettingsMenu label — **RESOLVED 2026-04-13**
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
-- **File:** [useWorkoutSettings.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/workout/useWorkoutSettings.ts#L43)
+- **File:** `useWorkoutSettings.ts` (historical location: `src/hooks/workout/useWorkoutSettings.ts#L43`)
 - **Root cause:** `weightUnit` stored as local `useState` loaded once on mount. If user changed unit in SettingsScreen and returned, the WorkoutSettingsMenu stepper showed stale "5 lbs" instead of "5 kg".
 - **Fix applied:** Replaced `useState('lbs')` with `useWeightUnit()` subscriber hook, which auto-updates via module-level cache invalidation.
 
 #### BH-053/054 · `loadWeightUnit` unhandled promise rejection + stuck cache — **RESOLVED 2026-04-13**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [useWeightUnit.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWeightUnit.ts#L26-L37)
+- **File:** `useWeightUnit.ts` (historical location: `src/hooks/useWeightUnit.ts#L26-L37`)
 - **Root cause:** `getSettings().then(...)` had no `.catch()`. A DB init race caused an unhandled rejection and left `cachePromise` as a rejected promise permanently, making all future weight unit reads also fail.
 - **Fix applied:** Added `.catch()` that logs a warning, resets `cachePromise = null` (so next call retries), and returns `'lbs'` as fallback.
 
 #### BH-052 · Floating-point noise in MacroAnalyticsView chart data — **RESOLVED 2026-04-13**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [MacroAnalyticsView.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/analytics/MacroAnalyticsView.tsx#L121)
+- **File:** `MacroAnalyticsView.tsx` (historical location: `src/components/analytics/MacroAnalyticsView.tsx#L121`)
 - **Root cause:** `convertWeight(value, weightUnit)` used without rounding in chart data transformation. In kg mode, produced values like `102.0582` which showed excessive decimal precision in chart tooltips and Y-axis labels.
 - **Fix applied:** Added `Math.round(... * 10) / 10` to match the rounding pattern used in all other conversion call sites.
 
 #### BH-050 · `handleBackspace` treats weight value `0` as null — **RESOLVED 2026-04-13**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [useWorkoutKeyboard.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWorkoutKeyboard.ts#L149)
+- **File:** `useWorkoutKeyboard.ts` (historical location: `src/hooks/useWorkoutKeyboard.ts#L149`)
 - **Root cause:** `numValue && !isNaN(numValue)` is falsy when `numValue === 0`. Typing or backspacing to `0` silently stored `null` instead of `0`, making bodyweight exercises impossible to set to 0 weight.
 - **Fix applied:** Changed to `numValue != null && !isNaN(numValue)`.
 
 #### BH-042 · React key collision for warmup sets in HistoryTab — **RESOLVED 2026-04-10**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [HistoryTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/exerciseDetails/HistoryTab.tsx#L64)
+- **File:** `HistoryTab.tsx` (historical location: `src/components/exerciseDetails/HistoryTab.tsx#L64`)
 - **Root cause:** Set row keys used `{set.setNumber}-${set.type}`. Warmup sets all had `setNumber: 0` and `type: 'warmup'`, so multiple warmups produced duplicate keys.
 - **Fix applied:** Changed `.map((set) => ...)` to `.map((set, idx) => ...)` and key to `key={idx}`.
 
 #### BH-041 · `ExerciseCard` info button `as any` cast documented — **RESOLVED 2026-04-10**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [ExerciseCard.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/ExerciseCard.tsx#L235)
+- **File:** `ExerciseCard.tsx` (historical location: `src/components/ExerciseCard.tsx#L235`)
 - **Root cause:** Cross-stack navigation `as any` needed for nested params but lacked eslint-disable comment.
 - **Fix applied:** Added `// eslint-disable-next-line @typescript-eslint/no-explicit-any — cross-stack navigation requires untyped nested params (BH-041)` comment.
 
 #### BH-040 · Analytics Hub and Widget deep-link defaulted to wrong tab — **RESOLVED 2026-04-10**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [ExerciseListView.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/analytics/ExerciseListView.tsx#L81-L84), [WidgetGrid.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/widgets/WidgetGrid.tsx#L259-L262)
+- **File:** `ExerciseListView.tsx` (historical location: `src/components/analytics/ExerciseListView.tsx#L81-L84`), `WidgetGrid.tsx` (historical location: `src/components/widgets/WidgetGrid.tsx#L259-L262`)
 - **Root cause:** Both callers navigated to `ExerciseDetails` without `initialTab` param. Screen defaulted to `'about'` instead of `'charts'` (PRD requirement for Path A and Path C).
 - **Fix applied:** Added `initialTab: 'charts'` to navigation params in both `ExerciseListView.tsx` and `WidgetGrid.tsx`.
 
 #### BH-039 · `AboutTab` permanent spinner on missing exercise — **RESOLVED 2026-04-10**
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
-- **File:** [AboutTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/exerciseDetails/AboutTab.tsx#L114-L130)
+- **File:** `AboutTab.tsx` (historical location: `src/components/exerciseDetails/AboutTab.tsx#L114-L130`)
 - **Root cause:** `getExerciseById` returning `null` caused `if (loading || !exercise)` to show spinner forever.
 - **Fix applied:** Added `notFound` state. When exercise is null after fetch, shows `MaterialIcons error-outline` icon with "Exercise not found" message.
 
 #### BH-038 · `handleLoadMore` pagination race in HistoryTab — **RESOLVED 2026-04-10**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [HistoryTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/exerciseDetails/HistoryTab.tsx#L124-L134)
+- **File:** `HistoryTab.tsx` (historical location: `src/components/exerciseDetails/HistoryTab.tsx#L124-L134`)
 - **Root cause:** `loadingMore` state guard was async (batched React state), allowing `onEndReached` to fire twice before the guard engaged.
 - **Fix applied:** Added `loadingMoreRef = useRef(false)` as a synchronous guard. Set `true` immediately before async fetch, `false` on completion. Removed `loadingMore` from the `useCallback` dep array.
 
 #### BH-037 · Duration input logs reps instead of duration — **RESOLVED 2026-03-30**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx), [useWorkoutKeyboard.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useWorkoutKeyboard.ts), [ExerciseCard.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/ExerciseCard.tsx)
+- **File:** [SetRow.tsx](../../../src/components/SetRow.tsx), [useWorkoutKeyboard.ts](../../../src/hooks/useWorkoutKeyboard.ts), [ExerciseCard.tsx](../../../src/components/ExerciseCard.tsx)
 - **Root cause:** The custom numeric keyboard was hardcoded to `'weight' | 'reps'`, and clicking the duration field incorrectly focused `'reps'`. Typing updated the `reps` field in state, but the UI displayed the untouched `duration` field, rendering duration un-loggable.
 - **Fix applied:** Added `'duration'` to `FocusState.field` union. Rewrote `useWorkoutKeyboard.ts` with 3-way branching in all handlers (`handleKeyPress`, `handleBackspace`, `handleClear`, `handleAdjust`, `handleNext`). Updated `SetRow.tsx` to pass `'duration'` from the duration cell. Added `isDurationFocused` prop for highlight ring. Updated `getKeyboardFieldType` and `getFieldLabel` to return correct type/label.
 
 #### BH-033 · Superset cards rendered without ErrorBoundary wrapping — **RESOLVED 2026-03-30**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [SupersetGroup.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/workout/SupersetGroup.tsx)
+- **File:** [SupersetGroup.tsx](../../../src/components/workout/SupersetGroup.tsx)
 - **Root cause:** ExerciseCards in `SupersetGroup` were rendered directly without `<ErrorBoundary>` wrapping, unlike standalone cards in `WorkoutScreen`.
 - **Fix applied:** Wrapped each `<ExerciseCard>` inside the superset group's `.map()` with `<ErrorBoundary fallback="card" label={ex.exercise.name}>`.
 
 #### BH-032 · `handleDiscardWorkout` captured in stale BackHandler closure — **RESOLVED 2026-03-30**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx)
+- **File:** [WorkoutScreen.tsx](../../../src/screens/WorkoutScreen.tsx)
 - **Root cause:** `handleDiscardWorkout` referenced `handleHideKeyboard` (recreated each render) but was not memoized, and the BackHandler `useEffect` didn't include it in deps.
 - **Fix applied:** Wrapped `handleDiscardWorkout` in `useCallback` with `[handleHideKeyboard, discardWorkout]` deps, and added `handleDiscardWorkout` to the BackHandler `useEffect` deps.
 
 #### BH-035 · PlateCalculator rejects barbell-only weight as invalid — **RESOLVED 2026-03-30**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [PlateCalculator.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/PlateCalculator.tsx)
+- **File:** [PlateCalculator.tsx](../../../src/components/PlateCalculator.tsx)
 - **Root cause:** `const isValid = weight > barbellWeight` used strict `>`, rejecting barbell-only weight (e.g., 45 lbs).
 - **Fix applied:** Changed to `>=`. Added ternary: when `isValid && plates.length === 0`, shows "Barbell only — no plates needed".
 
 #### BH-034 · `replaceExercise` doesn't clear `collapsedExercises` — **RESOLVED 2026-03-30**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [workoutStore.ts](file:///c:/Users/teddy/projects/workout-app/src/stores/workoutStore.ts)
+- **File:** [workoutStore.ts](../../../src/stores/workoutStore.ts)
 - **Root cause:** `replaceExercise` swapped the exercise definition and reset sets to pending, but didn't remove the exercise ID from `collapsedExercises`.
 - **Fix applied:** Added `collapsedExercises.delete(exerciseId)` and included `collapsedExercises: updatedCollapsed` in the `set()` call.
 
 #### BH-031 · `pulseAnim` / `swipeHintAnim` missing from `useEffect` deps — **RESOLVED 2026-03-30**
 - **Severity:** Low
 - **Original status:** 🔴 Confirmed
-- **File:** [SetRow.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SetRow.tsx)
+- **File:** [SetRow.tsx](../../../src/components/SetRow.tsx)
 - **Root cause:** `useEffect` deps didn't include `pulseAnim` or `swipeHintAnim` despite referencing them.
 - **Fix applied:** Added `pulseAnim` to line 112's deps and `swipeHintAnim` to line 140's deps.
 
 #### BH-030 · `WidgetEditorModal` internal state not reset on external visibility toggle — **RESOLVED 2026-03-28**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [WidgetEditorModal.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/widgets/WidgetEditorModal.tsx)
+- **File:** [WidgetEditorModal.tsx](../../../src/components/widgets/WidgetEditorModal.tsx)
 - **Root cause:** Internal state (`showCatalog`, `showExercisePicker`, `exerciseSearch`) persisted when `visible` was toggled externally without `handleClose`.
 - **Fix applied:** Added `useEffect` that resets internal state when `visible` transitions to `false`.
 
 #### BH-029 · `ProfileScreen.loadConfig` uses always-true `>= 0` length check — **RESOLVED 2026-03-28**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [ProfileScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ProfileScreen.tsx)
+- **File:** [ProfileScreen.tsx](../../../src/screens/ProfileScreen.tsx)
 - **Root cause:** `settings.widgetConfig.length >= 0` always true for any array. Misleading guard.
 - **Fix applied:** Simplified to `if (settings.widgetConfig)` — clearer intent.
 
 #### BH-027 · `SwipeableTabScreen` `useEffect` missing shared values in deps — **RESOLVED 2026-03-28**
 - **Severity:** Low
 - **Original status:** 🔴 Confirmed
-- **File:** [SwipeableTabScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/SwipeableTabScreen.tsx)
+- **File:** [SwipeableTabScreen.tsx](../../../src/components/SwipeableTabScreen.tsx)
 - **Root cause:** `useEffect` referenced `translateX` and `opacity` but only had `[isFocused]` in deps.
 - **Fix applied:** Added `translateX` and `opacity` to the dependency array.
 
 #### BH-026 · `TrendsTab.loadSparklines` stale `autoSelectTypeId` — **RESOLVED 2026-03-28**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [TrendsTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/TrendsTab.tsx)
+- **File:** [TrendsTab.tsx](../../../src/components/measurements/TrendsTab.tsx)
 - **Root cause:** `loadSparklines` memoized with empty deps; `autoSelectTypeId` captured from first render.
 - **Fix applied:** Added `autoSelectTypeId` to `useCallback` dependency array.
 
 #### BH-025 · `GoalProgressWidget` progress calculation wrong for regression — **RESOLVED 2026-03-28**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [GoalProgressWidget.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/widgets/GoalProgressWidget.tsx)
+- **File:** [GoalProgressWidget.tsx](../../../src/components/widgets/GoalProgressWidget.tsx)
 - **Root cause:** `Math.abs(current - starting)` erased direction, showing false progress when user regressed past starting value.
 - **Fix applied:** Replaced with directional formula `(current - starting) / (target - starting)` clamped to [0, 1]. Works for both gain and loss goals.
 
 #### BH-024 · Fire-and-forget `refreshAllGoalProgress()` + service→store coupling — **RESOLVED 2026-03-24**
 - **Severity:** High
 - **Original status:** 🟡 Plausible
-- **File:** [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts), [measurementService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/measurementService.ts)
+- **File:** [workoutService.ts](../../../src/services/workoutService.ts), [measurementService.ts](../../../src/services/measurementService.ts)
 - **Root cause:** Fire-and-forget `.then().catch()` pattern left uncovered rejection path; services imported `useGoalCelebrationStore` violating guardrail #9.
 - **Fix applied:** `saveWorkout`/`updateWorkout` now return `Goal[]`; `logMeasurement` returns `{ measurement, completedGoals }`. All three services properly `await refreshAllGoalProgress()`. Celebration logic moved to callers (`WorkoutScreen.tsx`, `MeasurementsScreen.tsx`). Store import removed from both services.
 
 #### BH-023 · `goalProgressService` 1RM/reps queries include abandoned workouts — **RESOLVED 2026-03-24**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [goalProgressService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/goalProgressService.ts)
+- **File:** [goalProgressService.ts](../../../src/services/goalProgressService.ts)
 - **Root cause:** 6 SQL queries (3 single-goal compute + 3 batch) had no `JOIN workouts` and no `w.status = 'completed'` filter. Abandoned workouts inflated goal progress.
 - **Fix applied:** Added `JOIN workouts w ON w.id = we.workout_id` and `AND w.status = 'completed'` to all 6 queries: `computeExercise1RM()`, `computeExerciseVolume()`, `computeExerciseMaxReps()`, and their batch equivalents in `refreshAllGoalProgress()`.
 
 #### BH-022 · `getProgressPercent` returns misleading percentage for loss goals — **RESOLVED 2026-03-23**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [GoalCard.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/goals/GoalCard.tsx#L50-L63), [GoalDetailModal.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/goals/GoalDetailModal.tsx#L41-L54)
+- **File:** `GoalCard.tsx` (historical location: `src/components/goals/GoalCard.tsx#L50-L63`), `GoalDetailModal.tsx` (historical location: `src/components/goals/GoalDetailModal.tsx#L41-L54`)
 - **Root cause:** `(currentBest / targetValue) * 100` gave 109% clamped to 100% for a loss goal (e.g., 185/170). Misleading progress bar.
 - **Fix applied:** Added direction detection (`targetValue < startingValue`); loss goals now compute `((starting - current) / (starting - target)) * 100`.
 
 #### BH-021 · Stale closure in `selectExerciseMetric` — **RESOLVED 2026-03-23**
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
-- **File:** [useGoalCreation.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useGoalCreation.ts#L187-L204)
+- **File:** `useGoalCreation.ts` (historical location: `src/hooks/useGoalCreation.ts#L187-L204`)
 - **Root cause:** `state.exercise?.id` read from outer closure after `setState` call in the same callback, risking a stale value.
 - **Fix applied:** Captured `exerciseId` from `prev` argument inside the `setState` updater function. Removed `state.exercise?.id` dependency.
 
 #### BH-020 · `updateWorkout` fire-and-forget doesn't celebrate completed goals — **RESOLVED 2026-03-23**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts#L258-L265)
+- **File:** `workoutService.ts` (historical location: `src/services/workoutService.ts#L258-L265`)
 - **Root cause:** `updateWorkout` only logged completed goals to console, unlike `saveWorkout` and `logMeasurement` which called `celebrate()`.
 - **Fix applied:** Replaced `console.log` loop with `useGoalCelebrationStore.getState().celebrate(completed)`.
 
 #### BH-019 · `refreshAllGoalProgress` completion check wrong for loss goals — **RESOLVED 2026-03-23**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [goalService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/goalService.ts#L419-L428)
+- **File:** `goalService.ts` (historical location: `src/services/goalService.ts#L419-L428`)
 - **Root cause:** `currentBest >= targetValue` was always used, but for loss goals (target < starting), `<=` should be used.
 - **Fix applied:** Added `isLossGoal` detection. Loss goals use `<=`, gain goals use `>=`.
 
 #### BH-013 · "View Comparison" button is a no-op — **RESOLVED 2026-03-23**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [GalleryTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L661-L666)
+- **File:** `GalleryTab.tsx` (historical location: `src/components/measurements/GalleryTab.tsx#L661-L666`)
 - **Root cause:** `CompareView` auto-rendered when 2 photos selected, but the "View Comparison" button `onPress` was a stub.
 - **Fix applied:** Added `showCompare` state to gate the `CompareView` modal behind the button press. Button now sets `showCompare(true)`, and `onClose` resets all compare state.
 
 #### BH-014 · `getLatestMeasurements` returns arbitrary values when multiple entries exist on same date — **RESOLVED 2026-03-23**
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
-- **File:** [measurementService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/measurementService.ts#L257-L294)
+- **File:** `measurementService.ts` (historical location: `src/services/measurementService.ts#L257-L294`)
 - **Root cause:** `INNER JOIN` on `recorded_at = max_date` could match multiple rows with no tiebreaker.
 - **Fix applied:** Added `MAX(created_at) AS max_created` to subquery and `AND m.created_at = latest.max_created` to join condition.
 
 #### BH-015 · Hardcoded "lbs" unit in overlay summary and tooltip — **RESOLVED 2026-03-23**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [TrendsTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/TrendsTab.tsx#L441-L510)
+- **File:** `TrendsTab.tsx` (historical location: `src/components/measurements/TrendsTab.tsx#L441-L510`)
 - **Root cause:** Three hardcoded `lbs` string literals in the 1RM overlay tooltip, latest row, and change row.
 - **Fix applied:** Replaced all three with the dynamic `{unit}` variable, which correctly reflects the user's kg/lbs preference.
 
 #### BH-017 · `PhotoViewer` doesn't guard `currentIndex` against out-of-bounds after delete — **RESOLVED 2026-03-23**
 - **Severity:** Low
 - **Original status:** 🟡 Plausible
-- **File:** [GalleryTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/GalleryTab.tsx#L186-L207)
+- **File:** `GalleryTab.tsx` (historical location: `src/components/measurements/GalleryTab.tsx#L186-L207`)
 - **Root cause:** `currentIndex` was local state not clamped when `photos` array shrank after deletion.
 - **Fix applied:** Added `useEffect` watching `photos.length` to clamp `currentIndex` to `Math.min(currentIndex, photos.length - 1)`.
 
 #### BH-018 · Duplicated `generateId()` utility across measurement and photo services — **RESOLVED 2026-03-23**
 - **Severity:** Low
 - **Original status:** 🔴 Confirmed
-- **File:** [measurementService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/measurementService.ts), [photoService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/photoService.ts)
+- **File:** [measurementService.ts](../../../src/services/measurementService.ts), [photoService.ts](../../../src/services/photoService.ts)
 - **Root cause:** Identical UUID v4 `generateId()` function copy-pasted into both files.
 - **Fix applied:** Extracted to shared `src/utils/uuid.ts`. Both services now import from there.
 
 #### BH-012 · Overlay `data2` length mismatch causes chart crash or misalignment — **RESOLVED 2026-03-23**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [TrendsTab.tsx](file:///c:/Users/teddy/projects/workout-app/src/components/measurements/TrendsTab.tsx#L294-L311)
+- **File:** `TrendsTab.tsx` (historical location: `src/components/measurements/TrendsTab.tsx#L294-L311`)
 - **Root cause:** `.filter(d => d.value > 0)` on `overlayChartData` shrunk `data2` relative to `data`, breaking gifted-charts' 1:1 index alignment.
 - **Fix applied:** Removed the `.filter()` call. Added `hasAnyOverlay` flag to gate overlay rendering. The interpolation pass already fills gaps with nearest-neighbor values.
 
 #### BH-001 · ISO-week mismatch between SQLite `%W` and JS `getISOWeekNumber()` — **RESOLVED 2026-03-14**
 - **Severity:** High
 - **Original status:** 🟡 Plausible
-- **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts)
+- **File:** [analyticsService.ts](../../../src/services/analyticsService.ts)
 - **Root cause:** SQLite `strftime('%W', ...)` uses non-ISO week numbering while JS `getISOWeekNumber()` uses ISO 8601. These disagreed near year boundaries.
 - **Fix applied:** Streak calculation replaced with raw `DATE(completed_at)` fetches; week keys computed in JS via `getISOWeekYear()` / `toISOWeekKey()`. Chart `buildBucketExpression` `per_week` case also updated to use ISO 8601 Thursday-pivot formula (`date(col, '-3 days', 'weekday 4')`) instead of `strftime('%W')`.
 
 #### BH-003 · `Text.onPress` replaced with `TouchableOpacity` in RangePills — **RESOLVED 2026-03-14**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [ExerciseAnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx)
+- **File:** `ExerciseAnalyticsScreen.tsx` (historical path: `src/screens/ExerciseAnalyticsScreen.tsx`)
 - **Root cause:** `RangePills` used `<Text onPress>` with mixed View/Text styles — no touch feedback, broken `borderRadius` on Android.
 - **Fix applied:** Replaced with `<TouchableOpacity>` wrapping `<Text>`, split the `pill` style into container and text styles.
 
 #### BH-004 · `getBestWeightForReps` returns correct `achieved_date` — **RESOLVED 2026-03-14**
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
-- **File:** [analyticsService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/analyticsService.ts)
+- **File:** [analyticsService.ts](../../../src/services/analyticsService.ts)
 - **Root cause:** `GROUP BY ws.reps` with `MAX(ws.weight)` left `achieved_date` as a non-aggregated bare column.
 - **Fix applied:** Replaced with CTE using `ROW_NUMBER()` window function.
 
 #### BH-005 · Duration excluded from Breakdown tab — **RESOLVED 2026-03-14**
 - **Severity:** Medium
 - **Original status:** 🟡 Plausible
-- **File:** [AnalyticsScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/AnalyticsScreen.tsx)
+- **File:** [AnalyticsScreen.tsx](../../../src/screens/AnalyticsScreen.tsx)
 - **Root cause:** Duration can't meaningfully be distributed per muscle group.
 - **Fix applied:** Added `BREAKDOWN_METRICS` constant excluding `duration`, passed via optional `items` prop on `MetricSelector`.
 
 #### BH-006 · Analytics screens wrapped in `ErrorBoundary` — **RESOLVED 2026-03-14**
 - **Severity:** Low
 - **Original status:** 🔴 Confirmed
-- **File:** [AppNavigator.tsx](file:///c:/Users/teddy/projects/workout-app/src/navigation/AppNavigator.tsx)
+- **File:** [AppNavigator.tsx](../../../src/navigation/AppNavigator.tsx)
 - **Root cause:** Analytics screens were only covered by the outer ProfileStack boundary. A chart crash would take down the entire stack.
 - **Fix applied:** Added `AnalyticsScreenWithBoundary` and `ExerciseAnalyticsScreenWithBoundary` wrapper components in AppNavigator.
 
 #### BH-011 · `updateWorkout` not exported in default export object of `workoutService.ts` — **RESOLVED 2026-03-17**
 - **Severity:** Low
 - **Original status:** 🔴 Confirmed
-- **File:** [workoutService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/workoutService.ts#L431-L439)
+- **File:** `workoutService.ts` (historical location: `src/services/workoutService.ts#L431-L439`)
 - **Root cause:** `updateWorkout` was a named export but missing from the default export object.
 - **Fix applied:** Added `updateWorkout` to the default export object.
 
 #### BH-010 · `navigationRef` typed as `any` — violates conventions guardrail #2 — **RESOLVED 2026-03-17**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [navigationRef.ts](file:///c:/Users/teddy/projects/workout-app/src/navigation/navigationRef.ts)
+- **File:** [navigationRef.ts](../../../src/navigation/navigationRef.ts)
 - **Root cause:** `createNavigationContainerRef<any>()` and untyped `tabName: string` parameter.
 - **Fix applied:** Used existing `RootTabParamList` from `AppNavigator.tsx`. Typed `tabName` as `keyof RootTabParamList`. Removed `as never` cast.
 
 #### BH-009 · `getWorkoutsForDate` casts `SetRow` without `workout_exercise_id` in type — **RESOLVED 2026-03-17**
 - **Severity:** Medium
 - **Original status:** 🔴 Confirmed
-- **File:** [calendarService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L335-L350)
+- **File:** `calendarService.ts` (historical location: `src/services/calendarService.ts#L335-L350`)
 - **Root cause:** Used inline `as SetRow & { workout_exercise_id: string }` cast instead of the existing `SetRowWithParent` interface.
 - **Fix applied:** Replaced `getAllAsync<SetRow>` with `getAllAsync<SetRowWithParent>` and removed the inline cast.
 
 #### BH-008 · `backfillPersonalRecords` uses manual `BEGIN/COMMIT` instead of `withTransactionAsync` — **RESOLVED 2026-03-17**
 - **Severity:** High
 - **Original status:** 🟡 Plausible
-- **File:** [calendarService.ts](file:///c:/Users/teddy/projects/workout-app/src/services/calendarService.ts#L545-L600)
+- **File:** `calendarService.ts` (historical location: `src/services/calendarService.ts#L545-L600`)
 - **Root cause:** Manual `BEGIN`/`COMMIT`/`ROLLBACK` pattern was inconsistent with the rest of the codebase and risked partial writes on failure.
 - **Fix applied:** Replaced with `db.withTransactionAsync()`, removed manual rollback catch block.
 
 #### BH-007 · `finishWorkout` reads stale `isEditMode` / `original*` after `set()` clears them — **RESOLVED 2026-03-17**
 - **Severity:** High
 - **Original status:** 🔴 Confirmed
-- **File:** [WorkoutScreen.tsx](file:///c:/Users/teddy/projects/workout-app/src/screens/WorkoutScreen.tsx#L126-L200)
+- **File:** `WorkoutScreen.tsx` (historical location: `src/screens/WorkoutScreen.tsx#L126-L200`)
 - **Root cause:** `finishWorkout()` resets `isEditMode`/`original*` to `false`/`null` in the Zustand store before the screen reads them to decide between `updateWorkout` vs `saveWorkout`.
 - **Fix applied:** Snapshot `isEditMode`, `originalDuration`, `originalCompletedAt`, `originalStartedAt` into local `const`s before calling `finishWorkout()`.
 
 #### BH-002 · Missing cleanup return in `useExerciseAnalytics` web path — **RESOLVED 2026-03-14**
 - **Severity:** High
 - **Original status:** ➖ Accepted
-- **File:** [useExerciseAnalytics.ts](file:///c:/Users/teddy/projects/workout-app/src/hooks/useExerciseAnalytics.ts)
+- **File:** [useExerciseAnalytics.ts](../../../src/hooks/useExerciseAnalytics.ts)
 - **Root cause:** Web mock-data path in `useEffect` returned bare `return;` instead of a cleanup function, breaking React's cleanup contract.
 - **Fix applied:** Changed `return;` to `return () => {};` so both code paths consistently return cleanup functions.
 

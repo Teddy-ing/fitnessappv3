@@ -7,12 +7,12 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useIsFocused } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors, withAlpha } from '../theme';
 import { ProfileStackParamList } from '../navigation/AppNavigator';
 import { WidgetConfig, DEFAULT_WIDGETS } from '../models/widget';
 import { getSettings } from '../services';
@@ -24,20 +24,23 @@ type ProfileScreenProps = {
 };
 
 // Dashboard grid items
-const DASHBOARD_ITEMS: {
+type DashboardItem = {
     key: string;
     label: string;
     icon: keyof typeof MaterialIcons.glyphMap;
     route: keyof ProfileStackParamList;
     color: string;
-}[] = [
-    { key: 'statistics', label: 'Statistics', icon: 'bar-chart', route: 'Analytics', color: '#a855f7' },
-    { key: 'calendar', label: 'Calendar', icon: 'calendar-today', route: 'Calendar', color: '#3b82f6' },
-    { key: 'measurements', label: 'Measurements', icon: 'straighten', route: 'Measurements', color: '#22c55e' },
-    { key: 'goals', label: 'Goals', icon: 'flag', route: 'Goals', color: '#f59e0b' },
-];
+};
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
+    const colors = useThemeColors();
+    const styles = useStyles();
+    const dashboardItems: DashboardItem[] = [
+        { key: 'statistics', label: 'Statistics', icon: 'bar-chart', route: 'Analytics', color: colors.accent.primary },
+        { key: 'calendar', label: 'Calendar', icon: 'calendar-today', route: 'Calendar', color: '#3b82f6' },
+        { key: 'measurements', label: 'Measurements', icon: 'straighten', route: 'Measurements', color: colors.accent.success },
+        { key: 'goals', label: 'Goals', icon: 'flag', route: 'Goals', color: colors.accent.warning },
+    ];
     const isFocused = useIsFocused();
     const [widgets, setWidgets] = useState<WidgetConfig[]>(DEFAULT_WIDGETS);
     const [editorVisible, setEditorVisible] = useState(false);
@@ -94,7 +97,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>YOUR DATA</Text>
                     <View style={styles.dashboardGrid}>
-                        {DASHBOARD_ITEMS.map((item) => (
+                        {dashboardItems.map((item) => (
                             <TouchableOpacity
                                 key={item.key}
                                 style={styles.dashboardCell}
@@ -102,7 +105,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                                 activeOpacity={0.7}
                             >
                                 <View style={styles.dashboardCard}>
-                                    <View style={[styles.dashboardIcon, { backgroundColor: `${item.color}20` }]}>
+                                    <View style={[styles.dashboardIcon, { backgroundColor: withAlpha(item.color, 0.125) }]}>
                                         <MaterialIcons name={item.icon} size={24} color={item.color} />
                                     </View>
                                     <Text style={styles.dashboardLabel}>{item.label}</Text>
@@ -133,7 +136,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -230,4 +233,4 @@ const styles = StyleSheet.create({
         top: spacing.md,
         right: spacing.md,
     },
-});
+}));

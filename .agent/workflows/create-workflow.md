@@ -1,101 +1,56 @@
 ---
-description: When and how to create new workflow documents
+description: Maintain a short reusable procedure when future work benefits from it
 ---
 
-# Create Workflow
+# Create or Update a Workflow
 
-A meta-workflow for documenting repeatable processes.
+**Updated: 2026-10-02.** Add a workflow when a repeated or error-prone procedure genuinely needs documenting. A completed feature does not automatically need its own workflow.
 
-## When to Create a Workflow
+## Content
 
-Create a new workflow when:
-- A process has been repeated 2+ times
-- Steps are complex enough to forget
-- Future agents or developers would benefit from documentation
-- A mistake was made that could be prevented with a checklist
+Keep the document focused on what the next developer needs:
 
-## Workflow Template
+1. Purpose and the date last verified.
+2. Required tools, access, files, or configuration.
+3. Ordered steps, with commands checked against the repository.
+4. How to verify the result and protect existing user data.
+5. Known failure modes and links to related guides.
 
-```markdown
+Use lowercase filenames with hyphens in `.agent/workflows/`. Keep product direction in knowledge files and dated outcomes in current progress. Historical plans should be clearly dated as artifacts rather than presented as current instructions.
+
+## Check before saving
+
+- The procedure agrees with [AGENTS.md](../../AGENTS.md).
+- File links and commands point to real project resources.
+- It does not add mandatory approval gates, separate QA chats, arbitrary line limits, automatic commits, or publication steps.
+- Verification claims describe work actually performed; future checks remain instructions.
+- Existing guidance is updated rather than duplicated.
+
+## Small template
+
+````markdown
 ---
-description: [One-line description of what this workflow accomplishes]
+description: One sentence describing the procedure
 ---
 
-# [Workflow Title]
+# Workflow Title
 
-[Brief intro explaining purpose, 1-2 sentences]
+**Updated: YYYY-MM-DD.** Purpose and scope.
 
 ## Prerequisites
 
-- [Required tools, access, or knowledge]
-- [Files or configurations needed]
+Required tools and context.
 
 ## Steps
 
-### 1. [Step Name]
-
-[Description of what to do]
-
-```command
-# Commands if applicable
-```
-
-### 2. [Step Name]
-
-[Description]
-
-- Sub-step details
-- More details
-
-### 3. [Continue as needed...]
+1. First action.
+2. Next action.
 
 ## Verification
 
-How to confirm the workflow completed successfully:
-- [ ] Check item 1
-- [ ] Check item 2
+Observable checks and any native-device requirements.
 
 ## Troubleshooting
 
-### [Common Issue 1]
-**Symptom:** [What goes wrong]
-**Solution:** [How to fix it]
-
-### [Common Issue 2]
-**Symptom:** [What goes wrong]
-**Solution:** [How to fix it]
-
-## Notes
-
-- [Additional context]
-- [Gotchas to remember]
-- [Related workflows]
-
----
-
-## Last Updated
-- Date: [YYYY-MM-DD]
-- Session Context: [What prompted the update]
-```
-
-## Naming Conventions
-
-- Use lowercase with hyphens: `add-feature.md`, `release-checklist.md`
-- Be specific: `add-exercise.md` not just `add.md`
-- Verb-noun format when possible: `setup-project.md`, `run-tests.md`
-
-## Where to Save
-
-All workflows go in: `.agent/workflows/`
-
-## Linking Workflows
-
-Reference other workflows when relevant:
-- "See `code-review.md` for audit procedure"
-- Cross-link to knowledge files when needed
-
----
-
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial workflow setup
+Known symptoms and safe recovery steps.
+````

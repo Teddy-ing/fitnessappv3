@@ -1,96 +1,37 @@
 ---
-description: Process for adding new exercises to the exercise database
+description: Add or maintain a built-in or custom exercise without breaking history
 ---
 
-# Add Exercise Workflow
+# Add an Exercise
 
-How to add new exercises to the app's exercise database.
+**Updated: 2026-10-02.** The built-in library lives in `src/data/exercises.ts`. Custom exercises and built-in favorite/hidden overrides use the SQLite-backed `exerciseService.ts`.
 
-## Prerequisites
+## Built-in exercise
 
-- Exercise database schema defined
-- Understanding of exercise categorization system
+1. Search the current seed library and import mappings for the same movement or variant.
+2. Add an entry using the existing `seedExercise` helper and a stable, unique ID. Never reuse an existing ID for a different movement; saved history, templates, and artwork depend on it.
+3. Use the types in `src/models/exercise.ts`:
+   - Category: strength, cardio, stretch, mobility, warmup, plyometric, or isometric.
+   - Primary/secondary muscles and equipment.
+   - Tracking flags for weight, reps, time, and distance. The model supports distance, but the current logging keyboard only exposes weight, reps, and duration.
+   - Optional description/instructions where supported.
+4. Check the helper's default tracking flags and override them for the actual exercise. Confirm comparable seeds before changing muscle contributions.
+5. Add/review illustration coverage through the [exercise illustration workflow](exercise-illustrations.md). Keep exact ID-to-movement mappings; generated registries are maintained by the packaging utility.
+6. Check `src/services/importParsers/exerciseMapper.ts` and exercise relationships if the movement needs competitor-name mapping or related-exercise suggestions. The exercise model has no general aliases or compound/isolation fields.
 
-## Exercise Data Structure
+Adding a seed does not itself require a database schema change. Changing persisted fields does; use the [migration workflow](database-migration.md).
 
-Each exercise needs:
-- **Name**: Canonical name (e.g., "Barbell Bench Press")
-- **Category**: Body part/muscle group (e.g., "Chest", "Back", "Legs")
-- **Equipment**: Required equipment (e.g., "Barbell", "Dumbbell", "Bodyweight")
-- **Type**: Movement type (e.g., "Compound", "Isolation")
-- **Aliases**: Alternative names for search (e.g., "Bench", "Flat Bench")
-- **Description**: Brief explanation (optional for MVP)
-- **Instructions**: How to perform (optional for MVP)
+## Custom exercise
 
-## Steps
+Use the app's custom-exercise flow and `createCustomExercise` in `src/services/exerciseService.ts`. Custom images are local paths and fall back gracefully when absent. Use the service's mutation APIs so exercise caches are invalidated.
 
-### 1. Verify Exercise Doesn't Exist
+## Verify
 
-- [ ] Search existing database for name
-- [ ] Check common aliases
-- [ ] Avoid duplicates
+- The exercise appears in the correct picker/search/filter results with the right equipment and tracking inputs.
+- It can be added to a workout and template, logged, saved, and reopened.
+- Favorite and hide/unhide changes persist.
+- Its artwork identifies the exact movement and displays without cropping important content.
+- Imported names map deliberately; do not collapse distinct variants.
+- Existing exercise IDs and history stay intact.
 
-### 2. Gather Exercise Info
-
-- [ ] Determine primary muscle group
-- [ ] Identify equipment needed
-- [ ] Classify as compound or isolation
-- [ ] List common aliases
-
-### 3. Add to Database
-
-*Exact process depends on data storage approach*
-
-For seeded database:
-```
-// Example structure (format TBD)
-{
-  id: "barbell-bench-press",
-  name: "Barbell Bench Press",
-  category: "Chest",
-  equipment: "Barbell",
-  type: "Compound",
-  aliases: ["bench", "flat bench", "bb bench"]
-}
-```
-
-### 4. Test
-
-- [ ] Exercise appears in search
-- [ ] Aliases work for search
-- [ ] Category filter shows exercise
-- [ ] Exercise can be added to workout
-- [ ] Sets can be logged for exercise
-
-### 5. Verify Import Compatibility
-
-- [ ] Check if exercise exists in major competitor exports
-- [ ] Add mapping if needed for import feature
-
-## Common Exercise Categories
-
-| Category | Examples |
-|----------|----------|
-| Chest | Bench Press, Flyes, Push-ups |
-| Back | Rows, Pull-ups, Lat Pulldown |
-| Shoulders | OHP, Lateral Raises, Face Pulls |
-| Legs | Squat, Deadlift, Leg Press, Lunges |
-| Arms | Curls, Tricep Extensions, Dips |
-| Core | Planks, Ab Wheel, Hanging Leg Raises |
-
-## Equipment Types
-
-- Barbell
-- Dumbbell
-- Kettlebell
-- Cable
-- Machine
-- Bodyweight
-- Band
-- Other
-
----
-
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial workflow setup
+Run typecheck and relevant exercise/import/artwork tests for code/data changes. Run `node scripts/exercise-art.cjs verify --require-complete` when built-in artwork or seeds change.

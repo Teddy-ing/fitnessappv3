@@ -40,7 +40,7 @@ jest.mock('react-native-safe-area-context', () => ({
     SafeAreaProvider: 'SafeAreaProvider', SafeAreaView: 'SafeAreaView',
 }));
 jest.mock('@expo/vector-icons', () => ({ MaterialIcons: 'MaterialIcons' }));
-jest.mock('../../../assets/exercise-placeholder.png', () => 1);
+jest.mock('../../../assets/exercise-placeholder.jpg', () => 1);
 jest.mock('../../../assets/exercises/optimized/bench-press-barbell.jpg', () => 101, { virtual: true });
 jest.mock('../../../assets/exercises/optimized/squat-barbell.jpg', () => 102, { virtual: true });
 jest.mock('../../../assets/exercises/optimized/barbell-curl.jpg', () => 103, { virtual: true });

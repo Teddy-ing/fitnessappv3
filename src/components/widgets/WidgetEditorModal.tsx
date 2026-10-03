@@ -12,21 +12,12 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import {
-    View,
-    Dimensions,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    ScrollView,
-    Alert,
-} from 'react-native';
+import { View, Dimensions, Text, Modal, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Crypto from 'expo-crypto';
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { spacing, typography, borderRadius, createThemedStyles, useThemeColors } from '../../theme';
 import {
     WidgetConfig,
     WidgetCatalogEntry,
@@ -58,6 +49,8 @@ export default function WidgetEditorModal({
     widgets,
     onWidgetsChange,
 }: WidgetEditorModalProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const insets = useSafeAreaInsets();
     const [showCatalog, setShowCatalog] = useState(false);
     const [showExercisePicker, setShowExercisePicker] = useState(false);
@@ -352,7 +345,7 @@ export default function WidgetEditorModal({
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     overlay: {
         flex: 1,
         backgroundColor: colors.overlay,
@@ -512,5 +505,5 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginLeft: spacing.xs,
     },
-});
+}));
 

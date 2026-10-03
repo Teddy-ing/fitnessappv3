@@ -6,45 +6,47 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { getFatigueRatio } from '../services/exerciseAnalyticsService';
 import { FatigueRatioResult, FatigueStatus } from '../models/analytics';
 
-// Status display config
-const STATUS_CONFIG: Record<FatigueStatus, {
-    label: string;
-    description: string;
-    icon: keyof typeof MaterialIcons.glyphMap;
-    color: string;
-    bg: string;
-}> = {
-    light: {
-        label: 'Light Week',
-        description: 'Volume is below your recent average — a deload or rest week.',
-        icon: 'spa',
-        color: '#22c55e',
-        bg: 'rgba(34, 197, 94, 0.12)',
-    },
-    normal: {
-        label: 'Normal Load',
-        description: 'Training volume is on track with your recent average.',
-        icon: 'check-circle',
-        color: colors.text.secondary,
-        bg: colors.background.secondary,
-    },
-    high: {
-        label: 'High Fatigue',
-        description: 'Volume is significantly above average — monitor recovery.',
-        icon: 'warning',
-        color: '#f97316',
-        bg: 'rgba(249, 115, 22, 0.12)',
-    },
-};
-
 export default function FatigueRatioBanner() {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    // Status display config follows the active palette.
+    const STATUS_CONFIG: Record<FatigueStatus, {
+        label: string;
+        description: string;
+        icon: keyof typeof MaterialIcons.glyphMap;
+        color: string;
+        bg: string;
+    }> = {
+        light: {
+            label: 'Light Week',
+            description: 'Volume is below your recent average — a deload or rest week.',
+            icon: 'spa',
+            color: '#22c55e',
+            bg: 'rgba(34, 197, 94, 0.12)',
+        },
+        normal: {
+            label: 'Normal Load',
+            description: 'Training volume is on track with your recent average.',
+            icon: 'check-circle',
+            color: colors.text.secondary,
+            bg: colors.background.secondary,
+        },
+        high: {
+            label: 'High Fatigue',
+            description: 'Volume is significantly above average — monitor recovery.',
+            icon: 'warning',
+            color: '#f97316',
+            bg: 'rgba(249, 115, 22, 0.12)',
+        },
+    };
+
     const [data, setData] = useState<FatigueRatioResult | null>(null);
 
     useEffect(() => {
@@ -95,7 +97,7 @@ export default function FatigueRatioBanner() {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         borderRadius: borderRadius.xl,
         padding: spacing.md,
@@ -146,4 +148,4 @@ const styles = StyleSheet.create({
         height: 28,
         backgroundColor: colors.background.tertiary,
     },
-});
+}));

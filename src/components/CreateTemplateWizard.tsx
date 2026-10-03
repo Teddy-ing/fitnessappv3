@@ -12,7 +12,6 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     ScrollView,
     Modal,
@@ -23,7 +22,7 @@ import { ExercisePicker } from '../components';
 import { getTemplates, createTemplateFromWorkout, type Template } from '../services';
 import { Exercise } from '../models/exercise';
 import { createWorkout, createWorkoutExercise } from '../models/workout';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { SplitScheduleItem } from '../models/split';
 
 interface PendingExercise {
@@ -44,6 +43,8 @@ export default function CreateTemplateWizard({
     onClose,
     onTemplateCreated,
 }: CreateTemplateWizardProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [templateName, setTemplateName] = useState('');
     const [step, setStep] = useState<'name' | 'exercises'>('name');
     const [pendingExercises, setPendingExercises] = useState<PendingExercise[]>([]);
@@ -314,7 +315,7 @@ export default function CreateTemplateWizard({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -367,7 +368,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalCreateText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
     },
@@ -484,4 +485,4 @@ const styles = StyleSheet.create({
         color: colors.accent.warning,
         fontWeight: typography.weight.medium,
     },
-});
+}));

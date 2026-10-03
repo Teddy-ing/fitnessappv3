@@ -9,13 +9,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../theme';
 import { CreateTemplateWizard, SplitListView, SplitFormView } from '../components';
 import {
     getSplits,
@@ -38,6 +37,7 @@ interface SplitsScreenProps {
 }
 
 export default function SplitsScreen({ visible, startCreating = false, onClose, onSplitSelected }: SplitsScreenProps) {
+    const styles = useStyles();
     const [splits, setSplits] = useState<Split[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [activeSplitState, setActiveSplitState] = useState<Split | null>(null);
@@ -211,7 +211,7 @@ export default function SplitsScreen({ visible, startCreating = false, onClose, 
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -242,4 +242,4 @@ const styles = StyleSheet.create({
     headerPlaceholder: {
         width: 50,
     },
-});
+}));

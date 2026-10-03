@@ -1,136 +1,109 @@
 ---
-description: Technical stack, dependencies, build commands, and project structure
+description: Current technical stack, data boundaries, native configuration, and build commands
 ---
 
 # Project Configuration
 
-## Project Type
+## Current configuration — 2026-10-02
 
-**Open Source** ✅
+This snapshot supersedes the initial January 2026 placeholders. The original reasons for choosing React Native and Expo still apply: one mobile codebase, a familiar TypeScript ecosystem, and manageable maintenance for a solo developer. Android development works on Windows; local iOS builds require macOS and Xcode.
 
-License: TBD (MIT, Apache 2.0, or GPL to consider)
+The app is named **IronJot**. The existing technical identifiers remain `workout-app` (package name and Expo slug), `com.workoutapp.app` (Android package and iOS bundle ID), and `workout_app.db` (database). These are compatibility identifiers, not unfinished display branding. Decide any identity change before store registration and account for existing installations and backups.
 
----
+The configured version is `0.1.0`. `LICENSE` contains GPLv3 and package metadata says MIT; the owner must resolve the mismatch before publication.
 
-## Technology Stack
+## Technology stack
 
-| Layer | Choice | Rationale |
-|-------|--------|----------|
-| **Framework** | React Native + Expo | Cross-platform, JS ecosystem, no Mac required for dev |
-| **Language** | TypeScript | Type safety, better tooling |
-| **State Management** | Zustand | Lightweight, minimal boilerplate, great TypeScript support |
-| **Local Database** | TBD | (SQLite via expo-sqlite, or WatermelonDB) |
-| **On-device ML** | TBD | (TensorFlow Lite, ONNX, or custom) |
-| **Cloud AI** | TBD | (OpenAI, Anthropic, or open-source) |
+Versions below are declared in `package.json`; `package-lock.json` is the reproducible dependency record.
 
-### Why React Native + Expo
+| Layer | Current choice |
+| --- | --- |
+| Mobile framework | Expo `~54.0.30`, React Native `0.81.5`, React `19.1.0` |
+| Language | TypeScript `~5.9.2`, strict app typechecking |
+| State | Zustand `^5.0.9` |
+| Local database | `expo-sqlite` `~16.0.10` |
+| Navigation | React Navigation 7; Workout and Profile tabs with nested stacks |
+| UI and animation | Reanimated 4, Gesture Handler, Gorhom Bottom Sheet, React Native SVG |
+| Charts | `react-native-gifted-charts` |
+| Files and transfer | Expo file system, document picker, sharing, Papa Parse, SheetJS |
+| Optional cloud backup | Native Google sign-in and Google Drive REST API |
+| Tests | Jest 30, ts-jest, React Native Testing Library |
 
-- Cross-platform (Android + iOS) from single codebase
-- No Mac required for Android development
-- Large ecosystem and community
-- Expo simplifies build/deploy pipeline
-- Good enough performance for this use case
+Personalization currently uses local statistics in `smartSuggestionsService.ts`, `exerciseSuggestionService.ts`, and `strengthProfileService.ts`. The early TensorFlow/ONNX and cloud-chatbot ideas did not become dependencies. There is no app backend or live multi-device synchronization.
 
-### Development Constraints
+## Data boundaries
 
-- **No Mac available** — iOS testing will require Expo Go or cloud builds
-- **Solo developer** — Framework choice prioritizes productivity over performance
-- **1 year timeline** — Room for iteration and polish
+- `src/services/database.ts` opens `workout_app.db`, enables WAL and foreign keys, and runs the versioned migrations in `src/services/migrations.ts`. The current schema is **v21**. Read the registry for the next version; never edit a shipped migration.
+- Services perform data access independently of Zustand stores. Reuse `hydration.ts`, formulas, batching helpers, and `withWriteLock` where applicable.
+- Weight is stored in pounds; use `src/utils/unitConversion.ts` at UI and import/export boundaries. Preserve the existing conventions for other measurements.
+- `src/stores/workoutPersistence.ts` persists an unfinished workout separately from completed database history.
+- `dataTransferService.ts` exports database tables as JSON and restores snapshots. Its `EXPORT_TABLES` list also defines the Drive backup payload. Keep new persisted fields and tables compatible with restore, imports, and clearing.
+- `exportService.ts` creates an `.xlsx` workbook for workouts, measurements, goals, and personal records. Competitor import uses separate parsers for supported FitNotes, Strong, and Hevy files.
+- Progress photos are local files with database records. The current JSON/Drive payload preserves their paths, not their image bytes; portable photo restoration remains a release gap.
+- `cloudBackupService.ts` keeps one latest JSON backup in Google's hidden app-data folder. It is an optional backup/replace-restore flow. Device-specific cloud connection settings are excluded from the snapshot.
 
----
+## Native development and commands
 
-## Rest timer delivery (updated 2026-09-29)
+Use Node.js **20.19.4 or newer**, matching the installed React Native package's engine requirement. Use a native development build because Google sign-in and other native integrations are not fully available in Expo Go. The generated `android/` and `ios/` folders are ignored by Git.
 
-JavaScript can pause when the app is backgrounded. The native notification scheduled for the absolute timer deadline owns the alert; the foreground interval only updates the display and haptics.
-
-- `App.tsx` mounts `useRestTimerLifecycle` once. It observes the timer store independently of screen navigation.
-- Starting or changing a timer replaces the native alarm. Skip, discard and successful workout save cancel it. Returning to the app synchronizes the clock without sending a second alert.
-- `restTimerNotificationController` guards asynchronous scheduling so stale requests cannot leave alarms behind after Skip or a newer set.
-- Android creates the audible `rest-timer` channel before requesting notification permission. The Expo config declares `SCHEDULE_EXACT_ALARM` and the notifications plugin.
-- On Android 12+, allow **Alarms & reminders → Workout App**, as well as notifications and sound. Settings → **Rest Timer Alerts** opens the relevant system settings. Without exact-alarm access, installed Expo native code uses inexact delivery and Android may delay it.
-- Native permission/config changes require rebuilding the Android app; a JavaScript reload is insufficient. Timer delivery must be checked on-device, including screen-off/background use.
-
-Keep notification services independent of stores. Do not reintroduce an immediate JavaScript notification on resume or depend on a background JS interval for delivery.
-
-### Data Storage
-- [ ] SQLite (local, Fitnotes-compatible)
-- [ ] Room (Android) / Core Data (iOS)
-- [ ] Realm
-- [ ] Custom JSON/file-based
-
-### Cloud Sync (Optional Feature)
-- [ ] Firebase
-- [ ] Supabase
-- [ ] Custom backend
-- [ ] Peer-to-peer sync
-
----
-
-## Project Structure
-
-```
-workout-app/
-├── .agent/                 # AI agent knowledge & workflows
-│   ├── knowledge/          # Project documentation
-│   └── workflows/          # Development procedures
-├── src/
-│   ├── components/         # Reusable UI components
-│   ├── screens/            # Full-screen views  
-│   ├── services/           # Business logic, data access
-│   ├── models/             # Data types and entities
-│   ├── hooks/              # Custom React hooks
-│   ├── navigation/         # Navigation configuration
-│   ├── theme/              # Colors, typography, spacing
-│   └── utils/              # Helper functions
-├── assets/                 # Images, fonts, etc.
-├── App.tsx                 # App entry point
-├── app.json                # Expo configuration
-├── package.json            # Dependencies
-├── README.md               # Project overview
-└── LICENSE                 # MIT License
-```
-
----
-
-## Build Commands
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm start
-
-# Run on Android
+```sh
+npm ci
 npm run android
-
-# Run on iOS (requires macOS)
+# On macOS with Xcode:
 npm run ios
-
-# Run on web
-npm run web
-
-# Type check
-npm run typecheck
-
-# Lint
-npm run lint
+# For an installed development build:
+npm start -- --dev-client
 ```
 
----
+```sh
+npm run typecheck
+npm test -- --runInBand
+npm run assets:branding
+node scripts/exercise-art.cjs verify --require-complete
+```
 
-## Dependencies (Current)
+The `web` script exists as a development convenience; it does not establish support for native storage, notifications, or sign-in in a browser. The lint script currently has no declared ESLint dependency or repository configuration. Do not report lint as a completed check until its tooling is configured.
 
-| Package | Version | Purpose |
-|---------|---------|----------|
-| expo | ~54.0.30 | Framework |
-| react | 19.1.0 | UI library |
-| react-native | 0.81.5 | Native bridge |
-| expo-status-bar | ~3.0.9 | Status bar control |
-| typescript | ~5.9.2 | Type checking |
+See [setup-project](../workflows/setup-project.md) for first builds and [release-checklist](../workflows/release-checklist.md) for production preparation. Current local Android `release` uses debug signing; creating a release-mode build alone does not make it a store-ready build. There is no checked-in EAS build configuration.
 
----
+## Branding and startup
 
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial project setup, placeholder for technical decisions
+IronJot's icon uses the barbell-and-pen mark. `assets/branding/ironjot.geometry.json` is the shared editable geometry for exported assets and the animated React Native mark. Run `npm run assets:branding` after changing it.
+
+The startup sequence lasts 2.5 seconds in a fresh app runtime. The mark assembles over the first 1,000 ms, the title reveals between 850 and 1,750 ms, and the finished design holds until initialization is ready. It does not replay on screen remounts or app resume within the same runtime. Reduced motion uses a static title and mark.
+
+Native display name, icons, splash, plugins, or permission changes require a native rebuild. If a native folder already exists, refresh it first:
+
+```sh
+npx expo prebuild --platform android --no-install
+# On macOS, for iOS:
+npx expo prebuild --platform ios --no-install
+```
+
+Preserve and review any local native customization when regenerating. Verify the installed splash in a release-mode build; the development launcher does not reproduce it reliably. An emulator-only APK architecture is not a phone distribution build.
+
+## Rest timer delivery
+
+JavaScript can pause in the background. A native notification scheduled for the absolute timer deadline owns the alert; the foreground interval updates the display and haptics.
+
+- `App.tsx` mounts `useRestTimerLifecycle` once, independently of screen navigation.
+- Starting or changing the timer replaces the alarm. Skip, discard, and successful workout save cancel it. Resume synchronizes the clock without a second alert.
+- `restTimerNotificationController` guards asynchronous scheduling against stale requests.
+- Android creates the audible `rest-timer` channel before requesting notification permission. Expo configuration declares `SCHEDULE_EXACT_ALARM` and the notifications plugin.
+- Settings → **Rest Timer Alerts** opens the relevant system settings. On Android versions that require exact-alarm access, check both **Alarms & reminders** and notification/sound access for IronJot. Without exact-alarm access, the installed native implementation may deliver late.
+- Verify screen-off, background, permission-denied, and resume behavior on a device. Do not replace native delivery with a background JavaScript interval or an immediate notification on resume.
+
+## Source map
+
+| Location | Responsibility |
+| --- | --- |
+| `App.tsx`, `src/components/startup/` | App initialization and launch branding |
+| `src/screens/`, `src/components/`, `src/hooks/` | Screens, controls, and interaction logic |
+| `src/navigation/` | Two-tab navigation and nested screen stacks |
+| `src/services/`, `src/stores/` | Persistence/domain operations and client state |
+| `src/models/`, `src/data/`, `src/utils/` | Shared models, built-in content, and helpers |
+| `src/theme/` | Purple and IronJot dark palettes and runtime styling |
+| `assets/branding/`, `assets/exercises/`, `scripts/` | Artwork sources, packaged assets, and generation utilities |
+| `.agent/knowledge/`, `.agent/workflows/` | Product context, dated project records, and reusable development procedures |
+
+Historical initial stack explorations are settled by the choices above. Product direction belongs in [app vision](app-vision.md); implementation outcomes and unresolved work belong in [current progress](current-progress.md).

@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Workout } from '../../models/workout';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { getWorkoutSummary, formatWorkoutDuration, formatWorkoutVolume } from '../../utils/workoutSummary';
 
 interface Props {
@@ -15,6 +15,8 @@ interface Props {
 }
 
 export default function WorkoutCompletion({ workout, weightUnit, onDone, onSaveTemplate }: Props) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const summary = useMemo(() => getWorkoutSummary(workout), [workout]);
 
     return (
@@ -22,7 +24,7 @@ export default function WorkoutCompletion({ workout, weightUnit, onDone, onSaveT
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.hero}>
                     <View style={styles.trophyHalo}>
-                        <LinearGradient colors={['#6b21a8', '#2e1065']} style={styles.trophy}>
+                        <LinearGradient colors={colors.gradient.celebration} style={styles.trophy}>
                             <MaterialIcons name="emoji-events" size={56} color="#fbbf24" />
                         </LinearGradient>
                         <View style={styles.check}><MaterialIcons name="check" size={20} color={colors.background.primary} /></View>
@@ -69,10 +71,11 @@ export default function WorkoutCompletion({ workout, weightUnit, onDone, onSaveT
 }
 
 function Stat({ value, label }: { value: string; label: string }) {
+    const styles = useStyles();
     return <View style={styles.stat}><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     content: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg, paddingBottom: spacing.xxl },
     hero: { alignItems: 'center', marginBottom: spacing.xl },
@@ -94,7 +97,7 @@ const styles = StyleSheet.create({
     savedText: { color: colors.text.secondary, fontSize: typography.size.xs },
     actions: { marginTop: spacing.xl, gap: spacing.sm },
     doneButton: { backgroundColor: colors.accent.primary, borderRadius: borderRadius.lg, alignItems: 'center', padding: spacing.md },
-    doneText: { color: colors.text.primary, fontSize: typography.size.lg, fontWeight: '700' },
+    doneText: { color: colors.text.onAccent, fontSize: typography.size.lg, fontWeight: '700' },
     templateButton: { minHeight: 48, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: spacing.xs },
     templateText: { color: colors.accent.tertiary, fontSize: typography.size.md, fontWeight: '500' },
-});
+}));

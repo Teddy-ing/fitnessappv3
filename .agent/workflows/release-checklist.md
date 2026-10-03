@@ -1,111 +1,76 @@
 ---
-description: Build, test, and publish process for app releases
+description: Prepare and verify an IronJot release
 ---
 
 # Release Checklist
 
-Comprehensive checklist for preparing and shipping a release.
+**Updated: 2026-10-02.** This is a reusable readiness checklist. Check items for the specific release being prepared and record its version/date. Completion does not authorize a commit, push, upload, publication, or release; those actions require the owner's explicit instruction under [AGENTS.md](../../AGENTS.md).
 
-## Prerequisites
+## Current first-release gaps
 
-- All planned features complete
-- No known critical bugs
-- Version number incremented
+- [ ] Set launch platforms and confirm production package/bundle IDs, signing, and version/build numbers.
+- [ ] Replace Settings placeholders: About, changelog, privacy policy, feedback address, rating destination, and any unfinished features.
+- [ ] Provide a normal Settings path for user data deletion; currently Clear All Data is a development tool.
+- [ ] Resolve photo backup portability: current JSON/Drive snapshots contain paths but not image files.
+- [ ] Resolve GPLv3 in `LICENSE` versus MIT in `package.json`.
+- [ ] Complete physical-device release testing and iOS verification if iOS is in the launch scope.
+- [ ] Decide whether developer support/tips belongs in the first release and choose the platform-appropriate implementation.
 
-## Pre-Release
+These gaps are also summarized in [current progress](../knowledge/current-progress.md). Store requirements should be checked against the target stores when preparing submission.
 
-### Code Quality
-- [ ] Run full code audit (see `code-review.md`)
-- [ ] All lint errors resolved
-- [ ] No compiler/build warnings
-- [ ] Dead code removed
+## Code and data readiness
 
-### Testing
-- [ ] Full test suite passes
-- [ ] Manual testing of critical paths:
-  - [ ] Start new workout
-  - [ ] Log sets for multiple exercises
-  - [ ] Complete and save workout
-  - [ ] View workout history
-  - [ ] Export data
-  - [ ] Import data (if applicable)
-- [ ] Test on multiple device sizes
-- [ ] Test offline functionality
-- [ ] Test upgrade path from previous version
+- [ ] Run `npm run typecheck` and `npm test -- --runInBand`; resolve regressions and identify any pre-existing failures.
+- [ ] Review substantive changes with a separate reviewer against acceptance criteria, data safety, and regression risks. Use the focused [code review](code-review.md) guide.
+- [ ] Run lint only if its dependency and configuration have been installed; both are currently absent.
+- [ ] Verify a fresh database and an upgrade from representative existing data. Preserve workout, exercise, template, split, settings, goal, and measurement identities.
+- [ ] Round-trip JSON and Drive backups on a separate test installation, including whatever photo support the release promises.
+- [ ] Verify supported competitor imports and spreadsheet export with realistic history and both weight units.
+- [ ] Confirm malformed, incompatible, or cancelled imports/restores leave data safe.
+- [ ] Check unfinished-workout recovery and repeated-tap/concurrent save behavior.
+- [ ] Verify local logging offline and with no Google account.
 
-### Data Safety
-- [ ] Existing user data preserved after upgrade
-- [ ] Database migrations work correctly
-- [ ] Export format backwards compatible
+## Native release build
 
-### Documentation
-- [ ] CHANGELOG.md updated
-- [ ] Version number updated in:
-  - [ ] App manifest/config
-  - [ ] About screen
-- [ ] Release notes written
+- [ ] Keep `app.json`, package version metadata, in-app version display, and export metadata consistent. Inspect current hard-coded versions before release.
+- [ ] Regenerate native projects after config/plugin/branding changes and preserve intended local customizations.
+- [ ] Configure production signing. The current local Android release build uses the debug key.
+- [ ] Confirm Google OAuth configuration for the production signing identity.
+- [ ] Build for the intended distribution target and device architectures. An emulator-only APK is not a phone distribution build.
+- [ ] Install and inspect the actual release-mode artifact. Verify name, launcher icon, splash, and startup behavior.
 
-## Build
+A local Android release-mode build can be made with:
 
-### Android
-
-```bash
-# Commands TBD based on framework
-# Example for typical Android build:
-./gradlew assembleRelease
-# or for Flutter:
-flutter build apk --release
+```sh
+npx expo prebuild --platform android --no-install
+npx expo run:android --variant release
 ```
 
-- [ ] Release build compiles successfully
-- [ ] APK size reasonable
-- [ ] ProGuard/R8 configured correctly (if applicable)
+This is useful for release-mode verification; it does not establish production signing or create a completed store submission. Local iOS builds require macOS/Xcode. There is no checked-in EAS build configuration; choose and document the distribution setup when it is established.
 
-### iOS (if applicable)
+## Device checks
 
-```bash
-# Commands TBD
-```
+- [ ] Start/log/save/reopen a workout, including templates, supersets, notes, editing history, and the numeric keyboard.
+- [ ] Background, lock, and resume during a workout and rest timer; check allowed/denied permissions, alarm cancellation, and duplicate alerts.
+- [ ] Test photos, file pickers, sharing, and Drive sign-in/restore on the target device.
+- [ ] Inspect both dark themes, large text, keyboard avoidance, safe areas, and common phone sizes.
+- [ ] Verify optional setup and tutorial can be skipped; existing users retain their data and launch experience.
+- [ ] Verify analytics, calendar, goals, and Profile widgets with empty and substantial histories.
+- [ ] Confirm Dev Tools and test-only entry points are absent in production, and support links lead to real destinations.
+- [ ] Check cold launch, failed initialization, and reduced-motion startup behavior.
 
-## Testing Release Build
+Record the actual device/build tested and any unavailable platform. Automated checks do not establish mobile layout or native behavior.
 
-- [ ] Install release build on test device
-- [ ] Verify all features work in release mode
-- [ ] No debug tools or logs visible
-- [ ] Performance acceptable
+## Public information and submission preparation
 
-## Publish
+- [ ] Write accurate store description, screenshots, release notes, support details, and public privacy policy.
+- [ ] Align privacy disclosures with local storage, optional Google Drive backup, progress photos, exports, and feedback.
+- [ ] Complete the target store's current account, testing, app-content, and privacy requirements.
+- [ ] Verify ratings and any support-payment flow against the target store's current rules.
+- [ ] Obtain explicit authorization before uploading or publishing.
 
-### Google Play Store
-- [ ] Screenshots up to date
-- [ ] Store description accurate
-- [ ] Upload AAB/APK
-- [ ] Set rollout percentage (staged rollout recommended)
-- [ ] Submit for review
+## After an authorized release
 
-### Alternative Distribution (if applicable)
-- [ ] GitHub Releases
-- [ ] APK download on website
-- [ ] F-Droid (if open source)
-
-## Post-Release
-
-- [ ] Monitor crash reports (24-48 hours)
-- [ ] Check store reviews
-- [ ] Update `current-progress.md` with release info
-- [ ] Tag release in git
-- [ ] Celebrate 🎉
-
-## Rollback Plan
-
-If critical issues discovered:
-1. Halt rollout in Play Console
-2. Identify issue
-3. Fix and re-release or rollback to previous version
-4. Post-mortem and document in knowledge files
-
----
-
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial workflow setup
+- Record the release version/date and meaningful verification in current progress.
+- Check available support channels and store feedback for launch issues; do not assume crash reporting is installed.
+- If a serious data or runtime issue appears, assess affected users and stop further rollout where possible. Prepare a forward fix; never assume an older binary can safely read a newer database schema.

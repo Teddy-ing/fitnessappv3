@@ -4,6 +4,20 @@ description: Product requirements document for the Widget System — modular, cu
 
 # Widget System PRD
 
+## Current app as of 2026-10-02
+
+This source-based status supersedes the original implementation plan. Root [AGENTS.md](../../../AGENTS.md) replaces historical line-count requirements; this refresh contains no new performance measurements.
+
+- All seven catalog types are available in `src/models/widget.ts`: streak, weekly wrap-up, bodyweight trend, goal progress, muscle balance, pinned exercise and workload/readiness. Workload/readiness uses a square default; time-series cards use rectangles.
+- `src/components/widgets/WidgetGrid.tsx` renders the configured cards and routes taps to their feature screens. `WidgetEditorModal` provides add/remove/reorder and exercise selection. Configuration is stored in `user_settings.widget_config` and travels with JSON/Drive database backups.
+- Profile has the implemented Statistics / Calendar / Measurements / Goals grid. Pinned exercise taps open `ExerciseDetails` on Charts, replacing the proposed `ExerciseAnalyticsScreen` destination.
+- Widgets subscribe to the live IronJot or Classic Purple palette. Bodyweight trend interpretation uses the active weight goal; the old purple-only styling examples are historical.
+- These are **in-app Profile cards**. OS home-screen widgets remain out of scope. The sub-100ms target below is a design target, not a measured release guarantee; device accessibility/layout and realistic-history performance still need release checks.
+
+## Historical PRD
+
+The original catalog and phases below are retained as design history; their future tense and open size choices are not the current implementation status.
+
 ## Overview
 
 The Widget System lets users customize their Profile screen with at-a-glance data cards. Widgets surface key metrics — streaks, goals, body trends, exercise PRs — so users feel the pull of progress every time they open the app.

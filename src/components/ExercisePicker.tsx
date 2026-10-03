@@ -26,7 +26,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Exercise, MuscleGroup, ExerciseCategory } from '../models/exercise';
 import { INDIVIDUAL_MUSCLE_FILTERS } from '../models/muscleGroups';
 import { getExercises, toggleExerciseFavorite, toggleExerciseHidden, getSettings, getSuggestedExercises } from '../services';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { useWorkoutStore } from '../stores';
 import AddExerciseScreen from '../screens/AddExerciseScreen';
 import ExercisePickerItem from './ExercisePickerItem';
@@ -61,6 +61,8 @@ export default function ExercisePicker({
     onClose,
     onSelect,
 }: ExercisePickerProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<CategoryTab>('all');
     const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
@@ -448,7 +450,7 @@ export default function ExercisePicker({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -522,7 +524,7 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.medium,
     },
     filterTabTextActive: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
     },
 
     // Category tabs
@@ -628,4 +630,4 @@ const styles = StyleSheet.create({
         backgroundColor: colors.separator,
         marginVertical: spacing.sm,
     },
-});
+}));

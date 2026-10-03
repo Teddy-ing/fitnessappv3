@@ -11,17 +11,10 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    ActivityIndicator,
-    BackHandler,
-} from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, BackHandler } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { getWeightUnitSync } from '../../hooks/useWeightUnit';
 import {
     getSparklineDataBatch,
@@ -46,6 +39,8 @@ interface TrendsTabProps {
 }
 
 export default function TrendsTab({ autoSelectTypeId }: TrendsTabProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const isFocused = useIsFocused();
     const [sparklineRows, setSparklineRows] = useState<SparklineRowData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -164,7 +159,7 @@ export default function TrendsTab({ autoSelectTypeId }: TrendsTabProps) {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     loading: {
         flex: 1,
         justifyContent: 'center',
@@ -207,4 +202,4 @@ const styles = StyleSheet.create({
         marginBottom: spacing.sm,
         textTransform: 'uppercase',
     },
-});
+}));

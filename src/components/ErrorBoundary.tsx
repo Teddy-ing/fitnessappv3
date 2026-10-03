@@ -16,8 +16,8 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 type FallbackType = 'screen' | 'card' | 'silent';
 
@@ -62,46 +62,53 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
             return this.props.children;
         }
 
-        const fallbackType = this.props.fallback ?? 'screen';
+        return <ErrorFallback fallback={this.props.fallback} label={this.props.label} error={this.state.error} onRetry={this.handleRetry} />;
+    }
+}
 
-        if (fallbackType === 'silent') {
-            return null;
-        }
+function ErrorFallback({ fallback, label, error, onRetry }: {
+    fallback?: FallbackType; label?: string; error: Error | null; onRetry: () => void;
+}) {
+    const styles = useStyles();
+    const fallbackType = fallback ?? 'screen';
 
-        if (fallbackType === 'card') {
-            return (
-                <View style={styles.cardFallback}>
-                    <Text style={styles.cardIcon}>⚠️</Text>
-                    <View style={styles.cardTextContainer}>
-                        <Text style={styles.cardTitle}>Failed to load</Text>
-                        <Text style={styles.cardMessage}>
-                            {this.props.label ?? 'This item'} encountered an error
-                        </Text>
-                    </View>
-                    <TouchableOpacity onPress={this.handleRetry} style={styles.cardRetryButton}>
-                        <Text style={styles.cardRetryText}>Retry</Text>
-                    </TouchableOpacity>
-                </View>
-            );
-        }
+    if (fallbackType === 'silent') {
+        return null;
+    }
 
-        // Screen fallback (default)
+    if (fallbackType === 'card') {
         return (
-            <View style={styles.screenFallback}>
-                <Text style={styles.screenIcon}>😵</Text>
-                <Text style={styles.screenTitle}>Something went wrong</Text>
-                <Text style={styles.screenMessage}>
-                    {this.state.error?.message ?? 'An unexpected error occurred'}
-                </Text>
-                <TouchableOpacity onPress={this.handleRetry} style={styles.retryButton}>
-                    <Text style={styles.retryButtonText}>Try Again</Text>
+            <View style={styles.cardFallback}>
+                <Text style={styles.cardIcon}>⚠️</Text>
+                <View style={styles.cardTextContainer}>
+                    <Text style={styles.cardTitle}>Failed to load</Text>
+                    <Text style={styles.cardMessage}>
+                        {label ?? 'This item'} encountered an error
+                    </Text>
+                </View>
+                <TouchableOpacity onPress={onRetry} style={styles.cardRetryButton}>
+                    <Text style={styles.cardRetryText}>Retry</Text>
                 </TouchableOpacity>
             </View>
         );
     }
+
+    // Screen fallback (default)
+    return (
+        <View style={styles.screenFallback}>
+            <Text style={styles.screenIcon}>😵</Text>
+            <Text style={styles.screenTitle}>Something went wrong</Text>
+            <Text style={styles.screenMessage}>
+                {error?.message ?? 'An unexpected error occurred'}
+            </Text>
+            <TouchableOpacity onPress={onRetry} style={styles.retryButton}>
+                <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
+        </View>
+    );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     // Screen-level fallback (full screen)
     screenFallback: {
         flex: 1,
@@ -135,7 +142,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
     },
     retryButtonText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
     },
@@ -176,4 +183,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         fontWeight: typography.weight.medium,
     },
-});
+}));

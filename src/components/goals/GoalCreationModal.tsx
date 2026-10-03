@@ -14,17 +14,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Modal,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { useGoalCreation, type PrefillParams, type CreationStep } from '../../hooks/useGoalCreation';
 import { getMeasurementTypes } from '../../services/measurementService';
 import { getSettings } from '../../services/preferencesService';
@@ -63,6 +57,8 @@ export default function GoalCreationModal({
     onCreated,
     prefillData,
 }: GoalCreationModalProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const wizard = useGoalCreation();
     const { state } = wizard;
 
@@ -298,7 +294,7 @@ export default function GoalCreationModal({
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -349,4 +345,4 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

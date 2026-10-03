@@ -1,0 +1,49 @@
+{
+  "viewBox": "0 0 512 512",
+  "background": "#252E33",
+  "coral": "#FF795F",
+  "cream": "#FFF8E9",
+  "duration": 1000,
+  "layers": [
+    {
+      "id": "paper",
+      "from": { "x": -35, "y": 22, "rotation": -6 },
+      "timing": [0, 0.65],
+      "paths": [
+        { "d": "M145 340 H326 L294 439 Q290 453 278 453 H87 Q68 453 76 438 L131 350 Q136 340 145 340 Z", "fill": "cream" },
+        { "d": "M330 343 L400 410 H348 Q330 410 330 393 Z", "fill": "cream" },
+        { "d": "M150 384 H251 M136 413 H217", "fill": "none", "stroke": "background", "strokeWidth": 11 }
+      ]
+    },
+    {
+      "id": "pen",
+      "from": { "x": 46, "y": -42, "rotation": 10 },
+      "timing": [0.08, 0.86],
+      "paths": [
+        { "d": "M311 139 L331 114 L376 150 L355 177 Z", "fill": "cream" },
+        { "d": "M246 249 L311 157 L339 178 L275 269 Q261 268 246 249 Z", "fill": "coral" },
+        { "d": "M235 251 L208 277 L187 355 L257 314 L275 277 Q254 273 235 251 Z", "fill": "cream", "stroke": "background", "strokeWidth": 8 },
+        { "d": "M228 300 L205 331", "fill": "none", "stroke": "background", "strokeWidth": 5 },
+        { "d": "M237 300 A9 9 0 1 1 219 300 A9 9 0 1 1 237 300 Z", "fill": "background" }
+      ]
+    },
+    {
+      "id": "upper-plates",
+      "from": { "x": -34, "y": -26, "rotation": -14 },
+      "timing": [0.17, 0.95],
+      "paths": [
+        { "d": "M243 98 L274 59 Q281 50 290 57 L297 62 Q305 68 299 77 L263 123 Q258 128 251 123 L244 118 Q235 111 243 98 Z", "fill": "coral" },
+        { "d": "M258 139 L319 62 Q327 50 337 58 L344 64 Q353 71 345 82 L285 159 Q277 170 267 161 L260 156 Q250 149 258 139 Z", "fill": "coral" }
+      ]
+    },
+    {
+      "id": "lower-plates",
+      "from": { "x": 42, "y": 28, "rotation": 12 },
+      "timing": [0.23, 1],
+      "paths": [
+        { "d": "M338 205 L393 135 Q400 125 410 132 L420 139 Q432 146 423 158 L366 230 Q359 240 349 232 L341 226 Q331 219 338 205 Z", "fill": "coral" },
+        { "d": "M380 224 L418 175 L433 185 Q443 191 436 202 L403 246 Q397 252 390 246 L382 240 Q374 234 380 224 Z", "fill": "coral" }
+      ]
+    }
+  ]
+}

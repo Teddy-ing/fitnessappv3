@@ -9,9 +9,9 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 
 interface SegmentOption {
     key: string;
@@ -29,12 +29,15 @@ interface SettingSegmentedRowProps {
 
 export default function SettingSegmentedRow({
     icon,
-    iconColor = colors.text.primary,
+    iconColor: providedIconColor,
     label,
     options,
     selectedKey,
     onSelect,
 }: SettingSegmentedRowProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    const iconColor = providedIconColor ?? colors.text.primary;
     const stacked = options.length > 2;
     return (
         <View style={[styles.container, stacked && styles.stackedContainer]}>
@@ -69,7 +72,7 @@ export default function SettingSegmentedRow({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -124,7 +127,7 @@ const styles = StyleSheet.create({
         color: colors.text.disabled,
     },
     segmentTextActive: {
-        color: '#ffffff',
+        color: colors.text.onAccent,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

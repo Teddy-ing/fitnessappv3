@@ -6,15 +6,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { getBestWeightForReps } from '../../services/exerciseAnalyticsService';
 import { BestWeightForRep } from '../../models/analytics';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
@@ -39,6 +33,8 @@ interface RecordsTabProps {
 }
 
 export default function RecordsTab({ exerciseId }: RecordsTabProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [records, setRecords] = useState<RecordRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [bestEstIndex, setBestEstIndex] = useState(-1);
@@ -148,7 +144,7 @@ export default function RecordsTab({ exerciseId }: RecordsTabProps) {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     scrollView: {
         flex: 1,
     },
@@ -242,4 +238,4 @@ const styles = StyleSheet.create({
         width: 60,
         textAlign: 'right',
     },
-});
+}));

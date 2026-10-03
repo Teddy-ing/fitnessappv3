@@ -8,8 +8,8 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors, spacing, typography } from '../../theme';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { spacing, typography, createThemedStyles } from '../../theme';
 import { formatElapsedTime } from '../../hooks';
 import { formatCompactVolume } from '../../utils/formatters';
 
@@ -40,6 +40,7 @@ export default function WorkoutHeader({
     onFinish,
     onSettingsPress,
 }: WorkoutHeaderProps) {
+    const styles = useStyles();
     return (
         <View style={styles.header}>
             <View style={styles.headerTop}>
@@ -95,7 +96,7 @@ export default function WorkoutHeader({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     header: {
         backgroundColor: colors.background.secondary,
         paddingHorizontal: spacing.md,
@@ -156,4 +157,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.xs,
         marginTop: spacing.xs,
     },
-});
+}));

@@ -12,9 +12,9 @@
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Modal, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 const TIME_INCREMENT = 15; // 15 second increments
 
@@ -33,6 +33,7 @@ export default function ActiveRestLine({
     onAdjustTime,
     onSkip,
 }: ActiveRestLineProps) {
+    const styles = useStyles();
     const progressAnim = useRef(new Animated.Value(1)).current;
     const [showAdjustModal, setShowAdjustModal] = useState(false);
 
@@ -186,7 +187,7 @@ export default function ActiveRestLine({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -304,8 +305,8 @@ const styles = StyleSheet.create({
         marginTop: spacing.sm,
     },
     doneButtonText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

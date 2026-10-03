@@ -6,14 +6,9 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 
 // ============================================================
 // Component
@@ -30,6 +25,7 @@ export default function SegmentedControl<T extends string>({
     activeTab,
     onTabChange,
 }: SegmentedControlProps<T>) {
+    const styles = useStyles();
     return (
         <View style={styles.container}>
             {tabs.map((tab) => {
@@ -55,7 +51,7 @@ export default function SegmentedControl<T extends string>({
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         backgroundColor: colors.background.tertiary,
@@ -80,7 +76,7 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.medium as '500',
     },
     activeTabText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontWeight: typography.weight.semibold as '600',
     },
-});
+}));

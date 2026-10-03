@@ -9,9 +9,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { getConsistencyStats } from '../services/analyticsService';
 import { ChartRange, ConsistencyStats } from '../models/analytics';
 
@@ -20,6 +20,7 @@ interface ConsistencyCardsProps {
 }
 
 export default function ConsistencyCards({ range }: ConsistencyCardsProps) {
+    const styles = useStyles();
     const [stats, setStats] = useState<ConsistencyStats>({
         totalWorkouts: 0,
         activeDays: 0,
@@ -77,6 +78,7 @@ function StatCard({
     value: string;
     label: string;
 }) {
+    const styles = useStyles();
     return (
         <View style={styles.card}>
             <Text style={styles.cardIcon}>{icon}</Text>
@@ -86,7 +88,7 @@ function StatCard({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         marginTop: spacing.lg,
     },
@@ -124,4 +126,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.xs,
         color: colors.text.secondary,
     },
-});
+}));

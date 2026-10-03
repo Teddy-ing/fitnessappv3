@@ -8,18 +8,10 @@
  */
 
 import React, { useMemo } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
-    Dimensions,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { useExerciseAnalytics } from '../../hooks/useExerciseAnalytics';
 import { ChartRange, CHART_RANGE_LABELS, ExerciseTimeSeriesPoint } from '../../models/analytics';
 import { createLabelProcessor, BAR_CHART_MARGINS, LINE_CHART_MARGINS } from '../../utils/chartLabels';
@@ -57,6 +49,7 @@ function RangePills({
     selected: ChartRange;
     onSelect: (r: ChartRange) => void;
 }) {
+    const styles = useStyles();
     return (
         <ScrollView
             horizontal
@@ -80,6 +73,7 @@ function RangePills({
 }
 
 function SectionHeader({ title }: { title: string }) {
+    const styles = useStyles();
     return <Text style={styles.sectionTitle}>{title}</Text>;
 }
 
@@ -92,14 +86,8 @@ function TimeSeriesLineChart({
     color: string;
     suffix?: string;
 }) {
-    if (data.length === 0) {
-        return (
-            <View style={styles.emptyChart}>
-                <Text style={styles.emptyText}>No data for this range</Text>
-            </View>
-        );
-    }
-
+    const styles = useStyles();
+    const colors = useThemeColors();
     const { chartData, maxValue, latestValue, needsScroll } = useMemo(() => {
         const processLabel = createLabelProcessor(LINE_CHART_MARGINS, styles.axisText);
         const cd = data.map((d) => {
@@ -114,11 +102,19 @@ function TimeSeriesLineChart({
         });
         return {
             chartData: cd,
-            maxValue: Math.max(...data.map((d) => d.value)) * 1.15,
+            maxValue: (data.length ? Math.max(...data.map((d) => d.value)) : 0) * 1.15,
             latestValue: data[data.length - 1]?.value ?? 0,
             needsScroll: computeChartSpacing(data.length).needsScroll,
         };
-    }, [data]);
+    }, [data, styles]);
+
+    if (data.length === 0) {
+        return (
+            <View style={styles.emptyChart}>
+                <Text style={styles.emptyText}>No data for this range</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.chartCard}>
@@ -196,14 +192,8 @@ function TimeSeriesLineChart({
 }
 
 function VolumeBarChart({ data, weightUnit }: { data: ExerciseTimeSeriesPoint[]; weightUnit: string }) {
-    if (data.length === 0) {
-        return (
-            <View style={[styles.chartCard, styles.emptyChart]}>
-                <Text style={styles.emptyText}>No data for this range</Text>
-            </View>
-        );
-    }
-
+    const styles = useStyles();
+    const colors = useThemeColors();
     const { chartData, maxValue, barWidth, barSpacing, needsScroll } = useMemo(() => {
         const processLabel = createLabelProcessor(BAR_CHART_MARGINS, styles.axisText);
         const cd = data.map((d) => {
@@ -220,12 +210,20 @@ function VolumeBarChart({ data, weightUnit }: { data: ExerciseTimeSeriesPoint[];
         const spacing = computeChartSpacing(data.length);
         return {
             chartData: cd,
-            maxValue: Math.max(...data.map((d) => d.value)) * 1.15,
+            maxValue: (data.length ? Math.max(...data.map((d) => d.value)) : 0) * 1.15,
             barWidth: spacing.barWidth,
             barSpacing: spacing.barSpacing,
             needsScroll: spacing.needsScroll,
         };
-    }, [data]);
+    }, [data, styles, colors]);
+
+    if (data.length === 0) {
+        return (
+            <View style={[styles.chartCard, styles.emptyChart]}>
+                <Text style={styles.emptyText}>No data for this range</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.chartCard}>
@@ -293,6 +291,8 @@ interface ChartsTabProps {
 }
 
 export default function ChartsTab({ exerciseId }: ChartsTabProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const {
         chartRange,
         setChartRange,
@@ -336,7 +336,7 @@ export default function ChartsTab({ exerciseId }: ChartsTabProps) {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     scrollView: {
         flex: 1,
     },
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
     },
     pillTextActive: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontWeight: typography.weight.semibold,
     },
 
@@ -448,4 +448,4 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.semibold,
         color: colors.text.primary,
     },
-});
+}));

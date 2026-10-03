@@ -1,6 +1,7 @@
 import React from 'react';
 import ExerciseDetailsScreen from '../ExerciseDetailsScreen';
 
+jest.mock('react-native', () => ({ StyleSheet: { create: (styles: unknown) => styles } }));
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 jest.mock('../../components/exerciseDetails/ExerciseDetailsContent', () => 'ExerciseDetailsContent');
 

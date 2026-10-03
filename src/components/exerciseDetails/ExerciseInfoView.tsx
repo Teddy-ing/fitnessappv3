@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Exercise } from '../../models/exercise';
-import { colors, spacing, typography } from '../../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../../theme';
 import ExerciseDetailsContent from './ExerciseDetailsContent';
 
 /** Shows the guide inside the current native modal, keeping its editor mounted. */
@@ -11,6 +11,8 @@ export default function ExerciseInfoView({ exercise, onBack, returnLabel }: {
     onBack: () => void;
     returnLabel: string;
 }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -29,7 +31,7 @@ export default function ExerciseInfoView({ exercise, onBack, returnLabel }: {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     header: {
         flexDirection: 'row',
@@ -47,4 +49,4 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.semibold,
         marginHorizontal: spacing.sm,
     },
-});
+}));

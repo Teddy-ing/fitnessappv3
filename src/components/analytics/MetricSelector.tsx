@@ -6,14 +6,9 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import { MetricType, METRIC_LABELS } from '../../models/analytics';
 
 const ALL_METRICS: MetricType[] = ['volume', 'sets', 'reps', 'duration'];
@@ -28,6 +23,7 @@ export default function MetricSelector({
     /** Subset of metrics to show (defaults to all 4) */
     items?: MetricType[];
 }) {
+    const styles = useStyles();
     return (
         <View style={styles.segmentedControl}>
             {items.map((m) => (
@@ -46,7 +42,7 @@ export default function MetricSelector({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     segmentedControl: {
         flexDirection: 'row',
         backgroundColor: colors.background.secondary,
@@ -72,4 +68,4 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         fontWeight: typography.weight.semibold,
     },
-});
+}));

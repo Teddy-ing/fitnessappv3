@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { borderRadius, colors, spacing } from '../../theme';
+import { borderRadius, spacing, createThemedStyles, useThemeColors } from '../../theme';
 
 export interface QuickStartGuideProps {
     visible: boolean;
@@ -17,6 +17,7 @@ export interface QuickStartGuideProps {
 }
 
 function GuideCard({ title, children }: { title: string; children: React.ReactNode }) {
+    const styles = useStyles();
     return (
         <View style={styles.card}>
             <Text style={styles.cardTitle}>{title}</Text>
@@ -29,6 +30,8 @@ function GuideCard({ title, children }: { title: string; children: React.ReactNo
 export default function QuickStartGuide({
     visible, experienced, hasPlan, weightUnit, onSkip, onStartWorkout, onCreateSplit, onDone, onDismiss,
 }: QuickStartGuideProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [page, setPage] = useState(0);
 
     useEffect(() => {
@@ -139,17 +142,17 @@ export default function QuickStartGuide({
                             <>
                                 {page === 0 && experienced && (
                                     <TouchableOpacity accessibilityRole="button" onPress={onCreateSplit} style={styles.primaryButton}>
-                                        <Text style={styles.buttonText}>Create my split</Text>
+                                        <Text style={[styles.buttonText, styles.primaryButtonText]}>Create my split</Text>
                                     </TouchableOpacity>
                                 )}
                                 <TouchableOpacity accessibilityRole="button" accessibilityLabel="Next tutorial page" onPress={() => setPage(value => Math.min(2, value + 1))} style={page === 0 && experienced ? styles.secondaryButton : styles.primaryButton}>
-                                    <Text style={styles.buttonText}>{page === 0 && experienced ? 'Next: logging' : 'Next'}</Text>
+                                    <Text style={[styles.buttonText, !(page === 0 && experienced) && styles.primaryButtonText]}>{page === 0 && experienced ? 'Next: logging' : 'Next'}</Text>
                                 </TouchableOpacity>
                             </>
                         ) : (
                             <>
                                 <TouchableOpacity accessibilityRole="button" onPress={primaryAction} style={styles.primaryButton} testID="tutorial-primary-action">
-                                    <Text style={styles.buttonText}>{primaryLabel}</Text>
+                                    <Text style={[styles.buttonText, styles.primaryButtonText]}>{primaryLabel}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity accessibilityRole="button" onPress={secondaryAction} style={styles.secondaryButton}>
                                     <Text style={styles.buttonText}>{secondaryLabel}</Text>
@@ -166,7 +169,7 @@ export default function QuickStartGuide({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, gap: spacing.sm },
     headerButton: { minHeight: 48, minWidth: 48, justifyContent: 'center', paddingVertical: spacing.sm },
@@ -190,5 +193,6 @@ const styles = StyleSheet.create({
     primaryButton: { backgroundColor: colors.accent.secondary, borderRadius: borderRadius.lg, padding: spacing.md, minHeight: 52, alignItems: 'center', justifyContent: 'center' },
     secondaryButton: { backgroundColor: colors.background.tertiary, borderRadius: borderRadius.lg, padding: spacing.md, minHeight: 52, alignItems: 'center', justifyContent: 'center' },
     buttonText: { color: colors.text.primary, fontSize: 17, fontWeight: '600', textAlign: 'center' },
+    primaryButtonText: { color: colors.text.onAccent },
     doneButton: { minHeight: 48, padding: spacing.sm, alignItems: 'center', justifyContent: 'center' },
-});
+}));

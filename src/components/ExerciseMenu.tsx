@@ -19,10 +19,9 @@ import {
     TouchableOpacity,
     Modal,
     Pressable,
-    StyleSheet,
     Alert,
 } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface MenuItem {
     label: string;
@@ -56,6 +55,7 @@ export default function ExerciseMenu({
     onToggleSuperset,
     onRemoveExercise,
 }: ExerciseMenuProps) {
+    const styles = useStyles();
     const handleRemove = () => {
         onClose();
         Alert.alert(
@@ -157,7 +157,7 @@ export default function ExerciseMenu({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     overlay: {
         flex: 1,
         backgroundColor: colors.overlay,
@@ -217,4 +217,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.md,
         fontWeight: typography.weight.medium,
     },
-});
+}));

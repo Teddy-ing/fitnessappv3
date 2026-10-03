@@ -9,17 +9,10 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ActivityIndicator,
-    ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import type { ImportSummary } from '../../services/importParsers/types';
 import type { CompetitorSource } from '../../services/importParsers/types';
 
@@ -60,6 +53,8 @@ export default function ImportSummaryView({
     onClose,
     bottomInset,
 }: ImportSummaryViewProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={[styles.container, { paddingBottom: bottomInset + spacing.lg }]}>
             <View style={styles.header}>
@@ -114,10 +109,10 @@ export default function ImportSummaryView({
                 activeOpacity={0.8}
             >
                 {isImporting ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={colors.text.onAccent} size="small" />
                 ) : (
                     <>
-                        <MaterialIcons name="download" size={20} color="#fff" />
+                        <MaterialIcons name="download" size={20} color={colors.text.onAccent} />
                         <Text style={styles.importButtonText}>Import Data</Text>
                     </>
                 )}
@@ -131,6 +126,8 @@ export default function ImportSummaryView({
 // ============================================================
 
 function StatCard({ label, value, icon }: { label: string; value: number; icon: keyof typeof MaterialIcons.glyphMap }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <View style={styles.statCard}>
             <MaterialIcons name={icon} size={20} color={colors.accent.primary} />
@@ -144,7 +141,7 @@ function StatCard({ label, value, icon }: { label: string; value: number; icon: 
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -176,7 +173,7 @@ const styles = StyleSheet.create({
     warningText: { flex: 1, fontSize: typography.size.sm, color: colors.text.secondary },
     noticeCard: {
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: 'rgba(168, 85, 247, 0.08)', borderRadius: borderRadius.lg,
+        backgroundColor: colors.accent.subtle, borderRadius: borderRadius.lg,
         padding: spacing.md, marginTop: spacing.sm, gap: spacing.sm,
     },
     noticeText: { flex: 1, fontSize: typography.size.sm, color: colors.text.secondary },
@@ -186,5 +183,5 @@ const styles = StyleSheet.create({
         paddingVertical: 14, borderRadius: borderRadius.lg, gap: spacing.sm,
     },
     importButtonDisabled: { opacity: 0.6 },
-    importButtonText: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: '#fff' },
-});
+    importButtonText: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: colors.text.onAccent },
+}));

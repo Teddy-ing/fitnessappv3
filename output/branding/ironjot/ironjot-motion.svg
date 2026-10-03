@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="410" viewBox="-55 -40 430 410" role="img" aria-labelledby="title desc">
+  <title id="title">IronJot one-second motion study</title>
+  <desc id="desc">An ivory page, a coral flexed arm, and a pen assemble into a workout logging icon over exactly 1000 milliseconds. The final frame remains. Reduced-motion preference displays the final frame immediately.</desc>
+  <style>
+    .paper{fill:#fff7e8}.arm{fill:#ff795b}.outline{stroke:#242525;stroke-linecap:round;stroke-linejoin:round}.mark{fill:none;stroke:#242525;stroke-width:7;stroke-linecap:round}
+    .page-motion{animation:page 1s cubic-bezier(.33,1,.68,1) both}
+    .arm-motion{animation:arm 1s cubic-bezier(.33,1,.68,1) both}
+    .pen-motion{animation:pen 1s cubic-bezier(.33,1,.68,1) both}
+    .jot-motion{stroke-dasharray:1;animation:jot 1s linear both}
+    .whole-motion{animation:settle 1s ease-in-out both}
+    @keyframes page{0%{transform:translate(-48px,-28px) translate(140px,145px) rotate(-16deg) translate(-140px,-145px)}37%,100%{transform:none}}
+    @keyframes arm{0%,14%{transform:translate(55px,35px) translate(230px,215px) rotate(17deg) translate(-230px,-215px)}76%,100%{transform:none}}
+    @keyframes pen{0%,10%{transform:translate(48px,-61px) translate(180px,110px) rotate(28deg) translate(-180px,-110px)}65%,100%{transform:none}}
+    @keyframes jot{0%,71%{stroke-dashoffset:1;opacity:0}71.01%{opacity:1;stroke-dashoffset:1}92%,100%{opacity:1;stroke-dashoffset:0}}
+    @keyframes settle{0%,76%,100%{transform:none}88%{transform:translate(160px,160px) scale(1.018) translate(-160px,-160px)}}
+    @media(prefers-reduced-motion:reduce){.page-motion,.arm-motion,.pen-motion,.jot-motion,.whole-motion{animation:none}}
+  </style>
+  <g class="whole-motion">
+    <rect x="0" y="0" width="320" height="320" rx="70" fill="#242525"/>
+    <g class="page-motion">
+      <g transform="rotate(-12 139 146)">
+        <path class="paper outline" stroke-width="8" d="M87 57 H185 L211 84 V221 Q211 231 201 231 H87 Q77 231 77 221 V67 Q77 57 87 57 Z"/>
+        <path class="outline" fill="none" stroke-width="7" d="M181 59 V89 H208"/>
+        <path class="mark" d="M102 94 H150 M102 117 H149"/>
+        <path class="mark jot-motion" d="M103 165 H140" pathLength="1"/>
+      </g>
+    </g>
+    <g class="pen-motion">
+      <path class="paper outline" stroke-width="7" d="M205 49 Q208 45 213 48 L224 55 Q228 58 225 63 L163 153 L144 164 L148 142 Z"/>
+      <path class="outline" fill="none" stroke-width="6" d="M201 64 L214 73 M148 143 L162 153"/>
+    </g>
+    <g class="arm-motion">
+      <path class="arm outline" stroke-width="8" d="M59 235 C54 217 61 196 76 185 C89 175 104 175 117 183 C128 190 135 201 138 211 C151 195 171 190 188 194 L177 165 C171 151 164 143 165 132 L157 135 C149 138 141 134 142 126 L148 112 C152 105 160 103 166 105 L169 93 C172 84 181 79 190 81 L211 85 C222 87 230 95 233 107 L238 124 C246 135 251 148 256 164 L278 227 C285 247 275 261 253 268 L209 279 Q193 284 175 284 H104 C84 284 66 266 59 235 Z"/>
+      <path class="outline" stroke-width="8" fill="none" d="M138 211 C154 192 173 189 189 195 M166 105 L183 111 M168 130 L185 135"/>
+      <path class="outline" stroke-width="6" fill="none" d="M92 198 C103 197 113 204 117 212"/>
+    </g>
+  </g>
+</svg>

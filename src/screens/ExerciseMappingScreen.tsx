@@ -16,7 +16,6 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     Alert,
     ScrollView,
@@ -27,7 +26,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors, withAlpha } from '../theme';
 import { getUnresolvedMappings } from '../services/importParsers/exerciseMapper';
 import { getImportSummary, executeCompetitorImport } from '../services/competitorImportService';
 import { ExercisePicker } from '../components';
@@ -63,6 +62,8 @@ type NavigationType = NativeStackNavigationProp<SharedStackParamList>;
 // ============================================================
 
 export default function ExerciseMappingScreen() {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const route = useRoute<RouteType>();
     const navigation = useNavigation<NavigationType>();
     const insets = useSafeAreaInsets();
@@ -361,7 +362,7 @@ export default function ExerciseMappingScreen() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -396,8 +397,8 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: colors.border,
     },
     suggestionCardBest: {
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        borderColor: 'rgba(34, 197, 94, 0.3)',
+        backgroundColor: withAlpha(colors.accent.success, 0.1),
+        borderColor: withAlpha(colors.accent.success, 0.3),
     },
     suggestionInfo: { flex: 1, marginLeft: spacing.sm },
     suggestionName: { fontSize: typography.size.md, fontWeight: typography.weight.medium, color: colors.text.primary },
@@ -427,5 +428,5 @@ const styles = StyleSheet.create({
         backgroundColor: colors.accent.primary,
         paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: borderRadius.md,
     },
-    confirmAllText: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: '#fff' },
-});
+    confirmAllText: { fontSize: typography.size.md, fontWeight: typography.weight.semibold, color: colors.text.onAccent },
+}));

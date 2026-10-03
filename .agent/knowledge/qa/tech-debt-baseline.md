@@ -4,6 +4,19 @@ description: Tracking document for technical debt, anti-patterns, and scalabilit
 
 # Tech Debt Audit Baseline
 
+## Current app as of 2026-10-02
+
+This is an archived issue/history register with a current orientation note. Root [AGENTS.md](../../../AGENTS.md) supersedes old line/hook-count limits, mandatory three-chat audits and exhaustive baseline maintenance. Historical “resolved” labels and file counts are retained as evidence from those sessions, not revalidated here.
+
+- Keep **TD-046** as a focused date/recovery concern: workout database serialization and `src/stores/workoutPersistence.ts` still use different date representations. This refresh did not reproduce a timezone/DST defect or declare the concern resolved.
+- **TD-048:** there is still no configured crash-reporting dependency in `package.json`; services use console logging. Choose an appropriate diagnostics/support approach before public launch and reconcile any collection with the privacy policy. An analytics SDK is not automatically required.
+- **TD-053** remains a service-owned exported interface. Under the current agreement, moving `CloudBackupConfig` solely to meet an old file-location preference is not a launch gate. **TD-054** parser casts remain an input-validation review topic; their historical risk assessment is not proof every malformed CSV is safe.
+- Current architecture includes versioned migrations through 21, shared write coordination/batching, canonical-pound boundaries, optional onboarding/tutorial, and live IronJot/Classic Purple themes. The Assistant is retired; old references to future chatbot work do not set the release scope.
+- Release concerns not represented by these old debt counts include photo bytes missing from JSON/Drive backups, production Drive validation, public Settings placeholders, and conflicting license metadata. See [current progress](../current-progress.md) for the current handoff and recorded tests.
+- No source refactor, test run or exhaustive debt re-audit was performed in this documentation pass. Recheck the concrete behavior before reopening or closing an old ID; file length alone is insufficient.
+
+## Historical audit record
+
 ## Summary
 
 - **Last full pass:** 2026-03-24 (comprehensive full-project scan — 118 files)
@@ -389,21 +402,21 @@ These are foundational architectural decisions that predate the guardrail system
 ### TD-A01 · `any` in chart library callbacks
 
 - **Files:**
-  - [AnalyticsScreen.tsx:335](file:///c:/Users/teddy/projects/workout-app/src/screens/AnalyticsScreen.tsx#L335) — `renderTooltip={(item: any, index: number)`
-  - [ExerciseAnalyticsScreen.tsx:210](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L210) — `pointerLabelComponent: (items: any[])`
-  - [ExerciseAnalyticsScreen.tsx:327](file:///c:/Users/teddy/projects/workout-app/src/screens/ExerciseAnalyticsScreen.tsx#L327) — `renderTooltip={(item: any, index: number)`
+  - `AnalyticsScreen.tsx:335` (historical location: `src/screens/AnalyticsScreen.tsx#L335`) — `renderTooltip={(item: any, index: number)`
+  - `ExerciseAnalyticsScreen.tsx:210` (historical location: `src/screens/ExerciseAnalyticsScreen.tsx#L210`) — `pointerLabelComponent: (items: any[])`
+  - `ExerciseAnalyticsScreen.tsx:327` (historical location: `src/screens/ExerciseAnalyticsScreen.tsx#L327`) — `renderTooltip={(item: any, index: number)`
 - **Why accepted:** `react-native-gifted-charts` does not export proper types for these callbacks. The items are library-internal objects augmented with our own `fullLabel` property. Typing them would require maintaining fragile declaration merges. Guardrail #2 allows justified `any` for RN library quirks.
 
 ### TD-A02 · Mock data in production hook (`useExerciseAnalytics.ts`)
 
-- **File:** [useExerciseAnalytics.ts:38-72](file:///c:/Users/teddy/projects/workout-app/src/hooks/useExerciseAnalytics.ts#L38-L72)
+- **File:** `useExerciseAnalytics.ts:38-72` (historical location: `src/hooks/useExerciseAnalytics.ts#L38-L72`)
 - **What:** `generateMockTimeSeries()` and `getWebMockData()` are included in the production bundle, gated behind `Platform.OS === 'web'`.
 - **Why accepted:** Web is development-only (no production web target). Mock data enables chart debugging via browser DevTools, which was critical for fixing x-axis alignment issues. Code is cleanly separated and clearly documented. When tree-shaking is needed for a production web build, this can be extracted to `__mocks__/`.
 
 ### TD-050 · Migration system has no downgrade path
 
 - **Category:** Schema management
-- **File:** [migrations.ts](file:///c:/Users/teddy/projects/workout-app/src/services/migrations.ts#L725-L770)
+- **File:** `migrations.ts` (historical location: `src/services/migrations.ts#L725-L770`)
 - **Description:** Forward-only migrations. If a migration introduces data corruption, there's no rollback — requires a manual fix migration. Standard for SQLite mobile apps, but worth documenting.
 - **Why accepted:** Fix-forward is the standard pattern for SQLite mobile apps. No production users have been affected.
 

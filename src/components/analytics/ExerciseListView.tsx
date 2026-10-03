@@ -7,21 +7,12 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
-    TextInput,
-    FlatList,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, FlatList } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { PerformedExercise } from '../../models/analytics';
 import { COMPOSITE_FILTER_PILLS, CompositeFilterPill } from '../../models/muscleGroups';
 import { getPerformedExercises } from '../../services/exerciseAnalyticsService';
@@ -32,6 +23,8 @@ import type { ProfileStackParamList } from '../../navigation/AppNavigator';
 // ============================================================
 
 export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderComponent?: React.ReactElement }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
     const [exercises, setExercises] = useState<PerformedExercise[]>([]);
     const [search, setSearch] = useState('');
@@ -106,7 +99,7 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
                 color={colors.text.disabled}
             />
         </TouchableOpacity>
-    ), [navigation]);
+    ), [navigation, styles, colors]);
 
     const keyExtractor = useCallback((item: PerformedExercise) => item.exerciseId, []);
 
@@ -166,7 +159,7 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
                 ))}
             </ScrollView>
         </>
-    ), [ListHeaderComponent, search, activeFilter]);
+    ), [ListHeaderComponent, search, activeFilter, styles, colors]);
 
     const emptyComponent = useMemo(() => (
         loading ? (
@@ -179,7 +172,7 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
                 <Text style={styles.placeholderText}>{emptyMessage}</Text>
             </View>
         )
-    ), [loading, emptyMessage]);
+    ), [loading, emptyMessage, styles, colors]);
 
     // PP-004 fix: FlatList virtualizes the exercise list so only
     // visible rows are rendered. Replaces the old .map() approach.
@@ -201,7 +194,7 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     scrollContent: {
         padding: spacing.md,
         paddingBottom: spacing.md,
@@ -248,7 +241,7 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
     },
     filterPillTextActive: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontWeight: typography.weight.semibold,
     },
 
@@ -300,4 +293,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginTop: spacing.xs,
     },
-});
+}));

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../theme';
 import { createOnboardingProfile, OnboardingAnswers, OnboardingEquipment, OnboardingProfile } from '../models/onboarding';
 import { getOnboardingProfile, saveOnboardingProfile } from '../services/onboardingService';
 import { getOnboardingRecommendation } from '../services/onboardingPlanService';
@@ -80,6 +80,8 @@ function ChoiceGroup<T extends string | number>({
     disabled: boolean;
     compact?: boolean;
 }) {
+    const colors = useThemeColors();
+    const styles = useStyles();
     return (
         <View style={styles.group}>
             <Text style={styles.groupLabel}>{label}</Text>
@@ -127,6 +129,8 @@ function EquipmentChoices({ value, onSelect, disabled, bothLocations }: {
     disabled: boolean;
     bothLocations: boolean;
 }) {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const bodyweightOnly = value !== null && value.length === 0;
     return (
         <View style={styles.group}>
@@ -175,6 +179,8 @@ function EquipmentChoices({ value, onSelect, disabled, bothLocations }: {
 type PendingSave = { profile: OnboardingProfile; done: boolean };
 
 export default function OnboardingScreen({ onDone, initialProfile, mode = 'setup' }: OnboardingScreenProps) {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const isEditing = mode === 'edit';
     const prepareProfile = (saved: OnboardingProfile | null): OnboardingProfile => {
         const result = saved ?? createOnboardingProfile();
@@ -486,7 +492,7 @@ export default function OnboardingScreen({ onDone, initialProfile, mode = 'setup
                         <View style={styles.footer}>
                             {step > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel={returnToReview ? 'Review' : 'Back'} accessibilityState={{ disabled: busy }} disabled={busy} onPress={goBack} style={styles.backButton}><Text style={styles.backText}>{returnToReview ? 'Review' : 'Back'}</Text></TouchableOpacity>}
                             <TouchableOpacity accessibilityRole="button" accessibilityLabel={step === 6 ? 'Save preferences' : returnToReview ? 'Back to review' : step === 0 ? 'Get started' : 'Continue'} accessibilityState={{ disabled: busy, busy }} disabled={busy} onPress={continueSetup} style={[styles.primaryButton, busy && styles.disabledButton]}>
-                                {busy ? <ActivityIndicator color={colors.text.primary} /> : <Text style={styles.primaryText}>{step === 6 ? 'Save preferences' : returnToReview ? 'Back to review' : step === 0 ? 'Get started' : 'Continue'}</Text>}
+                                {busy ? <ActivityIndicator color={colors.text.onAccent} /> : <Text style={styles.primaryText}>{step === 6 ? 'Save preferences' : returnToReview ? 'Back to review' : step === 0 ? 'Get started' : 'Continue'}</Text>}
                             </TouchableOpacity>
                         </View>
                     )}
@@ -496,7 +502,7 @@ export default function OnboardingScreen({ onDone, initialProfile, mode = 'setup
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     header: { width: '100%', maxWidth: 640, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
     brand: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
@@ -524,7 +530,7 @@ const styles = StyleSheet.create({
     optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     option: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, minHeight: 64, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background.secondary },
     compactOption: { flexGrow: 1, minWidth: 48, minHeight: 52, justifyContent: 'center' },
-    selectedOption: { borderColor: colors.accent.tertiary, backgroundColor: 'rgba(168, 85, 247, 0.14)' },
+    selectedOption: { borderColor: colors.accent.tertiary, backgroundColor: colors.accent.muted },
     optionText: { flexShrink: 1, flexGrow: 1, gap: spacing.xs },
     optionLabel: { color: colors.text.primary, fontSize: typography.size.md, fontWeight: '600' },
     selectedLabel: { color: colors.accent.tertiary },
@@ -548,9 +554,9 @@ const styles = StyleSheet.create({
     backButton: { paddingHorizontal: spacing.md, paddingVertical: spacing.md, minHeight: 52, justifyContent: 'center' },
     backText: { color: colors.text.primary, fontSize: typography.size.md, fontWeight: '600' },
     primaryButton: { flex: 1, minHeight: 54, paddingHorizontal: spacing.md, paddingVertical: spacing.md, justifyContent: 'center', alignItems: 'center', borderRadius: borderRadius.lg, backgroundColor: colors.accent.secondary },
-    primaryText: { color: colors.text.primary, fontSize: typography.size.md, fontWeight: '700', textAlign: 'center' },
+    primaryText: { color: colors.text.onAccent, fontSize: typography.size.md, fontWeight: '700', textAlign: 'center' },
     disabledButton: { opacity: 0.6 },
     loading: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg, gap: spacing.md },
     errorBox: { borderWidth: 1, borderColor: colors.accent.error, borderRadius: borderRadius.lg, padding: spacing.md, gap: spacing.xs },
     errorText: { color: colors.text.primary, fontSize: typography.size.sm, lineHeight: 22 },
-});
+}));

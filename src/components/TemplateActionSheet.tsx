@@ -24,7 +24,7 @@ import ExercisePicker from './ExercisePicker';
 import ExerciseInfoView from './exerciseDetails/ExerciseInfoView';
 import { updateTemplate, deleteTemplate, type Template } from '../services';
 import { Exercise } from '../models/exercise';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface EditExercise {
     exercise: Exercise;
@@ -46,6 +46,8 @@ export default function TemplateActionSheet({
     onClose,
     onTemplateChanged,
 }: TemplateActionSheetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [editName, setEditName] = useState('');
     const [editExercises, setEditExercises] = useState<EditExercise[]>([]);
     const [showExercisePicker, setShowExercisePicker] = useState(false);
@@ -358,7 +360,7 @@ export default function TemplateActionSheet({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -546,4 +548,4 @@ const styles = StyleSheet.create({
         color: colors.accent.warning,
         fontWeight: typography.weight.medium,
     },
-});
+}));

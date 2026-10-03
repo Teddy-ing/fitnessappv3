@@ -1,5 +1,7 @@
 # Exercise illustrations
 
+**Current update — 2026-10-02:** All 114 built-in exercises have reviewed illustrations and packaged offline assets in the current manifest. This guide remains the maintenance procedure and retains the original production references below. Verify the manifest and registry when seeds or artwork change.
+
 ## Purpose and current scope
 
 Create an original, consistent library of exercise stills for the About tab. The owner approved model v1 and requested expansion to all 114 built-in exercises on 2026-09-30. Preserve the three pilot assets and use the same reference for the full library. Custom exercises retain their own image or fallback. Track actual coverage in `assets/exercises/library-manifest.json`; only independently reviewed artwork is packaged.

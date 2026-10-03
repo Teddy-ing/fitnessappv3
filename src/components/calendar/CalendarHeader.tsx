@@ -8,13 +8,8 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import { METRIC_OPTIONS } from './types';
 
 // ============================================================
@@ -56,6 +51,7 @@ export default function CalendarHeader({
     onFatigueFilterToggle,
     onJournalViewToggle,
 }: CalendarHeaderProps) {
+    const styles = useStyles();
     return (
         <View style={styles.headerContainer}>
             {/* Streak and rest day badges */}
@@ -184,7 +180,7 @@ export default function CalendarHeader({
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     headerContainer: {
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
@@ -234,7 +230,7 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
     },
     pillTextActive: {
-        color: '#ffffff',
+        color: colors.text.onAccent,
         fontWeight: typography.weight.semibold,
     },
 
@@ -255,7 +251,7 @@ const styles = StyleSheet.create({
     },
     filterPillActive: {
         borderColor: colors.accent.primary,
-        backgroundColor: 'rgba(168, 85, 247, 0.15)',
+        backgroundColor: colors.accent.muted,
     },
     filterPillText: {
         fontSize: typography.size.xs,
@@ -276,4 +272,4 @@ const styles = StyleSheet.create({
         color: '#5EEAD4',
         fontWeight: typography.weight.semibold,
     },
-});
+}));

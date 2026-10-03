@@ -10,13 +10,12 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     FlatList,
     TextInput,
     ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { searchNotes, type JournalEntry } from '../services';
 import { formatDuration } from '../utils/formatters';
 
@@ -42,6 +41,8 @@ function formatDate(dateStr: string): string {
 // ============================================================
 
 function JournalCard({ entry }: { entry: JournalEntry }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const duration = formatDuration(entry.duration, '');
 
     return (
@@ -87,6 +88,8 @@ function JournalCard({ entry }: { entry: JournalEntry }) {
 // ============================================================
 
 export default function JournalView() {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [entries, setEntries] = useState<JournalEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -192,7 +195,7 @@ export default function JournalView() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
     },
@@ -285,7 +288,7 @@ const styles = StyleSheet.create({
     noteBlock: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: 'rgba(168, 85, 247, 0.08)',
+        backgroundColor: colors.accent.subtle,
         borderRadius: borderRadius.md,
         padding: spacing.sm,
         marginBottom: spacing.xs,
@@ -315,4 +318,4 @@ const styles = StyleSheet.create({
         color: colors.text.primary,
         lineHeight: 18,
     },
-});
+}));

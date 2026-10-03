@@ -6,13 +6,13 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Exercise } from '../models/exercise';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 // Placeholder image for exercises
-const EXERCISE_PLACEHOLDER = require('../../assets/exercise-placeholder.png');
+const EXERCISE_PLACEHOLDER = require('../../assets/exercise-placeholder.jpg');
 
 interface ExercisePickerItemProps {
     exercise: Exercise;
@@ -33,6 +33,8 @@ function ExercisePickerItem({
     onUnhide,
     onShowInfo,
 }: ExercisePickerItemProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const primaryMuscle = exercise.muscleGroups.find(mg => mg.isPrimary)?.muscle ?? '';
     const formattedMuscle = primaryMuscle.replace('_', ' ');
     const equipment = exercise.equipment[0]?.replace('_', ' ') ?? '';
@@ -106,7 +108,7 @@ function ExercisePickerItem({
 
 export default React.memo(ExercisePickerItem);
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     exerciseItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -202,8 +204,8 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.md,
     },
     unhideButtonText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.sm,
         fontWeight: typography.weight.medium,
     },
-});
+}));

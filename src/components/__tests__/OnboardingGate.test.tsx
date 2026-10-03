@@ -92,3 +92,28 @@ it('offers retry and a way into the app after a load failure', async () => {
     await act(async () => { renderer.root.findAllByType('TouchableOpacity')[1].props.onPress(); });
     expect(renderer.toJSON()).toBe('App content');
 });
+
+it('does not expose Continue after a preferences error until workout restoration settles', async () => {
+    let finishRestoration!: () => void;
+    const restoration = new Promise<void>(resolve => { finishRestoration = resolve; });
+    jest.mocked(getOnboardingProfile).mockRejectedValueOnce(new Error('read failed'));
+    await act(async () => {
+        renderer = create(<OnboardingGate prepareApp={() => restoration}>App content</OnboardingGate>);
+    });
+    expect(renderer.root.findAllByType('ActivityIndicator')).toHaveLength(1);
+    expect(renderer.root.findAllByType('TouchableOpacity')).toHaveLength(0);
+    await act(async () => { finishRestoration(); });
+    expect(renderer.root.findAllByType('TouchableOpacity')).toHaveLength(2);
+});
+
+it('does not mount app content before restored workout state is available', async () => {
+    let finishRestoration!: () => void;
+    const restoration = new Promise<void>(resolve => { finishRestoration = resolve; });
+    jest.mocked(getOnboardingProfile).mockResolvedValue({ ...createOnboardingProfile(), status: 'completed' });
+    await act(async () => {
+        renderer = create(<OnboardingGate prepareApp={() => restoration}>App content</OnboardingGate>);
+    });
+    expect(JSON.stringify(renderer.toJSON())).not.toContain('App content');
+    await act(async () => { finishRestoration(); });
+    expect(renderer.toJSON()).toBe('App content');
+});

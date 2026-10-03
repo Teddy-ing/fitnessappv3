@@ -4,6 +4,21 @@ description: Phase 7 Smart Personalization — Product Requirements Document
 
 # Phase 7: Smart Personalization PRD
 
+## Current app as of 2026-10-02
+
+The following status is based on current source, not new model evaluation or device testing. Root [AGENTS.md](../../../AGENTS.md) controls the implementation workflow.
+
+- Implemented in `src/services/smartSuggestionsService.ts`: direct-history weight/rep suggestions, learned rest duration, predicted set counts and progression nudges. `workoutStore.ts` loads suggestions for workout entry paths and uses suggestions for working sets; `ExercisePicker.tsx` surfaces suggested exercises.
+- This is local SQL and statistical logic, with no ML runtime or remote inference dependency. The master toggle and nudge toggle are live in `WorkoutSettingsMenu`; training phase is a General setting.
+- **Not every planned feature shipped:** warmup weight-ladder suggestions are not wired into set rows (`ExerciseCard` passes no suggestion for warmups). `strengthProfileService.getBootstrapEstimate` still has a TODO for ratio-table cross-exercise bootstrapping and uses a muscle-group fallback. Keep those as future work, not completed Phase 7 claims.
+- Optional onboarding is implemented, but `onboardingService.applyProfile` currently applies units, training phase and an accepted starter routine. It does **not** turn progression nudges on for beginners as proposed below.
+- The Assistant screen/tab has been retired from current navigation. The “AI Chatbot Bridge” below is historical exploration, not a launch dependency or an implemented feature.
+- Local computation remains private to the device. Users can explicitly export or upload their data through optional Drive backup, so “data never leaves device” is not an app-wide guarantee. Settings/profile data are included in database backups; photo bytes are not.
+
+## Historical PRD
+
+The original algorithms, thresholds and roadmap below explain design intent. Consult the service implementation before changing behavior; these plans are not proof that every tier is complete.
+
 ## Overview
 
 Build a statistical personalization engine that learns from the user's workout history to provide intelligent defaults across the app. All processing on-device, no cloud dependency, no ML framework — pure SQL queries and lightweight JS statistics.

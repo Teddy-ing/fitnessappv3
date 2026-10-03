@@ -7,6 +7,9 @@ const mockTutorial = { status: 'skipped', requestedAction: null as string | null
 const mockHomeData = { templates: [], currentTemplate: null as any, isLoading: false, loadData: jest.fn().mockResolvedValue(undefined) };
 let mockIsFocused = true;
 let mockKeyboardFocus: any = null;
+const mockStartup = { isComplete: false, onInitializationComplete: jest.fn() };
+const mockWorkoutSettings = { isLoaded: true, weightUnit: 'kg', refreshSettings: jest.fn() };
+jest.mock('../../components/startup/StartupContext', () => ({ useStartup: () => mockStartup }));
 jest.mock('../../components/tutorial/TutorialProvider', () => ({ useTutorial: () => mockTutorial }));
 jest.mock('../../components/tutorial/WorkoutTutorialTip', () => ({ __esModule: true, default: 'WorkoutTutorialTip' }));
 jest.mock('../SplitsScreen', () => ({ __esModule: true, default: 'SplitsScreen' }));
@@ -40,8 +43,7 @@ jest.mock('../../hooks', () => ({
 }));
 jest.mock('../../hooks/useWorkoutKeyboard', () => ({ isKeyboardField: () => true }));
 jest.mock('../../hooks/workout/useWorkoutSettings', () => {
-    const settings = { weightUnit: 'kg', refreshSettings: jest.fn() };
-    return { useWorkoutSettings: () => settings };
+    return { useWorkoutSettings: () => mockWorkoutSettings };
 });
 jest.mock('../../components', () => ({
     ExercisePicker: 'ExercisePicker', RestTimer: 'RestTimer', WorkoutKeyboard: 'WorkoutKeyboard', SaveTemplateModal: 'SaveTemplateModal', WorkoutSettingsMenu: 'WorkoutSettingsMenu',
@@ -73,6 +75,7 @@ describe('workout finish flow', () => {
         mockTutorial.consumeAction.mockImplementation(() => { mockTutorial.requestedAction = null; });
         mockHomeData.currentTemplate = null;
         mockHomeData.isLoading = false;
+        mockWorkoutSettings.isLoaded = true;
         const workout = createWorkout('Push day');
         const exercise = createWorkoutExercise(createExercise({ name: 'Bench press' }), 0);
         exercise.sets = [{ ...createSet(0), weight: 100, reps: 8, status: 'completed' }];
@@ -88,6 +91,19 @@ describe('workout finish flow', () => {
     async function render() {
         await act(async () => { renderer = create(<WorkoutScreen />); });
     }
+
+    it('keeps startup covered until both consumed settings and home data have loaded', async () => {
+        mockWorkoutSettings.isLoaded = false;
+        mockHomeData.isLoading = true;
+        await render();
+        expect(mockStartup.onInitializationComplete).not.toHaveBeenCalled();
+        mockHomeData.isLoading = false;
+        await act(async () => renderer.update(<WorkoutScreen />));
+        expect(mockStartup.onInitializationComplete).not.toHaveBeenCalled();
+        mockWorkoutSettings.isLoaded = true;
+        await act(async () => renderer.update(<WorkoutScreen />));
+        expect(mockStartup.onInitializationComplete).toHaveBeenCalledTimes(1);
+    });
 
     it('deactivates the workout keyboard while a child screen is focused, preserving the workout', async () => {
         const workout = useWorkoutStore.getState().activeWorkout;

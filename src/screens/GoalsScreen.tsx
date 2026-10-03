@@ -18,7 +18,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
-    StyleSheet,
     FlatList,
     TouchableOpacity,
     Alert,
@@ -28,7 +27,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../theme';
 import {
     getActiveGoals,
     getCompletedGoals,
@@ -76,6 +75,8 @@ const METRIC_LABELS: Record<GoalType, string> = {
 // ============================================================
 
 export default function GoalsScreen() {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState<TabId>('active');
     const [activeGoals, setActiveGoals] = useState<Goal[]>([]);
@@ -353,7 +354,7 @@ export default function GoalsScreen() {
                     colors={colors.gradient.primary}
                     style={styles.fabGradient}
                 >
-                    <MaterialIcons name="add" size={28} color="#fff" />
+                    <MaterialIcons name="add" size={28} color={colors.text.onAccent} />
                 </LinearGradient>
             </TouchableOpacity>
 
@@ -383,7 +384,7 @@ export default function GoalsScreen() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -439,4 +440,4 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-});
+}));

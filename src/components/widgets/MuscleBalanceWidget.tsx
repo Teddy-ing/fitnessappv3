@@ -7,8 +7,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '../../theme';
+import { View, Text } from 'react-native';
+import { spacing, typography, createThemedStyles } from '../../theme';
 import { MuscleDistributionPoint } from '../../models/analytics';
 
 interface MuscleBalanceWidgetProps {
@@ -30,6 +30,7 @@ function capitalize(s: string): string {
 }
 
 export default function MuscleBalanceWidget({ data }: MuscleBalanceWidgetProps) {
+    const styles = useStyles();
     const { topMuscles, maxValue } = useMemo(() => {
         const top = data.slice(0, 5);
         const max = top.length > 0 ? top[0].value : 1;
@@ -79,7 +80,7 @@ export default function MuscleBalanceWidget({ data }: MuscleBalanceWidgetProps) 
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
     },
@@ -127,4 +128,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.sm,
         color: colors.text.disabled,
     },
-});
+}));

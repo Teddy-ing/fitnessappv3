@@ -15,7 +15,6 @@ import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     ScrollView,
     TextInput,
@@ -28,7 +27,7 @@ import {
     type Template,
     type SplitInfo,
 } from '../services';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { useThemeColors, createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import SplitSchedulePreview from './SplitSchedulePreview';
 import TemplateActionSheet from './TemplateActionSheet';
 
@@ -60,6 +59,8 @@ export default function SplitFormView({
     onSaved,
     onTemplatesChanged,
 }: SplitFormViewProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [splitName, setSplitName] = useState('');
     const [scheduleItems, setScheduleItems] = useState<SplitScheduleItem[]>([]);
     const [longPressTemplate, setLongPressTemplate] = useState<Template | null>(null);
@@ -467,7 +468,7 @@ export default function SplitFormView({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     createForm: {
         flex: 1,
         padding: spacing.md,
@@ -543,7 +544,7 @@ const styles = StyleSheet.create({
         marginRight: spacing.sm,
     },
     orderBadgeText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.sm,
         fontWeight: typography.weight.bold,
     },
@@ -608,7 +609,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     saveButtonText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold,
     },
@@ -654,4 +655,4 @@ const styles = StyleSheet.create({
         marginTop: spacing.sm,
         marginBottom: spacing.xs,
     },
-});
+}));

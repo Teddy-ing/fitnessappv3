@@ -6,16 +6,10 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    FlatList,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { getExerciseSessionHistory } from '../../services/exerciseDetailsService';
 import { ExerciseSession } from '../../models/exerciseDetails';
 import { useWeightUnit } from '../../hooks/useWeightUnit';
@@ -28,6 +22,7 @@ const PAGE_SIZE = 20;
 // ============================================================
 
 const SessionCard = React.memo(function SessionCard({ session, weightUnit }: { session: ExerciseSession; weightUnit: string }) {
+    const styles = useStyles();
     const dateStr = new Date(session.date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -103,6 +98,8 @@ interface HistoryTabProps {
 }
 
 export default function HistoryTab({ exerciseId }: HistoryTabProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [sessions, setSessions] = useState<ExerciseSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -202,7 +199,7 @@ export default function HistoryTab({ exerciseId }: HistoryTabProps) {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     listContent: {
         padding: spacing.md,
         paddingBottom: spacing.xxl,
@@ -305,4 +302,4 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.semibold,
         color: colors.accent.primary,
     },
-});
+}));

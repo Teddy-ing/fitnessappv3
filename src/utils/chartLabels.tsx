@@ -10,7 +10,7 @@
 import React from 'react';
 import { View, Text, TextStyle } from 'react-native';
 
-import { colors } from '../theme';
+import { useThemeColors } from '../theme';
 
 // ============================================================
 // Constants
@@ -66,6 +66,32 @@ export const LINE_CHART_MARGINS: ChartLabelMargins = {
 // Label processor
 // ============================================================
 
+function AxisLabel({ day, month, margins, axisTextStyle }: {
+    day: string;
+    month?: string;
+    margins: ChartLabelMargins;
+    axisTextStyle: TextStyle;
+}) {
+    const colors = useThemeColors();
+    return (
+        <View style={{
+            alignItems: 'center',
+            width: month ? margins.monthHeaderWidth : margins.dayOnlyWidth,
+            marginLeft: month ? margins.monthHeaderMarginLeft : margins.dayOnlyMarginLeft,
+            marginTop: 12,
+        }}>
+            <Text style={[axisTextStyle, { color: month ? colors.text.primary : colors.text.secondary }]}>
+                {day}
+            </Text>
+            {month && <Text style={[axisTextStyle, {
+                fontWeight: 'bold',
+                color: colors.text.secondary,
+                marginTop: 2,
+            }]}>{month}</Text>}
+        </View>
+    );
+}
+
 /**
  * Create a stateful label processor for a sequence of chart data points.
  *
@@ -102,34 +128,11 @@ export function createLabelProcessor(
             const monthIndex = parseInt(currentMonth, 10) - 1;
             const monthName = MONTH_NAMES[monthIndex] || currentMonth;
             labelComponent = () => (
-                <View style={{
-                    alignItems: 'center',
-                    width: margins.monthHeaderWidth,
-                    marginLeft: margins.monthHeaderMarginLeft,
-                    marginTop: 12,
-                }}>
-                    <Text style={[axisTextStyle, { color: colors.text.primary }]}>
-                        {currentDay}
-                    </Text>
-                    <Text style={[axisTextStyle, {
-                        fontWeight: 'bold',
-                        color: colors.text.secondary,
-                        marginTop: 2,
-                    }]}>
-                        {monthName}
-                    </Text>
-                </View>
+                <AxisLabel day={currentDay} month={monthName} margins={margins} axisTextStyle={axisTextStyle} />
             );
         } else {
             labelComponent = () => (
-                <View style={{
-                    alignItems: 'center',
-                    width: margins.dayOnlyWidth,
-                    marginLeft: margins.dayOnlyMarginLeft,
-                    marginTop: 12,
-                }}>
-                    <Text style={axisTextStyle}>{currentDay}</Text>
-                </View>
+                <AxisLabel day={currentDay} margins={margins} axisTextStyle={axisTextStyle} />
             );
         }
 

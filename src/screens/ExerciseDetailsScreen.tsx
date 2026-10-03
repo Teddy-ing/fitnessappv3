@@ -17,7 +17,7 @@ import React from 'react';
 import type { RouteProp } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors } from '../theme';
+import { useThemeColors } from '../theme';
 import type { ExerciseDetailsParams } from '../navigation/types';
 import ExerciseDetailsContent from '../components/exerciseDetails/ExerciseDetailsContent';
 export type { ExerciseDetailsTab } from '../components/exerciseDetails/ExerciseDetailsContent';
@@ -29,6 +29,7 @@ type Props = { route: RouteProp<{ ExerciseDetails: ExerciseDetailsParams }, 'Exe
 // ============================================================
 
 export default function ExerciseDetailsScreen({ route }: Props) {
+    const colors = useThemeColors();
     const { exerciseId, initialTab } = route.params;
 
     return (

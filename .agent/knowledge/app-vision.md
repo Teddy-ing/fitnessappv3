@@ -4,14 +4,22 @@ description: Core goals, market positioning, design philosophy, and disruption s
 
 # App Vision
 
-## Current product decisions — 2026-09-30
+## Current update — 2026-10-02
 
-- The owner retired the AI assistant and optional cloud AI tier. Remove its tab, placeholder, and promotional copy; do not plan a replacement assistant. Existing on-device workout-history suggestions remain in scope.
-- Onboarding is optional, private, and focused on collecting preferences. No account, payment, or Google sign-in is required. Google Drive sign-in remains optional for backups.
-- Completed onboarding now applies selected units and training phase and uses experience, goal, available days, location, and home equipment to propose a starting routine. Drafts and skipped setup do not apply choices. Blank answers keep existing defaults.
-- Automatically offer setup to new installs, with skip and resume. The owner approved the original flow and requested removal of its Settings shortcut; normal settings remain editable in Settings.
-- Beginners receive a manageable starting-plan suggestion selected by default, intermediate lifters can opt in, and experienced lifters receive no assigned plan. Preserve any routine already selected. A completed setup applies once, including previously collected responses, without repeatedly overriding later changes.
-- The next requested task is an optional tutorial. For experienced users, it should guide them to creating their own split. The tutorial is not part of the current implementation.
+**IronJot is the final app name, and a barbell-and-pen icon was created to connect lifting with logging.** The default visual identity uses charcoal, coral, and cream. Classic Purple remains an optional theme.
+
+The core direction is unchanged: a polished, free workout tracker that serves experienced lifters first, keeps logging fast, and gives users control of their history. The app now includes workout logging, templates and splits, analytics, goals, measurements, exercise illustrations, and import/export.
+
+- **Guidance is optional.** Setup can apply preferences and suggest a starter routine. Beginners receive a suggestion, intermediates can opt in, and experienced lifters keep control of their own program. A separate quick-start tutorial is implemented and can be skipped or reopened from Settings.
+- **The core works locally without an account.** Google Drive sign-in is optional for backups. Describe cloud backup as an explicit user choice; avoid blanket claims that data can never leave the device.
+- **Suggestions use local workout history and statistics.** They support logging without an AI assistant or cloud model. The assistant and paid AI tier were retired in September 2026.
+- **Core features remain free.** Optional developer support is desired, but payments are not implemented.
+
+This file records product direction. Implementation outcomes and remaining release work belong in [current progress](current-progress.md); detailed behavior belongs in [feature design](feature-design.md).
+
+## Founding vision — 2026-01-04
+
+The original strategy below is retained as context. Competitor comparisons, pricing, ML language, and market-wide claims reflect early research rather than a verified description of today's market or app. The current update above takes precedence. The repository license also needs reconciliation before making a definitive licensing claim; see [current progress](current-progress.md).
 
 ## Mission Statement
 
@@ -120,6 +128,7 @@ This project is **open source**, which means:
 
 ---
 
-## Last Updated
-- Date: 2026-01-04
-- Session Context: Initial project setup and vision documentation from brainstorming session
+## Document history
+
+- **2026-01-04:** Original product vision and positioning.
+- **2026-10-02:** Current product direction added; implementation history moved out of the vision.

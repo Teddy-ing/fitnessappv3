@@ -10,18 +10,10 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    FlatList,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { formatISODate } from '../../utils/formatters';
 import {
     saveProgressPhoto,
@@ -39,6 +31,8 @@ import CompareView from './CompareView';
 // ============================================================
 
 export default function GalleryTab() {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewerVisible, setViewerVisible] = useState(false);
@@ -273,7 +267,7 @@ export default function GalleryTab() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     loading: {
         flex: 1,
         justifyContent: 'center',
@@ -293,7 +287,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
     },
     addBtnText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.sm,
         fontWeight: typography.weight.semibold as '600',
     },
@@ -329,7 +323,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.md,
     },
     compareLaunchText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.xs,
         fontWeight: typography.weight.semibold as '600',
     },
@@ -363,8 +357,8 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
     },
     emptyBtnText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.semibold as '600',
     },
-});
+}));

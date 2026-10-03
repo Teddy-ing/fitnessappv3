@@ -6,6 +6,7 @@
  */
 
 import { WidgetConfig } from './widget';
+import type { ThemeId } from './theme';
 import type { TrainingPhase, StrengthProfile } from './smartSuggestions';
 
 /** Row shape matching the user_settings table columns */
@@ -15,7 +16,7 @@ export interface UserSettings {
     lastWorkoutDate: string | null;
     weightUnit: string;
     distanceUnit: string;
-    theme: string;
+    theme: ThemeId;
     defaultRestTime: number;
     autoStartRestTimer: boolean;
     restTimerVibration: boolean;

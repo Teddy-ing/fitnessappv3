@@ -17,12 +17,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     View,
     Text,
-    StyleSheet,
     FlatList,
     ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing, typography } from '../theme';
+import { spacing, typography, createThemedStyles, useThemeColors } from '../theme';
 import {
     getWorkoutsForMonth,
     getWorkoutStreak,
@@ -52,6 +51,8 @@ import {
 // ============================================================
 
 export default function CalendarScreen() {
+    const colors = useThemeColors();
+    const styles = useStyles();
     // State
     const [months, setMonths] = useState<MonthData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -341,7 +342,7 @@ export default function CalendarScreen() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -364,4 +365,4 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
         paddingBottom: spacing.xl,
     },
-});
+}));

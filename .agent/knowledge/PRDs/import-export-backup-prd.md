@@ -4,6 +4,22 @@ description: Product requirements document for Phase 6 — Import, Export, and C
 
 # Import, Export & Backup PRD
 
+## Current app as of 2026-10-02
+
+This update supersedes conflicting details in the original plan below. It is a source review, not a fresh end-to-end backup test. Root [AGENTS.md](../../../AGENTS.md) replaces the old procedural guardrails; preserve transactional writes, canonical units and existing records.
+
+- Implemented: `.xlsx` export, local JSON export/restore, and additive CSV imports from **Hevy, Strong and FitNotes**. The references below to five supported competitors, GymWP and Fitbod are obsolete. Current entry points are `src/components/settings/ExportBottomSheet.tsx`, `ImportBottomSheet.tsx` and `src/screens/ExerciseMappingScreen.tsx`.
+- `src/services/dataTransferService.ts` exports 15 database tables, including exercise notes and settings. `cloud_backup_config` remains excluded because authentication/configuration is device-specific. Schema version is 21; onboarding, tutorial and theme data are carried through settings and restore compatibility helpers.
+- **Photo limitation:** local JSON and Google Drive backups include `progress_photos` metadata and relative file paths, but no image bytes. `photoService.ts` stores those images separately under the app document directory. Restoring onto a new device does not restore the photos. The old “full backup” wording must not be read as a guarantee of photo recovery.
+- Google Drive backup/restore and the optional after-workout backup hook exist in `cloudBackupService.ts` and `WorkoutScreen.tsx`. This is one latest JSON snapshot, not synchronization or backup history. Production OAuth/signing and real-device recovery still need validation. The populated client ID alone does not prove production readiness. iCloud remains deferred.
+- JSON/cloud restore replaces current database content; competitor imports append records. Coordinated writes use `withWriteLock`, transactions and `batchInsert`. Import mapping/Back transitions were revised in the October navigation work; Settings and mapping now belong to the stack that opened them.
+- Optional Drive upload sends selected backup data off-device. Privacy language must distinguish local core use from that explicit choice. Historical claims below about automatic Drive deletion on uninstall have not been verified in this refresh and must not be used as a deletion guarantee.
+- Open release work includes photo portability or clear exclusion messaging, native picker/share/restore checks, and recovery on a clean install. Existing scoped verification is recorded in [current progress](../current-progress.md); it does not certify every older checklist item.
+
+## Historical PRD
+
+The original requirements, sample formats and decisions below are retained for context. Historical table counts, optimistic backup promises, sample paths, proposed APIs and implementation phases are not a current implementation contract.
+
 ## Overview
 
 Phase 6 delivers three pillars of data management: getting data **out** (Export), getting data **in** (Import), and keeping it **safe** (Cloud Backup). These features live in the existing **Settings** screen under the **Data Management** section, which currently has placeholder rows for Export, Import, and Cloud Backup.
@@ -265,7 +281,7 @@ Each parser maps competitor-specific CSV columns to the shared `ParsedWorkout` /
 
 #### Hevy CSV Format
 
-**Status:** ✅ Sample analyzed — [workout_data.csv](file:///c:/Users/teddy/projects/workout-app/.agent/knowledge/Import%20examples/hevy/workout_data.csv), [measurement_data.csv](file:///c:/Users/teddy/projects/workout-app/.agent/knowledge/Import%20examples/hevy/measurement_data.csv)
+**Status:** ✅ Sample analyzed — [workout_data.csv](../Import%20examples/hevy/workout_data.csv), [measurement_data.csv](../Import%20examples/hevy/measurement_data.csv)
 **Priority:** High — largest competitor, most migration traffic expected.
 **Delimiter:** Comma (`,`)
 **Files:** Two separate CSVs — workout data and measurement data.
@@ -327,7 +343,7 @@ Each parser maps competitor-specific CSV columns to the shared `ParsedWorkout` /
 
 #### Strong CSV Format
 
-**Status:** ✅ Sample analyzed — [strong CSV](file:///c:/Users/teddy/projects/workout-app/.agent/knowledge/Import%20examples/strong7829848025505501631.csv)
+**Status:** ✅ Sample analyzed — [strong CSV](../Import%20examples/strong7829848025505501631.csv)
 **Priority:** High.
 **Delimiter:** Semicolon (`;`) — NOT comma. All values are double-quoted.
 **Files:** Single CSV containing all workout data. No separate measurement file.
@@ -362,7 +378,7 @@ Each parser maps competitor-specific CSV columns to the shared `ParsedWorkout` /
 
 #### FitNotes CSV Format
 
-**Status:** ✅ Sample analyzed — [FitNotes_Export.csv](file:///c:/Users/teddy/projects/workout-app/.agent/knowledge/Import%20examples/FitNotes_Export.csv), [FitNotes_BodyTracker_Export.csv](file:///c:/Users/teddy/projects/workout-app/.agent/knowledge/Import%20examples/FitNotes_BodyTracker_Export.csv)
+**Status:** ✅ Sample analyzed — [FitNotes_Export.csv](../Import%20examples/FitNotes_Export.csv), [FitNotes_BodyTracker_Export.csv](../Import%20examples/FitNotes_BodyTracker_Export.csv)
 **Priority:** Medium — Android-focused user base.
 **Delimiter:** Comma (`,`)
 **Files:** Two separate CSVs — workout data and body tracker data. User must export each separately.

@@ -3,6 +3,7 @@ import React from 'react';
 const mockNavigationRef = { current: null, isReady: jest.fn(() => true), navigate: jest.fn() };
 jest.mock('@react-navigation/native', () => ({
     NavigationContainer: 'NavigationContainer',
+    DarkTheme: { dark: true, colors: {} },
     createNavigationContainerRef: () => mockNavigationRef,
 }));
 jest.mock('@react-navigation/bottom-tabs', () => ({
@@ -40,6 +41,7 @@ import AppNavigator from '../AppNavigator';
 import ExerciseCard from '../../components/ExerciseCard';
 import { navigateToTab, navigateToWorkoutHome, openWorkoutExerciseDetails } from '../navigationRef';
 import { shouldHideTabBar } from '../tabBarVisibility';
+import { ThemeProvider, palettes } from '../../theme';
 
 // Load the installed routers' TypeScript sources: this project uses ts-jest and
 // the package's published entry is ESM JavaScript. Transitions remain real router code.
@@ -196,4 +198,16 @@ it('waits for the navigation container before opening an exercise or starting a 
     openWorkoutExerciseDetails({ exerciseId: 'bench', exerciseName: 'Bench press' });
     navigateToWorkoutHome();
     expect(mockNavigationRef.navigate).not.toHaveBeenCalled();
+});
+
+it('updates navigation colors without replacing the navigator or route components', async () => {
+    const app = await render(<ThemeProvider themeId="ironjot"><AppNavigator /></ThemeProvider>);
+    const navigator = app.root.findByType('TabNavigator');
+    const routeComponents = app.root.findAllByType('TabScreen').map((screen: any) => screen.props.component);
+    expect(app.root.findByType('NavigationContainer').props.theme.colors.background).toBe(palettes.ironjot.background.primary);
+    await act(async () => { app.update(<ThemeProvider themeId="purple"><AppNavigator /></ThemeProvider>); });
+    expect(app.root.findByType('TabNavigator')).toBe(navigator);
+    expect(app.root.findAllByType('TabScreen').map((screen: any) => screen.props.component)).toEqual(routeComponents);
+    expect(app.root.findByType('NavigationContainer').props.theme.colors.background).toBe(palettes.purple.background.primary);
+    expect(app.root.findByType('TabNavigator').props.screenOptions.headerTintColor).toBe(palettes.purple.text.primary);
 });

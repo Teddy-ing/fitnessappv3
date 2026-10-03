@@ -4,6 +4,22 @@ description: Product requirements document for the Settings feature — app-wide
 
 # Settings PRD
 
+## Current app as of 2026-10-02
+
+This source-based update overrides the original plan below. Root [AGENTS.md](../../../AGENTS.md) governs the work; fixed component-size limits are retired. This documentation refresh did not run new UI or device tests.
+
+- General preferences and contextual workout settings are implemented in `src/screens/SettingsScreen.tsx` and `src/components/WorkoutSettingsMenu.tsx`. Settings is reachable from both Workout and Profile and returns within the owning navigation stack.
+- **Correct storage rule:** exercise/body weight is stored canonically in **pounds**, with `src/utils/unitConversion.ts` used at input/display boundaries. The historical warning below that each entry retains its entry-time weight unit is obsolete and must not guide code changes. Keep distance and tape-measure conventions separate.
+- Theme is now a working choice between **IronJot** (default charcoal/coral/cream) and **Classic Purple**, persisted as `ironjot` / `purple`. Legacy Dark/Light values resolve to IronJot; there is no working light theme. `AppThemeProvider` refreshes after committed restore/reset.
+- Smart Suggestions and progression nudges are functional optional workout settings, alongside Previous/RPE/RIR, prefill previous values, plate calculator, set defaults and rest timer controls. Training phase is in General. The old disabled “AI-powered” placeholder description is obsolete.
+- Optional onboarding and Quick Start Guide are implemented. Settings can reopen the tutorial; the onboarding shortcut was removed at the owner's request. Schema migrations now run through 21. Setup applies selected units/training phase and an accepted routine; it does not require an account.
+- Google Drive has a real backup section; local JSON/spreadsheet export and competitor import are implemented. Production Drive validation remains outstanding. JSON/Drive backups currently omit photo bytes even though they include photo metadata.
+- Release-facing work remains: Warm-Up Calculator is still Coming Soon; rate/support/feedback/privacy and About/changelog need final content or destinations. Dev Tools are already gated by `__DEV__`, but **Clear All Data is inside that gate too**, so public deletion access needs a product decision. Existing privacy copy must acknowledge optional cloud backup.
+
+## Historical PRD
+
+The original settings catalog, SQL, phases and decisions are preserved below. They describe the April plan and are not a current checklist or an instruction to recreate shipped migrations.
+
 ## Overview
 
 The Settings feature has two distinct surfaces:

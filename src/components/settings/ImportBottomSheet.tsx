@@ -13,23 +13,14 @@
  */
 
 import React, { useCallback, useRef, useState } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    StyleSheet,
-    ActivityIndicator,
-    Alert,
-    Modal,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TouchableWithoutFeedback, ActivityIndicator, Alert, Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { parseFile, generateExerciseMappings, getUnresolvedMappings } from '../../services/importParsers';
 import type { CompetitorSource } from '../../services/importParsers';
 import type { SharedStackParamList } from '../../navigation/types';
@@ -47,6 +38,8 @@ export default function ImportBottomSheet({
     onClose,
     onImportJSON,
 }: ImportBottomSheetProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const isRunning = useRef(false);
     const [loadingSource, setLoadingSource] = useState<CompetitorSource | null>(null);
     const navigation = useNavigation<Navigation>();
@@ -162,7 +155,7 @@ export default function ImportBottomSheet({
                                     disabled={isLoading}
                                     activeOpacity={0.7}
                                 >
-                                    <View style={[styles.iconContainer, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}>
+                                    <View style={[styles.iconContainer, { backgroundColor: colors.accent.muted }]}>
                                         <MaterialIcons name="restore" size={22} color={colors.accent.primary} />
                                     </View>
                                     <View style={styles.optionText}>
@@ -234,6 +227,8 @@ function SourceRow({
     disabled: boolean;
     onPress: () => void;
 }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     return (
         <TouchableOpacity
             style={styles.option}
@@ -257,7 +252,7 @@ function SourceRow({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -323,4 +318,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginTop: 2,
     },
-});
+}));

@@ -9,9 +9,9 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 
 interface SettingNavigationRowProps {
     icon: keyof typeof MaterialIcons.glyphMap;
@@ -24,12 +24,15 @@ interface SettingNavigationRowProps {
 
 export default function SettingNavigationRow({
     icon,
-    iconColor = colors.text.primary,
+    iconColor: providedIconColor,
     label,
     subtitle,
     value,
     onPress,
 }: SettingNavigationRowProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    const iconColor = providedIconColor ?? colors.text.primary;
     return (
         <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
             <View style={styles.iconContainer}>
@@ -49,7 +52,7 @@ export default function SettingNavigationRow({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -85,4 +88,4 @@ const styles = StyleSheet.create({
         color: colors.text.secondary,
         marginRight: spacing.sm,
     },
-});
+}));

@@ -1,8 +1,25 @@
 ---
-description: Feature specifications, on-device ML concepts, and UX decisions
+description: Current feature behavior, durable UX decisions, and dated design proposals
 ---
 
 # Feature Design
+
+## Current update — 2026-10-02
+
+IronJot's main flows are implemented: logging and recovery, templates/splits, calendar and journal history, analytics, measurements/photos, goals, in-app widgets, optional setup and tutorial, and local statistical suggestions. The Workout and Profile tabs own their own navigation stacks. The brand theme is IronJot, with Classic Purple available in Settings.
+
+The sections below distinguish current behavior from original proposals. Implementation history and release status live in [current progress](current-progress.md); this file records decisions worth preserving.
+
+| Area | Current behavior | Source |
+|---|---|---|
+| Guidance | Optional preference setup, starter-plan suggestions, and a separate quick-start tutorial | `src/services/onboardingService.ts`, `onboardingPlanService.ts`, `tutorialService.ts` |
+| Suggestions | Local weighted statistics for sets, rest, and progression; exercise-history ranking | `src/services/smartSuggestionsService.ts`, `exerciseSuggestionService.ts` |
+| Export | XLSX workbook and JSON database backup | `src/services/exportService.ts`, `dataTransferService.ts` |
+| Import | Own-app JSON restore and supported Hevy, Strong, FitNotes files with exercise mapping | `src/components/settings/ImportBottomSheet.tsx`, `src/services/competitorImportService.ts` |
+| Cloud | Optional Google Drive backup/restore and auto-backup setting | `src/services/cloudBackupService.ts` |
+| Widgets | Cards inside the app; no native phone home-screen widget implementation | `src/components/widgets/`, `src/models/widget.ts` |
+
+JSON backups include progress-photo records but do not bundle the image files. They are not yet a complete photo backup for a new device. iCloud, PDF/CSV export, and a cloud AI assistant must not be described as implemented.
 
 ## Navigation ownership and return paths — 2026-10-01
 
@@ -14,13 +31,15 @@ description: Feature specifications, on-device ML concepts, and UX decisions
 
 ## Exercise illustration library — 2026-10-01
 
-- The owner approved the original grey humanoid and coral muscle treatment in the bench/squat/curl pilot, then requested expansion to every built-in exercise. Coverage is tracked in `assets/exercises/library-manifest.json`; the target is all 114 current seed IDs.
+- Built-in exercise illustrations use a grey humanoid and coral muscle treatment. Coverage is tracked in `assets/exercises/library-manifest.json` against the 114 current seed IDs.
 - Use the original curl image as the fixed model/style reference. The pilot prompts live in `assets/exercises/generation-spec.json`; each production image has its exact prompt, corrections, hash and review in `assets/exercises/records/<id>.json`. The reusable process is in `../workflows/exercise-illustrations.md`. Each new pose needs independent visual review because image generation can drift or produce plausible mechanical errors.
 - Render reviewed assets in exercise information's shared About tab as a responsive square card capped at 380 layout units. Static assets keyed by stable built-in exercise ID support existing installations and offline builds without schema changes. Explicit image URLs take precedence; custom or unknown exercises retain their supplied image or category icon.
 - Preserve full-size source PNGs for future work and bundle quality-90 JPEG copies at the same dimensions. This substantially reduces the offline library size. `scripts/exercise-art.cjs` creates the registry and verifies exact ID coverage and source/output hashes; package only independently reviewed records.
 - Coral denotes visible primary target muscles, not measured activation. For stretches it marks target regions. Deep or clothing-covered muscles remain uncolored. These are representative stills with descriptions naming the visible phase; motion demonstrations would need additional reviewed poses or a rig.
 
-## Workout Type Support (Beyond Weightlifting)
+## Original warmup and mobility proposal — 2026-01-04
+
+Strength, cardio, and stretching categories now exist. The separate warmup/cooldown flow below remains an idea; the Settings warm-up calculator still shows a coming-soon message. The market and health claims in these early notes were rationale, not established product evidence.
 
 **Problem:** Most apps are weight-lifting focused. Users want to track:
 - Strength/resistance training ✅ (core focus)
@@ -130,7 +149,13 @@ These sources document supported workflows and help content. They do not establi
 
 ---
 
-## On-Device ML Features
+## Local statistical suggestions — current behavior
+
+The service uses SQL history and JavaScript statistics, including weighted linear regression, rather than an ML framework or cloud model. Settings controls Smart Suggestions. Predictions can supply weight/reps, set count, rest duration, and progression nudges; exercise-picker suggestions use co-occurrence and frequency. These are editable aids to logging.
+
+### Original personalization concepts — 2026-01-04
+
+The concepts below explain the design intent. Workout-day prediction is not an established current capability, and the exact interaction bullets are proposals rather than a completed-feature checklist. Suggestions are computed locally; an explicit export or optional cloud backup can still transmit the underlying history. There is no separate trained model to export.
 
 **Core Philosophy:** Learn from user behavior to reduce friction, but NEVER feel intrusive or creepy.
 
@@ -142,11 +167,11 @@ These sources document supported workflows and help content. They do not establi
 - Example: User enters 90lbs Bench Press → suggests 8, 10, 12 based on history
 
 **UX Requirements:**
-- \u2705 Extremely easy to accept (single tap)
-- \u2705 Extremely easy to reject (tap elsewhere, type different number)
-- \u2705 Easy to revert accidental accepts (undo or quick edit)
-- \u2705 Option to start from 0 and increment if preferred
-- \u2705 Non-blocking — suggestions don't slow down manual entry
+- Extremely easy to accept (single tap)
+- Extremely easy to reject (tap elsewhere, type different number)
+- Easy to revert accidental accepts (undo or quick edit)
+- Option to start from 0 and increment if preferred
+- Non-blocking — suggestions don't slow down manual entry
 
 **Implementation Notes:**
 - Simple statistical model (not deep learning)
@@ -164,11 +189,11 @@ These sources document supported workflows and help content. They do not establi
 - User can accept, edit, or dismiss
 
 **UX Requirements:**
-- \u2705 Easy to accept (one tap, start workout)
-- \u2705 Easy to decline (dismiss, choose different)
-- \u2705 Easy to edit (accept but modify)
-- \u2705 "Don't show this again" option for changed routines
-- \u2705 Only suggest when confidence is high
+- Easy to accept (one tap, start workout)
+- Easy to decline (dismiss, choose different)
+- Easy to edit (accept but modify)
+- "Don't show this again" option for changed routines
+- Only suggest when confidence is high
 
 **Edge Cases:**
 - User completely changes routine → "Don't suggest this anymore"
@@ -180,11 +205,11 @@ These sources document supported workflows and help content. They do not establi
 ### Privacy & Control
 
 **Critical Requirements:**
-- \ud83d\udd12 **Explicit messaging**: "This data never leaves your device"
-- \ud83d\udd12 **Toggle to disable**: Full on/off control for all ML features
-- \ud83d\udd12 **Transparency**: Explain what is learned and how
-- \ud83d\udd12 **No cloud dependency**: Works entirely offline
-- \ud83d\udd12 **User owns their data**: ML models exportable with user data
+- **Explicit messaging**: "This data never leaves your device"
+- **Toggle to disable**: Full on/off control for all ML features
+- **Transparency**: Explain what is learned and how
+- **No cloud dependency**: Works entirely offline
+- **User owns their data**: ML models exportable with user data
 
 ---
 
@@ -237,30 +262,24 @@ interface Split {
 
 ---
 
-## Data & Sync Features
+## Data transfer and optional backup — current behavior
 
 ### Export Capabilities
 
-Multiple formats for maximum portability:
-- CSV (Fitnotes-compatible)
-- JSON (full fidelity)
-- PDF (printable workout logs)
+- **XLSX:** A workbook with Workouts, Measurements, Goals, and Personal Records sheets for viewing data outside the app.
+- **JSON:** A database snapshot for own-app restore, including templates, splits, preferences, and history. Photo records contain local paths; photo files are not bundled.
+- **Competitor imports:** Hevy, Strong, and FitNotes exports go through parsing and exercise mapping. This is separate from JSON restore, which replaces existing app data after confirmation.
+- CSV/PDF export and a generic CSV mapping tool are original ideas, not current exports.
 
 ### Cloud Backup (Optional)
 
-**Supported Providers:**
-- Google Drive (Android-native)
-- iCloud (iOS-native)
-- Manual export/import as fallback
-
-**Sync Approach:**
-- User-initiated backup (not auto-sync initially)
-- Clear UI showing last backup date
-- Restore from backup on new device
+Google Drive is the implemented provider. Users can connect, back up, restore, disconnect, and enable automatic backup. It uploads the JSON snapshot to the app-data folder; this is snapshot backup, not multi-device conflict-merging sync. Manual JSON export/restore is also available. iCloud is not implemented. Production sign-in and cross-device restore still need release verification.
 
 ---
 
-## Feature Prioritization (Updated Roadmap)
+## Historical eight-phase roadmap — 2026-02-20
+
+This is the original planning artifact, retained for context. It is not the current release checklist. Visual updates, analytics/profile, Settings, data transfer, and local suggestions now have implementations. Widgets became in-app cards; native launcher widgets remain a different feature. The chatbot phase was retired in September 2026. Specific old format/provider proposals below should not override the current data-transfer section above.
 
 ### Phase 1: Visual Refactor
 - App-wide UI/UX overhaul of all existing screens and components
@@ -319,14 +338,14 @@ Multiple formats for maximum portability:
   - Manual export/import as primary mechanism
   - Optional cloud backup (Google Drive / iCloud) as stretch goal
 
-### Phase 7: ML & Personalization *(see "On-Device ML Features" section above for full spec)*
+### Phase 7: ML & Personalization (historical label)
 - Implement rep/weight autocomplete based on exercise history
 - Workout day suggestions from recurring patterns
 - Smart rest timer defaults per exercise type
 - Set count suggestions based on history
 - All processing on-device, privacy-first
 
-### Phase 8: LLM Chatbot Feature *(see "Cloud AI Features" section above for full spec)*
+### Phase 8: LLM Chatbot Feature (retired September 2026)
 - AI chatbot assistant in dedicated tab
 - Preformatted queries: weak points, optimizations, template generation, periodization
 - Free-form conversation with workout history context
@@ -336,6 +355,8 @@ Multiple formats for maximum portability:
 
 ---
 
-## Last Updated
-- Date: 2026-02-20
-- Session Context: Restructured feature prioritization with new 8-phase roadmap after month-long break
+## Document history
+
+- **2026-01-04–2026-02-20:** Original feature concepts and eight-phase roadmap.
+- **September–October 2026:** Onboarding, tutorial, navigation, and exercise-library decisions.
+- **2026-10-02:** Current capabilities reconciled with source; proposals and retired scope labeled explicitly.

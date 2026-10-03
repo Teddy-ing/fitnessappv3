@@ -1,5 +1,17 @@
 # From "Vibe Coding" to Production: An Architectural Journey
 
+## Current app as of 2026-10-02
+
+This essay is a historical account of an early architecture review. Its statements such as “worked perfectly” and “production-ready” express that narrative; they are not a current release certification.
+
+- The architecture now has versioned migrations through 21, shared hydration/calculation/unit helpers, coordinated database writes, separate workout/rest-timer state, active-workout recovery and UI error boundaries. See `src/services/migrations.ts`, `src/utils/dbMutex.ts` and `src/stores/`.
+- IronJot now includes analytics, calendar, measurements/photos, goals, widgets, optional onboarding and tutorial, 114 exercise illustrations, and live IronJot/Classic Purple themes. The Assistant has been retired from current navigation.
+- Root [AGENTS.md](../../../AGENTS.md) governs development. Large files alone do not require a refactor; reviews should identify concrete behavior, maintenance or data-safety risks. Old mandatory guardrail/audit procedures are retired.
+- Launch still requires production build/signing and cloud validation, release-facing Settings content, and device checks including iOS if supported. JSON/Drive backups currently contain photo metadata without image bytes. Historical architectural improvements do not close those gaps.
+- [Current progress](../current-progress.md) records actual implementation and verification scope. This documentation refresh did not rerun audits, tests or device checks.
+
+## Historical essay
+
 ## The Context
 
 This project began as an experiment in AI-assisted development ("vibe coding"). Using Cursor and Claude, I rapidly prototyped a functional, feature-rich fitness application from scratch. As a developer with zero prior experience in TypeScript or React Native, the AI tools allowed me to bridge the syntax gap and bring the application logic to life. 

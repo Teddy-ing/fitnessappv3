@@ -16,13 +16,12 @@ import {
     View,
     Text,
     TouchableOpacity,
-    StyleSheet,
     Animated,
     Dimensions,
     BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 import { useWeightUnit } from '../hooks/useWeightUnit';
 import PlateCalculator from './PlateCalculator';
 
@@ -67,6 +66,7 @@ export default function WorkoutKeyboard({
     showAdjustButtons = true,
     weightIncrement = 5,
 }: WorkoutKeyboardProps) {
+    const styles = useStyles();
     const weightUnit = useWeightUnit();
     const insets = useSafeAreaInsets();
     const bottomInset = Math.max(insets.bottom, 0);
@@ -258,7 +258,7 @@ export default function WorkoutKeyboard({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         position: 'absolute',
         bottom: 0,
@@ -417,13 +417,13 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     nextKeyText: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.md,
         fontWeight: typography.weight.bold,
     },
     nextArrow: {
-        color: colors.text.primary,
+        color: colors.text.onAccent,
         fontSize: typography.size.lg,
         marginTop: 2,
     },
-});
+}));

@@ -28,7 +28,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { File, Paths } from 'expo-file-system';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../theme';
 import { useWorkoutStore } from '../stores';
 import { ExercisePicker, RestTimer, WorkoutKeyboard, SaveTemplateModal, WorkoutSettingsMenu } from '../components';
 import RenderableExerciseItem, { RenderableItem } from '../components/workout/RenderableExerciseItem';
@@ -55,11 +55,14 @@ import { useIsFocused } from '@react-navigation/native';
 import { useTutorial } from '../components/tutorial/TutorialProvider';
 import WorkoutTutorialTip from '../components/tutorial/WorkoutTutorialTip';
 import SplitsScreen from './SplitsScreen';
+import { useStartup } from '../components/startup/StartupContext';
 
 // Swipe hint persistence key
 const SWIPE_HINT_FILE = new File(Paths.document, '.swipe_hint_seen');
 
 export default function WorkoutScreen() {
+    const colors = useThemeColors();
+    const styles = useStyles();
     const tutorial = useTutorial();
     const [showTutorialSplit, setShowTutorialSplit] = useState(false);
     const handledTutorialAction = useRef<string | null>(null);
@@ -114,6 +117,7 @@ export default function WorkoutScreen() {
 
     // Workout settings — extracted to useWorkoutSettings hook
     const {
+        isLoaded: settingsLoaded,
         showPrevious,
         showRpe,
         showRir,
@@ -137,6 +141,12 @@ export default function WorkoutScreen() {
         handleChangeRestTime,
         refreshSettings,
     } = useWorkoutSettings();
+
+    const { onInitializationComplete } = useStartup();
+    useEffect(() => {
+        // Reveal the actual saved units, settings, and home data, not their placeholders.
+        if (settingsLoaded && !isHomeLoading) onInitializationComplete();
+    }, [settingsLoaded, isHomeLoading, onInitializationComplete]);
 
     // BH-051: Re-read settings when the Workout tab receives focus.
     // keepAwakeDuringWorkout (and other settings) were stale if changed
@@ -216,7 +226,7 @@ export default function WorkoutScreen() {
     const exercisesListStyle = useMemo(() => ({
         ...styles.exercisesList,
         paddingBottom: isKeyboardVisible ? 360 : 120,
-    }), [isKeyboardVisible]);
+    }), [isKeyboardVisible, styles]);
 
     // Auto-scroll: bring focused exercise above the keyboard when it would obstruct
     const flatListRef = useRef<FlatList>(null);
@@ -789,7 +799,7 @@ export default function WorkoutScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles(colors => ({
     savingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.overlay, alignItems: 'center', justifyContent: 'center', gap: spacing.md, zIndex: 100 },
     savingText: { color: colors.text.primary, fontSize: typography.size.lg },
     container: {
@@ -830,4 +840,4 @@ const styles = StyleSheet.create({
         fontSize: typography.size.lg,
         fontWeight: typography.weight.medium,
     },
-});
+}));

@@ -5,6 +5,7 @@ import { createOnboardingProfile, OnboardingProfile } from '../../models/onboard
 import { getOnboardingProfile, saveOnboardingProfile } from '../../services/onboardingService';
 import { getOnboardingRecommendation } from '../../services/onboardingPlanService';
 import { updateSettings } from '../../services/preferencesService';
+import { ThemeProvider, palettes } from '../../theme';
 
 jest.mock('react-native', () => ({
     ActivityIndicator: 'ActivityIndicator', ScrollView: 'ScrollView',
@@ -93,6 +94,29 @@ afterEach(async () => {
     if (renderer) await act(async () => { renderer.unmount(); });
     renderer = undefined;
     jest.restoreAllMocks();
+});
+
+it('switches the live palette without losing the current step or selected units', async () => {
+    const profile = { ...createOnboardingProfile(), step: 1 };
+    await act(async () => {
+        renderer = create(<ThemeProvider themeId="ironjot">
+            <OnboardingScreen initialProfile={profile} onDone={onDone} />
+        </ThemeProvider>);
+    });
+    await press('Weight: Kilograms (kg)');
+    expect(renderer.root.findByType('SafeAreaView').props.style.backgroundColor).toBe(palettes.ironjot.background.primary);
+    await act(async () => {
+        renderer.update(<ThemeProvider themeId="purple">
+            <OnboardingScreen initialProfile={profile} onDone={onDone} />
+        </ThemeProvider>);
+    });
+    expect(heading()).toBe('Which units feel familiar?');
+    expect(button('Weight: Kilograms (kg)').props.accessibilityState.selected).toBe(true);
+    expect(renderer.root.findByType('SafeAreaView').props.style.backgroundColor).toBe(palettes.purple.background.primary);
+    const choiceStyle = Object.assign({}, ...button('Weight: Kilograms (kg)').props.style.filter(Boolean));
+    expect(choiceStyle.backgroundColor).toBe(palettes.purple.accent.muted);
+    const continueStyle = Object.assign({}, ...button('Continue').props.style.filter(Boolean));
+    expect(continueStyle.backgroundColor).toBe(palettes.purple.accent.secondary);
 });
 
 it('collects optional preferences, retains them on Back, and delegates completion to the application service', async () => {

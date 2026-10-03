@@ -4,6 +4,21 @@ description: Product requirements document for the Exercise Details screen — a
 
 # Exercise Details PRD ("Master Guide")
 
+## Current app as of 2026-10-02
+
+This dated update takes precedence over the original plan below. It records source inspection, not a new device test. Root [AGENTS.md](../../../AGENTS.md) governs implementation and verification; historical file-size limits are retired.
+
+- Implemented: the shared `ExerciseDetailsContent` renders About, History, Charts and Records. History loads 20 sessions at a time. Analytics and pinned widgets request Charts; workout information requests About.
+- Navigation changed from the proposed cross-tab push: Workout and Profile have their own detail routes in `src/navigation/AppNavigator.tsx`. Opening information during a workout preserves its return path. Template editors reuse `ExerciseInfoView` to retain their drafts.
+- The old 96px placeholder is replaced by responsive artwork for all 114 built-in exercises. `ExerciseIllustration` prefers a supplied image URL, then bundled artwork, with a fallback on failure. Instruction text remains separate from illustration coverage.
+- About supports multiple dated notes with explicit Save and delete actions, rather than one note auto-saved on blur. See `src/components/exerciseDetails/AboutTab.tsx`, `src/services/exerciseDetailsService.ts` and migrations 11/12.
+- Charts and records use the shared calculation and canonical-pound display helpers. The original `ExerciseAnalyticsScreen` route is retired. Components follow the live IronJot / Classic Purple palette.
+- Release verification still needs iOS interactions and phone review; see [current progress](../current-progress.md) for the scoped tests and Android checks already recorded.
+
+## Historical PRD
+
+The following is the original design record. Its future tense, open questions, code examples and completion expectations describe that planning stage, not the current backlog.
+
 ## Overview
 
 The Exercise Details screen is a comprehensive, per-exercise reference that consolidates everything the user needs to know about a single exercise into one place. It replaces the current `ExerciseAnalyticsScreen` as the canonical "drill into an exercise" destination, adding form guidance, session history, persistent personal notes, and a cleaner records table alongside the existing charts.

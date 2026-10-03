@@ -11,13 +11,12 @@ import React from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     ScrollView,
     RefreshControl,
 } from 'react-native';
 import { Split } from '../models/split';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { createThemedStyles, spacing, borderRadius, typography } from '../theme';
 
 interface SplitListViewProps {
     splits: Split[];
@@ -38,6 +37,7 @@ export default function SplitListView({
     onToggleFavorite,
     onRefresh,
 }: SplitListViewProps) {
+    const styles = useStyles();
 
     const renderSplitCard = (split: Split) => {
         const isActive = activeSplit?.id === split.id;
@@ -136,7 +136,7 @@ export default function SplitListView({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     scrollView: {
         flex: 1,
     },
@@ -236,4 +236,4 @@ const styles = StyleSheet.create({
         marginTop: spacing.lg,
         marginBottom: spacing.lg,
     },
-});
+}));

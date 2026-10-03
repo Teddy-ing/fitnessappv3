@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import type { Goal } from '../../models';
 import type { GoalDisplayInfo } from './GoalCard';
 import { getProgressPercent, formatDate } from './goalUtils';
@@ -90,6 +90,8 @@ export default function GoalDetailModal({
     displayInfo,
     onClose,
 }: GoalDetailModalProps) {
+    const styles = useStyles();
+    const colors = useThemeColors();
     if (!goal || !displayInfo) return null;
 
     const percent = getProgressPercent(goal);
@@ -270,6 +272,7 @@ function InfoRow({
     value: string;
     highlight?: boolean;
 }) {
+    const styles = useStyles();
     return (
         <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>{label}</Text>
@@ -284,7 +287,7 @@ function InfoRow({
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,
@@ -464,4 +467,4 @@ const styles = StyleSheet.create({
     statusTextAbandoned: {
         color: colors.text.secondary,
     },
-});
+}));

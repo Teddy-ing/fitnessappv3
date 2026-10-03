@@ -1,186 +1,80 @@
 ---
-description: Coding patterns, naming conventions, and project structure standards (TBD)
+description: Active coding conventions, data-safety patterns, and project structure
 ---
 
 # Project Conventions
 
-## Status
+## Current update — 2026-10-02
 
-**Stack selected: React Native + Expo + TypeScript + Zustand + expo-sqlite**
+IronJot uses **React Native, Expo, TypeScript, Zustand, and expo-sqlite**. [AGENTS.md](../../AGENTS.md) is the active working agreement and takes precedence over older procedures in the knowledge and workflow folders.
 
----
+These conventions retain useful implementation guidance. Fixed file-size and hook-count limits, mandatory multi-chat QA, required PRDs, exhaustive audit baselines, and a log entry for every exchange are retired. Extract code when responsibilities or reuse justify it.
 
-## General Principles
+## Code and state
 
-These apply regardless of framework:
+- Prefer clear names, typed interfaces, and cohesive functions. Explain non-obvious decisions without narrating straightforward code.
+- Avoid `any` where a specific type or `unknown` with narrowing works. Keep canonical domain models in `src/models/`; local projection/result types can live beside their use.
+- Services return data and do not import stores. Screens, hooks, and store actions coordinate UI state and side effects.
+- State tied to an entity must reset or rehydrate when its identity changes. Preserve drafts and active workout state during theme changes and ordinary navigation.
+- Reuse existing hydration, batching, formulas, unit-conversion, and write-coordination helpers before adding parallel implementations.
 
-### Code Quality
-- Prefer readability over cleverness
-- Document non-obvious decisions
-- Write self-documenting code with clear naming
-- Keep functions small and focused
+## Database and data ownership
 
-### Guardrails
+1. Add schema changes as new versioned migrations in `src/services/migrations.ts`. Do not rewrite shipped migrations. Verify both a fresh database and an upgrade.
+2. Store weight canonically in pounds. Convert at input/display boundaries through `src/utils/unitConversion.ts`; preserve existing conventions for other measurements and imported data.
+3. Keep related writes atomic and use the established database write lock. Guard non-idempotent actions against concurrent invocation and double taps, with a synchronous guard before the first `await` where needed.
+4. Update parent records in place. Replacing children can be appropriate, but deleting and recreating a parent risks breaking identities, references, and history.
+5. Carry persisted fields through save/load, backup/restore, relevant import/export, and data clearing. Register new user-data tables in the relevant export/clear lists and preserve compatibility with older backups.
+6. Use batch queries for multi-entity work instead of N independent reads. Reuse `src/utils/batchQuery.ts` and `batchInsert.ts`, including their parameter-budget handling. The established ID batch size is 500; account for additional placeholders when constructing custom queries.
+7. Keep shared SQL formulas in `src/utils/sqlFragments.ts` and equivalent JavaScript calculations in `src/utils/formulas.ts`. Avoid independently maintained copies of volume and estimated-1RM calculations.
+8. Restore operations must make their replacement behavior clear and must not leave a partial database on failure. Photo files require explicit handling beyond database rows; the current JSON format only includes their paths.
 
-These rules are enforced to prevent the specific categories of tech debt that have bitten this project:
+## UI and navigation
 
-1. **Component size limit (600 lines) — build first, extract later**
-   Component files should stay under 600 lines. **This is strictly enforced post-completion, never mid-build.**
-   - **During active feature development: DO NOT extract for line count.** Files may freely exceed 600 lines while a feature is being built. Agents must not pause implementation to refactor, extract sub-components, or split files to satisfy the line limit. Premature extraction adds friction, creates churn, and produces worse component boundaries because the full picture isn't visible yet.
-   - **After feature completion: run the tech-debt auditor workflow** (`.agent/workflows/qa/tech-debt-auditor.md`). Any file over 600 lines is flagged as active debt and extracted in a dedicated refactoring pass. This is the **only** point where the guardrail is enforced.
-   
-   *Rationale:* Every god-component in this project (WorkoutScreen 1600→385, SplitsScreen 1258→225, AnalyticsScreen 902→148, CalendarScreen 1056→310) followed the same pattern: grew during multi-phase development, then was cleanly extracted once boundaries were stable. The right abstraction only becomes obvious after the feature is complete. Mid-build extraction consistently produces inferior splits that need re-extraction later.
+- Use `useThemeColors` and `createThemedStyles` from `src/theme` for reactive palette access. Do not capture a palette once at module load. Use semantic colors, including `text.onAccent` for text on filled actions.
+- IronJot is the default theme; Classic Purple is optional. The icon and startup artwork retain IronJot brand colors.
+- Workout and Profile each own a stack. Shared detail/settings routes belong to the caller's stack. Ordinary Back pops that stack; explicit workout-entry actions use the existing navigation helpers.
+- Only the focused screen should respond to screen-specific Android Back handling. Nested editors and pickers close before their parent.
+- Match safe-area handling to navigation ownership. The visible tab bar supplies its bottom inset; a screen without it must account for the bottom system area. A native stack header normally handles the top inset. Avoid adding duplicate padding.
+- Preserve accessible labels, readable numeric inputs, and adequate touch targets. Check changed native interactions on a device or emulator when available; automated tests alone do not establish mobile layout or lifecycle behavior.
 
-2. **Avoid `any` types**
-   Do not use `any` in TypeScript. If `any` is truly unavoidable (e.g., React Native API quirks like `Alert.alert` button arrays), add a `// eslint-disable-next-line` comment with a short justification.
+## Naming and layout
 
-3. **Database schema changes require versioned migrations**
-   All database schema changes must go through a versioned migration in the migration system. Never modify the schema inline or alter existing migration files.
+- Prefer descriptive names; booleans commonly use `is`, `has`, `can`, or `should`.
+- Use `Workout` for a session, `Exercise` for an activity, `WorkoutSet` for a logged set, `Template` for a reusable workout, and `Split` for an ordered schedule of templates and rest days.
+- Keep reusable UI in components, screen orchestration in screens/hooks, domain types in models, and persistence/business logic in services.
 
-4. **Hook extraction signal: 3+ `useState` for one concern**
-   When a component needs more than 3 `useState` hooks for a single concern (e.g., keyboard state, data fetching), extract that concern into a custom hook in `src/hooks/`.
-
-5. **Canonical types live in `src/models/`**
-   Service files must not re-declare model types. Import from `src/models/` instead. If a service only needs a subset of fields, define a minimal interface locally (e.g., `TemplateSummary`) rather than re-exporting a conflicting type.
-
-6. **State reset on lifecycle boundaries**
-   Hooks that manage state tied to a specific entity (e.g., a workout, a split) must reset their state when that entity's identity changes. Use a `useEffect` watching the entity's ID and a `useRef` to track the previous value.
-
-7. **SafeAreaView edges must match tab bar visibility**
-   The custom tab bar already handles `insets.bottom`. When it hides (active workout, profile sub-screens), screens must provide their own bottom safe area. Rules:
-   - **Tab bar visible** → Use plain `<View>` (tab bar handles bottom inset)
-   - **Tab bar hidden + stack header** → Use `<SafeAreaView edges={['bottom']}>` (header handles top)
-   - **Tab bar hidden + no header** → Use `<SafeAreaView edges={['top', 'bottom']}>`
-    - Never use `edges={[]}` or omit bottom when the tab bar is hidden — this causes content to clip behind the system navigation bar.
-
-8. **Batch `IN (...)` queries must be chunked at 500 IDs**
-   SQLite has a compile-time limit of 999 bound parameters (`SQLITE_MAX_VARIABLE_NUMBER`). Any query that builds `WHERE x IN (?,?,?...)` with a dynamic list must chunk IDs into batches of 500 and merge results. A user with ~3 years of daily workouts will exceed 999 IDs.
-   
-   *Pattern:*
-   ```typescript
-   const BATCH_SIZE = 500;
-   const allResults = [];
-   for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-       const batch = ids.slice(i, i + BATCH_SIZE);
-       const placeholders = batch.map(() => '?').join(',');
-       const rows = await db.getAllAsync(`... IN (${placeholders})`, batch);
-       allResults.push(...rows);
-   }
-   ```
-
-9. **Services must not reach into stores**
-   Service files (`src/services/`) must never import from `src/stores/` or call `useXStore.getState()`. Services return data; the caller (screen, hook, or store action) decides what to do with it. This keeps services testable and prevents invisible coupling.
-   
-   *Bad:* `workoutService.ts` calling `useGoalCelebrationStore.getState().celebrate(completed)` after save.
-   *Good:* `saveWorkout()` returns a result, and the caller in `WorkoutScreen.tsx` triggers the celebration.
-
-10. **Shared formulas live in one canonical location**
-     Any SQL formula used in more than one service must be defined once in `src/utils/sqlFragments.ts` and imported. Any equivalent JS computation must be defined once in `src/utils/formulas.ts` and imported. Duplicated formulas drift silently — one copy gets a bugfix, the others don't.
-     
-     Currently centralized:
-     - Epley 1RM SQL: `weight * (1.0 + reps / 30.0)` — in `sqlFragments.ts`
-     - Epley 1RM JS: `computeEpley1RM()` — in `formulas.ts`
-     - Volume: `SUM(weight * reps)` — in `sqlFragments.ts`
-     
-     *Approach:* SQL string-builder helpers in `src/utils/sqlFragments.ts`, JS computation helpers in `src/utils/formulas.ts`.
-
-11. **New tables must be registered in `clearAllData()`**
-    Every migration that creates a new table must also add a corresponding `DELETE FROM <table>` line in `database.ts → clearAllData()`. Without this, "clear all data" leaves orphaned rows that corrupt imports and dev testing. Add a comment in `clearAllData()` referencing the migration version for each table.
-
-12. **`updateX()` must use UPDATE, not delete-then-reinsert**
-     Update functions must use SQL `UPDATE` statements on the existing rows. The pattern of deleting a parent + all children and re-inserting them is fragile: any table with a foreign key reference that isn't `ON DELETE CASCADE` will silently orphan data. If a complex update is truly needed (e.g., replacing all child rows), use `DELETE` only on the children being replaced, and `UPDATE` the parent row in-place.
-
-13. **Batch data operations must use batch queries, not loops**
-     When operating on multiple entities (e.g., loading previous sets for N exercises, inserting N imported workouts), write a single query that handles all entities at once — do not call a single-entity function in a loop or `Promise.all`. SQLite is single-writer; parallel queries serialize internally and multiply overhead.
-     
-     *Bad:* `exerciseIds.map(id => getPreviousSetsForExercise(id))` — N queries.
-     *Good:* A single query with `WHERE exercise_id IN (...)` grouped by exercise, or a CTE that handles the batch. Use `batchGetAll()` from `src/utils/batchQuery.ts` for reads.
-     
-     *Rationale:* Phase 6 (Import) and Phase 7 (ML) will involve bulk operations on hundreds of entities. The N+1 pattern that's tolerable for 5 exercises becomes a multi-second hang at 50.
-
-14. **Destructive async actions must guard against concurrent invocation**
-     Any button that triggers a non-idempotent async operation (save, finish, import, export, delete-all) must be protected against double-taps. Use one of:
-     - A `useRef(false)` flag set synchronously before the first `await`, cleared in `finally`
-     - A loading state that disables the button
-     
-     *Bad:* `onPress={handleFinishWorkout}` where `handleFinishWorkout` is a bare async function.
-     *Good:* `const saving = useRef(false); if (saving.current) return; saving.current = true; try { ... } finally { saving.current = false; }`
-     
-     *Rationale:* `handleFinishWorkout` chains 6+ async operations with no debounce. A double-tap races two save operations. Phase 6 (Import) will have the same pattern with even higher stakes.
-
-### Git Practices
-- Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
-- Feature branches from `main`
-- Squash merge for clean history
-- Meaningful commit messages
-
-### Agent Commit Message Convention
-**At the end of every coding task**, the agent should provide a suggested commit message following this format:
-
-```
-<type>(<scope>): <short description>
-
-<optional body with more details>
-```
-
-**Types**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
-**Scope**: Component or feature area (e.g., `splits`, `workout`, `database`)
-
-Example:
-```
-feat(splits): add rest days support in split creation
-
-- Added splits_schedule table for rest day storage
-- Updated SplitsScreen with Add Rest Day button
-- Schedule preview shows ordered templates + rest days
-```
-
-### Testing Philosophy
-- Test critical paths (logging a set, saving a workout)
-- Integration tests over unit tests for UI
-- Manual testing for UX flows
-
----
-
-## Naming Conventions
-
-*To be defined per language/framework*
-
-### General
-- Use descriptive names over abbreviations
-- Boolean variables: `isX`, `hasX`, `canX`, `shouldX`
-- Constants: `SCREAMING_SNAKE_CASE`
-- Avoid generic names (`data`, `item`, `temp`, `stuff`)
-
-### Domain-Specific
-- `Workout` — A complete workout session
-- `Exercise` — A type of exercise (e.g., "Bench Press")
-- `Set` — A single set of an exercise (weight, reps, etc.)
-- `Template` — A reusable workout structure
-- `Routine` — A collection of templates (e.g., weekly program)
-
----
-
-## File Organization
-
-*To be defined after framework selection*
-
-### General Pattern
-```
+```text
 src/
-├── components/    # Reusable UI components
+├── components/    # Reusable UI and feature-specific component groups
 ├── screens/       # Full-screen views
-├── hooks/         # Custom React hooks (one concern per hook)
-├── models/        # Data models/entities (canonical types)
-├── stores/        # Zustand stores
-├── services/      # Business logic, data access
-├── utils/         # Helper functions
-├── theme/         # Colors, spacing, typography tokens
-└── assets/        # Static resources
+├── hooks/         # Stateful behavior and screen coordination
+├── models/        # Canonical domain types
+├── stores/        # Zustand state and workout persistence
+├── services/      # Data access, calculations, migrations, imports
+├── navigation/    # Routes, stacks, tabs, navigation helpers
+├── theme/         # Palettes, shared tokens, reactive theme runtime
+├── data/          # Bundled data and generated registries
+└── utils/         # Shared pure helpers and database coordination
+assets/            # Branding, exercise images, and other bundled assets
 ```
 
----
+## Verification and handoff
 
-## Last Updated
-- Date: 2026-04-13
-- Session Context: Added guardrails 13–14 from staff engineer scalability audit — batch queries over loops (prevents N+1 in Import/ML phases), concurrent invocation guards (prevents double-tap race conditions on finish/import/export)
+For code changes, run `npm run typecheck` and relevant Jest tests. Run `npm test -- --runInBand` when shared behavior or broad integration warrants the full suite. Add tests for meaningful behavior, calculations, persistence, and regressions; do not add tests merely to exercise documentation changes. Run lint only when its tooling and configuration are available.
+
+Use a separate review for substantive changes as described in AGENTS.md. Report confirmed defects, remaining risks, and unperformed checks accurately. Record a short substantive outcome in [current progress](current-progress.md), with durable product or architecture decisions in the relevant knowledge file.
+
+Work on the selected branch and preserve unrelated edits. Do not commit, push, merge, publish, or release without explicit authorization. If a commit is requested, conventional prefixes such as `feat:`, `fix:`, `docs:`, `refactor:`, and `test:` remain useful; a commit-message proposal is not required for every exchange.
+
+## Maintaining the project records
+
+- Keep one current follow-up list in `current-progress.md`. Add simple dated outcome entries that say what changed and include meaningful verification or an unresolved limitation.
+- Link older logs and plans as dated archives. Keep their original context distinct from current status; use a capture date when the original date is unknown.
+- Avoid Latest/Previous outcome labels, repeated branch/install notes, and step-by-step design-option deliberations. Put reusable build instructions in project configuration and technical decisions in the relevant reference file.
+- App Vision holds durable product direction. Delivery logs belong in Current Progress. Preserve useful original strategy in other product documents and add a dated update when the app changes.
+
+## Document history
+
+- **January–April 2026:** Original conventions and guardrails developed alongside implementation. Their rationale is preserved in the [April 13 conventions archive](progress-archive/2026-04-13-conventions.md).
+- **2026-10-02:** Active conventions reconciled with AGENTS.md and the current theme, navigation, and data architecture.

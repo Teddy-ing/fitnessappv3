@@ -4,6 +4,20 @@ description: Goals feature spec — active/trophy case layout, goal cards with p
 
 # Goals Feature
 
+## Current app as of 2026-10-02
+
+This source-based update overrides the original plan below. Root [AGENTS.md](../../../../AGENTS.md) governs development; fixed file-size and hook-count gates are retired. No new tests were run for this documentation refresh.
+
+- `src/screens/GoalsScreen.tsx` implements Active and Trophy Case tabs, goal creation, detail modal, context actions and quick-add suggestions. The components are under `src/components/goals/` with creation logic in `useGoalCreation`.
+- Persistence/CRUD is in `goalService.ts`; batched progress calculation is in `goalProgressService.ts`. Goal progress is refreshed from workout/measurement paths and completed goals are returned to callers for celebration, keeping services independent of stores.
+- **Loss goals differ from gain goals:** completion checks use `<= target` when the target is below the starting value. Shared goal helpers handle direction-aware progress. The simplified `current_best >= target_value` pseudocode below is not correct for every goal and must not be copied into production.
+- Weight targets use canonical pounds with input/display conversion; measurement goals retain their measurement-specific units. Goal rows are included in local JSON and Drive database snapshots.
+- Cards, modals and charts follow the live IronJot / Classic Purple palette. Release verification still needs phone/iOS interaction and accessibility checks; old sample screenshots, deadlines and completion statements are design examples.
+
+## Historical feature specification
+
+The original creation flow, proposed service signatures and example formulas below are retained for rationale. Current source and the dated corrections above take precedence.
+
 > **Architecture note:** This spec aligns with the post-audit codebase (March 2026).
 > See `conventions.md` for guardrails: 600-line component cap, typed DB rows, versioned migrations, hook extraction.
 

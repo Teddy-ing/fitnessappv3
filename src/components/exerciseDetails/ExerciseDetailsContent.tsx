@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import AboutTab from './AboutTab';
 import HistoryTab from './HistoryTab';
 import ChartsTab from './ChartsTab';
@@ -23,6 +23,7 @@ export default function ExerciseDetailsContent({
     exerciseId: string;
     initialTab?: ExerciseDetailsTab;
 }) {
+    const styles = useStyles();
     const [activeTab, setActiveTab] = useState<ExerciseDetailsTab>(initialTab);
 
     return (
@@ -53,7 +54,7 @@ export default function ExerciseDetailsContent({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     container: { flex: 1, backgroundColor: colors.background.primary },
     tabBarContainer: {
         paddingHorizontal: spacing.md,
@@ -78,5 +79,5 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.semibold,
         color: colors.text.secondary,
     },
-    tabTextActive: { color: colors.text.primary },
-});
+    tabTextActive: { color: colors.text.onAccent },
+}));

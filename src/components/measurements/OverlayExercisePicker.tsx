@@ -14,7 +14,7 @@ import {
     FlatList,
 } from 'react-native';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles } from '../../theme';
 import type { Exercise } from '../../models/exercise';
 
 interface OverlayExercisePickerProps {
@@ -30,6 +30,7 @@ export default function OverlayExercisePicker({
     onSelect,
     onClose,
 }: OverlayExercisePickerProps) {
+    const styles = useStyles();
     return (
         <View style={styles.overlay}>
             <View style={styles.modal}>
@@ -65,7 +66,7 @@ export default function OverlayExercisePicker({
     );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     overlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0,0,0,0.6)',
@@ -117,4 +118,4 @@ const styles = StyleSheet.create({
         color: colors.accent.primary,
         fontWeight: typography.weight.semibold as '600',
     },
-});
+}));

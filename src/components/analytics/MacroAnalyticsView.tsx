@@ -6,17 +6,11 @@
  */
 
 import React, { useMemo } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ActivityIndicator,
-    Dimensions,
-} from 'react-native';
+import { View, Text, ActivityIndicator, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { spacing, borderRadius, typography, createThemedStyles, useThemeColors } from '../../theme';
 import { useMacroAnalytics } from '../../hooks/useMacroAnalytics';
 import ConsistencyCards from '../ConsistencyCards';
 import FatigueRatioBanner from '../FatigueRatioBanner';
@@ -87,6 +81,8 @@ function getYAxisSuffix(metric: MetricType, weightUnit: string): string {
 // ============================================================
 
 export default function MacroAnalyticsView() {
+    const styles = useStyles();
+    const colors = useThemeColors();
     const weightUnit = useWeightUnit();
     const {
         metric,
@@ -137,7 +133,7 @@ export default function MacroAnalyticsView() {
             : 100;
 
         return { chartData: transformed, maxValue: max };
-    }, [data, metric, timeBucket, weightUnit]);
+    }, [data, metric, timeBucket, weightUnit, styles, colors]);
 
     return (
         <View>
@@ -265,7 +261,7 @@ export default function MacroAnalyticsView() {
 // Styles
 // ============================================================
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
     // Chart card
     chartCard: {
         backgroundColor: colors.background.secondary,
@@ -336,4 +332,4 @@ const styles = StyleSheet.create({
         fontWeight: typography.weight.semibold,
         color: colors.text.primary,
     },
-});
+}));
