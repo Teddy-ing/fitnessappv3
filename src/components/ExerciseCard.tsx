@@ -25,6 +25,8 @@ import SetRow from './SetRow';
 import ActiveRestLine from './ActiveRestLine';
 import ExerciseMenu from './ExerciseMenu';
 import { openWorkoutExerciseDetails } from '../navigation/navigationRef';
+import { useWeightUnit } from '../hooks/useWeightUnit';
+import { displayWeight } from '../utils/unitConversion';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -103,6 +105,7 @@ function ExerciseCardInner({
 }: ExerciseCardProps) {
     const styles = useStyles();
     const colors = useThemeColors();
+    const weightUnit = useWeightUnit();
     const { exercise, sets } = workoutExercise;
 
     // Local UI state
@@ -295,7 +298,7 @@ function ExerciseCardInner({
             {showProgressionNudges && exerciseSuggestion?.progressionNudge && (
                 <View style={styles.nudgeBanner}>
                     <Text style={styles.nudgeText}>
-                        {exerciseSuggestion.progressionNudge.currentWeight}{'\u00D7'}{exerciseSuggestion.progressionNudge.currentReps} for {exerciseSuggestion.progressionNudge.consecutiveSessions} sessions {'\u2014'} try {exerciseSuggestion.progressionNudge.suggestedWeight}!
+                        {displayWeight(exerciseSuggestion.progressionNudge.currentWeight, weightUnit)}{'\u00D7'}{exerciseSuggestion.progressionNudge.currentReps} for {exerciseSuggestion.progressionNudge.consecutiveSessions} sessions {'\u2014'} try {displayWeight(exerciseSuggestion.progressionNudge.suggestedWeight, weightUnit)}!
                     </Text>
                 </View>
             )}
@@ -334,6 +337,7 @@ function ExerciseCardInner({
                             trackWeight={exercise.trackWeight}
                             trackReps={exercise.trackReps}
                             trackTime={exercise.trackTime}
+                            weightUnit={weightUnit}
                             previousData={previousSets?.[index] ?? null}
                             isActiveSet={index === activeSetIndex}
                             showSwipeHint={showSwipeHint && index === 0}

@@ -50,6 +50,13 @@ interface SessionData {
     sets: { weight: number | null; reps: number | null }[];
 }
 
+interface NudgeRow {
+    exercise_id: string;
+    session_num: number;
+    max_weight: number;
+    max_reps: number;
+}
+
 interface RegResult {
     slope: number;
     intercept: number;
@@ -114,7 +121,7 @@ export async function getSuggestionsForExercises(
                         ws.order_index AS set_index, ws.weight, ws.reps, ws.type,
                         DENSE_RANK() OVER (
                             PARTITION BY we.exercise_id
-                            ORDER BY w.completed_at DESC
+                            ORDER BY w.completed_at DESC, w.id DESC
                         ) AS session_num
                     FROM workout_sets ws
                     JOIN workout_exercises we ON ws.workout_exercise_id = we.id
@@ -172,32 +179,9 @@ export async function getSuggestionsForExercises(
         );
 
         // ── Query 4: Batch nudge data ──
-        const nudgeRows = await batchGetAll<{
-            exercise_id: string; session_num: number;
-            max_weight: number; max_reps: number;
-        }>(
+        const nudgeRows = await batchGetAll<NudgeRow>(
             db, exerciseIds,
-            (placeholders, batch) => [
-                `WITH ranked AS (
-                    SELECT we.exercise_id,
-                        DENSE_RANK() OVER (
-                            PARTITION BY we.exercise_id
-                            ORDER BY w.completed_at DESC
-                        ) AS session_num,
-                        MAX(ws.weight) AS max_weight, MAX(ws.reps) AS max_reps
-                    FROM workout_sets ws
-                    JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                    JOIN workouts w ON we.workout_id = w.id
-                    WHERE we.exercise_id IN (${placeholders}) AND w.status = 'completed'
-                      AND ws.status = 'completed' AND ws.type = 'working'
-                      AND ws.weight IS NOT NULL AND ws.reps IS NOT NULL
-                    GROUP BY we.exercise_id, w.id
-                )
-                SELECT exercise_id, session_num, max_weight, max_reps
-                FROM ranked WHERE session_num <= ${NUDGE_THRESHOLD + 2}
-                ORDER BY exercise_id, session_num ASC`,
-                batch,
-            ],
+            (placeholders, batch) => [nudgeHistoryQuery(placeholders), batch],
         );
 
         // ── Group batch results by exercise_id ──
@@ -350,24 +334,7 @@ export async function getProgressionNudge(
     if (!db) return null;
 
     try {
-        const rows = await db.getAllAsync<{
-            session_num: number; max_weight: number; max_reps: number;
-        }>(
-            `WITH ranked AS (
-                SELECT DENSE_RANK() OVER (ORDER BY w.completed_at DESC) AS session_num,
-                    MAX(ws.weight) AS max_weight, MAX(ws.reps) AS max_reps
-                FROM workout_sets ws
-                JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                JOIN workouts w ON we.workout_id = w.id
-                WHERE we.exercise_id = ? AND w.status = 'completed'
-                  AND ws.status = 'completed' AND ws.type = 'working'
-                  AND ws.weight IS NOT NULL AND ws.reps IS NOT NULL
-                GROUP BY w.id ORDER BY w.completed_at DESC
-            )
-            SELECT session_num, max_weight, max_reps FROM ranked
-            WHERE session_num <= ? ORDER BY session_num ASC`,
-            [exerciseId, NUDGE_THRESHOLD + 2],
-        );
+        const rows = await db.getAllAsync<NudgeRow>(nudgeHistoryQuery('?'), [exerciseId]);
 
         const sessions: SessionData[] = rows.map(r => ({
             sessionNum: r.session_num, maxWeight: r.max_weight,
@@ -524,6 +491,39 @@ function detectNudge(sessions: SessionData[], weightIncrement: number): Progress
 // ============================================================
 // Helpers
 // ============================================================
+
+/**
+ * One actual top-weight set represents each completed session. Reps from a
+ * lighter back-off set must not be paired with the session's heaviest weight.
+ * Return oldest first, matching the regression and nudge detector convention.
+ */
+function nudgeHistoryQuery(placeholders: string): string {
+    return `WITH working_sets AS (
+        SELECT we.exercise_id, w.id AS workout_id, w.completed_at,
+            ws.weight, ws.reps,
+            ROW_NUMBER() OVER (
+                PARTITION BY we.exercise_id, w.id
+                ORDER BY ws.weight DESC, ws.reps DESC, ws.order_index ASC, ws.id ASC
+            ) AS top_set
+        FROM workout_sets ws
+        JOIN workout_exercises we ON ws.workout_exercise_id = we.id
+        JOIN workouts w ON we.workout_id = w.id
+        WHERE we.exercise_id IN (${placeholders})
+          AND w.status = 'completed' AND w.completed_at IS NOT NULL
+          AND ws.status = 'completed' AND ws.type = 'working'
+          AND ws.weight > 0 AND ws.reps > 0
+    ), ranked AS (
+        SELECT exercise_id, weight AS max_weight, reps AS max_reps,
+            ROW_NUMBER() OVER (
+                PARTITION BY exercise_id
+                ORDER BY completed_at DESC, workout_id DESC
+            ) AS session_num
+        FROM working_sets WHERE top_set = 1
+    )
+    SELECT exercise_id, session_num, max_weight, max_reps
+    FROM ranked WHERE session_num <= ${NUDGE_THRESHOLD + 2}
+    ORDER BY exercise_id, session_num DESC`;
+}
 
 /**
  * Group any row array with an exercise_id field into a Map keyed by exercise ID.

@@ -31,7 +31,12 @@ jest.mock('../../services/preferencesService', () => ({
 import { useWorkoutStore } from '../workoutStore';
 import { Exercise } from '../../models/exercise';
 import { useRestTimerStore } from '../restTimerStore';
-import { clearPersistedWorkout } from '../workoutPersistence';
+import { clearPersistedWorkout, loadPersistedWorkout } from '../workoutPersistence';
+import { createWorkout, createWorkoutExercise, PreviousSetData, Workout } from '../../models/workout';
+import { ExerciseSuggestion } from '../../models/smartSuggestions';
+import { getPreviousSetsForExercise, getPreviousSetsForExercises } from '../../services/workoutService';
+import { getSuggestionsForExercise, getSuggestionsForExercises } from '../../services/smartSuggestionsService';
+import { getSettings } from '../../services/preferencesService';
 
 // A minimal exercise fixture for testing
 function makeExercise(id: string, name: string = 'Test Exercise'): Exercise {
@@ -393,5 +398,233 @@ describe('toggleSuperset', () => {
 
         const exercises = useWorkoutStore.getState().activeWorkout!.main.exercises;
         expect(exercises[0].supersetGroupId).toBeNull();
+    });
+});
+
+// Runtime history/prediction requests must follow the workout and exercise that
+// requested them, even when the user switches workouts before SQLite responds.
+describe('asynchronous exercise data', () => {
+    function deferred<T>() {
+        let resolve!: (value: T) => void;
+        const promise = new Promise<T>(done => { resolve = done; });
+        return { promise, resolve };
+    }
+    const flush = () => new Promise<void>(resolve => setImmediate(resolve));
+    const suggestion = (exerciseId: string, weight: number): ExerciseSuggestion => ({
+        exerciseId,
+        sets: [{ suggestedWeight: weight, suggestedReps: 10, confidence: 'high', source: 'direct' }],
+        predictedSetCount: 3, smartRestDuration: weight + 60, progressionNudge: null,
+    });
+    const previous = (weight: number): PreviousSetData[] => [{ weight, reps: 10, type: 'working' }];
+    const workoutWith = (...ids: string[]): Workout => {
+        const workout = createWorkout('Template');
+        workout.main.exercises = ids.map((id, index) => createWorkoutExercise(makeExercise(id), index));
+        return workout;
+    };
+
+    beforeEach(() => {
+        jest.mocked(getSettings).mockReset().mockResolvedValue({
+            smartSuggestions: true, trainingPhase: 'maintain', defaultWeightIncrement: 5,
+        } as Awaited<ReturnType<typeof getSettings>>);
+        jest.mocked(getPreviousSetsForExercise).mockReset().mockResolvedValue([]);
+        jest.mocked(getPreviousSetsForExercises).mockReset().mockResolvedValue(new Map());
+        jest.mocked(getSuggestionsForExercise).mockReset().mockImplementation(async id => suggestion(id, 55));
+        jest.mocked(getSuggestionsForExercises).mockReset().mockResolvedValue(new Map());
+        jest.mocked(loadPersistedWorkout).mockReset().mockResolvedValue(null);
+        useWorkoutStore.setState({ previousSets: new Map(), exerciseSuggestions: new Map(), collapsedExercises: new Set() });
+        useRestTimerStore.setState({ exerciseRestTimes: {} });
+    });
+
+    it('ignores an old workout batch when a newer workout has the same exercise', async () => {
+        const oldSuggestions = deferred<Map<string, ExerciseSuggestion>>();
+        const oldPrevious = deferred<Map<string, PreviousSetData[]>>();
+        jest.mocked(getSuggestionsForExercises).mockReturnValueOnce(oldSuggestions.promise);
+        jest.mocked(getPreviousSetsForExercises).mockReturnValueOnce(oldPrevious.promise);
+        useWorkoutStore.getState().startFromTemplate(workoutWith('bench'));
+        await flush();
+
+        const currentWorkout = workoutWith('bench');
+        const currentSuggestion = suggestion('bench', 70);
+        jest.mocked(getSuggestionsForExercises).mockResolvedValueOnce(new Map([['bench', currentSuggestion]]));
+        jest.mocked(getPreviousSetsForExercises).mockResolvedValueOnce(new Map([['bench', previous(75)]]));
+        useWorkoutStore.getState().startFromTemplate(currentWorkout);
+        await flush();
+        oldSuggestions.resolve(new Map([['bench', suggestion('bench', 50)]]));
+        oldPrevious.resolve(new Map([['bench', previous(50)]]));
+        await flush();
+
+        expect(useWorkoutStore.getState().exerciseSuggestions.get('bench')).toEqual(currentSuggestion);
+        expect(useWorkoutStore.getState().previousSets.get('bench')).toEqual(previous(75));
+        expect(useRestTimerStore.getState().exerciseRestTimes.bench).toBe(130);
+        expect(useWorkoutStore.getState().activeWorkout).toBe(currentWorkout);
+    });
+
+    it('clears old predictions on edit and rejects the prior lifecycle even for the same workout ID', async () => {
+        const oldSuggestions = deferred<Map<string, ExerciseSuggestion>>();
+        const workout = workoutWith('bench');
+        jest.mocked(getSuggestionsForExercises).mockReturnValueOnce(oldSuggestions.promise);
+        useWorkoutStore.getState().startFromTemplate(workout);
+        await flush();
+        useWorkoutStore.setState({ exerciseSuggestions: new Map([['bench', suggestion('bench', 40)]]) });
+        useWorkoutStore.getState().loadWorkoutForEditing(workout);
+        expect(useWorkoutStore.getState().exerciseSuggestions.size).toBe(0);
+        await flush();
+        oldSuggestions.resolve(new Map([['bench', suggestion('bench', 50)]]));
+        await flush();
+
+        expect(useWorkoutStore.getState().exerciseSuggestions.size).toBe(0);
+        expect(useRestTimerStore.getState().exerciseRestTimes).toEqual({});
+    });
+
+    it('does not repopulate discarded workout data or learned rest times from a late single response', async () => {
+        const oldSuggestions = deferred<ExerciseSuggestion>();
+        const oldPrevious = deferred<PreviousSetData[]>();
+        jest.mocked(getSuggestionsForExercise).mockReturnValueOnce(oldSuggestions.promise);
+        jest.mocked(getPreviousSetsForExercise).mockReturnValueOnce(oldPrevious.promise);
+        useWorkoutStore.getState().startWorkout();
+        useWorkoutStore.getState().addExercise(makeExercise('bench'));
+        await flush();
+        useWorkoutStore.getState().discardWorkout();
+        oldSuggestions.resolve(suggestion('bench', 50));
+        oldPrevious.resolve(previous(50));
+        await flush();
+
+        expect(useWorkoutStore.getState().activeWorkout).toBeNull();
+        expect(useWorkoutStore.getState().exerciseSuggestions.size).toBe(0);
+        expect(useWorkoutStore.getState().previousSets.size).toBe(0);
+        expect(useRestTimerStore.getState().exerciseRestTimes).toEqual({});
+    });
+
+    it('merges a late batch without erasing data for an exercise added after that batch began', async () => {
+        const batchSuggestions = deferred<Map<string, ExerciseSuggestion>>();
+        const batchPrevious = deferred<Map<string, PreviousSetData[]>>();
+        jest.mocked(getSuggestionsForExercises).mockReturnValueOnce(batchSuggestions.promise);
+        jest.mocked(getPreviousSetsForExercises).mockReturnValueOnce(batchPrevious.promise);
+        useWorkoutStore.getState().startFromTemplate(workoutWith('bench'));
+        await flush();
+        jest.mocked(getPreviousSetsForExercise).mockResolvedValueOnce(previous(80));
+        useWorkoutStore.getState().addExercise(makeExercise('row'));
+        await flush();
+        batchSuggestions.resolve(new Map([['bench', suggestion('bench', 60)]]));
+        batchPrevious.resolve(new Map([['bench', previous(65)]]));
+        await flush();
+
+        expect([...useWorkoutStore.getState().exerciseSuggestions.keys()]).toEqual(['row', 'bench']);
+        expect(useWorkoutStore.getState().previousSets.get('row')).toEqual(previous(80));
+        expect(useWorkoutStore.getState().previousSets.get('bench')).toEqual(previous(65));
+    });
+
+    it('rejects the replaced exercise from a batch while keeping responses for unchanged exercises', async () => {
+        const batchSuggestions = deferred<Map<string, ExerciseSuggestion>>();
+        const batchPrevious = deferred<Map<string, PreviousSetData[]>>();
+        jest.mocked(getSuggestionsForExercises).mockReturnValueOnce(batchSuggestions.promise);
+        jest.mocked(getPreviousSetsForExercises).mockReturnValueOnce(batchPrevious.promise);
+        const workout = workoutWith('bench', 'row');
+        useWorkoutStore.getState().startFromTemplate(workout);
+        await flush();
+        useWorkoutStore.getState().replaceExercise(workout.main.exercises[0].id, makeExercise('press'));
+        await flush();
+        batchSuggestions.resolve(new Map([['bench', suggestion('bench', 60)], ['row', suggestion('row', 80)]]));
+        batchPrevious.resolve(new Map([['bench', previous(65)], ['row', previous(85)]]));
+        await flush();
+
+        expect([...useWorkoutStore.getState().exerciseSuggestions.keys()]).toEqual(['press', 'row']);
+        expect(useWorkoutStore.getState().previousSets.has('bench')).toBe(false);
+        expect(useWorkoutStore.getState().previousSets.get('row')).toEqual(previous(85));
+        expect(useRestTimerStore.getState().exerciseRestTimes.bench).toBeUndefined();
+    });
+
+    it('rejects an old response after replacing an exercise away and then back to the same ID', async () => {
+        const oldSuggestions = deferred<ExerciseSuggestion>();
+        const oldPrevious = deferred<PreviousSetData[]>();
+        jest.mocked(getSuggestionsForExercise).mockReturnValueOnce(oldSuggestions.promise);
+        jest.mocked(getPreviousSetsForExercise).mockReturnValueOnce(oldPrevious.promise);
+        useWorkoutStore.getState().startWorkout();
+        useWorkoutStore.getState().addExercise(makeExercise('bench'));
+        await flush();
+        const rowId = useWorkoutStore.getState().activeWorkout!.main.exercises[0].id;
+        useWorkoutStore.getState().replaceExercise(rowId, makeExercise('press'));
+        await flush();
+        useWorkoutStore.getState().replaceExercise(rowId, makeExercise('bench'));
+        await flush();
+        oldSuggestions.resolve(suggestion('bench', 20));
+        oldPrevious.resolve(previous(20));
+        await flush();
+
+        expect(useWorkoutStore.getState().exerciseSuggestions.get('bench')).toEqual(suggestion('bench', 55));
+        expect(useWorkoutStore.getState().previousSets.get('bench')).toEqual([]);
+        expect(useRestTimerStore.getState().exerciseRestTimes.bench).toBe(115);
+    });
+
+    it('rejects removed instances even when the same exercise is added again', async () => {
+        const oldSuggestions = deferred<ExerciseSuggestion>();
+        jest.mocked(getSuggestionsForExercise).mockReturnValueOnce(oldSuggestions.promise);
+        useWorkoutStore.getState().startWorkout();
+        useWorkoutStore.getState().addExercise(makeExercise('bench'));
+        await flush();
+        const oldRowId = useWorkoutStore.getState().activeWorkout!.main.exercises[0].id;
+        useWorkoutStore.getState().removeExercise(oldRowId);
+        useWorkoutStore.getState().addExercise(makeExercise('bench'));
+        await flush();
+        oldSuggestions.resolve(suggestion('bench', 20));
+        await flush();
+
+        expect(useWorkoutStore.getState().exerciseSuggestions.get('bench')).toEqual(suggestion('bench', 55));
+        expect(useWorkoutStore.getState().activeWorkout!.main.exercises[0].id).not.toBe(oldRowId);
+    });
+
+    it('restores with fresh runtime maps while preserving saved set values', async () => {
+        const workout = workoutWith('bench');
+        workout.main.exercises[0].sets[0].weight = 60;
+        workout.main.exercises[0].sets[0].reps = 10;
+        useWorkoutStore.setState({
+            exerciseSuggestions: new Map([['bench', suggestion('bench', 40)]]),
+            previousSets: new Map([['bench', previous(40)]]),
+            collapsedExercises: new Set(['old-row']),
+        });
+        jest.mocked(loadPersistedWorkout).mockResolvedValueOnce({
+            activeWorkout: workout, isEditMode: false, originalDuration: null,
+            originalStartedAt: null, originalCompletedAt: null,
+        });
+        await useWorkoutStore.getState().restoreWorkout();
+        await flush();
+
+        expect(useWorkoutStore.getState().exerciseSuggestions.size).toBe(0);
+        expect(useWorkoutStore.getState().previousSets.size).toBe(0);
+        expect(useWorkoutStore.getState().collapsedExercises.size).toBe(0);
+        expect(useWorkoutStore.getState().activeWorkout).toBe(workout);
+        expect(workout.main.exercises[0].sets[0]).toMatchObject({ weight: 60, reps: 10 });
+    });
+
+    it('does not let a delayed disk restore replace a newly started workout', async () => {
+        const disk = deferred<Awaited<ReturnType<typeof loadPersistedWorkout>>>();
+        jest.mocked(loadPersistedWorkout).mockReturnValueOnce(disk.promise);
+        const restoring = useWorkoutStore.getState().restoreWorkout();
+        useWorkoutStore.getState().startWorkout('New session');
+        const current = useWorkoutStore.getState().activeWorkout;
+        disk.resolve({
+            activeWorkout: workoutWith('bench'), isEditMode: false, originalDuration: null,
+            originalStartedAt: null, originalCompletedAt: null,
+        });
+        await restoring;
+        await flush();
+
+        expect(useWorkoutStore.getState().activeWorkout).toBe(current);
+        expect(getSuggestionsForExercises).not.toHaveBeenCalled();
+    });
+
+    it('keeps predictions and previous-session values separate without changing logged sets', async () => {
+        const workout = workoutWith('bench');
+        workout.main.exercises[0].sets[0].weight = 65;
+        workout.main.exercises[0].sets[0].reps = 8;
+        jest.mocked(getSuggestionsForExercises).mockResolvedValueOnce(new Map([['bench', suggestion('bench', 55)]]));
+        jest.mocked(getPreviousSetsForExercises).mockResolvedValueOnce(new Map([['bench', previous(60)]]));
+        useWorkoutStore.getState().startFromTemplate(workout);
+        await flush();
+
+        expect(useWorkoutStore.getState().exerciseSuggestions.get('bench')?.sets[0].suggestedWeight).toBe(55);
+        expect(useWorkoutStore.getState().previousSets.get('bench')?.[0].weight).toBe(60);
+        expect(useWorkoutStore.getState().activeWorkout).toBe(workout);
+        expect(workout.main.exercises[0].sets[0]).toMatchObject({ weight: 65, reps: 8 });
     });
 });

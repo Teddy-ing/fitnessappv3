@@ -10,6 +10,8 @@ import { getDatabase } from './database';
 import { Split, createSplit } from '../models/split';
 import { Template, getTemplates } from './templateService';
 import { getSettings, updateSettings } from './preferencesService';
+import { withWriteLock } from '../utils/dbMutex';
+import { toLocalISOString } from '../utils/localDate';
 
 /** Row shape returned by SELECT * FROM splits */
 interface SplitRow {
@@ -63,6 +65,7 @@ export async function getSplitById(id: string): Promise<Split | null> {
  * Create a new split
  */
 export async function saveSplit(split: Split): Promise<Split | null> {
+    return withWriteLock(async () => {
     const db = await getDatabase();
     if (!db) return null;
 
@@ -115,15 +118,16 @@ export async function saveSplit(split: Split): Promise<Split | null> {
         }
     });
 
-    // Clamp currentTemplateIndex if this is the active split and schedule shrank
+    // A repaired position must not inherit completion from the removed position.
     const settings = await getSettings();
     if (settings.activeSplitId === split.id) {
-        if (settings.currentTemplateIndex >= split.schedule.length && split.schedule.length > 0) {
-            await updateSettings({ currentTemplateIndex: 0 });
+        if (!isValidScheduleIndex(settings.currentTemplateIndex, split.schedule.length)) {
+            await updateSettings({ currentTemplateIndex: 0, lastWorkoutDate: null });
         }
     }
 
     return { ...split, updatedAt: now };
+    });
 }
 
 /**
@@ -159,65 +163,79 @@ export async function getActiveSplit(): Promise<Split | null> {
  * Set the active split
  */
 export async function setActiveSplit(splitId: string | null): Promise<void> {
-    if (splitId) {
+    await withWriteLock(async () => {
         await updateSettings({
             activeSplitId: splitId,
             currentTemplateIndex: 0, // Reset when changing splits
+            lastWorkoutDate: null,
         });
-    } else {
-        await updateSettings({
-            activeSplitId: null,
-            currentTemplateIndex: 0,
-        });
-    }
+    });
 }
 
 /**
  * Get current template index (which template is next in the split)
  */
 export async function getCurrentTemplateIndex(): Promise<number> {
-    const settings = await getSettings();
-    const idx = settings.currentTemplateIndex;
-
-    // Safety clamp: if the active split's schedule shrank, reset to 0
-    if (settings.activeSplitId && idx > 0) {
-        const split = await getSplitById(settings.activeSplitId);
-        if (split && idx >= split.schedule.length) {
-            await updateSettings({ currentTemplateIndex: 0 });
+    return withWriteLock(async () => {
+        const settings = await getSettings();
+        const split = settings.activeSplitId ? await getSplitById(settings.activeSplitId) : null;
+        if (!isValidScheduleIndex(settings.currentTemplateIndex, split?.schedule.length ?? 0)) {
+            if (settings.currentTemplateIndex !== 0 || settings.lastWorkoutDate) {
+                await updateSettings({ currentTemplateIndex: 0, lastWorkoutDate: null });
+            }
             return 0;
         }
-    }
-    return idx;
+        return settings.currentTemplateIndex;
+    });
 }
 
 /**
  * Set current template index
  */
 export async function setCurrentTemplateIndex(index: number): Promise<void> {
-    await updateSettings({ currentTemplateIndex: index });
+    await withWriteLock(async () => {
+        const split = await getActiveSplit();
+        await updateSettings({
+            currentTemplateIndex: isValidScheduleIndex(index, split?.schedule.length ?? 0) ? index : 0,
+            lastWorkoutDate: null,
+        });
+    });
+}
+
+function isValidScheduleIndex(index: number, length: number): boolean {
+    return Number.isInteger(index) && index >= 0 && index < length;
+}
+
+function findNextTemplateIndex(split: Split, currentIndex: number): number | null {
+    for (let offset = 1; offset <= split.schedule.length; offset++) {
+        const index = (currentIndex + offset) % split.schedule.length;
+        if (split.schedule[index].type === 'template') return index;
+    }
+    return null;
+}
+
+/** Caller must hold the write lock; never call the locking public setters here. */
+async function advancePosition(activeSplitId: string | null, currentIndex: number): Promise<boolean> {
+    const split = activeSplitId ? await getSplitById(activeSplitId) : null;
+    if (!split || !isValidScheduleIndex(currentIndex, split.schedule.length)) {
+        await updateSettings({ currentTemplateIndex: 0, lastWorkoutDate: null });
+        return false;
+    }
+
+    const nextIndex = findNextTemplateIndex(split, currentIndex);
+    // One SQL update consumes the pending completion together with its position.
+    await updateSettings({ currentTemplateIndex: nextIndex ?? currentIndex, lastWorkoutDate: null });
+    return nextIndex !== null;
 }
 
 /**
  * Advance to next template in split (skipping rest days)
  */
 export async function advanceToNextTemplate(): Promise<void> {
-    const split = await getActiveSplit();
-    if (!split || split.schedule.length === 0) return;
-
-    let currentIndex = await getCurrentTemplateIndex();
-    // Clamp in case schedule shrank
-    if (currentIndex >= split.schedule.length) currentIndex = 0;
-
-    let nextIndex = (currentIndex + 1) % split.schedule.length;
-
-    // Skip rest days (find next actual template)
-    let attempts = 0;
-    while (split.schedule[nextIndex]?.type === 'rest' && attempts < split.schedule.length) {
-        nextIndex = (nextIndex + 1) % split.schedule.length;
-        attempts++;
-    }
-
-    await setCurrentTemplateIndex(nextIndex);
+    await withWriteLock(async () => {
+        const settings = await getSettings();
+        await advancePosition(settings.activeSplitId, settings.currentTemplateIndex);
+    });
 }
 
 /**
@@ -250,66 +268,27 @@ export async function getLastWorkoutDate(): Promise<string | null> {
  * Set the last workout date
  */
 export async function setLastWorkoutDate(date: string): Promise<void> {
-    await updateSettings({ lastWorkoutDate: date });
+    await withWriteLock(() => updateSettings({ lastWorkoutDate: date }));
 }
 
 /**
- * Check if we should advance or reset template (called when app opens).
- * - If a new WEEK has started (based on calendarStartDay), reset to Day 1.
- * - If same week but new day, advance to next template.
- * - If same day, do nothing.
+ * Consume a completed workout on the next local date. Split positions follow
+ * the schedule, independent of calendar weeks or the number of missed days.
  */
 export async function checkAndAdvanceIfNewDay(): Promise<boolean> {
-    const lastDate = await getLastWorkoutDate();
-    if (!lastDate) return false;
-
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    if (lastDate === today) return false;
-
-    // Parse dates for week comparison
-    const lastDateObj = new Date(lastDate + 'T12:00:00'); // noon to avoid TZ edge cases
-    const todayObj = new Date(today + 'T12:00:00');
-
-    // Determine if we crossed a week boundary
-    const settings = await getSettings();
-    const startDay = settings.calendarStartDay === 'monday' ? 1 : 0; // 0=Sun, 1=Mon
-
-    const lastWeekStart = getWeekStart(lastDateObj, startDay);
-    const todayWeekStart = getWeekStart(todayObj, startDay);
-
-    if (lastWeekStart.getTime() !== todayWeekStart.getTime()) {
-        // New week — reset split to Day 1
-        await setCurrentTemplateIndex(0);
-        await setLastWorkoutDate(''); // Clear the flag
-        return true;
-    }
-
-    // Same week, different day — advance normally
-    await advanceToNextTemplate();
-    await setLastWorkoutDate(''); // Clear the flag
-    return true;
-}
-
-/**
- * Get the start of the week (midnight) for a given date.
- * @param date — The date to find the week start for
- * @param startDay — 0 for Sunday, 1 for Monday
- */
-function getWeekStart(date: Date, startDay: number): Date {
-    const d = new Date(date);
-    const day = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    // Calculate how many days back to go to reach the start of the week
-    const diff = (day - startDay + 7) % 7;
-    d.setDate(d.getDate() - diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
+    return withWriteLock(async () => {
+        const settings = await getSettings();
+        const today = toLocalISOString(new Date()).split('T')[0];
+        if (!settings.lastWorkoutDate || settings.lastWorkoutDate >= today) return false;
+        return advancePosition(settings.activeSplitId, settings.currentTemplateIndex);
+    });
 }
 
 /**
  * Mark that a workout was completed today (used for date-based advance)
  */
 export async function markWorkoutCompletedToday(): Promise<void> {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = toLocalISOString(new Date()).split('T')[0];
     await setLastWorkoutDate(today);
 }
 

@@ -27,6 +27,7 @@ jest.mock('../../components/SwipeableTabScreen', () => 'SwipeableTabScreen');
 jest.mock('../../components/SetRow', () => 'SetRow');
 jest.mock('../../components/ActiveRestLine', () => 'ActiveRestLine');
 jest.mock('../../components/ExerciseMenu', () => 'ExerciseMenu');
+jest.mock('../../hooks/useWeightUnit', () => ({ useWeightUnit: () => 'lbs' }));
 jest.mock('../../screens/WorkoutScreen', () => 'WorkoutScreen');
 jest.mock('../../screens/ProfileScreen', () => 'ProfileScreen');
 jest.mock('../../screens/AnalyticsScreen', () => 'AnalyticsScreen');

@@ -66,6 +66,18 @@ The `web` script exists as a development convenience; it does not establish supp
 
 See [setup-project](../workflows/setup-project.md) for first builds and [release-checklist](../workflows/release-checklist.md) for production preparation. Current local Android `release` uses debug signing; creating a release-mode build alone does not make it a store-ready build. There is no checked-in EAS build configuration.
 
+### Missing images during Android USB development
+
+When the development app uses `http://localhost:8081`, the phone needs an ADB reverse connection to the computer's Expo server. If USB debugging becomes unauthorized or the connection is lost, already-loaded screens can remain visible while new asset requests fail. Exercise About cards then show their category icon until reopened.
+
+Keep Expo running, accept the phone's USB debugging prompt, and restore the connection from PowerShell:
+
+```powershell
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:8081 tcp:8081
+```
+
+Use the actual Expo port if different, and add `-s <device-serial>` before `reverse` when multiple devices are connected. Reopen exercise information, or switch away from About and back, to retry the failed image. This resolved the October 20 missing-image report on the connected phone. The generated illustrations appear in About and the Analytics exercise list; picker list rows still use the shared placeholder for built-in exercises.
+
 ## Branding and startup
 
 IronJot's icon uses the barbell-and-pen mark. `assets/branding/ironjot.geometry.json` is the shared editable geometry for exported assets and the animated React Native mark. Run `npm run assets:branding` after changing it.
