@@ -106,7 +106,6 @@ export default function WorkoutScreen() {
         loadData,
         onRefresh,
         handleChangeTemplateIndex,
-        setActiveSplit,
     } = useHomeScreenData();
 
     // Exercise picker visibility — local UI state (not in Zustand store)
@@ -573,8 +572,7 @@ export default function WorkoutScreen() {
                 setShowTutorialSplit(false);
                 void loadData();
             }}
-            onSplitSelected={(split) => {
-                setActiveSplit(split);
+            onSplitSelected={() => {
                 void loadData();
             }}
         />
@@ -606,12 +604,10 @@ export default function WorkoutScreen() {
                 onRefresh={onRefresh}
                 onStartWorkout={handleStartWorkout}
                 onStartFromTemplate={handleStartFromTemplate}
-                onSplitSelected={(split) => {
-                    setActiveSplit(split);
-                    loadData();
+                onSplitSelected={() => {
+                    void loadData();
                 }}
                 onTemplateIndexChanged={handleChangeTemplateIndex}
-                onDataRefresh={loadData}
                 onSettingsPress={() => {
                     if (navigationRef.isReady()) {
                         navigationRef.navigate('Workout', { screen: 'Settings', initial: false });

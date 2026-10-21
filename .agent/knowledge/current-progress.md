@@ -65,6 +65,34 @@ This is the current working list. Older phase roadmaps are archived below.
 Entries describe the result and relevant verification. Build instructions belong
 in [Project Configuration](project-config.md); release tasks stay in the list above.
 
+### 2026-10-21: Progression suggestions use the latest sessions
+
+- Fixed reversed chronology in both single and batch progression-nudge queries: older repeated 50-pound sessions could produce "try 55" despite a newer 60-pound session. Both paths now examine the latest consecutive sessions and pair weight/reps from an actual top-weight working set. Distinct workouts with identical timestamps remain separate. No schema or history writes.
+- Guarded previous-set/suggestion responses by workout lifecycle and exercise request, merged valid batch results, cleared stale edit/restore caches, and prevented delayed restore from replacing a newly started workout. Entered/completed sets are preserved. Banner and set-row weights now share the preferred display unit.
+- Verification: TypeScript and all Jest tests passed (52 suites / 704 tests). Added 35 regressions across real-SQLite suggestion queries, deferred store responses and banner rendering. Independent review passed 51 focused tests and found no actionable issues. Updated the routing test's unit-hook mock for the new component dependency.
+- On the Samsung phone, restored the development connection through the existing USB localhost route, confirmed the reported October 16 history (60 × 10/7/4), and verified that a temporary unsaved Preacher Curl workout no longer shows the old plateau banner. Discarded the test workout and returned to Workout home; saved history and split position are unchanged. Screenshots/logs are under ignored `.expo/suggestions-*`. iOS remains unverified.
+- The separate per-set prediction still shows 55 for this history; it is produced by the existing weighted-regression formula, not the progression banner. This fix preserves that formula. A future product decision could make the latest working weight a lower bound outside Recovery. Changes remain uncommitted on `NewCodexChanges`.
+
+### 2026-10-20: Consistent split day counter and progression
+
+- Fixed a home-load race that read the old schedule index while date-based advancement ran, then loaded the new workout. The card, badge and picker now publish one consistent snapshot; queued refreshes and manual selections cannot overwrite newer choices. Home data refreshes on app resume and local midnight.
+- The badge now says "SPLIT DAY X OF Y" to distinguish schedule position from weekday. Keep unfinished workouts across calendar weeks; advance once after a completed workout on the next local date, skip rest entries, and wrap after the final template. Manual position/split selection clears stale pending advancement. Settings updates are serialized and the position/completion marker change in one write; no schema or history changes.
+- Verification: TypeScript passed; full Jest suite passed (50 suites / 669 tests), including 44 new service/hook/UI regressions. Independent review found no actionable issues and reran those three focused suites. On the connected Samsung phone, confirmed matching card/picker position, readable labels, Cancel dismissal and stable state after background/resume. Also fixed the picker's clipped Cancel label. Screenshots/logs are in ignored `.expo/split-counter-*`.
+- Date rollover and concurrent progression were verified through automated tests; no phone clock or workout-history changes were made for testing. iOS remains unverified. Changes are uncommitted on `NewCodexChanges`; next useful check is the next normal workout/local-day rollover on the phone.
+
+### 2026-10-20: Miniature artwork in Analytics
+
+- Replaced Analytics → Exercises placeholder icons with 48×48 rounded thumbnails from the existing illustration registry. Full poses fit inside each thumbnail. Unknown/custom IDs and image-load failures retain an icon; matching uses stable IDs rather than names. Other screens, assets, services and stored data are unchanged.
+- Verification: TypeScript passed; three focused Jest suites / 15 tests passed, including three new Analytics regressions for ID matching, fallbacks, search and chart navigation. Independent review found no concrete defects and reran the new tests successfully. Scoped source diff check passed; the progress document already had an unrelated trailing blank line from the earlier desktop chat-recovery entry.
+- Verified on the connected Samsung phone after reloading the development app: multiple distinct thumbnails, custom fallback, Chest filtering, opening Charts and returning to the list. Left the app on Recent exercises. Screenshots are under ignored `.expo/analytics-thumbnails-*`. iOS remains unverified. Changes are uncommitted on `NewCodexChanges`.
+
+### 2026-10-20: Missing exercise images on the phone
+
+- Confirmed GitHub `main` at `5f95dff` merged `NewCodexChanges` through PR #6, including artwork commit `ade63e4`. The selected `NewCodexChanges` checkout at `5feb1c7` has the same file tree as remote main. Fetched remote metadata; did not switch or merge branches. Local `main` remains at its older commit.
+- Reproduced the missing Machine Chest Press illustration on the connected phone. Its development URL was `http://localhost:8081`, but the ADB reverse connection was absent and USB debugging was unauthorized when inspected. The local server served the JPEG successfully. After the owner approved USB debugging, restored port 8081 forwarding and remounted About; the full illustration appeared immediately on the phone.
+- All 114 illustration records, hashes and runtime assets passed strict verification; four focused Jest suites / 18 tests passed. No app source or workout data changed. List thumbnails remain the existing shared placeholder; the original artwork feature is in exercise information's About tab.
+- Added USB connection recovery steps to `project-config.md`. Before/after screenshots are in ignored `.expo/image-investigation-*.png`. No image regeneration or rebuild was required.
+
 ### 2026-10-02: Documentation refresh
 
 **Focus:** Bring project documentation up to date and make the history easier to use.
@@ -198,3 +226,10 @@ appeared improved; repeated screen-off reliability remains open.
 
 Historical plans and test results describe their own period. The current state
 and release follow-up at the top of this file take precedence.
+
+### 2026-10-20: Desktop project chat recovery
+
+- Found the existing fitnessappv3 project and ten earlier top-level chats in the local index. Reconnected all ten using supported app tools; restored one archived chat (Add onboarding and remove assistant).
+- App tools confirmed each move, and a fresh sidebar listing verified the six recent historical chat associations. The original project-refresh history was readable.
+- Cause of missing associations and persistence after restarting remain unverified. Next step: confirm the recovered chats appear when expanding fitnessappv3 in the sidebar. No app code changed.
+

@@ -51,7 +51,6 @@ interface WorkoutHomeViewProps {
     onStartFromTemplate: (template: Template) => void;
     onSplitSelected: (split: Split | null) => void;
     onTemplateIndexChanged: (index: number) => void;
-    onDataRefresh: () => void;
     onSettingsPress: () => void;
 }
 
@@ -67,7 +66,6 @@ export default function WorkoutHomeView({
     onStartFromTemplate,
     onSplitSelected,
     onTemplateIndexChanged,
-    onDataRefresh,
     onSettingsPress,
 }: WorkoutHomeViewProps) {
     const colors = useThemeColors();
@@ -119,10 +117,10 @@ export default function WorkoutHomeView({
                     {/* Card Header */}
                     <View style={styles.splitCardHeader}>
                         <Text style={styles.splitCardLabel}>CURRENT SPLIT</Text>
-                        {activeSplit && (
+                        {activeSplit && activeSplit.schedule.length > 0 && (
                             <View style={styles.dayBadge}>
                                 <Text style={styles.dayBadgeText}>
-                                    DAY {currentTemplateIndex + 1} OF {activeSplit.schedule.length}
+                                    SPLIT DAY {currentTemplateIndex + 1} OF {activeSplit.schedule.length}
                                 </Text>
                             </View>
                         )}
@@ -148,6 +146,8 @@ export default function WorkoutHomeView({
                             {activeSplit && activeSplit.schedule.length > 1 && (
                                 <TouchableOpacity
                                     onPress={() => setShowTemplatePicker(true)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Choose split day"
                                     style={styles.swapButton}
                                     activeOpacity={0.7}
                                 >
@@ -162,6 +162,8 @@ export default function WorkoutHomeView({
                             {activeSplit.schedule.length > 1 && (
                                 <TouchableOpacity
                                     onPress={() => setShowTemplatePicker(true)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Choose split day"
                                     style={styles.swapButton}
                                     activeOpacity={0.7}
                                 >
@@ -245,7 +247,6 @@ export default function WorkoutHomeView({
                 onClose={() => setShowSplitsModal(false)}
                 onSplitSelected={(split) => {
                     onSplitSelected(split);
-                    onDataRefresh();
                 }}
             />
 

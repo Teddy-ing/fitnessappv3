@@ -44,9 +44,9 @@ export default function TemplatePickerModal({
         >
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>Choose Current Template</Text>
+                    <Text style={styles.modalTitle}>Choose Split Day</Text>
                     <Text style={styles.pickerSubtitle}>
-                        Select which template to start from
+                        Follow your split in order, at your own pace. Split days aren't weekdays.
                     </Text>
                     <ScrollView style={styles.pickerList}>
                         {activeSplit?.schedule.map((item, index) => {
@@ -54,6 +54,9 @@ export default function TemplatePickerModal({
                                 return (
                                     <TouchableOpacity
                                         key={index}
+                                        accessibilityRole="button"
+                                        accessibilityState={{ selected: currentTemplateIndex === index }}
+                                        accessibilityLabel={`Split day ${index + 1}: Rest Day`}
                                         style={[
                                             styles.pickerItem,
                                             currentTemplateIndex === index && styles.pickerItemActive
@@ -65,7 +68,7 @@ export default function TemplatePickerModal({
                                             currentTemplateIndex === index && styles.pickerItemTextActive
                                         ]}>Rest Day</Text>
                                         <Text style={styles.pickerItemMeta}>
-                                            Day {index + 1}
+                                            Split day {index + 1}
                                         </Text>
                                     </TouchableOpacity>
                                 );
@@ -74,6 +77,9 @@ export default function TemplatePickerModal({
                             return (
                                 <TouchableOpacity
                                     key={index}
+                                    accessibilityRole="button"
+                                    accessibilityState={{ selected: currentTemplateIndex === index }}
+                                    accessibilityLabel={`Split day ${index + 1}: ${template?.name || 'Unknown Template'}`}
                                     style={[
                                         styles.pickerItem,
                                         currentTemplateIndex === index && styles.pickerItemActive
@@ -87,7 +93,7 @@ export default function TemplatePickerModal({
                                         {template?.name || 'Unknown Template'}
                                     </Text>
                                     <Text style={styles.pickerItemMeta}>
-                                        Day {index + 1}
+                                        Split day {index + 1}
                                     </Text>
                                 </TouchableOpacity>
                             );
@@ -125,9 +131,7 @@ const useStyles = createThemedStyles((colors) => ({
         textAlign: 'center',
     },
     modalButtonCancel: {
-        flex: 1,
         paddingVertical: spacing.md,
-        marginRight: spacing.sm,
         borderRadius: borderRadius.md,
         alignItems: 'center',
         backgroundColor: colors.background.tertiary,

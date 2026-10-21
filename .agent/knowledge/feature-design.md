@@ -31,6 +31,7 @@ JSON backups include progress-photo records but do not bundle the image files. T
 
 ## Exercise illustration library — 2026-10-01
 
+- October 20: Analytics → Exercises reuses the bundled illustrations as 48×48 rounded thumbnails with the full pose visible. Exact exercise IDs keep renamed exercises matched; unknown/custom IDs and failed image loads keep the icon fallback. The list remains virtualized and requires no extra database requests. Exercise-picker thumbnails remain unchanged.
 - Built-in exercise illustrations use a grey humanoid and coral muscle treatment. Coverage is tracked in `assets/exercises/library-manifest.json` against the 114 current seed IDs.
 - Use the original curl image as the fixed model/style reference. The pilot prompts live in `assets/exercises/generation-spec.json`; each production image has its exact prompt, corrections, hash and review in `assets/exercises/records/<id>.json`. The reusable process is in `../workflows/exercise-illustrations.md`. Each new pose needs independent visual review because image generation can drift or produce plausible mechanical errors.
 - Render reviewed assets in exercise information's shared About tab as a responsive square card capped at 380 layout units. Static assets keyed by stable built-in exercise ID support existing installations and offline builds without schema changes. Explicit image URLs take precedence; custom or unknown exercises retain their supplied image or category icon.
@@ -153,6 +154,10 @@ These sources document supported workflows and help content. They do not establi
 
 The service uses SQL history and JavaScript statistics, including weighted linear regression, rather than an ML framework or cloud model. Settings controls Smart Suggestions. Predictions can supply weight/reps, set count, rest duration, and progression nudges; exercise-picker suggestions use co-occurrence and frequency. These are editable aids to logging.
 
+Progression banners evaluate the newest consecutive completed working sessions, using reps actually performed at the session's top weight. Increasing from 50 to 60 ends the older 50-pound streak; warm-ups and incomplete sets do not establish a streak. Session chronology is shared by single-exercise and batch loads. Runtime history/suggestion responses are scoped to the current workout session and exercise request, so late results cannot overwrite a new workout or erase newly added exercise data.
+
+The progression banner and per-set predicted weight are separate calculations. The existing weighted regression can suggest less than the latest single-session weight, including recovery adjustments; the October 21, 2026 stale-banner fix does not add a weight floor or alter that formula. Both banner weights and set rows use the preferred display unit; stored weights remain pounds.
+
 ### Original personalization concepts — 2026-01-04
 
 The concepts below explain the design intent. Workout-day prediction is not an established current capability, and the exact interaction bullets are proposals rather than a completed-feature checklist. Suggestions are computed locally; an explicit export or optional cloud backup can still transmit the underlying history. There is no separate trained model to export.
@@ -246,19 +251,23 @@ interface Split {
 
 **Current Template Tracking:**
 - `currentTemplateIndex` stored in user preferences
-- Shows "Current Template" card on home screen
+- Home card labels the position "SPLIT DAY X OF Y"; this is a position in the split schedule, including rest entries, rather than a weekday. The weekly tracker separately shows the calendar day.
+- The day badge, displayed workout and picker selection come from one refreshed snapshot.
 - Tap to start that workout
 
 **Manual Position Switching:**
 - "Change" button opens picker modal
 - User can jump to any position in split
 - Useful for: starting mid-week, making up missed days
+- Selecting a position or changing splits clears any pending advance from a previous completion, so the explicit choice stays selected.
 
 **Date-Based Auto-Advance:**
-- When workout finishes → record today's date
-- Next time app opens on a **different day** → advance to next template
+- When a workout finishes → record today's local date
+- On the next local date, opening/resuming the app or crossing midnight while it is open advances once to the next template. Concurrent refreshes cannot apply the same completion twice.
 - Skips rest days automatically
 - Does NOT advance immediately after finishing (per user request)
+- No calendar-week reset: a late start or missed day preserves unfinished workouts. After the final template, the sequence wraps to the first one. This also supports splits longer or shorter than a week.
+- October 20, 2026 decision: keep sequence progress separate from weekday position, so starting Ted upper on Tuesday is still split day 1. This avoids dropping workouts when the calendar week changes.
 
 ---
 

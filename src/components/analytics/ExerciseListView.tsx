@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, FlatList } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, FlatList, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,7 +16,33 @@ import { spacing, borderRadius, typography, createThemedStyles, useThemeColors }
 import { PerformedExercise } from '../../models/analytics';
 import { COMPOSITE_FILTER_PILLS, CompositeFilterPill } from '../../models/muscleGroups';
 import { getPerformedExercises } from '../../services/exerciseAnalyticsService';
+import { getExerciseIllustration } from '../../data/exerciseIllustrations';
 import type { ProfileStackParamList } from '../../navigation/AppNavigator';
+
+const ExerciseThumbnail = React.memo(function ExerciseThumbnail({ exerciseId }: { exerciseId: string }) {
+    const styles = useStyles();
+    const colors = useThemeColors();
+    const [failed, setFailed] = useState(false);
+    // Analytics supplies IDs only. Custom UUIDs and unknown IDs have no bundled match.
+    const illustration = getExerciseIllustration({ id: exerciseId, isCustom: false });
+
+    return (
+        <View style={[styles.exerciseIcon, illustration && !failed && styles.illustrationBackground]}>
+            {illustration && !failed ? (
+                <Image
+                    source={illustration.source}
+                    style={styles.exerciseImage}
+                    resizeMode="contain"
+                    resizeMethod="resize"
+                    accessible={false}
+                    onError={() => setFailed(true)}
+                />
+            ) : (
+                <MaterialIcons name="fitness-center" size={18} color={colors.accent.primary} />
+            )}
+        </View>
+    );
+});
 
 // ============================================================
 // Component
@@ -78,13 +104,7 @@ export default function ExerciseListView({ ListHeaderComponent }: { ListHeaderCo
                 })
             }
         >
-            <View style={styles.exerciseIcon}>
-                <MaterialIcons
-                    name="fitness-center"
-                    size={18}
-                    color={colors.accent.primary}
-                />
-            </View>
+            <ExerciseThumbnail key={ex.exerciseId} exerciseId={ex.exerciseId} />
             <View style={styles.exerciseInfo}>
                 <Text style={styles.exerciseName}>{ex.exerciseName}</Text>
                 <Text style={styles.exerciseMeta}>
@@ -259,13 +279,22 @@ const useStyles = createThemedStyles((colors) => ({
         marginBottom: spacing.sm,
     },
     exerciseIcon: {
-        width: 36,
-        height: 36,
+        width: 48,
+        height: 48,
+        flexShrink: 0,
         borderRadius: borderRadius.md,
         backgroundColor: colors.background.tertiary,
+        overflow: 'hidden',
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: spacing.md,
+    },
+    illustrationBackground: {
+        backgroundColor: '#F3F5F7',
+    },
+    exerciseImage: {
+        width: '100%',
+        height: '100%',
     },
     exerciseInfo: {
         flex: 1,

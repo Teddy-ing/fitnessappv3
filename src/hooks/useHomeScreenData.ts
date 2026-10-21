@@ -1,132 +1,164 @@
 /**
- * useHomeScreenData Hook
- *
- * Manages all data fetching and data state for the WorkoutScreen home view.
- * Extracted from WorkoutScreen to isolate data concerns from UI logic.
- *
- * Owns: recentWorkouts, templates, activeSplit, currentTemplate,
- *       currentTemplateIndex, workoutDatesThisWeek, isLoading, refreshing
+ * Data and refresh lifecycle for the WorkoutScreen home view.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AppState } from 'react-native';
 import { Workout } from '../models/workout';
 import { Split } from '../models/split';
 import {
     getWorkouts,
     getTemplates,
     getActiveSplit,
-    getCurrentTemplate,
     getCurrentTemplateIndex,
     setCurrentTemplateIndex,
     getWorkoutDatesThisWeek,
-    getTemplatesForSplit,
     checkAndAdvanceIfNewDay,
     Template,
 } from '../services';
 
-interface UseHomeScreenDataReturn {
+interface HomeData {
     recentWorkouts: Workout[];
     templates: Template[];
     activeSplit: Split | null;
     currentTemplate: Template | null;
     currentTemplateIndex: number;
     workoutDatesThisWeek: Date[];
+}
+
+interface UseHomeScreenDataReturn extends HomeData {
     isLoading: boolean;
     refreshing: boolean;
     /** Reload all data */
     loadData: () => Promise<void>;
     /** Pull-to-refresh handler */
     onRefresh: () => Promise<void>;
-    /** Change the current template index in split */
+    /** Change the current schedule position and refresh its template together. */
     handleChangeTemplateIndex: (newIndex: number) => Promise<void>;
-    /** Direct state setters needed by parent for edge cases */
-    setActiveSplit: (split: Split | null) => void;
-    setCurrentTemplateIndexState: (index: number) => void;
 }
 
 export function useHomeScreenData(): UseHomeScreenDataReturn {
-    const [recentWorkouts, setRecentWorkouts] = useState<Workout[]>([]);
-    const [templates, setTemplates] = useState<Template[]>([]);
+    const [data, setData] = useState<HomeData>({
+        recentWorkouts: [],
+        templates: [],
+        activeSplit: null,
+        currentTemplate: null,
+        currentTemplateIndex: 0,
+        workoutDatesThisWeek: [],
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [activeSplit, setActiveSplit] = useState<Split | null>(null);
-    const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null);
-    const [currentTemplateIndex, setCurrentTemplateIndexState] = useState(0);
-    const [workoutDatesThisWeek, setWorkoutDatesThisWeek] = useState<Date[]>([]);
+    const operationQueue = useRef(Promise.resolve());
+    const latestRequest = useRef(0);
+    const latestRefresh = useRef(0);
+    const mounted = useRef(false);
 
-    const loadData = async () => {
-        try {
-            // PP-010 fix: Run advance check in parallel with data fetches
-            // instead of blocking serially before them
-            const [, workouts, active, currentIdx, weekDates] = await Promise.all([
-                checkAndAdvanceIfNewDay(),
-                getWorkouts(5),
-                getActiveSplit(),
-                getCurrentTemplateIndex(),
-                getWorkoutDatesThisWeek(),
-            ]);
-            setRecentWorkouts(workouts);
-            setActiveSplit(active);
-            setCurrentTemplateIndexState(currentIdx);
-            setWorkoutDatesThisWeek(weekDates);
+    const refreshData = useCallback((selectedIndex?: number): Promise<void> => {
+        const request = ++latestRequest.current;
+        // A refresh may advance the saved position. Serialize it with manual
+        // selections so an older refresh cannot advance a newly selected day.
+        const operation = operationQueue.current.then(async () => {
+            try {
+                await checkAndAdvanceIfNewDay();
+                if (selectedIndex !== undefined) {
+                    await setCurrentTemplateIndex(selectedIndex);
+                }
 
-            // Load templates based on active split
-            if (active) {
-                const splitTemplates = await getTemplatesForSplit(active.id);
-                setTemplates(splitTemplates);
+                // These reads must follow rollover, never run alongside it.
+                const [recentWorkouts, activeSplit, currentTemplateIndex, workoutDatesThisWeek, allTemplates] = await Promise.all([
+                    getWorkouts(5),
+                    getActiveSplit(),
+                    getCurrentTemplateIndex(),
+                    getWorkoutDatesThisWeek(),
+                    getTemplates(),
+                ]);
+                const templateMap = new Map(allTemplates.map(template => [template.id, template]));
+                const templates = activeSplit
+                    ? activeSplit.templateIds.map(id => templateMap.get(id)).filter((template): template is Template => !!template)
+                    : allTemplates;
+                const scheduleItem = activeSplit?.schedule[currentTemplateIndex];
+                const currentTemplate = scheduleItem?.type === 'template'
+                    ? templateMap.get(scheduleItem.templateId) ?? null
+                    : null;
 
-                // Get current template from split schedule
-                const nextTemplate = await getCurrentTemplate();
-                setCurrentTemplate(nextTemplate);
-            } else {
-                const allTemplates = await getTemplates();
-                setTemplates(allTemplates);
-                setCurrentTemplate(null);
+                // Publish one coherent snapshot. A newer request invalidates
+                // this result even while it is waiting for its turn in the queue.
+                if (mounted.current && request === latestRequest.current) {
+                    setData({ recentWorkouts, activeSplit, currentTemplate, currentTemplateIndex, workoutDatesThisWeek, templates });
+                }
+            } catch (error) {
+                console.error('Error loading home data:', error);
+            } finally {
+                if (mounted.current && request === latestRequest.current) {
+                    setIsLoading(false);
+                }
             }
-        } catch (error) {
-            console.error('Error loading data:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        });
+        operationQueue.current = operation;
+        return operation;
+    }, []);
+
+    const loadData = useCallback(() => refreshData(), [refreshData]);
 
     const onRefresh = useCallback(async () => {
+        const request = ++latestRefresh.current;
         setRefreshing(true);
         await loadData();
-        setRefreshing(false);
-    }, []);
-
-    const handleChangeTemplateIndex = async (newIndex: number) => {
-        try {
-            await setCurrentTemplateIndex(newIndex);
-            setCurrentTemplateIndexState(newIndex);
-
-            // Reload current template
-            const nextTemplate = await getCurrentTemplate();
-            setCurrentTemplate(nextTemplate);
-        } catch (error) {
-            console.error('Error changing template index:', error);
+        if (mounted.current && request === latestRefresh.current) {
+            setRefreshing(false);
         }
-    };
+    }, [loadData]);
 
-    // Load data on mount
+    const handleChangeTemplateIndex = useCallback(
+        (newIndex: number) => refreshData(newIndex),
+        [refreshData],
+    );
+
     useEffect(() => {
-        loadData();
-    }, []);
+        mounted.current = true;
+        void loadData();
+
+        let appState = AppState.currentState;
+        let midnightTimer: ReturnType<typeof setTimeout> | undefined;
+        const clearMidnightTimer = () => {
+            if (midnightTimer !== undefined) clearTimeout(midnightTimer);
+            midnightTimer = undefined;
+        };
+        const scheduleMidnightRefresh = () => {
+            clearMidnightTimer();
+            const now = new Date();
+            const midnight = new Date(now);
+            midnight.setHours(24, 0, 0, 0);
+            midnightTimer = setTimeout(() => {
+                void loadData();
+                scheduleMidnightRefresh();
+            }, midnight.getTime() - now.getTime());
+        };
+        if (appState === 'active') scheduleMidnightRefresh();
+        const subscription = AppState.addEventListener('change', nextState => {
+            if (nextState === 'active' && appState !== 'active') {
+                void loadData();
+                scheduleMidnightRefresh();
+            } else if (nextState !== 'active') {
+                clearMidnightTimer();
+            }
+            appState = nextState;
+        });
+
+        return () => {
+            mounted.current = false;
+            latestRequest.current++;
+            clearMidnightTimer();
+            subscription.remove();
+        };
+    }, [loadData]);
 
     return {
-        recentWorkouts,
-        templates,
-        activeSplit,
-        currentTemplate,
-        currentTemplateIndex,
-        workoutDatesThisWeek,
+        ...data,
         isLoading,
         refreshing,
         loadData,
         onRefresh,
         handleChangeTemplateIndex,
-        setActiveSplit,
-        setCurrentTemplateIndexState,
     };
 }
